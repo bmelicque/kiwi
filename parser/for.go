@@ -6,77 +6,57 @@ import (
 
 type For struct {
 	keyword   tokenizer.Token
-	statement Statement // ExpressionStatement holding a condition OR Assignment
-	body      *Body
+	Statement Statement // ExpressionStatement holding a condition OR Assignment
+	Body      *Body
 }
 
 func (f For) Loc() tokenizer.Loc {
 	loc := f.keyword.Loc()
-	if f.body != nil {
-		loc.End = f.body.Loc().End
-	} else if f.statement != nil {
-		loc.End = f.statement.Loc().End
+	if f.Body != nil {
+		loc.End = f.Body.Loc().End
+	} else if f.Statement != nil {
+		loc.End = f.Statement.Loc().End
 	}
 	return loc
 }
 
-func (f For) Emit(e *Emitter) {
-	if assignment, ok := f.statement.(Assignment); ok {
-		e.Write("for (const ")
-		assignment.declared.Emit(e)
-		e.Write(" of ")
-		assignment.initializer.Emit(e)
-	} else {
-		e.Write("while (")
-		if f.statement != nil {
-			// FIXME: ';' at the end of the statement, body should handle where to put ';'
-			f.statement.Emit(e)
-		} else {
-			e.Write("true")
-		}
-	}
-	e.Write(") ")
-
-	f.body.Emit(e)
-}
-
 func (f For) Check(c *Checker) {
-	if f.statement == nil {
+	if f.Statement == nil {
 		return
 	}
 
 	scope := Scope{map[string]*Variable{}, nil, nil}
 	scope.returnType = c.scope.returnType
-	switch statement := f.statement.(type) {
+	switch statement := f.Statement.(type) {
 	case ExpressionStatement:
-		if statement.expr.Type(c.scope) != (Primitive{BOOLEAN}) {
+		if statement.Expr.Type(c.scope) != (Primitive{BOOLEAN}) {
 			c.report("Boolean expected", statement.Loc())
 		}
 	case Assignment:
-		declared, ok := statement.declared.(TokenExpression)
+		declared, ok := statement.Declared.(TokenExpression)
 		if !ok || declared.Token.Kind() != tokenizer.IDENTIFIER {
-			c.report("Identifier expected", statement.declared.Loc())
+			c.report("Identifier expected", statement.Declared.Loc())
 		} else {
 			text := declared.Token.Text()
 			if text != "_" {
 				scope.inner[declared.Token.Text()] = &Variable{
 					declaredAt: declared.Loc(),
-					typing:     statement.initializer.Type(c.scope),
+					typing:     statement.Initializer.Type(c.scope),
 				}
 			}
 		}
-		if statement.operator.Kind() != tokenizer.DECLARE && statement.operator.Kind() != tokenizer.DEFINE {
-			c.report("':=' or '::' expected", statement.operator.Loc())
+		if statement.Operator.Kind() != tokenizer.DECLARE && statement.Operator.Kind() != tokenizer.DEFINE {
+			c.report("':=' or '::' expected", statement.Operator.Loc())
 		}
-		if _, ok := statement.initializer.(RangeExpression); !ok {
-			c.report("Range expression expected", statement.initializer.Loc())
+		if _, ok := statement.Initializer.(RangeExpression); !ok {
+			c.report("Range expression expected", statement.Initializer.Loc())
 		}
 	default:
 		c.report("Condition or declaration expected", statement.Loc())
 	}
 
 	c.PushScope(&scope)
-	f.body.Check(c)
+	f.Body.Check(c)
 	c.DropScope()
 }
 
@@ -85,10 +65,10 @@ func ParseForLoop(p *Parser) Statement {
 	statement.keyword = p.tokenizer.Consume()
 
 	if p.tokenizer.Peek().Kind() != tokenizer.LBRACE {
-		statement.statement = ParseAssignment(p)
+		statement.Statement = ParseAssignment(p)
 	}
 
-	statement.body = ParseBody(p)
+	statement.Body = ParseBody(p)
 
 	return statement
 }

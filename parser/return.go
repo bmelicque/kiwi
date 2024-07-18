@@ -6,22 +6,13 @@ import (
 
 type Return struct {
 	operator tokenizer.Token
-	value    Expression
-}
-
-func (r Return) Emit(e *Emitter) {
-	e.Write("return")
-	if r.value != nil {
-		e.Write(" ")
-		r.value.Emit(e)
-	}
-	e.Write(";\n")
+	Value    Expression
 }
 
 func (r Return) Loc() tokenizer.Loc {
 	loc := r.operator.Loc()
-	if r.value != nil {
-		loc.End = r.value.Loc().End
+	if r.Value != nil {
+		loc.End = r.Value.Loc().End
 	}
 	return loc
 }
@@ -29,13 +20,13 @@ func (r Return) Loc() tokenizer.Loc {
 func (r Return) Check(c *Checker) {
 	expected := c.scope.returnType
 
-	if r.value != nil {
-		r.value.Check(c)
+	if r.Value != nil {
+		r.Value.Check(c)
 
 		if expected == nil {
 			c.report("Expected no return value", r.Loc())
-		} else if !expected.Match(r.value.Type(c.scope)) {
-			c.report("Type does not match expected return type", r.value.Loc())
+		} else if !expected.Match(r.Value.Type(c.scope)) {
+			c.report("Type does not match expected return type", r.Value.Loc())
 		}
 	} else if expected != nil {
 		c.report("Expected return value", r.Loc())

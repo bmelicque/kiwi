@@ -2,17 +2,18 @@
 
 - no re-assignment to constants
 - \_ for unused values
+- call expression
 
 ### Objective
 
-fibonacci :: (n: number) => number {
-if n == 0 { return 0 }
-if n == 1 { return 1 }
+(Tuple).identifier :: method
 
-    (prev, cur) := (1, 1)
-    for _ := 3..=n {
-        (prev, cur) = (cur, prev + cur)
+```
+dom.body.appendChild(
+    DivElement {
+        childNodes: [
+            "Hello, World!"
+        ]
     }
-    return cur
-
-}
+)
+```

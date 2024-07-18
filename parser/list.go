@@ -5,15 +5,15 @@ import (
 )
 
 type ListExpression struct {
-	elements []Expression
+	Elements []Expression
 	loc      tokenizer.Loc
 }
 
 func (l ListExpression) Type(ctx *Scope) ExpressionType {
-	if len(l.elements) == 0 {
+	if len(l.Elements) == 0 {
 		return List{Primitive{UNKNOWN}}
 	}
-	t := l.elements[0].Type(ctx)
+	t := l.Elements[0].Type(ctx)
 	if t.Kind() == TYPE {
 		return t
 	}
@@ -22,7 +22,7 @@ func (l ListExpression) Type(ctx *Scope) ExpressionType {
 
 func (l ListExpression) Check(c *Checker) {
 	var t ExpressionType
-	for _, el := range l.elements {
+	for _, el := range l.Elements {
 		if el == nil {
 			continue
 		}
@@ -35,17 +35,6 @@ func (l ListExpression) Check(c *Checker) {
 	}
 
 }
-func (l ListExpression) Emit(e *Emitter) {
-	e.Write("[")
-	length := len(l.elements)
-	for i, el := range l.elements {
-		el.Emit(e)
-		if i != length-1 {
-			e.Write(", ")
-		}
-	}
-	e.Write("]")
-}
 
 func (l ListExpression) Loc() tokenizer.Loc { return l.loc }
 func (l ListExpression) Parse(p *Parser) Expression {
@@ -53,7 +42,7 @@ func (l ListExpression) Parse(p *Parser) Expression {
 	l.loc.Start = lbracket.Loc().Start
 
 	ParseList(p, tokenizer.RBRACKET, func() {
-		l.elements = append(l.elements, ParseExpression(p))
+		l.Elements = append(l.Elements, ParseExpression(p))
 	})
 
 	next := p.tokenizer.Peek()

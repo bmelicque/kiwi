@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/bmelicque/test-parser/emitter"
 	"github.com/bmelicque/test-parser/parser"
 	"github.com/bmelicque/test-parser/tokenizer"
 )
@@ -33,8 +34,8 @@ func main() {
 	declaration.Check(c)
 	errors := append(p.GetReport(), c.GetReport()...)
 	if len(errors) == 0 {
-		e := parser.MakeEmitter()
-		declaration.Emit(e)
+		e := emitter.MakeEmitter()
+		e.Emit(declaration)
 		fmt.Printf("%+v\n", e.String())
 	} else {
 		for _, err := range errors {

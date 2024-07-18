@@ -3,7 +3,6 @@ package parser
 import "github.com/bmelicque/test-parser/tokenizer"
 
 type Node interface {
-	Emit(e *Emitter)
 	Loc() tokenizer.Loc
 }
 

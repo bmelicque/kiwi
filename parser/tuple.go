@@ -5,40 +5,28 @@ import (
 )
 
 type TupleExpression struct {
-	elements []Expression
+	Elements []Expression
 	loc      tokenizer.Loc
 }
 
 func (t TupleExpression) Type(ctx *Scope) ExpressionType {
-	if len(t.elements) == 0 {
+	if len(t.Elements) == 0 {
 		return Primitive{NIL}
 	}
-	types := make([]ExpressionType, len(t.elements))
-	for i, element := range t.elements {
+	types := make([]ExpressionType, len(t.Elements))
+	for i, element := range t.Elements {
 		types[i] = element.Type(ctx)
 	}
 	return Tuple{types}
 }
 
 func (l TupleExpression) Check(c *Checker) {
-	for _, el := range l.elements {
+	for _, el := range l.Elements {
 		if el != nil {
 			el.Check(c)
 		}
 	}
 
-}
-
-func (t TupleExpression) Emit(e *Emitter) {
-	e.Write("[")
-	length := len(t.elements)
-	for i, el := range t.elements {
-		el.Emit(e)
-		if i != length-1 {
-			e.Write(", ")
-		}
-	}
-	e.Write("]")
 }
 
 func (t TupleExpression) Loc() tokenizer.Loc {

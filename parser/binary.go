@@ -7,14 +7,14 @@ import (
 )
 
 type BinaryExpression struct {
-	left     Expression
-	right    Expression
-	operator tokenizer.Token
+	Left     Expression
+	Right    Expression
+	Operator tokenizer.Token
 	loc      tokenizer.Loc
 }
 
 func (expr BinaryExpression) Type(ctx *Scope) ExpressionType {
-	switch expr.operator.Kind() {
+	switch expr.Operator.Kind() {
 	case
 		tokenizer.ADD,
 		tokenizer.SUB,
@@ -24,7 +24,7 @@ func (expr BinaryExpression) Type(ctx *Scope) ExpressionType {
 		tokenizer.MOD:
 		return Primitive{NUMBER}
 	case tokenizer.CONCAT:
-		return expr.left.Type(ctx)
+		return expr.Left.Type(ctx)
 	case
 		tokenizer.LAND,
 		tokenizer.LOR,
@@ -41,35 +41,17 @@ func (expr BinaryExpression) Type(ctx *Scope) ExpressionType {
 
 func (expr BinaryExpression) Loc() tokenizer.Loc { return expr.loc }
 
-func (expr BinaryExpression) Emit(e *Emitter) {
-	// TODO: function to get JS operator precedence for limiting parenthesis output
-	// TODO: if e.minify, replace "===" by "==" (also, make sure that equality check is strict on types)
-	e.Write("(")
-	if expr.left != nil {
-		expr.left.Emit(e)
-	}
-
-	e.Write(" ")
-	e.Write(expr.operator.Text())
-	e.Write(" ")
-
-	if expr.right != nil {
-		expr.right.Emit(e)
-	}
-	e.Write(")")
-}
-
 /*******************
  *  TYPE CHECKING  *
  *******************/
 func (expr BinaryExpression) Check(c *Checker) {
-	if expr.left != nil {
-		expr.left.Check(c)
+	if expr.Left != nil {
+		expr.Left.Check(c)
 	}
-	if expr.right != nil {
-		expr.right.Check(c)
+	if expr.Right != nil {
+		expr.Right.Check(c)
 	}
-	switch expr.operator.Kind() {
+	switch expr.Operator.Kind() {
 	case
 		tokenizer.ADD,
 		tokenizer.SUB,
@@ -96,45 +78,45 @@ func (expr BinaryExpression) Check(c *Checker) {
 }
 
 func (expr BinaryExpression) checkLogical(c *Checker) {
-	if expr.left != nil && !(Primitive{BOOLEAN}).Extends(expr.left.Type(c.scope)) {
-		c.report("The left-hand side of a logical operation must be a boolean", expr.left.Loc())
+	if expr.Left != nil && !(Primitive{BOOLEAN}).Extends(expr.Left.Type(c.scope)) {
+		c.report("The left-hand side of a logical operation must be a boolean", expr.Left.Loc())
 	}
-	if expr.right != nil && !(Primitive{BOOLEAN}).Extends(expr.right.Type(c.scope)) {
-		c.report("The right-hand side of a logical operation must be a boolean", expr.right.Loc())
+	if expr.Right != nil && !(Primitive{BOOLEAN}).Extends(expr.Right.Type(c.scope)) {
+		c.report("The right-hand side of a logical operation must be a boolean", expr.Right.Loc())
 	}
 }
 func (expr BinaryExpression) checkEq(c *Checker) {
-	if expr.left == nil || expr.right == nil {
+	if expr.Left == nil || expr.Right == nil {
 		return
 	}
-	left := expr.left.Type(c.scope)
-	right := expr.right.Type(c.scope)
+	left := expr.Left.Type(c.scope)
+	right := expr.Right.Type(c.scope)
 	if !left.Extends(right) && !right.Extends(left) {
 		c.report("Types don't match", expr.Loc())
 	}
 }
 func (expr BinaryExpression) checkConcat(c *Checker) {
 	var left ExpressionType
-	if expr.left != nil {
-		left = expr.left.Type(c.scope)
+	if expr.Left != nil {
+		left = expr.Left.Type(c.scope)
 	}
 	var right ExpressionType
-	if expr.right != nil {
-		right = expr.right.Type(c.scope)
+	if expr.Right != nil {
+		right = expr.Right.Type(c.scope)
 	}
 	if left != nil && !(Primitive{STRING}).Extends(left) && !(List{Primitive{UNKNOWN}}).Extends(left) {
-		c.report("The left-hand side of concatenation must be a string or a list", expr.left.Loc())
+		c.report("The left-hand side of concatenation must be a string or a list", expr.Left.Loc())
 	}
 	if right != nil && !(Primitive{STRING}).Extends(right) && !(List{Primitive{UNKNOWN}}).Extends(right) {
-		c.report("The right-hand side of concatenation must be a string or a list", expr.right.Loc())
+		c.report("The right-hand side of concatenation must be a string or a list", expr.Right.Loc())
 	}
 }
 func (expr BinaryExpression) checkArithmetic(c *Checker) {
-	if expr.left != nil && !(Primitive{NUMBER}).Extends(expr.left.Type(c.scope)) {
-		c.report("The left-hand side of an arithmetic operation must be a number", expr.left.Loc())
+	if expr.Left != nil && !(Primitive{NUMBER}).Extends(expr.Left.Type(c.scope)) {
+		c.report("The left-hand side of an arithmetic operation must be a number", expr.Left.Loc())
 	}
-	if expr.right != nil && !(Primitive{NUMBER}).Extends(expr.right.Type(c.scope)) {
-		c.report("The right-hand side of an arithmetic operation must be a number", expr.right.Loc())
+	if expr.Right != nil && !(Primitive{NUMBER}).Extends(expr.Right.Type(c.scope)) {
+		c.report("The right-hand side of an arithmetic operation must be a number", expr.Right.Loc())
 	}
 }
 
@@ -194,16 +176,16 @@ func fallback(p *Parser) Expression {
 	return TokenExpression{}.Parse(p)
 }
 func (expr BinaryExpression) setLoc() BinaryExpression {
-	if expr.left != nil {
-		expr.loc.Start = expr.left.Loc().Start
+	if expr.Left != nil {
+		expr.loc.Start = expr.Left.Loc().Start
 	} else {
-		expr.loc.Start = expr.operator.Loc().Start
+		expr.loc.Start = expr.Operator.Loc().Start
 	}
 
-	if expr.right != nil {
-		expr.loc.End = expr.right.Loc().End
+	if expr.Right != nil {
+		expr.loc.End = expr.Right.Loc().End
 	} else {
-		expr.loc.End = expr.operator.Loc().End
+		expr.loc.End = expr.Operator.Loc().End
 	}
 	return expr
 }

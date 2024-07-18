@@ -5,10 +5,10 @@ import (
 )
 
 type FunctionExpression struct {
-	params   TupleExpression
-	operator tokenizer.Token // -> or =>
-	expr     Expression      // return value for '->', return type for '=>'
-	body     *Body
+	Params   TupleExpression
+	Operator tokenizer.Token // -> or =>
+	Expr     Expression      // return value for '->', return type for '=>'
+	Body     *Body
 }
 
 func checkParam(c *Checker, param Expression) (string, bool) {
@@ -18,7 +18,7 @@ func checkParam(c *Checker, param Expression) (string, bool) {
 		return "", false
 	}
 
-	tokenExpression, ok := typedExpression.expr.(TokenExpression)
+	tokenExpression, ok := typedExpression.Expr.(TokenExpression)
 	if !ok {
 		c.report("Identifier expected", typedExpression.Loc())
 		return "", false
@@ -35,80 +35,57 @@ func checkParam(c *Checker, param Expression) (string, bool) {
 func (f FunctionExpression) Check(c *Checker) {
 	functionScope := Scope{map[string]*Variable{}, nil, nil}
 
-	for _, param := range f.params.elements {
+	for _, param := range f.Params.Elements {
 		name, ok := checkParam(c, param)
 		if ok {
 			typing := ReadTypeExpression(param.(TypedExpression).typing)
-			identifier := param.(TypedExpression).expr.(TokenExpression)
+			identifier := param.(TypedExpression).Expr.(TokenExpression)
 			functionScope.inner[name] = &Variable{identifier.Loc(), typing, []tokenizer.Loc{}, []tokenizer.Loc{}}
 		}
 	}
 
-	if f.operator.Kind() == tokenizer.SLIM_ARR {
-		if f.expr != nil {
-			f.expr.Check(c)
-			if f.expr.Type(c.scope).Kind() == TYPE {
-				c.report("Expression expected", f.expr.Loc())
+	if f.Operator.Kind() == tokenizer.SLIM_ARR {
+		if f.Expr != nil {
+			f.Expr.Check(c)
+			if f.Expr.Type(c.scope).Kind() == TYPE {
+				c.report("Expression expected", f.Expr.Loc())
 			}
 		}
 
-		if f.body != nil {
-			c.report("Function body should be a single statement", f.body.Loc())
+		if f.Body != nil {
+			c.report("Function body should be a single statement", f.Body.Loc())
 		}
 		return
 	}
 
-	if f.expr != nil {
-		f.expr.Check(c)
-		if f.expr.Type(c.scope).Kind() != TYPE {
-			c.report("Type expected", f.expr.Loc())
+	if f.Expr != nil {
+		f.Expr.Check(c)
+		if f.Expr.Type(c.scope).Kind() != TYPE {
+			c.report("Type expected", f.Expr.Loc())
 		} else {
-			functionScope.returnType = ReadTypeExpression(f.expr)
+			functionScope.returnType = ReadTypeExpression(f.Expr)
 		}
 	}
 
-	if f.body != nil {
+	if f.Body != nil {
 		c.PushScope(&functionScope)
-		f.body.Check(c)
+		f.Body.Check(c)
 		c.DropScope()
 	}
 }
 
-func emitParams(e *Emitter, params []Expression) {
-	e.Write("(")
-	for i, param := range params {
-		param.Emit(e)
-		if i != len(params)-1 {
-			e.Write(", ")
-		}
-	}
-	e.Write(")")
-}
-
-func (f FunctionExpression) Emit(e *Emitter) {
-	emitParams(e, f.params.elements)
-
-	e.Write(" => ")
-
-	if f.operator.Kind() == tokenizer.SLIM_ARR {
-		f.expr.Emit(e)
-	} else { // FAT_ARR
-		f.body.Emit(e)
-	}
-}
-
 func (f FunctionExpression) Loc() tokenizer.Loc {
-	loc := tokenizer.Loc{Start: f.params.Loc().Start, End: tokenizer.Position{}}
-	if f.body == nil {
-		loc.End = f.expr.Loc().End
+	loc := tokenizer.Loc{Start: f.Params.Loc().Start, End: tokenizer.Position{}}
+	if f.Body == nil {
+		loc.End = f.Expr.Loc().End
 	} else {
-		loc.End = f.body.Loc().End
+		loc.End = f.Body.Loc().End
 	}
 	return loc
 }
 func (f FunctionExpression) Type(ctx *Scope) ExpressionType {
 	// FIXME: return type
-	return Function{f.params.Type(ctx).(Tuple), nil}
+	return Function{f.Params.Type(ctx).(Tuple), nil}
 }
 
 func ParseFunctionExpression(p *Parser) Expression {
@@ -131,7 +108,7 @@ func ParseFunctionExpression(p *Parser) Expression {
 
 	res := FunctionExpression{tuple, operator, ParseExpression(p), nil}
 	if operator.Kind() == tokenizer.FAT_ARR {
-		res.body = ParseBody(p)
+		res.Body = ParseBody(p)
 	}
 	return res
 }

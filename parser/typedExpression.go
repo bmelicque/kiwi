@@ -3,7 +3,7 @@ package parser
 import "github.com/bmelicque/test-parser/tokenizer"
 
 type TypedExpression struct {
-	expr   Expression
+	Expr   Expression
 	typing Expression
 }
 
@@ -11,9 +11,8 @@ func (t TypedExpression) Type(ctx *Scope) ExpressionType {
 	// FIXME:
 	return Primitive{UNKNOWN}
 }
-func (t TypedExpression) Emit(e *Emitter) { t.expr.Emit(e) }
 func (t TypedExpression) Check(c *Checker) {
-	switch expr := t.expr.(type) {
+	switch expr := t.Expr.(type) {
 	case TokenExpression:
 		if expr.Token.Kind() != tokenizer.IDENTIFIER {
 			c.report("Identifer expected", expr.Loc())
@@ -27,7 +26,7 @@ func (t TypedExpression) Check(c *Checker) {
 	}
 }
 func (t TypedExpression) Loc() tokenizer.Loc {
-	return tokenizer.Loc{Start: t.expr.Loc().Start, End: t.typing.Loc().End}
+	return tokenizer.Loc{Start: t.Expr.Loc().Start, End: t.typing.Loc().End}
 }
 
 func ParseTypedExpression(p *Parser) Expression {

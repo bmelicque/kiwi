@@ -5,31 +5,13 @@ import (
 )
 
 type Body struct {
-	statements []Statement
+	Statements []Statement
 	loc        tokenizer.Loc
 }
 
-func (b Body) Emit(e *Emitter) {
-	e.Write("{")
-	if len(b.statements) == 0 {
-		e.Write("}")
-		return
-	}
-	e.Write("\n")
-
-	e.depth += 1
-	for _, statement := range b.statements {
-		e.Indent()
-		statement.Emit(e)
-	}
-	e.depth -= 1
-
-	e.Indent()
-	e.Write("}\n")
-}
 func (b Body) Loc() tokenizer.Loc { return b.loc }
 func (b Body) Check(c *Checker) {
-	for _, statement := range b.statements {
+	for _, statement := range b.Statements {
 		statement.Check(c)
 	}
 	// TODO: look for unreachable code
@@ -44,9 +26,9 @@ func ParseBody(p *Parser) *Body {
 		p.report("'{' expected", token.Loc())
 	}
 
-	body.statements = []Statement{}
+	body.Statements = []Statement{}
 	for p.tokenizer.Peek().Kind() != tokenizer.RBRACE && p.tokenizer.Peek().Kind() != tokenizer.EOF {
-		body.statements = append(body.statements, ParseStatement(p))
+		body.Statements = append(body.Statements, ParseStatement(p))
 	}
 
 	token = p.tokenizer.Consume()

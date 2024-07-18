@@ -5,73 +5,47 @@ import (
 )
 
 type RangeExpression struct {
-	left     Expression
-	right    Expression
-	operator tokenizer.Token
+	Left     Expression
+	Right    Expression
+	Operator tokenizer.Token
 }
 
 func (r RangeExpression) Loc() tokenizer.Loc {
 	var loc tokenizer.Loc
-	if r.left != nil {
-		loc.Start = r.left.Loc().Start
+	if r.Left != nil {
+		loc.Start = r.Left.Loc().Start
 	} else {
-		loc.Start = r.operator.Loc().Start
+		loc.Start = r.Operator.Loc().Start
 	}
-	if r.right != nil {
-		loc.End = r.right.Loc().End
+	if r.Right != nil {
+		loc.End = r.Right.Loc().End
 	} else {
-		loc.End = r.operator.Loc().End
+		loc.End = r.Operator.Loc().End
 	}
 	return loc
 }
 
-// TODO: Emit
-func (r RangeExpression) Emit(e *Emitter) {
-	e.AddFlag(RangeFlag)
-
-	e.Write("range(")
-
-	if r.left != nil {
-		r.left.Emit(e)
-	} else {
-		e.Write("0")
-	}
-
-	e.Write(", ")
-
-	if r.right != nil {
-		r.right.Emit(e)
-		if r.operator.Kind() == tokenizer.RANGE_INCLUSIVE {
-			e.Write(" + 1")
-		}
-	} else {
-		e.Write("1")
-	}
-
-	e.Write(")")
-}
-
 func (r RangeExpression) Type(ctx *Scope) ExpressionType {
 	var typing ExpressionType
-	if r.left != nil {
-		typing = r.left.Type(ctx)
-	} else if r.right != nil {
-		typing = r.right.Type(ctx)
+	if r.Left != nil {
+		typing = r.Left.Type(ctx)
+	} else if r.Right != nil {
+		typing = r.Right.Type(ctx)
 	}
 	return Range{typing}
 }
 
 func (r RangeExpression) Check(c *Checker) {
 	var typing ExpressionType
-	if r.left != nil {
-		r.left.Check(c)
-		typing = r.left.Type(c.scope)
+	if r.Left != nil {
+		r.Left.Check(c)
+		typing = r.Left.Type(c.scope)
 	}
-	if r.right != nil {
-		r.right.Check(c)
+	if r.Right != nil {
+		r.Right.Check(c)
 		if typing == nil {
-			typing = r.right.Type(c.scope)
-		} else if !typing.Match(r.right.Type(c.scope)) {
+			typing = r.Right.Type(c.scope)
+		} else if !typing.Match(r.Right.Type(c.scope)) {
 			c.report("Types don't match", r.Loc())
 		}
 	}
@@ -81,8 +55,8 @@ func (r RangeExpression) Check(c *Checker) {
 		c.report("Number type expected", r.Loc())
 	}
 
-	if r.operator.Kind() == tokenizer.RANGE_INCLUSIVE && r.right == nil {
-		c.report("Right operand expected", r.operator.Loc())
+	if r.Operator.Kind() == tokenizer.RANGE_INCLUSIVE && r.Right == nil {
+		c.report("Right operand expected", r.Operator.Loc())
 	}
 }
 

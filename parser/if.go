@@ -6,34 +6,24 @@ import (
 
 type IfElse struct {
 	keyword   tokenizer.Token
-	condition Expression
-	body      *Body
+	Condition Expression
+	Body      *Body
 	// TODO: alternate
-}
-
-// TODO: handle alternate
-func (i IfElse) Emit(e *Emitter) {
-	e.Write("if (")
-	i.condition.Emit(e)
-	e.Write(")")
-
-	e.Write(" ")
-	i.body.Emit(e)
 }
 
 func (i IfElse) Loc() tokenizer.Loc {
 	return tokenizer.Loc{
 		Start: i.keyword.Loc().Start,
-		End:   i.body.Loc().End,
+		End:   i.Body.Loc().End,
 	}
 	// TODO: handle alternate
 }
 
 func (i IfElse) Check(c *Checker) {
-	if i.condition != nil {
-		i.condition.Check(c)
-		if i.condition.Type(c.scope) != (Primitive{BOOLEAN}) {
-			c.report("Boolean expected in condition", i.condition.Loc())
+	if i.Condition != nil {
+		i.Condition.Check(c)
+		if i.Condition.Type(c.scope) != (Primitive{BOOLEAN}) {
+			c.report("Boolean expected in condition", i.Condition.Loc())
 		}
 	}
 
@@ -42,7 +32,7 @@ func (i IfElse) Check(c *Checker) {
 	// TODO: add variable to scope on some patterns:
 	//		if Type {x} := y {}
 	c.PushScope(&scope)
-	i.body.Check(c)
+	i.Body.Check(c)
 	c.DropScope()
 }
 

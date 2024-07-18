@@ -7,60 +7,42 @@ import (
 )
 
 type ExpressionStatement struct {
-	expr Expression
+	Expr Expression
 }
 
-func (s ExpressionStatement) Emit(e *Emitter) {
-	s.expr.Emit(e)
-	e.Write(";\n")
-}
-func (s ExpressionStatement) Loc() tokenizer.Loc { return s.expr.Loc() }
-func (s ExpressionStatement) Check(c *Checker)   { s.expr.Check(c) }
+func (s ExpressionStatement) Loc() tokenizer.Loc { return s.Expr.Loc() }
+func (s ExpressionStatement) Check(c *Checker)   { s.Expr.Check(c) }
 
 type Assignment struct {
-	declared    Expression // "value", "Type", "(value Type).method", "(value Type).(..Trait)"
-	initializer Expression
+	Declared    Expression // "value", "Type", "(value Type).method", "(value Type).(..Trait)"
+	Initializer Expression
 	typing      Expression
-	operator    tokenizer.Token
+	Operator    tokenizer.Token
 	loc         tokenizer.Loc
 }
 
-func (a Assignment) Emit(e *Emitter) {
-	kind := a.operator.Kind()
-	if kind == tokenizer.DEFINE {
-		e.Write("const ")
-	} else if kind == tokenizer.DECLARE {
-		e.Write("let ")
-	}
-	a.declared.Emit(e)
-	e.Write(" = ")
-	a.initializer.Emit(e)
-	if _, ok := a.initializer.(FunctionExpression); !ok {
-		e.Write(";\n")
-	}
-}
 func (a Assignment) Loc() tokenizer.Loc { return a.loc }
 
 func checkDeclaration(c *Checker, a Assignment) {
-	switch declared := a.declared.(type) {
+	switch declared := a.Declared.(type) {
 	case TokenExpression:
 		if declared.Token.Kind() != tokenizer.IDENTIFIER {
 			c.report("Identifier expected", declared.Loc())
 			break
 		}
 		name := declared.Token.Text()
-		c.scope.Add(name, declared.Loc(), a.initializer.Type(c.scope))
+		c.scope.Add(name, declared.Loc(), a.Initializer.Type(c.scope))
 	case TupleExpression:
-		typing, ok := a.initializer.Type(c.scope).(Tuple)
+		typing, ok := a.Initializer.Type(c.scope).(Tuple)
 		if !ok {
 			c.report("Patterns don't match", a.Loc())
 			break
 		}
-		if len(declared.elements) > len(typing.elements) {
+		if len(declared.Elements) > len(typing.elements) {
 			c.report("Too many elements", declared.Loc())
 			break
 		}
-		for i, expr := range declared.elements {
+		for i, expr := range declared.Elements {
 			identifier, ok := expr.(TokenExpression)
 			if !ok || identifier.Token.Kind() != tokenizer.IDENTIFIER {
 				c.report("Identifier expected", identifier.Loc())
@@ -91,28 +73,28 @@ func handleIdentiferAssignment(c *Checker, expr Expression, typing ExpressionTyp
 }
 
 func checkAssignment(c *Checker, a Assignment) {
-	switch assignee := a.declared.(type) {
+	switch assignee := a.Declared.(type) {
 	case TokenExpression:
-		handleIdentiferAssignment(c, assignee, a.initializer.Type(c.scope), a)
+		handleIdentiferAssignment(c, assignee, a.Initializer.Type(c.scope), a)
 	case TupleExpression:
-		typing, ok := a.initializer.Type(c.scope).(Tuple)
+		typing, ok := a.Initializer.Type(c.scope).(Tuple)
 		if !ok {
 			c.report("Patterns don't match", a.Loc())
 			break
 		}
-		if len(assignee.elements) > len(typing.elements) {
+		if len(assignee.Elements) > len(typing.elements) {
 			c.report("Too many elements", assignee.Loc())
 			break
 		}
-		for i, expr := range assignee.elements {
+		for i, expr := range assignee.Elements {
 			handleIdentiferAssignment(c, expr, typing.elements[i], a)
 		}
 	}
 }
 
 func (a Assignment) Check(c *Checker) {
-	a.initializer.Check(c)
-	switch a.operator.Kind() {
+	a.Initializer.Check(c)
+	switch a.Operator.Kind() {
 	case tokenizer.DEFINE, tokenizer.DECLARE:
 		checkDeclaration(c, a)
 	case tokenizer.ASSIGN:
