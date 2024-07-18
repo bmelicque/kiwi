@@ -29,6 +29,16 @@ func MakeParser(tokenizer tokenizer.Tokenizer, scope Scope) *Parser {
 	return &Parser{tokenizer, nil}
 }
 
+func (p *Parser) ParseProgram() []Statement {
+	statements := []Statement{}
+
+	for p.tokenizer.Peek().Kind() != tokenizer.EOF {
+		statements = append(statements, ParseStatement(p))
+	}
+
+	return statements
+}
+
 func ParseStatement(p *Parser) Statement {
 	switch p.tokenizer.Peek().Kind() {
 	case tokenizer.IF_KW:

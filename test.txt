@@ -1,4 +1,4 @@
-test :: (n: number) => number {
+fibonacci :: (n: number) => number {
     if n == 0 { return 0 }
     if n == 1 { return 1 }
 
@@ -11,3 +11,4 @@ test :: (n: number) => number {
     return prev * curr
 }
 
+fibonacci(2)

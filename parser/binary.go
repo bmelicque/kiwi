@@ -156,7 +156,7 @@ func parseMultiplication(p *Parser) Expression {
 	return parseBinary(p, []tokenizer.TokenKind{tokenizer.MUL, tokenizer.DIV, tokenizer.MOD}, parseExponentiation)
 }
 func parseExponentiation(p *Parser) Expression {
-	expression := fallback(p)
+	expression := ParseCallExpression(p)
 	next := p.tokenizer.Peek()
 	for next.Kind() == tokenizer.POW {
 		operator := p.tokenizer.Consume()
@@ -166,15 +166,7 @@ func parseExponentiation(p *Parser) Expression {
 	}
 	return expression
 }
-func fallback(p *Parser) Expression {
-	if p.tokenizer.Peek().Kind() == tokenizer.LPAREN {
-		return ParseFunctionExpression(p)
-	}
-	if p.tokenizer.Peek().Kind() == tokenizer.LBRACKET {
-		return ListExpression{}.Parse(p)
-	}
-	return TokenExpression{}.Parse(p)
-}
+
 func (expr BinaryExpression) setLoc() BinaryExpression {
 	if expr.Left != nil {
 		expr.loc.Start = expr.Left.Loc().Start

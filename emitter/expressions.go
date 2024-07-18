@@ -23,6 +23,20 @@ func (e *Emitter) EmitBinaryExpression(expr parser.BinaryExpression) {
 	e.Write(")")
 }
 
+func (e *Emitter) EmitCallExpression(expr parser.CallExpression) {
+	e.Emit(expr.Callee)
+
+	e.Write("(")
+	args := expr.Args.(parser.TupleExpression) // This should be ensured by checker
+	for i, el := range args.Elements {
+		e.Emit(el)
+		if i != len(args.Elements)-1 {
+			e.Write(", ")
+		}
+	}
+	e.Write(")")
+}
+
 func (e *Emitter) EmitFunctionExpression(f parser.FunctionExpression) {
 	e.Write("(")
 	length := len(f.Params.Elements)
@@ -39,7 +53,7 @@ func (e *Emitter) EmitFunctionExpression(f parser.FunctionExpression) {
 	if f.Operator.Kind() == tokenizer.SLIM_ARR {
 		e.Emit(f.Expr)
 	} else { // FAT_ARR
-		e.Emit(f.Body)
+		e.Emit(*f.Body)
 	}
 }
 

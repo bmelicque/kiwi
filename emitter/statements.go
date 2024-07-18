@@ -61,7 +61,7 @@ func (e *Emitter) EmitFor(f parser.For) {
 	}
 	e.Write(") ")
 
-	e.Emit(f.Body)
+	e.Emit(*f.Body)
 }
 
 // TODO: handle alternate
@@ -71,7 +71,7 @@ func (e *Emitter) EmitIfElse(i parser.IfElse) {
 	e.Write(")")
 
 	e.Write(" ")
-	e.Emit(i.Body)
+	e.Emit(*i.Body)
 }
 
 func (e *Emitter) EmitReturn(r parser.Return) {

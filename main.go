@@ -30,12 +30,16 @@ func main() {
 
 	p := parser.MakeParser(t, parser.Scope{})
 	c := parser.MakeChecker()
-	declaration := parser.ParseStatement(p)
-	declaration.Check(c)
+	program := p.ParseProgram()
+	for _, statement := range program {
+		statement.Check(c)
+	}
 	errors := append(p.GetReport(), c.GetReport()...)
 	if len(errors) == 0 {
 		e := emitter.MakeEmitter()
-		e.Emit(declaration)
+		for _, statement := range program {
+			e.Emit(statement)
+		}
 		fmt.Printf("%+v\n", e.String())
 	} else {
 		for _, err := range errors {
