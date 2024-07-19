@@ -6,11 +6,16 @@ import (
 )
 
 func (e *Emitter) EmitBinaryExpression(expr parser.BinaryExpression) {
-	// TODO: function to get JS operator precedence for limiting parenthesis output
-	// TODO: if e.minify, replace "===" by "==" (also, make sure that equality check is strict on types)
-	e.Write("(")
+	precedence := Precedence(expr)
 	if expr.Left != nil {
+		left := Precedence(expr.Left)
+		if left < precedence {
+			e.Write("(")
+		}
 		e.Emit(expr.Left)
+		if left < precedence {
+			e.Write(")")
+		}
 	}
 
 	e.Write(" ")
@@ -18,9 +23,15 @@ func (e *Emitter) EmitBinaryExpression(expr parser.BinaryExpression) {
 	e.Write(" ")
 
 	if expr.Right != nil {
+		right := Precedence(expr.Right)
+		if right < precedence {
+			e.Write("(")
+		}
 		e.Emit(expr.Right)
+		if right < precedence {
+			e.Write(")")
+		}
 	}
-	e.Write(")")
 }
 
 func (e *Emitter) EmitCallExpression(expr parser.CallExpression) {
@@ -94,6 +105,10 @@ func (e *Emitter) EmitRangeExpression(r parser.RangeExpression) {
 }
 
 func (e *Emitter) EmitTupleExpression(t parser.TupleExpression) {
+	if len(t.Elements) == 1 {
+		e.Emit(t.Elements[0])
+		return
+	}
 	e.Write("[")
 	length := len(t.Elements)
 	for i, el := range t.Elements {

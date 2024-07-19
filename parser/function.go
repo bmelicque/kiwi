@@ -85,7 +85,7 @@ func (f FunctionExpression) Loc() tokenizer.Loc {
 }
 func (f FunctionExpression) Type(ctx *Scope) ExpressionType {
 	// FIXME: return type
-	return Function{f.Params.Type(ctx).(Tuple), nil}
+	return Function{f.Params.Type(ctx), nil}
 }
 
 func ParseFunctionExpression(p *Parser) Expression {

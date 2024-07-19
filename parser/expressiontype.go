@@ -112,7 +112,7 @@ func (r Range) Extends(t ExpressionType) bool {
 }
 
 type Function struct {
-	params   Tuple
+	params   ExpressionType // Tuple if len > 1
 	returned ExpressionType
 }
 

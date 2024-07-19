@@ -13,6 +13,9 @@ func (t TupleExpression) Type(ctx *Scope) ExpressionType {
 	if len(t.Elements) == 0 {
 		return Primitive{NIL}
 	}
+	if len(t.Elements) == 1 {
+		return t.Elements[0].Type(ctx)
+	}
 	types := make([]ExpressionType, len(t.Elements))
 	for i, element := range t.Elements {
 		types[i] = element.Type(ctx)
