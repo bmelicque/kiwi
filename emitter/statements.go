@@ -6,6 +6,10 @@ import (
 )
 
 func (e *Emitter) EmitAssignment(a parser.Assignment) {
+	if parser.IsType(a.Declared) {
+		return
+	}
+
 	kind := a.Operator.Kind()
 	if kind == tokenizer.DEFINE {
 		e.Write("const ")

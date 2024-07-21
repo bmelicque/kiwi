@@ -11,32 +11,11 @@ type FunctionExpression struct {
 	Body     *Body
 }
 
-func checkParam(c *Checker, param Expression) (string, bool) {
-	typedExpression, ok := param.(TypedExpression)
-	if !ok {
-		c.report("Function parameter expected (name: type)", param.Loc())
-		return "", false
-	}
-
-	tokenExpression, ok := typedExpression.Expr.(TokenExpression)
-	if !ok {
-		c.report("Identifier expected", typedExpression.Loc())
-		return "", false
-	}
-
-	if tokenExpression.Token.Kind() != tokenizer.IDENTIFIER {
-		c.report("Identifier expected", tokenExpression.Loc())
-		return "", false
-	}
-
-	return tokenExpression.Token.Text(), true
-}
-
 func (f FunctionExpression) Check(c *Checker) {
 	functionScope := Scope{map[string]*Variable{}, nil, nil}
 
 	for _, param := range f.Params.Elements {
-		name, ok := checkParam(c, param)
+		name, ok := CheckTypedIdentifier(c, param)
 		if ok {
 			typing := ReadTypeExpression(param.(TypedExpression).typing)
 			identifier := param.(TypedExpression).Expr.(TokenExpression)

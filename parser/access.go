@@ -62,11 +62,14 @@ func ParseCallExpression(p *Parser) Expression {
 }
 
 func fallback(p *Parser) Expression {
-	if p.tokenizer.Peek().Kind() == tokenizer.LPAREN {
+	switch p.tokenizer.Peek().Kind() {
+	case tokenizer.LPAREN:
 		return ParseFunctionExpression(p)
-	}
-	if p.tokenizer.Peek().Kind() == tokenizer.LBRACKET {
+	case tokenizer.LBRACKET:
 		return ListExpression{}.Parse(p)
+	case tokenizer.LBRACE:
+		return ParseStructDef(p)
 	}
 	return TokenExpression{}.Parse(p)
+	// TODO: if IsType, check for { }
 }

@@ -31,7 +31,6 @@ func (t TokenExpression) Check(c *Checker) {
 		c.scope.ReadAt(t.Token.Text(), t.Loc())
 	}
 }
-func (t TokenExpression) Emit(e *Emitter)    { e.Write(t.Token.Text()) }
 func (t TokenExpression) Loc() tokenizer.Loc { return t.Token.Loc() }
 func (TokenExpression) Parse(p *Parser) Expression {
 	token := p.tokenizer.Consume()

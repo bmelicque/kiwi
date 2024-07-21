@@ -40,3 +40,24 @@ func ParseTypedExpression(p *Parser) Expression {
 	typing := ParseExpression(p)
 	return TypedExpression{expr, typing}
 }
+
+func CheckTypedIdentifier(c *Checker, expr Expression) (string, bool) {
+	typedExpression, ok := expr.(TypedExpression)
+	if !ok {
+		c.report("Typed identifier expected (name: type)", expr.Loc())
+		return "", false
+	}
+
+	tokenExpression, ok := typedExpression.Expr.(TokenExpression)
+	if !ok {
+		c.report("Identifier expected", typedExpression.Loc())
+		return "", false
+	}
+
+	if tokenExpression.Token.Kind() != tokenizer.IDENTIFIER {
+		c.report("Identifier expected", tokenExpression.Loc())
+		return "", false
+	}
+
+	return tokenExpression.Token.Text(), true
+}

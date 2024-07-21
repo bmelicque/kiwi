@@ -11,7 +11,11 @@ type ExpressionStatement struct {
 }
 
 func (s ExpressionStatement) Loc() tokenizer.Loc { return s.Expr.Loc() }
-func (s ExpressionStatement) Check(c *Checker)   { s.Expr.Check(c) }
+func (s ExpressionStatement) Check(c *Checker) {
+	if s.Expr != nil {
+		s.Expr.Check(c)
+	}
+}
 
 type Assignment struct {
 	Declared    Expression // "value", "Type", "(value Type).method", "(value Type).(..Trait)"
@@ -93,6 +97,10 @@ func checkAssignment(c *Checker, a Assignment) {
 }
 
 func (a Assignment) Check(c *Checker) {
+	// TODO: if type, only operator allowed is "::"
+	if a.Initializer == nil {
+		return
+	}
 	a.Initializer.Check(c)
 	switch a.Operator.Kind() {
 	case tokenizer.DEFINE, tokenizer.DECLARE:
@@ -117,8 +125,13 @@ func ParseAssignment(p *Parser) Statement {
 		tokenizer.ASSIGN:
 		operator = p.tokenizer.Consume()
 		init = ParseExpression(p)
-		// FIXME: handle expr == nil && init == nil
-		loc = tokenizer.Loc{Start: expr.Loc().Start, End: init.Loc().End}
+		loc = operator.Loc()
+		if expr != nil {
+			loc.Start = expr.Loc().Start
+		}
+		if init != nil {
+			loc.End = init.Loc().End
+		}
 		return Assignment{expr, init, nil, operator, loc}
 	}
 	return ExpressionStatement{expr}

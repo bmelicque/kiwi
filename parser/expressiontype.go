@@ -27,6 +27,18 @@ type ExpressionType interface {
 	Extends(ExpressionType) bool
 }
 
+type Type struct {
+	value ExpressionType
+}
+
+func (t Type) Kind() ExpressionTypeKind { return TYPE }
+func (t Type) Match(testType ExpressionType) bool {
+	return testType.Kind() == TYPE && t.value.Match(testType.(Type).value)
+}
+func (t Type) Extends(testType ExpressionType) bool {
+	return testType.Kind() == TYPE && t.value.Extends(testType.(Type).value)
+}
+
 type Primitive struct {
 	kind ExpressionTypeKind
 }
