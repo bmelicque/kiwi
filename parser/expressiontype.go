@@ -14,9 +14,12 @@ const (
 	STRING
 	NIL
 
+	TYPE_REF
+
 	LIST
 	TUPLE
 	RANGE
+	STRUCT
 
 	FUNCTION
 )
@@ -47,6 +50,29 @@ func (p Primitive) Kind() ExpressionTypeKind    { return p.kind }
 func (p Primitive) Match(t ExpressionType) bool { return p.Kind() == t.Kind() }
 func (p Primitive) Extends(t ExpressionType) bool {
 	return p.Kind() == t.Kind() || p.Kind() == UNKNOWN || t.Kind() == UNKNOWN
+}
+
+type TypeRef struct {
+	name string
+	ref  ExpressionType
+}
+
+func (r TypeRef) Kind() ExpressionTypeKind { return r.ref.Kind() }
+func (r TypeRef) Match(t ExpressionType) bool {
+	if typeRef, ok := t.(TypeRef); ok {
+		return typeRef.name == r.name
+	}
+	return false
+}
+func (r TypeRef) Extends(t ExpressionType) bool {
+	typeRef, ok := t.(TypeRef)
+	if !ok {
+		return false
+	}
+	if typeRef.name == r.name {
+		return true
+	}
+	return r.ref.Extends(typeRef.ref)
 }
 
 type List struct {
@@ -131,6 +157,34 @@ type Function struct {
 func (f Function) Kind() ExpressionTypeKind      { return FUNCTION }
 func (f Function) Match(t ExpressionType) bool   { /* FIXME: */ return false }
 func (f Function) Extends(t ExpressionType) bool { /* FIXME: */ return false }
+
+type Struct struct {
+	members map[string]ExpressionType
+}
+
+func (s Struct) Kind() ExpressionTypeKind    { return STRUCT }
+func (s Struct) Match(t ExpressionType) bool { return false }
+func (s Struct) Extends(t ExpressionType) bool {
+	structB, ok := t.(Struct)
+	if !ok {
+		return false
+	}
+	for member, typeA := range s.members {
+		typeB, ok := structB.members[member]
+		if !ok {
+			return false
+		}
+		if !typeA.Extends(typeB) {
+			return false
+		}
+	}
+	for member := range structB.members {
+		if _, ok := s.members[member]; !ok {
+			return false
+		}
+	}
+	return true
+}
 
 func ReadTypeExpression(expr Expression) ExpressionType {
 	switch expr := expr.(type) {

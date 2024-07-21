@@ -32,8 +32,13 @@ func (expr StructDef) Check(c *Checker) {
 }
 
 func (expr StructDef) Type(ctx *Scope) ExpressionType {
-	// FIXME: put type in it
-	return Type{}
+	value := Struct{map[string]ExpressionType{}}
+	for _, member := range expr.members {
+		name := member.(TypedExpression).Expr.(TokenExpression).Token.Text()
+		typing := member.Type(ctx)
+		value.members[name] = typing
+	}
+	return Type{value}
 }
 
 func ParseStructDef(p *Parser) Expression {
