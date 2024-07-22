@@ -22,12 +22,44 @@ type Assignment struct {
 	Initializer Expression
 	typing      Expression
 	Operator    tokenizer.Token
-	loc         tokenizer.Loc
 }
 
-func (a Assignment) Loc() tokenizer.Loc { return a.loc }
+func (a Assignment) Loc() tokenizer.Loc {
+	loc := a.Operator.Loc()
+	if a.Declared != nil {
+		loc.Start = a.Declared.Loc().Start
+	} else if a.typing != nil {
+		loc.Start = a.typing.Loc().Start
+	}
+	if a.Initializer != nil {
+		loc.End = a.Initializer.Loc().End
+	}
+	return loc
+}
+
+func checkDeclarationTyping(c *Checker, a Assignment) {
+	if a.typing == nil {
+		return
+	}
+
+	typing := a.typing.Type(c.scope)
+	if typing.Kind() != TYPE {
+		c.report("Typing expected", a.typing.Loc())
+	} else if !typing.(Type).value.Extends(a.Initializer.Type(c.scope)) {
+		c.report("Initializer type does not match declared type", a.Loc())
+	}
+}
+
+func getDeclarationTyping(c *Checker, a Assignment) ExpressionType {
+	if a.typing == nil {
+		return a.Initializer.Type(c.scope)
+	}
+	return a.typing.Type(c.scope).(Type).value
+}
 
 func checkDeclaration(c *Checker, a Assignment) {
+	checkDeclarationTyping(c, a)
+
 	switch declared := a.Declared.(type) {
 	case TokenExpression:
 		if declared.Token.Kind() != tokenizer.IDENTIFIER {
@@ -35,7 +67,7 @@ func checkDeclaration(c *Checker, a Assignment) {
 			break
 		}
 		name := declared.Token.Text()
-		c.scope.Add(name, declared.Loc(), a.Initializer.Type(c.scope))
+		c.scope.Add(name, declared.Loc(), getDeclarationTyping(c, a))
 	case TupleExpression:
 		typing, ok := a.Initializer.Type(c.scope).(Tuple)
 		if !ok {
@@ -72,7 +104,7 @@ func handleIdentiferAssignment(c *Checker, expr Expression, typing ExpressionTyp
 	}
 	c.scope.WriteAt(name, token.Loc())
 	if !variable.typing.Extends(typing) {
-		c.report("Types don't match", a.loc)
+		c.report("Types don't match", a.Loc())
 	}
 }
 
@@ -102,10 +134,11 @@ func (a Assignment) Check(c *Checker) {
 		return
 	}
 	a.Initializer.Check(c)
-	switch a.Operator.Kind() {
-	case tokenizer.DEFINE, tokenizer.DECLARE:
+
+	operator := a.Operator.Kind()
+	if operator == tokenizer.DEFINE || operator == tokenizer.DECLARE || a.typing != nil {
 		checkDeclaration(c, a)
-	case tokenizer.ASSIGN:
+	} else if operator == tokenizer.ASSIGN {
 		checkAssignment(c, a)
 	}
 }
@@ -113,26 +146,34 @@ func (a Assignment) Check(c *Checker) {
 func ParseAssignment(p *Parser) Statement {
 	expr := ParseExpression(p)
 
-	var init Expression
+	var typing Expression
 	var operator tokenizer.Token
 	var loc tokenizer.Loc
 	next := p.tokenizer.Peek()
 	switch next.Kind() {
 	case tokenizer.COLON:
-		// TODO: value: type = init
+		p.tokenizer.Consume()
+		typing = ParseExpression(p)
+		operator = p.tokenizer.Consume()
+		if operator.Kind() != tokenizer.ASSIGN {
+			p.report("'=' expected", operator.Loc())
+		}
 	case tokenizer.DECLARE,
 		tokenizer.DEFINE,
 		tokenizer.ASSIGN:
 		operator = p.tokenizer.Consume()
-		init = ParseExpression(p)
-		loc = operator.Loc()
-		if expr != nil {
-			loc.Start = expr.Loc().Start
-		}
-		if init != nil {
-			loc.End = init.Loc().End
-		}
-		return Assignment{expr, init, nil, operator, loc}
+	default:
+		return ExpressionStatement{expr}
 	}
-	return ExpressionStatement{expr}
+	init := ParseExpression(p)
+	loc = operator.Loc()
+	if expr != nil {
+		loc.Start = expr.Loc().Start
+	} else if typing != nil {
+		loc.Start = typing.Loc().Start
+	}
+	if init != nil {
+		loc.End = init.Loc().End
+	}
+	return Assignment{expr, init, typing, operator}
 }

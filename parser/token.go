@@ -16,8 +16,12 @@ func (t TokenExpression) Type(ctx *Scope) ExpressionType {
 		return Primitive{BOOLEAN}
 	case tokenizer.STRING:
 		return Primitive{STRING}
-	case tokenizer.STR_KW, tokenizer.NUM_KW, tokenizer.BOOL_KW:
-		return Primitive{TYPE}
+	case tokenizer.STR_KW:
+		return Type{Primitive{STRING}}
+	case tokenizer.NUM_KW:
+		return Type{Primitive{NUMBER}}
+	case tokenizer.BOOL_KW:
+		return Type{Primitive{BOOLEAN}}
 	case tokenizer.IDENTIFIER:
 		variable, ok := ctx.Find(t.Token.Text())
 		if ok {
