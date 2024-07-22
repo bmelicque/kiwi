@@ -71,6 +71,7 @@ const (
 
 	COMMA // ,
 	COLON // :
+	DOT   //.
 )
 
 type Token interface {
@@ -162,7 +163,7 @@ var number = regexp.MustCompile(`^\d+`)
 var doubleQuoteString = regexp.MustCompile(`^"(.*?)[^\\]"`)
 var word = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9]*`)
 var operator = regexp.MustCompile(`^(\+\+?|->?|\*\*?|/|%|::|:=|\.\.=?|=>|={1,2}|!=)`)
-var punctuation = regexp.MustCompile(`^(\[|\]|,|:|\(|\)|\{|\}|_)`)
+var punctuation = regexp.MustCompile(`^(\[|\]|,|:|\(|\)|\{|\}|_|\.)`)
 
 func split(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	switch {
@@ -295,6 +296,8 @@ func makeToken(text string, loc Loc) Token {
 		return token{COMMA, loc}
 	case ":":
 		return token{COLON, loc}
+	case ".":
+		return token{DOT, loc}
 	case "::":
 		return token{DEFINE, loc}
 	case ":=":
