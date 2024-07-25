@@ -6,14 +6,14 @@ import (
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
-type StructDef struct {
+type ObjectDefinition struct {
 	members []Expression // []TypedExpression
 	loc     tokenizer.Loc
 }
 
-func (expr StructDef) Loc() tokenizer.Loc { return expr.loc }
+func (expr ObjectDefinition) Loc() tokenizer.Loc { return expr.loc }
 
-func (expr StructDef) Check(c *Checker) {
+func (expr ObjectDefinition) Check(c *Checker) {
 	members := map[string][]tokenizer.Loc{}
 	for _, member := range expr.members {
 		name, ok := CheckTypedIdentifier(c, member)
@@ -31,8 +31,8 @@ func (expr StructDef) Check(c *Checker) {
 	}
 }
 
-func (expr StructDef) Type(ctx *Scope) ExpressionType {
-	value := Struct{map[string]ExpressionType{}}
+func (expr ObjectDefinition) Type(ctx *Scope) ExpressionType {
+	value := Object{map[string]ExpressionType{}}
 	for _, member := range expr.members {
 		name := member.(TypedExpression).Expr.(TokenExpression).Token.Text()
 		typing := member.Type(ctx)
@@ -41,7 +41,7 @@ func (expr StructDef) Type(ctx *Scope) ExpressionType {
 	return Type{value}
 }
 
-func ParseStructDef(p *Parser) Expression {
+func ParseObjectDefinition(p *Parser) Expression {
 	lbrace := p.tokenizer.Consume()
 	loc := lbrace.Loc()
 
@@ -56,5 +56,5 @@ func ParseStructDef(p *Parser) Expression {
 	}
 	loc.End = p.tokenizer.Consume().Loc().End
 
-	return StructDef{members, loc}
+	return ObjectDefinition{members, loc}
 }

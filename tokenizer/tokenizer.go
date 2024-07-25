@@ -160,6 +160,7 @@ func (l literal) Loc() Loc {
 var blank = regexp.MustCompile(`^\s+`)
 var newLine = regexp.MustCompile(`^\n`)
 var number = regexp.MustCompile(`^\d+`)
+var str = regexp.MustCompile(`^".+?[^\\]"`)
 var doubleQuoteString = regexp.MustCompile(`^"(.*?)[^\\]"`)
 var word = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9]*`)
 var operator = regexp.MustCompile(`^(\+\+?|->?|\*\*?|/|%|::|:=|\.\.=?|=>|={1,2}|!=)`)
@@ -173,6 +174,8 @@ func split(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		token = newLine.Find(data)
 	case number.Match(data):
 		token = number.Find(data)
+	case str.Match(data):
+		token = str.Find(data)
 	case doubleQuoteString.Match(data):
 		token = doubleQuoteString.Find(data)
 	case word.Match(data):
@@ -315,6 +318,8 @@ func makeToken(text string, loc Loc) Token {
 	switch {
 	case number.MatchString(text):
 		return literal{NUMBER, text, loc}
+	case str.MatchString(text):
+		return literal{STRING, text, loc}
 	case word.MatchString(text):
 		return literal{IDENTIFIER, text, loc}
 	}

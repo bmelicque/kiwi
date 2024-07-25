@@ -158,18 +158,18 @@ func (f Function) Kind() ExpressionTypeKind      { return FUNCTION }
 func (f Function) Match(t ExpressionType) bool   { /* FIXME: */ return false }
 func (f Function) Extends(t ExpressionType) bool { /* FIXME: */ return false }
 
-type Struct struct {
+type Object struct {
 	members map[string]ExpressionType
 }
 
-func (s Struct) Kind() ExpressionTypeKind    { return STRUCT }
-func (s Struct) Match(t ExpressionType) bool { return false }
-func (s Struct) Extends(t ExpressionType) bool {
-	structB, ok := t.(Struct)
+func (o Object) Kind() ExpressionTypeKind    { return STRUCT }
+func (o Object) Match(t ExpressionType) bool { return false }
+func (o Object) Extends(t ExpressionType) bool {
+	structB, ok := t.(Object)
 	if !ok {
 		return false
 	}
-	for member, typeA := range s.members {
+	for member, typeA := range o.members {
 		typeB, ok := structB.members[member]
 		if !ok {
 			return false
@@ -179,7 +179,7 @@ func (s Struct) Extends(t ExpressionType) bool {
 		}
 	}
 	for member := range structB.members {
-		if _, ok := s.members[member]; !ok {
+		if _, ok := o.members[member]; !ok {
 			return false
 		}
 	}

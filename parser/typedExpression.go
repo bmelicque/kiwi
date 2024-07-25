@@ -1,10 +1,13 @@
 package parser
 
-import "github.com/bmelicque/test-parser/tokenizer"
+import (
+	"github.com/bmelicque/test-parser/tokenizer"
+)
 
 type TypedExpression struct {
-	Expr   Expression
-	typing Expression
+	Expr     Expression
+	operator tokenizer.Token
+	typing   Expression
 }
 
 func (t TypedExpression) Type(ctx *Scope) ExpressionType {
@@ -26,19 +29,24 @@ func (t TypedExpression) Check(c *Checker) {
 	}
 }
 func (t TypedExpression) Loc() tokenizer.Loc {
-	return tokenizer.Loc{Start: t.Expr.Loc().Start, End: t.typing.Loc().End}
+	loc := t.operator.Loc()
+	if t.Expr != nil {
+		loc.Start = t.Expr.Loc().Start
+	}
+	if t.typing != nil {
+		loc.End = t.typing.Loc().End
+	}
+	return loc
 }
 
 func ParseTypedExpression(p *Parser) Expression {
 	expr := ParseExpression(p)
-
 	if p.tokenizer.Peek().Kind() != tokenizer.COLON {
 		return expr
 	}
-
-	p.tokenizer.Consume()
+	operator := p.tokenizer.Consume()
 	typing := ParseExpression(p)
-	return TypedExpression{expr, typing}
+	return TypedExpression{expr, operator, typing}
 }
 
 func CheckTypedIdentifier(c *Checker, expr Expression) (string, bool) {
