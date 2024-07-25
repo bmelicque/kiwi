@@ -221,9 +221,8 @@ func (t *tokenizer) Dispose() {
 }
 
 func (t *tokenizer) updateCursor(token string) {
-	// FIXME: line number is wrong... (count multiple '\n' once)
-	if regexp.MustCompile(`\n`).MatchString(token) {
-		t.cursor.Line++
+	if list := regexp.MustCompile(`\n`).FindAllString(token, -1); list != nil {
+		t.cursor.Line += len(list)
 		t.cursor.Col = 1
 		return
 	}
