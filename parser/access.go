@@ -107,7 +107,7 @@ func (p PropertyAccessExpression) Check(c *Checker) {
 
 type ObjectExpression struct {
 	typing  Expression
-	members []Expression
+	Members []Expression
 	loc     tokenizer.Loc
 }
 
@@ -117,7 +117,7 @@ func (o ObjectExpression) Check(c *Checker) {
 	typing := getValidatedObjectType(c, o)
 
 	members := map[string]bool{}
-	for _, member := range o.members {
+	for _, member := range o.Members {
 		member, ok := member.(TypedExpression)
 		if !ok {
 			c.report("Member expression expected", member.Loc())
@@ -159,16 +159,16 @@ func getValidatedMemberName(c *Checker, member TypedExpression) string {
 	return expr.Token.Text()
 }
 func checkMemberValue(c *Checker, member TypedExpression, expected ExpressionType) {
-	if member.typing == nil {
+	if member.Typing == nil {
 		c.report("Value expected", member.Loc())
 		return
 	}
-	member.typing.Check(c)
+	member.Typing.Check(c)
 	if expected == nil {
 		c.report("Property does not exist on type", member.Expr.Loc())
 		return
 	}
-	if !expected.Extends(member.typing.Type(c.scope)) {
+	if !expected.Extends(member.Typing.Type(c.scope)) {
 		c.report("Types do not match", member.Loc())
 	}
 }
@@ -207,7 +207,7 @@ func ParseAccessExpression(p *Parser) Expression {
 			}
 			return ObjectExpression{
 				typing:  expression,
-				members: members,
+				Members: members,
 				loc:     loc,
 			}
 		}

@@ -79,6 +79,21 @@ func (e *Emitter) EmitListExpression(l parser.ListExpression) {
 	e.Write("]")
 }
 
+func (e *Emitter) EmitObjectExpression(o parser.ObjectExpression) {
+	e.Write("{")
+	max := len(o.Members) - 1
+	for i, member := range o.Members {
+		member := member.(parser.TypedExpression)
+		e.Emit(member.Expr)
+		e.Write(": ")
+		e.Emit(member.Typing)
+		if i != max {
+			e.Write(", ")
+		}
+	}
+	e.Write("}")
+}
+
 func (e *Emitter) EmitRangeExpression(r parser.RangeExpression) {
 	e.AddFlag(RangeFlag)
 

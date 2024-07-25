@@ -68,6 +68,8 @@ func (e *Emitter) Emit(node parser.Node) {
 		e.EmitFunctionExpression(node)
 	case parser.ListExpression:
 		e.EmitListExpression(node)
+	case parser.ObjectExpression:
+		e.EmitObjectExpression(node)
 	case parser.RangeExpression:
 		e.EmitRangeExpression(node)
 	case parser.TokenExpression:

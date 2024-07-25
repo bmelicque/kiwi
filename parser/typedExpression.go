@@ -7,7 +7,7 @@ import (
 type TypedExpression struct {
 	Expr     Expression
 	operator tokenizer.Token
-	typing   Expression
+	Typing   Expression
 }
 
 func (t TypedExpression) Type(ctx *Scope) ExpressionType {
@@ -24,8 +24,8 @@ func (t TypedExpression) Check(c *Checker) {
 		c.report("Identifer expected", expr.Loc())
 	}
 
-	if t.typing.Type(c.scope).Kind() != TYPE {
-		c.report("Type expected", t.typing.Loc())
+	if t.Typing.Type(c.scope).Kind() != TYPE {
+		c.report("Type expected", t.Typing.Loc())
 	}
 }
 func (t TypedExpression) Loc() tokenizer.Loc {
@@ -33,8 +33,8 @@ func (t TypedExpression) Loc() tokenizer.Loc {
 	if t.Expr != nil {
 		loc.Start = t.Expr.Loc().Start
 	}
-	if t.typing != nil {
-		loc.End = t.typing.Loc().End
+	if t.Typing != nil {
+		loc.End = t.Typing.Loc().End
 	}
 	return loc
 }

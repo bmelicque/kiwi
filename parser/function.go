@@ -17,7 +17,7 @@ func (f FunctionExpression) Check(c *Checker) {
 	for _, param := range f.Params.Elements {
 		name, ok := CheckTypedIdentifier(c, param)
 		if ok {
-			typing := ReadTypeExpression(param.(TypedExpression).typing)
+			typing := ReadTypeExpression(param.(TypedExpression).Typing)
 			identifier := param.(TypedExpression).Expr.(TokenExpression)
 			functionScope.inner[name] = &Variable{identifier.Loc(), typing, []tokenizer.Loc{}, []tokenizer.Loc{}}
 		}
