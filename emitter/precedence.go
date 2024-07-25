@@ -24,7 +24,7 @@ func Precedence(expr parser.Expression) int8 {
 		case tokenizer.POW:
 			return 14
 		}
-	case parser.CallExpression:
+	case parser.CallExpression, parser.PropertyAccessExpression:
 		return 18
 	case parser.TupleExpression:
 		if len(expr.Elements) > 1 {

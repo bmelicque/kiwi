@@ -83,8 +83,8 @@ func (p PropertyAccessExpression) Type(ctx *Scope) ExpressionType {
 func (p PropertyAccessExpression) Check(c *Checker) {
 	p.Expr.Check(c)
 	typing := p.Expr.Type(c.scope)
-	if ref, ok := typing.(TypeRef); ok {
-		typing = ref.ref
+	if t, ok := typing.(Type); ok {
+		typing = t.value
 	}
 	struc, ok := typing.(Object)
 	if !ok {

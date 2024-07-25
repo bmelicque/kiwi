@@ -94,6 +94,12 @@ func (e *Emitter) EmitObjectExpression(o parser.ObjectExpression) {
 	e.Write("}")
 }
 
+func (e *Emitter) EmitPropertyAccessExpression(p parser.PropertyAccessExpression) {
+	e.Emit(p.Expr)
+	e.Write(".")
+	e.Emit(p.Property)
+}
+
 func (e *Emitter) EmitRangeExpression(r parser.RangeExpression) {
 	e.AddFlag(RangeFlag)
 
