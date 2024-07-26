@@ -71,8 +71,8 @@ func (p PropertyAccessExpression) Type(ctx *Scope) ExpressionType {
 	prop := token.Token.Text()
 
 	typing := p.Expr.Type(ctx)
-	if ref, ok := typing.(TypeRef); ok {
-		typing = ref.ref
+	if t, ok := typing.(Type); ok {
+		typing = t.value
 	}
 	if struc, ok := typing.(Object); ok {
 		return struc.members[prop]

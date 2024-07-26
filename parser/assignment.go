@@ -20,7 +20,7 @@ func (s ExpressionStatement) Check(c *Checker) {
 type Assignment struct {
 	Declared    Expression // "value", "Type", "(value Type).method", "(value Type).(..Trait)"
 	Initializer Expression
-	typing      Expression
+	Typing      Expression
 	Operator    tokenizer.Token
 }
 
@@ -28,8 +28,8 @@ func (a Assignment) Loc() tokenizer.Loc {
 	loc := a.Operator.Loc()
 	if a.Declared != nil {
 		loc.Start = a.Declared.Loc().Start
-	} else if a.typing != nil {
-		loc.Start = a.typing.Loc().Start
+	} else if a.Typing != nil {
+		loc.Start = a.Typing.Loc().Start
 	}
 	if a.Initializer != nil {
 		loc.End = a.Initializer.Loc().End
@@ -38,23 +38,23 @@ func (a Assignment) Loc() tokenizer.Loc {
 }
 
 func checkDeclarationTyping(c *Checker, a Assignment) {
-	if a.typing == nil {
+	if a.Typing == nil {
 		return
 	}
 
-	typing := a.typing.Type(c.scope)
-	if typing.Kind() != TYPE {
-		c.report("Typing expected", a.typing.Loc())
-	} else if !typing.(Type).value.Extends(a.Initializer.Type(c.scope)) {
+	typing, ok := a.Typing.Type(c.scope).(Type)
+	if !ok {
+		c.report("Typing expected", a.Typing.Loc())
+	} else if !typing.value.Extends(a.Initializer.Type(c.scope)) {
 		c.report("Initializer type does not match declared type", a.Loc())
 	}
 }
 
 func getDeclarationTyping(c *Checker, a Assignment) ExpressionType {
-	if a.typing == nil {
+	if a.Typing == nil {
 		return a.Initializer.Type(c.scope)
 	}
-	return a.typing.Type(c.scope).(Type).value
+	return a.Typing.Type(c.scope).(Type).value
 }
 
 func checkDeclaration(c *Checker, a Assignment) {
@@ -136,7 +136,7 @@ func (a Assignment) Check(c *Checker) {
 	a.Initializer.Check(c)
 
 	operator := a.Operator.Kind()
-	if operator == tokenizer.DEFINE || operator == tokenizer.DECLARE || a.typing != nil {
+	if operator == tokenizer.DEFINE || operator == tokenizer.DECLARE || a.Typing != nil {
 		checkDeclaration(c, a)
 	} else if operator == tokenizer.ASSIGN {
 		checkAssignment(c, a)

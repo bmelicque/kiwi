@@ -13,7 +13,7 @@ func (e *Emitter) EmitAssignment(a parser.Assignment) {
 	kind := a.Operator.Kind()
 	if kind == tokenizer.DEFINE {
 		e.Write("const ")
-	} else if kind == tokenizer.DECLARE {
+	} else if kind == tokenizer.DECLARE || kind == tokenizer.ASSIGN && a.Typing != nil {
 		e.Write("let ")
 	}
 	e.Emit(a.Declared)
