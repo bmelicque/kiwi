@@ -43,7 +43,7 @@ func main() {
 		fmt.Printf("%+v\n", e.String())
 	} else {
 		for _, err := range errors {
-			fmt.Printf("Error at line %v, col. %v: '%v'", err.Loc.Start.Line, err.Loc.Start.Col, err.Message)
+			fmt.Printf("Error at line %v, col. %v: '%v'\n", err.Loc.Start.Line, err.Loc.Start.Col, err.Message)
 		}
 	}
 }

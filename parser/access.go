@@ -127,7 +127,9 @@ func (o ObjectExpression) Check(c *Checker) {
 		if name != "" {
 			members[name] = true
 		}
-		checkMemberValue(c, member, typing.members[name])
+		if typing != nil {
+			checkMemberValue(c, member, typing.members[name])
+		}
 	}
 
 	if typing != nil {
@@ -143,12 +145,14 @@ func getValidatedObjectType(c *Checker, s ObjectExpression) *Object {
 		return nil
 	}
 	s.typing.Check(c)
-	typing := s.typing.Type(c.scope).(Type)
-	if t, ok := typing.value.(Object); ok {
-		return &t
+	typing, _ := s.typing.Type(c.scope).(Type)
+	object, ok := typing.value.(Object)
+	if !ok {
+		c.report("Object type expected", s.typing.Loc())
+		return nil
 	}
-	c.report("Object type expected", s.typing.Loc())
-	return nil
+	return &object
+
 }
 func getValidatedMemberName(c *Checker, member TypedExpression) string {
 	expr, ok := member.Expr.(TokenExpression)
