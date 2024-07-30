@@ -27,11 +27,11 @@ func (i IfElse) Check(c *Checker) {
 		}
 	}
 
-	scope := Scope{map[string]*Variable{}, nil, nil}
+	scope := NewScope()
 	scope.returnType = c.scope.returnType
 	// TODO: add variable to scope on some patterns:
 	//		if Type {x} := y {}
-	c.PushScope(&scope)
+	c.PushScope(scope)
 	i.Body.Check(c)
 	c.DropScope()
 }

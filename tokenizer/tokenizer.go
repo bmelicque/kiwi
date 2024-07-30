@@ -157,13 +157,13 @@ func (l literal) Loc() Loc {
 	return l.loc
 }
 
-var blank = regexp.MustCompile(`^\s+`)
-var newLine = regexp.MustCompile(`^\n`)
+var blank = regexp.MustCompile(`^[\t\f\r ]+`)
+var newLine = regexp.MustCompile(`^\s+`)
 var number = regexp.MustCompile(`^\d+`)
 var str = regexp.MustCompile(`^".+?[^\\]"`)
 var doubleQuoteString = regexp.MustCompile(`^"(.*?)[^\\]"`)
 var word = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9]*`)
-var operator = regexp.MustCompile(`^(\+\+?|->?|\*\*?|/|%|::|:=|\.\.=?|=>|={1,2}|!=)`)
+var operator = regexp.MustCompile(`^(\+\+?|->?|\*\*?|/|%|::|:=|\.\.=?|=>|<=?|>=?|={1,2}|!=)`)
 var punctuation = regexp.MustCompile(`^(\[|\]|,|:|\(|\)|\{|\}|_|\.)`)
 
 func split(data []byte, atEOF bool) (advance int, token []byte, err error) {
@@ -234,8 +234,6 @@ func (t *tokenizer) updateCursor(token string) {
 
 func makeToken(text string, loc Loc) Token {
 	switch text {
-	case "\n":
-		return token{EOL, loc}
 	case "_":
 		return literal{IDENTIFIER, text, loc}
 	case "true", "false":
@@ -316,6 +314,8 @@ func makeToken(text string, loc Loc) Token {
 		return token{FAT_ARR, loc}
 	}
 	switch {
+	case newLine.MatchString(text):
+		return token{EOL, loc}
 	case number.MatchString(text):
 		return literal{NUMBER, text, loc}
 	case str.MatchString(text):

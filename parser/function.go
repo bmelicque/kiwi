@@ -12,14 +12,14 @@ type FunctionExpression struct {
 }
 
 func (f FunctionExpression) Check(c *Checker) {
-	functionScope := Scope{map[string]*Variable{}, nil, nil}
+	functionScope := NewScope()
 
 	for _, param := range f.Params.Elements {
 		name, ok := CheckTypedIdentifier(c, param)
 		if ok {
 			typing := ReadTypeExpression(param.(TypedExpression).Typing)
 			identifier := param.(TypedExpression).Expr.(TokenExpression)
-			functionScope.inner[name] = &Variable{identifier.Loc(), typing, []tokenizer.Loc{}, []tokenizer.Loc{}}
+			functionScope.Add(name, identifier.Loc(), typing)
 		}
 	}
 
@@ -47,7 +47,7 @@ func (f FunctionExpression) Check(c *Checker) {
 	}
 
 	if f.Body != nil {
-		c.PushScope(&functionScope)
+		c.PushScope(functionScope)
 		f.Body.Check(c)
 		c.DropScope()
 	}

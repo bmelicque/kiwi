@@ -34,6 +34,12 @@ func (p *Parser) ParseProgram() []Statement {
 
 	for p.tokenizer.Peek().Kind() != tokenizer.EOF {
 		statements = append(statements, ParseStatement(p))
+		next := p.tokenizer.Peek().Kind()
+		if next == tokenizer.EOL {
+			p.tokenizer.DiscardLineBreaks()
+		} else if next != tokenizer.EOF {
+			p.report("End of line expected", p.tokenizer.Peek().Loc())
+		}
 	}
 
 	return statements

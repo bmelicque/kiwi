@@ -15,10 +15,18 @@ type CallExpression struct {
 }
 
 func (c CallExpression) Loc() tokenizer.Loc {
-	return tokenizer.Loc{
-		Start: c.Callee.Loc().Start,
-		End:   c.Args.Loc().End,
+	loc := tokenizer.Loc{}
+	if c.Callee != nil {
+		loc.Start = c.Callee.Loc().Start
+	} else {
+		loc.Start = c.Args.Loc().Start
 	}
+	if c.Args != nil {
+		loc.End = c.Args.Loc().End
+	} else {
+		loc.End = c.Callee.Loc().End
+	}
+	return loc
 }
 func (c CallExpression) Type(ctx *Scope) ExpressionType {
 	callee := c.Callee

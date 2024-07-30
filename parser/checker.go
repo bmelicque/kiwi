@@ -11,14 +11,30 @@ type Variable struct {
 	reads      []tokenizer.Loc
 }
 
+type Method struct {
+	self       ExpressionType
+	signature  Function
+	declaredAt tokenizer.Loc
+	reads      []tokenizer.Loc
+}
+
 type Scope struct {
-	inner      map[string]*Variable
-	returnType ExpressionType // The expected type for a return statement (if any) // TODO: handle no return vs optional return
+	variables  map[string]*Variable
+	methods    map[string][]Method
+	returnType ExpressionType // The expected type for a return statement (if any)
 	outer      *Scope
+	shadow     bool
+}
+
+func NewScope() *Scope {
+	return &Scope{
+		variables: map[string]*Variable{},
+		methods:   map[string][]Method{},
+	}
 }
 
 func (s Scope) Find(name string) (*Variable, bool) {
-	variable, ok := s.inner[name]
+	variable, ok := s.variables[name]
 	if ok {
 		return variable, true
 	}
@@ -29,12 +45,27 @@ func (s Scope) Find(name string) (*Variable, bool) {
 }
 
 func (s Scope) Has(name string) bool {
-	_, ok := s.inner[name]
-	return ok
+	_, ok := s.variables[name]
+	if ok {
+		return true
+	}
+	if s.outer != nil && s.outer.shadow {
+		return s.outer.Has(name)
+	}
+	return false
 }
 
 func (s *Scope) Add(name string, declaredAt tokenizer.Loc, typing ExpressionType) {
-	s.inner[name] = &Variable{declaredAt, typing, []tokenizer.Loc{}, []tokenizer.Loc{}}
+	s.variables[name] = &Variable{
+		declaredAt: declaredAt,
+		typing:     typing,
+		writes:     []tokenizer.Loc{},
+		reads:      []tokenizer.Loc{},
+	}
+}
+
+func (s *Scope) AddMethod(name string, declaredAt tokenizer.Loc, self ExpressionType, signature Function) {
+	s.methods[name] = append(s.methods[name], Method{self, signature, declaredAt, []tokenizer.Loc{}})
 }
 
 func (s *Scope) WriteAt(name string, loc tokenizer.Loc) {
@@ -70,7 +101,7 @@ func (c Checker) GetReport() []ParserError {
 }
 
 func MakeChecker() *Checker {
-	return &Checker{errors: []ParserError{}, scope: &Scope{map[string]*Variable{}, nil, nil}}
+	return &Checker{errors: []ParserError{}, scope: NewScope()}
 }
 
 func (c *Checker) PushScope(scope *Scope) {
@@ -79,7 +110,7 @@ func (c *Checker) PushScope(scope *Scope) {
 }
 
 func (c *Checker) DropScope() {
-	for _, info := range c.scope.inner {
+	for _, info := range c.scope.variables {
 		if len(info.reads) == 0 {
 			c.report("Unused variable", info.declaredAt)
 		}

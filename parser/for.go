@@ -25,7 +25,7 @@ func (f For) Check(c *Checker) {
 		return
 	}
 
-	scope := Scope{map[string]*Variable{}, nil, nil}
+	scope := NewScope()
 	scope.returnType = c.scope.returnType
 	switch statement := f.Statement.(type) {
 	case ExpressionStatement:
@@ -39,10 +39,7 @@ func (f For) Check(c *Checker) {
 		} else {
 			text := declared.Token.Text()
 			if text != "_" {
-				scope.inner[declared.Token.Text()] = &Variable{
-					declaredAt: declared.Loc(),
-					typing:     statement.Initializer.Type(c.scope),
-				}
+				scope.Add(text, declared.Loc(), statement.Initializer.Type(c.scope))
 			}
 		}
 		if statement.Operator.Kind() != tokenizer.DECLARE && statement.Operator.Kind() != tokenizer.DEFINE {
@@ -55,7 +52,7 @@ func (f For) Check(c *Checker) {
 		c.report("Condition or declaration expected", statement.Loc())
 	}
 
-	c.PushScope(&scope)
+	c.PushScope(scope)
 	f.Body.Check(c)
 	c.DropScope()
 }

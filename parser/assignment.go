@@ -87,6 +87,45 @@ func checkDeclaration(c *Checker, a Assignment) {
 			name := identifier.Token.Text()
 			c.scope.Add(name, identifier.Loc(), typing.elements[i])
 		}
+	case PropertyAccessExpression:
+		tuple, ok := declared.Expr.(TupleExpression)
+		if !ok || len(tuple.Elements) != 1 {
+			c.report("Receiver argument expected", declared.Expr.Loc())
+			break
+		}
+		expr, ok := tuple.Elements[0].(TypedExpression)
+		if !ok {
+			c.report("Receiver argument expected", declared.Expr.Loc())
+			break
+		}
+		name, ok := CheckTypedIdentifier(c, expr)
+		if !ok {
+			c.report("Receiver argument expected", declared.Expr.Loc())
+			break
+		}
+
+		// TODO: add to scope
+		method, ok := declared.Property.(TokenExpression)
+		if !ok || IsType(method) {
+			c.report("Method name expected", declared.Property.Loc())
+			break
+		}
+
+		scope := NewScope()
+		scope.shadow = true
+		scope.Add(name, expr.Loc(), expr.Typing.Type(c.scope))
+		c.PushScope(scope)
+		a.Initializer.Check(c)
+		c.DropScope()
+
+		function, ok := getDeclarationTyping(c, a).(Function)
+		if !ok {
+			c.report("Function type expected", a.Initializer.Loc())
+			break
+		}
+		c.scope.AddMethod(method.Token.Text(), declared.Loc(), expr.Typing.Type(c.scope), function)
+	default:
+		c.report("Invalid pattern", declared.Loc())
 	}
 }
 
