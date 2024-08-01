@@ -106,7 +106,6 @@ func checkDeclaration(c *Checker, a Assignment) {
 			break
 		}
 
-		// TODO: add to scope
 		method, ok := declared.Property.(TokenExpression)
 		if !ok || IsType(method) {
 			c.report("Method name expected", declared.Property.Loc())

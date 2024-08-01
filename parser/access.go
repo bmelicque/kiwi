@@ -72,6 +72,7 @@ func (p PropertyAccessExpression) Loc() tokenizer.Loc {
 	}
 }
 func (p PropertyAccessExpression) Type(ctx *Scope) ExpressionType {
+
 	token, ok := p.Property.(TokenExpression)
 	if !ok {
 		return nil
@@ -79,11 +80,12 @@ func (p PropertyAccessExpression) Type(ctx *Scope) ExpressionType {
 	prop := token.Token.Text()
 
 	typing := p.Expr.Type(ctx)
-	if t, ok := typing.(Type); ok {
-		typing = t.value
-	}
-	if struc, ok := typing.(Object); ok {
-		return struc.members[prop]
+	ref, _ := typing.(TypeRef)
+	if object, ok := ref.ref.(Object); ok {
+		if method, ok := ctx.FindMethod(prop, typing); ok {
+			return method.signature
+		}
+		return object.members[prop]
 	} else {
 		return nil
 	}
@@ -91,10 +93,8 @@ func (p PropertyAccessExpression) Type(ctx *Scope) ExpressionType {
 func (p PropertyAccessExpression) Check(c *Checker) {
 	p.Expr.Check(c)
 	typing := p.Expr.Type(c.scope)
-	if t, ok := typing.(Type); ok {
-		typing = t.value
-	}
-	struc, ok := typing.(Object)
+	ref, _ := typing.(TypeRef)
+	object, ok := ref.ref.(Object)
 	if !ok {
 		c.report("Object type expected", p.Expr.Loc())
 	}
@@ -103,10 +103,13 @@ func (p PropertyAccessExpression) Check(c *Checker) {
 	case TokenExpression:
 		if ok {
 			name := prop.Token.Text()
-			_, ok := struc.members[name]
-			if !ok {
-				c.report(fmt.Sprintf("Property '%v' does not exist on this type", name), prop.Loc())
+			if _, ok := object.members[name]; ok {
+				return
 			}
+			if _, ok := c.scope.FindMethod(name, typing); ok {
+				return
+			}
+			c.report(fmt.Sprintf("Property '%v' does not exist on this type", name), prop.Loc())
 		}
 	default:
 		c.report("Identifier expected", prop.Loc())
@@ -153,8 +156,8 @@ func getValidatedObjectType(c *Checker, s ObjectExpression) *Object {
 		return nil
 	}
 	s.typing.Check(c)
-	typing, _ := s.typing.Type(c.scope).(Type)
-	object, ok := typing.value.(Object)
+	typing, _ := s.typing.Type(c.scope).(TypeRef)
+	object, ok := typing.ref.(Object)
 	if !ok {
 		c.report("Object type expected", s.typing.Loc())
 		return nil

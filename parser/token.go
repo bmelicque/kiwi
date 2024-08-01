@@ -24,9 +24,17 @@ func (t TokenExpression) Type(ctx *Scope) ExpressionType {
 		return Type{Primitive{BOOLEAN}}
 	case tokenizer.IDENTIFIER:
 		variable, ok := ctx.Find(t.Token.Text())
-		if ok {
-			return variable.typing
+		if !ok {
+			break
 		}
+		if IsType(t) {
+			typing := variable.typing.(Type)
+			return TypeRef{
+				name: t.Token.Text(),
+				ref:  typing.value,
+			}
+		}
+		return variable.typing
 	}
 	return Primitive{UNKNOWN}
 }
