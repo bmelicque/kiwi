@@ -16,12 +16,24 @@ func (e *Emitter) EmitAssignment(a parser.Assignment) {
 	} else if kind == tokenizer.DECLARE || kind == tokenizer.ASSIGN && a.Typing != nil {
 		e.Write("let ")
 	}
-	e.Emit(a.Declared)
-	e.Write(" = ")
-	e.Emit(a.Initializer)
-	if _, ok := a.Initializer.(parser.FunctionExpression); !ok {
-		e.Write(";\n")
+	method, ok := a.Declared.(parser.PropertyAccessExpression)
+	if ok {
+		e.Emit(method.Expr.(parser.TupleExpression).Elements[0].(parser.TypedExpression).Typing)
+		e.Write("_")
+		e.Emit(method.Property)
+	} else {
+		e.Emit(a.Declared)
 	}
+	e.Write(" = ")
+	if ok {
+		e.emitMethod(a.Initializer.(parser.FunctionExpression), method.Expr.(parser.TupleExpression).Elements[0].(parser.TypedExpression))
+	} else {
+		e.Emit(a.Initializer)
+	}
+	if _, ok := a.Initializer.(parser.FunctionExpression); !ok {
+		e.Write(";")
+	}
+	e.Write("\n")
 }
 
 func (e *Emitter) EmitBody(b parser.Body) {

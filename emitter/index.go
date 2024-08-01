@@ -65,6 +65,7 @@ func (e *Emitter) Emit(node parser.Node) {
 	case parser.CallExpression:
 		e.EmitCallExpression(node)
 	case parser.FunctionExpression:
+		e.Write("(")
 		e.EmitFunctionExpression(node)
 	case parser.ListExpression:
 		e.EmitListExpression(node)

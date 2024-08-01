@@ -68,6 +68,7 @@ func checkDeclaration(c *Checker, a Assignment) {
 		}
 		name := declared.Token.Text()
 		c.scope.Add(name, declared.Loc(), getDeclarationTyping(c, a))
+		a.Initializer.Check(c)
 	case TupleExpression:
 		typing, ok := a.Initializer.Type(c.scope).(Tuple)
 		if !ok {
@@ -87,6 +88,7 @@ func checkDeclaration(c *Checker, a Assignment) {
 			name := identifier.Token.Text()
 			c.scope.Add(name, identifier.Loc(), typing.elements[i])
 		}
+		a.Initializer.Check(c)
 	case PropertyAccessExpression:
 		tuple, ok := declared.Expr.(TupleExpression)
 		if !ok || len(tuple.Elements) != 1 {
@@ -126,6 +128,7 @@ func checkDeclaration(c *Checker, a Assignment) {
 		c.scope.AddMethod(method.Token.Text(), declared.Loc(), expr.Typing.Type(c.scope), function)
 	default:
 		c.report("Invalid pattern", declared.Loc())
+		a.Initializer.Check(c)
 	}
 }
 
@@ -148,6 +151,8 @@ func handleIdentiferAssignment(c *Checker, expr Expression, typing ExpressionTyp
 }
 
 func checkAssignment(c *Checker, a Assignment) {
+	a.Initializer.Check(c)
+
 	switch assignee := a.Declared.(type) {
 	case TokenExpression:
 		handleIdentiferAssignment(c, assignee, a.Initializer.Type(c.scope), a)
@@ -172,7 +177,6 @@ func (a Assignment) Check(c *Checker) {
 	if a.Initializer == nil {
 		return
 	}
-	a.Initializer.Check(c)
 
 	operator := a.Operator.Kind()
 	if operator == tokenizer.DEFINE || operator == tokenizer.DECLARE || a.Typing != nil {

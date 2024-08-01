@@ -49,6 +49,9 @@ type Primitive struct {
 func (p Primitive) Kind() ExpressionTypeKind    { return p.kind }
 func (p Primitive) Match(t ExpressionType) bool { return p.Kind() == t.Kind() }
 func (p Primitive) Extends(t ExpressionType) bool {
+	if t == nil {
+		return true
+	}
 	return p.Kind() == t.Kind() || p.Kind() == UNKNOWN || t.Kind() == UNKNOWN
 }
 

@@ -49,7 +49,6 @@ func (e *Emitter) EmitCallExpression(expr parser.CallExpression) {
 }
 
 func (e *Emitter) EmitFunctionExpression(f parser.FunctionExpression) {
-	e.Write("(")
 	length := len(f.Params.Elements)
 	for i, param := range f.Params.Elements {
 		e.Emit(param)
@@ -66,6 +65,15 @@ func (e *Emitter) EmitFunctionExpression(f parser.FunctionExpression) {
 	} else { // FAT_ARR
 		e.Emit(*f.Body)
 	}
+}
+
+func (e *Emitter) emitMethod(f parser.FunctionExpression, self parser.Expression) {
+	e.Write("(")
+	e.Emit(self)
+	if len(f.Params.Elements) > 0 {
+		e.Write(", ")
+	}
+	e.EmitFunctionExpression(f)
 }
 
 func (e *Emitter) EmitListExpression(l parser.ListExpression) {
