@@ -98,12 +98,12 @@ func (p *PropertyAccessExpression) Check(c *Checker) {
 
 	switch prop := p.Property.(type) {
 	case *TokenExpression:
+		p.setType(c.scope)
 		typing := p.Expr.Type()
 		ref, _ := typing.(TypeRef)
 		if _, ok := ref.ref.(Object); !ok {
 			return
 		}
-		p.setType(c.scope)
 		if p.typing == nil {
 			c.report(fmt.Sprintf("Property '%v' does not exist on this type", prop.Token.Text()), prop.Loc())
 		}

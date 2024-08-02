@@ -68,5 +68,7 @@ func CheckTypedIdentifier(c *Checker, expr Expression) (string, bool) {
 		return "", false
 	}
 
+	typedExpression.Typing.Check(c)
+
 	return tokenExpression.Token.Text(), true
 }

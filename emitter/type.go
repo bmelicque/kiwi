@@ -9,7 +9,14 @@ import (
 func stringify(typing parser.ExpressionType) string {
 	switch typing := typing.(type) {
 	case parser.Primitive:
-		// TODO:
+		switch typing.Kind() {
+		case parser.NUMBER:
+			return "number"
+		case parser.BOOLEAN:
+			return "boolean"
+		case parser.STRING:
+			return "string"
+		}
 	case parser.TypeRef:
 		return typing.Name
 	case parser.List:

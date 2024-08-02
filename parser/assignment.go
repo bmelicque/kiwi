@@ -68,8 +68,8 @@ func checkDeclaration(c *Checker, a Assignment) {
 			break
 		}
 		name := declared.Token.Text()
-		c.scope.Add(name, declared.Loc(), getDeclarationTyping(c, a))
 		a.Initializer.Check(c)
+		c.scope.Add(name, declared.Loc(), getDeclarationTyping(c, a))
 	case TupleExpression:
 		typing, ok := a.Initializer.Type().(Tuple)
 		if !ok {
