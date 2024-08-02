@@ -34,6 +34,7 @@ func (t *TokenExpression) setType(ctx *Scope) {
 				Name: t.Token.Text(),
 				ref:  typing.value,
 			}
+			return
 		}
 		t.typing = variable.typing
 	default:
