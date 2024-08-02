@@ -31,11 +31,11 @@ func (expr ObjectDefinition) Check(c *Checker) {
 	}
 }
 
-func (expr ObjectDefinition) Type(ctx *Scope) ExpressionType {
+func (expr ObjectDefinition) Type() ExpressionType {
 	value := Object{map[string]ExpressionType{}}
 	for _, member := range expr.members {
-		name := member.(TypedExpression).Expr.(TokenExpression).Token.Text()
-		typing := member.Type(ctx)
+		name := member.(TypedExpression).Expr.(*TokenExpression).Token.Text()
+		typing := member.Type()
 		value.members[name] = typing
 	}
 	return Type{value}

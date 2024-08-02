@@ -13,7 +13,7 @@ type BinaryExpression struct {
 	loc      tokenizer.Loc
 }
 
-func (expr BinaryExpression) Type(ctx *Scope) ExpressionType {
+func (expr BinaryExpression) Type() ExpressionType {
 	switch expr.Operator.Kind() {
 	case
 		tokenizer.ADD,
@@ -24,7 +24,7 @@ func (expr BinaryExpression) Type(ctx *Scope) ExpressionType {
 		tokenizer.MOD:
 		return Primitive{NUMBER}
 	case tokenizer.CONCAT:
-		return expr.Left.Type(ctx)
+		return expr.Left.Type()
 	case
 		tokenizer.LAND,
 		tokenizer.LOR,
@@ -78,10 +78,10 @@ func (expr BinaryExpression) Check(c *Checker) {
 }
 
 func (expr BinaryExpression) checkLogical(c *Checker) {
-	if expr.Left != nil && !(Primitive{BOOLEAN}).Extends(expr.Left.Type(c.scope)) {
+	if expr.Left != nil && !(Primitive{BOOLEAN}).Extends(expr.Left.Type()) {
 		c.report("The left-hand side of a logical operation must be a boolean", expr.Left.Loc())
 	}
-	if expr.Right != nil && !(Primitive{BOOLEAN}).Extends(expr.Right.Type(c.scope)) {
+	if expr.Right != nil && !(Primitive{BOOLEAN}).Extends(expr.Right.Type()) {
 		c.report("The right-hand side of a logical operation must be a boolean", expr.Right.Loc())
 	}
 }
@@ -89,8 +89,8 @@ func (expr BinaryExpression) checkEq(c *Checker) {
 	if expr.Left == nil || expr.Right == nil {
 		return
 	}
-	left := expr.Left.Type(c.scope)
-	right := expr.Right.Type(c.scope)
+	left := expr.Left.Type()
+	right := expr.Right.Type()
 	if !left.Extends(right) && !right.Extends(left) {
 		c.report("Types don't match", expr.Loc())
 	}
@@ -98,11 +98,11 @@ func (expr BinaryExpression) checkEq(c *Checker) {
 func (expr BinaryExpression) checkConcat(c *Checker) {
 	var left ExpressionType
 	if expr.Left != nil {
-		left = expr.Left.Type(c.scope)
+		left = expr.Left.Type()
 	}
 	var right ExpressionType
 	if expr.Right != nil {
-		right = expr.Right.Type(c.scope)
+		right = expr.Right.Type()
 	}
 	if left != nil && !(Primitive{STRING}).Extends(left) && !(List{Primitive{UNKNOWN}}).Extends(left) {
 		c.report("The left-hand side of concatenation must be a string or a list", expr.Left.Loc())
@@ -112,10 +112,10 @@ func (expr BinaryExpression) checkConcat(c *Checker) {
 	}
 }
 func (expr BinaryExpression) checkArithmetic(c *Checker) {
-	if expr.Left != nil && !(Primitive{NUMBER}).Extends(expr.Left.Type(c.scope)) {
+	if expr.Left != nil && !(Primitive{NUMBER}).Extends(expr.Left.Type()) {
 		c.report("The left-hand side of an arithmetic operation must be a number", expr.Left.Loc())
 	}
-	if expr.Right != nil && !(Primitive{NUMBER}).Extends(expr.Right.Type(c.scope)) {
+	if expr.Right != nil && !(Primitive{NUMBER}).Extends(expr.Right.Type()) {
 		c.report("The right-hand side of an arithmetic operation must be a number", expr.Right.Loc())
 	}
 }

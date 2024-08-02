@@ -42,26 +42,27 @@ func checkDeclarationTyping(c *Checker, a Assignment) {
 		return
 	}
 
-	typing, ok := a.Typing.Type(c.scope).(Type)
+	a.Typing.Check(c)
+	typing, ok := a.Typing.Type().(Type)
 	if !ok {
 		c.report("Typing expected", a.Typing.Loc())
-	} else if !typing.value.Extends(a.Initializer.Type(c.scope)) {
+	} else if !typing.value.Extends(a.Initializer.Type()) {
 		c.report("Initializer type does not match declared type", a.Loc())
 	}
 }
 
 func getDeclarationTyping(c *Checker, a Assignment) ExpressionType {
 	if a.Typing == nil {
-		return a.Initializer.Type(c.scope)
+		return a.Initializer.Type()
 	}
-	return a.Typing.Type(c.scope).(Type).value
+	return a.Typing.Type().(Type).value
 }
 
 func checkDeclaration(c *Checker, a Assignment) {
 	checkDeclarationTyping(c, a)
 
 	switch declared := a.Declared.(type) {
-	case TokenExpression:
+	case *TokenExpression:
 		if declared.Token.Kind() != tokenizer.IDENTIFIER {
 			c.report("Identifier expected", declared.Loc())
 			break
@@ -70,7 +71,7 @@ func checkDeclaration(c *Checker, a Assignment) {
 		c.scope.Add(name, declared.Loc(), getDeclarationTyping(c, a))
 		a.Initializer.Check(c)
 	case TupleExpression:
-		typing, ok := a.Initializer.Type(c.scope).(Tuple)
+		typing, ok := a.Initializer.Type().(Tuple)
 		if !ok {
 			c.report("Patterns don't match", a.Loc())
 			break
@@ -80,7 +81,7 @@ func checkDeclaration(c *Checker, a Assignment) {
 			break
 		}
 		for i, expr := range declared.Elements {
-			identifier, ok := expr.(TokenExpression)
+			identifier, ok := expr.(*TokenExpression)
 			if !ok || identifier.Token.Kind() != tokenizer.IDENTIFIER {
 				c.report("Identifier expected", identifier.Loc())
 				continue
@@ -89,7 +90,7 @@ func checkDeclaration(c *Checker, a Assignment) {
 			c.scope.Add(name, identifier.Loc(), typing.elements[i])
 		}
 		a.Initializer.Check(c)
-	case PropertyAccessExpression:
+	case *PropertyAccessExpression:
 		tuple, ok := declared.Expr.(TupleExpression)
 		if !ok || len(tuple.Elements) != 1 {
 			c.report("Receiver argument expected", declared.Expr.Loc())
@@ -106,7 +107,7 @@ func checkDeclaration(c *Checker, a Assignment) {
 			break
 		}
 
-		method, ok := declared.Property.(TokenExpression)
+		method, ok := declared.Property.(*TokenExpression)
 		if !ok || IsType(method) {
 			c.report("Method name expected", declared.Property.Loc())
 			break
@@ -114,7 +115,7 @@ func checkDeclaration(c *Checker, a Assignment) {
 
 		scope := NewScope()
 		scope.shadow = true
-		scope.Add(name, expr.Loc(), expr.Typing.Type(c.scope))
+		scope.Add(name, expr.Loc(), expr.Typing.Type())
 		c.PushScope(scope)
 		a.Initializer.Check(c)
 		c.DropScope()
@@ -124,7 +125,7 @@ func checkDeclaration(c *Checker, a Assignment) {
 			c.report("Function type expected", a.Initializer.Loc())
 			break
 		}
-		c.scope.AddMethod(method.Token.Text(), declared.Loc(), expr.Typing.Type(c.scope), function)
+		c.scope.AddMethod(method.Token.Text(), declared.Loc(), expr.Typing.Type(), function)
 	default:
 		c.report("Invalid pattern", declared.Loc())
 		a.Initializer.Check(c)
@@ -132,7 +133,7 @@ func checkDeclaration(c *Checker, a Assignment) {
 }
 
 func handleIdentiferAssignment(c *Checker, expr Expression, typing ExpressionType, a Assignment) {
-	token, ok := expr.(TokenExpression)
+	token, ok := expr.(*TokenExpression)
 	if !ok || token.Token.Kind() != tokenizer.IDENTIFIER {
 		c.report("Identifier expected", token.Loc())
 		return
@@ -153,10 +154,10 @@ func checkAssignment(c *Checker, a Assignment) {
 	a.Initializer.Check(c)
 
 	switch assignee := a.Declared.(type) {
-	case TokenExpression:
-		handleIdentiferAssignment(c, assignee, a.Initializer.Type(c.scope), a)
+	case *TokenExpression:
+		handleIdentiferAssignment(c, assignee, a.Initializer.Type(), a)
 	case TupleExpression:
-		typing, ok := a.Initializer.Type(c.scope).(Tuple)
+		typing, ok := a.Initializer.Type().(Tuple)
 		if !ok {
 			c.report("Patterns don't match", a.Loc())
 			break

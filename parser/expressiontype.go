@@ -56,14 +56,14 @@ func (p Primitive) Extends(t ExpressionType) bool {
 }
 
 type TypeRef struct {
-	name string
+	Name string
 	ref  ExpressionType
 }
 
 func (r TypeRef) Kind() ExpressionTypeKind { return r.ref.Kind() }
 func (r TypeRef) Match(t ExpressionType) bool {
 	if typeRef, ok := t.(TypeRef); ok {
-		return typeRef.name == r.name
+		return typeRef.Name == r.Name
 	}
 	return false
 }
@@ -72,26 +72,26 @@ func (r TypeRef) Extends(t ExpressionType) bool {
 	if !ok {
 		return false
 	}
-	if typeRef.name == r.name {
+	if typeRef.Name == r.Name {
 		return true
 	}
 	return r.ref.Extends(typeRef.ref)
 }
 
 type List struct {
-	element ExpressionType
+	Element ExpressionType
 }
 
 func (l List) Kind() ExpressionTypeKind { return LIST }
 func (l List) Match(t ExpressionType) bool {
 	if list, ok := t.(List); ok {
-		return l.element.Match(list.element)
+		return l.Element.Match(list.Element)
 	}
 	return false
 }
 func (l List) Extends(t ExpressionType) bool {
 	if list, ok := t.(List); ok {
-		return l.element.Extends(list.element)
+		return l.Element.Extends(list.Element)
 	}
 	return false
 }
@@ -191,7 +191,7 @@ func (o Object) Extends(t ExpressionType) bool {
 
 func ReadTypeExpression(expr Expression) ExpressionType {
 	switch expr := expr.(type) {
-	case TokenExpression:
+	case *TokenExpression:
 		switch expr.Token.Kind() {
 		case tokenizer.BOOL_KW:
 			return Primitive{BOOLEAN}

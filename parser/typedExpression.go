@@ -10,13 +10,13 @@ type TypedExpression struct {
 	Typing   Expression
 }
 
-func (t TypedExpression) Type(ctx *Scope) ExpressionType {
+func (t TypedExpression) Type() ExpressionType {
 	// FIXME:
 	return Primitive{UNKNOWN}
 }
 func (t TypedExpression) Check(c *Checker) {
 	switch expr := t.Expr.(type) {
-	case TokenExpression:
+	case *TokenExpression:
 		if expr.Token.Kind() != tokenizer.IDENTIFIER {
 			c.report("Identifer expected", expr.Loc())
 		}
@@ -24,7 +24,8 @@ func (t TypedExpression) Check(c *Checker) {
 		c.report("Identifer expected", expr.Loc())
 	}
 
-	if t.Typing.Type(c.scope).Kind() != TYPE {
+	t.Typing.Check(c)
+	if t.Typing.Type().Kind() != TYPE {
 		c.report("Type expected", t.Typing.Loc())
 	}
 }
@@ -56,7 +57,7 @@ func CheckTypedIdentifier(c *Checker, expr Expression) (string, bool) {
 		return "", false
 	}
 
-	tokenExpression, ok := typedExpression.Expr.(TokenExpression)
+	tokenExpression, ok := typedExpression.Expr.(*TokenExpression)
 	if !ok {
 		c.report("Identifier expected", typedExpression.Loc())
 		return "", false

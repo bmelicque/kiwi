@@ -13,7 +13,7 @@ type Typing interface {
 
 type Expression interface {
 	Node
-	Type(ctx *Scope) ExpressionType
+	Type() ExpressionType
 	Check(c *Checker)
 }
 

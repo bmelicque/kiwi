@@ -25,12 +25,12 @@ func (r RangeExpression) Loc() tokenizer.Loc {
 	return loc
 }
 
-func (r RangeExpression) Type(ctx *Scope) ExpressionType {
+func (r RangeExpression) Type() ExpressionType {
 	var typing ExpressionType
 	if r.Left != nil {
-		typing = r.Left.Type(ctx)
+		typing = r.Left.Type()
 	} else if r.Right != nil {
-		typing = r.Right.Type(ctx)
+		typing = r.Right.Type()
 	}
 	return Range{typing}
 }
@@ -39,13 +39,13 @@ func (r RangeExpression) Check(c *Checker) {
 	var typing ExpressionType
 	if r.Left != nil {
 		r.Left.Check(c)
-		typing = r.Left.Type(c.scope)
+		typing = r.Left.Type()
 	}
 	if r.Right != nil {
 		r.Right.Check(c)
 		if typing == nil {
-			typing = r.Right.Type(c.scope)
-		} else if !typing.Match(r.Right.Type(c.scope)) {
+			typing = r.Right.Type()
+		} else if !typing.Match(r.Right.Type()) {
 			c.report("Types don't match", r.Loc())
 		}
 	}

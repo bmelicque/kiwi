@@ -28,13 +28,13 @@ func (c CallExpression) Loc() tokenizer.Loc {
 	}
 	return loc
 }
-func (c CallExpression) Type(ctx *Scope) ExpressionType {
+func (c CallExpression) Type() ExpressionType {
 	callee := c.Callee
 	if callee == nil {
 		return nil
 	}
 
-	if calleeType, ok := callee.Type(ctx).(Function); ok {
+	if calleeType, ok := callee.Type().(Function); ok {
 		return calleeType.returned
 	} else {
 		return nil
@@ -49,13 +49,13 @@ func (expr CallExpression) Check(c *Checker) {
 		return
 	}
 
-	calleeType, ok := expr.Callee.Type(c.scope).(Function)
+	calleeType, ok := expr.Callee.Type().(Function)
 	if !ok {
 		c.report("Function type expected", expr.Callee.Loc())
 		return
 	}
 
-	if !(expr.Args.Type(c.scope).Extends(calleeType.params)) {
+	if !(expr.Args.Type().Extends(calleeType.params)) {
 		c.report("Arguments types don't match expected parameters types", expr.Args.Loc())
 	}
 }
@@ -63,53 +63,49 @@ func (expr CallExpression) Check(c *Checker) {
 type PropertyAccessExpression struct {
 	Expr     Expression
 	Property Expression
+	typing   ExpressionType
 }
 
-func (p PropertyAccessExpression) Loc() tokenizer.Loc {
+func (p *PropertyAccessExpression) Loc() tokenizer.Loc {
 	return tokenizer.Loc{
 		Start: p.Expr.Loc().Start,
 		End:   p.Property.Loc().End,
 	}
 }
-func (p PropertyAccessExpression) Type(ctx *Scope) ExpressionType {
-
-	token, ok := p.Property.(TokenExpression)
+func (p *PropertyAccessExpression) setType(ctx *Scope) {
+	token, ok := p.Property.(*TokenExpression)
 	if !ok {
-		return nil
+		return
 	}
 	prop := token.Token.Text()
 
-	typing := p.Expr.Type(ctx)
-	ref, _ := typing.(TypeRef)
-	if object, ok := ref.ref.(Object); ok {
-		if method, ok := ctx.FindMethod(prop, typing); ok {
-			return method.signature
-		}
-		return object.members[prop]
-	} else {
-		return nil
-	}
-}
-func (p PropertyAccessExpression) Check(c *Checker) {
-	p.Expr.Check(c)
-	typing := p.Expr.Type(c.scope)
+	typing := p.Expr.Type()
 	ref, _ := typing.(TypeRef)
 	object, ok := ref.ref.(Object)
 	if !ok {
-		c.report("Object type expected", p.Expr.Loc())
+		return
+	}
+	if method, ok := ctx.FindMethod(prop, typing); ok {
+		p.typing = method.signature
+	} else {
+		p.typing = object.members[prop]
 	}
 
+}
+func (p *PropertyAccessExpression) Type() ExpressionType { return p.typing }
+func (p *PropertyAccessExpression) Check(c *Checker) {
+	p.Expr.Check(c)
+
 	switch prop := p.Property.(type) {
-	case TokenExpression:
-		if ok {
-			name := prop.Token.Text()
-			if _, ok := object.members[name]; ok {
-				return
-			}
-			if _, ok := c.scope.FindMethod(name, typing); ok {
-				return
-			}
-			c.report(fmt.Sprintf("Property '%v' does not exist on this type", name), prop.Loc())
+	case *TokenExpression:
+		typing := p.Expr.Type()
+		ref, _ := typing.(TypeRef)
+		if _, ok := ref.ref.(Object); !ok {
+			return
+		}
+		p.setType(c.scope)
+		if p.typing == nil {
+			c.report(fmt.Sprintf("Property '%v' does not exist on this type", prop.Token.Text()), prop.Loc())
 		}
 	default:
 		c.report("Identifier expected", prop.Loc())
@@ -122,8 +118,8 @@ type ObjectExpression struct {
 	loc     tokenizer.Loc
 }
 
-func (o ObjectExpression) Loc() tokenizer.Loc             { return o.loc }
-func (o ObjectExpression) Type(ctx *Scope) ExpressionType { return o.typing.Type(ctx) }
+func (o ObjectExpression) Loc() tokenizer.Loc   { return o.loc }
+func (o ObjectExpression) Type() ExpressionType { return o.typing.Type() }
 func (o ObjectExpression) Check(c *Checker) {
 	typing := getValidatedObjectType(c, o)
 
@@ -156,7 +152,7 @@ func getValidatedObjectType(c *Checker, s ObjectExpression) *Object {
 		return nil
 	}
 	s.typing.Check(c)
-	typing, _ := s.typing.Type(c.scope).(TypeRef)
+	typing, _ := s.typing.Type().(TypeRef)
 	object, ok := typing.ref.(Object)
 	if !ok {
 		c.report("Object type expected", s.typing.Loc())
@@ -166,7 +162,7 @@ func getValidatedObjectType(c *Checker, s ObjectExpression) *Object {
 
 }
 func getValidatedMemberName(c *Checker, member TypedExpression) string {
-	expr, ok := member.Expr.(TokenExpression)
+	expr, ok := member.Expr.(*TokenExpression)
 	if !ok || expr.Token.Kind() != tokenizer.IDENTIFIER {
 		c.report("Identifier expected", member.Expr.Loc())
 		return ""
@@ -183,7 +179,7 @@ func checkMemberValue(c *Checker, member TypedExpression, expected ExpressionTyp
 		c.report("Property does not exist on type", member.Expr.Loc())
 		return
 	}
-	if !expected.Extends(member.Typing.Type(c.scope)) {
+	if !expected.Extends(member.Typing.Type()) {
 		c.report("Types do not match", member.Loc())
 	}
 }
@@ -201,7 +197,7 @@ func ParseAccessExpression(p *Parser) Expression {
 		case tokenizer.DOT:
 			p.tokenizer.Consume()
 			property := fallback(p)
-			expression = PropertyAccessExpression{expression, property}
+			expression = &PropertyAccessExpression{expression, property, nil}
 		case tokenizer.LBRACE:
 			if !IsType(expression) {
 				return expression

@@ -29,17 +29,17 @@ func (f For) Check(c *Checker) {
 	scope.returnType = c.scope.returnType
 	switch statement := f.Statement.(type) {
 	case ExpressionStatement:
-		if statement.Expr.Type(c.scope) != (Primitive{BOOLEAN}) {
+		if statement.Expr.Type() != (Primitive{BOOLEAN}) {
 			c.report("Boolean expected", statement.Loc())
 		}
 	case Assignment:
-		declared, ok := statement.Declared.(TokenExpression)
+		declared, ok := statement.Declared.(*TokenExpression)
 		if !ok || declared.Token.Kind() != tokenizer.IDENTIFIER {
 			c.report("Identifier expected", statement.Declared.Loc())
 		} else {
 			text := declared.Token.Text()
 			if text != "_" {
-				scope.Add(text, declared.Loc(), statement.Initializer.Type(c.scope))
+				scope.Add(text, declared.Loc(), statement.Initializer.Type())
 			}
 		}
 		if statement.Operator.Kind() != tokenizer.DECLARE && statement.Operator.Kind() != tokenizer.DEFINE {

@@ -22,7 +22,7 @@ func (i IfElse) Loc() tokenizer.Loc {
 func (i IfElse) Check(c *Checker) {
 	if i.Condition != nil {
 		i.Condition.Check(c)
-		if i.Condition.Type(c.scope) != (Primitive{BOOLEAN}) {
+		if i.Condition.Type() != (Primitive{BOOLEAN}) {
 			c.report("Boolean expected in condition", i.Condition.Loc())
 		}
 	}

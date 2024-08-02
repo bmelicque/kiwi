@@ -22,7 +22,11 @@ type Emitter struct {
 }
 
 func MakeEmitter() *Emitter {
-	return &Emitter{0, NoFlags, strings.Builder{}}
+	return &Emitter{
+		depth:   0,
+		flags:   NoFlags,
+		builder: strings.Builder{},
+	}
 }
 
 func (e *Emitter) AddFlag(flag EmitterFlag) {
@@ -71,11 +75,11 @@ func (e *Emitter) Emit(node parser.Node) {
 		e.EmitListExpression(node)
 	case parser.ObjectExpression:
 		e.EmitObjectExpression(node)
-	case parser.PropertyAccessExpression:
+	case *parser.PropertyAccessExpression:
 		e.EmitPropertyAccessExpression(node)
 	case parser.RangeExpression:
 		e.EmitRangeExpression(node)
-	case parser.TokenExpression:
+	case *parser.TokenExpression:
 		e.Write(node.Token.Text())
 	case parser.TupleExpression:
 		e.EmitTupleExpression(node)

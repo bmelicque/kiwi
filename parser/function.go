@@ -18,7 +18,7 @@ func (f FunctionExpression) Check(c *Checker) {
 		name, ok := CheckTypedIdentifier(c, param)
 		if ok {
 			typing := ReadTypeExpression(param.(TypedExpression).Typing)
-			identifier := param.(TypedExpression).Expr.(TokenExpression)
+			identifier := param.(TypedExpression).Expr.(*TokenExpression)
 			functionScope.Add(name, identifier.Loc(), typing)
 		}
 	}
@@ -26,7 +26,7 @@ func (f FunctionExpression) Check(c *Checker) {
 	if f.Operator.Kind() == tokenizer.SLIM_ARR {
 		if f.Expr != nil {
 			f.Expr.Check(c)
-			if f.Expr.Type(c.scope).Kind() == TYPE {
+			if f.Expr.Type().Kind() == TYPE {
 				c.report("Expression expected", f.Expr.Loc())
 			}
 		}
@@ -39,7 +39,7 @@ func (f FunctionExpression) Check(c *Checker) {
 
 	if f.Expr != nil {
 		f.Expr.Check(c)
-		if f.Expr.Type(c.scope).Kind() != TYPE {
+		if f.Expr.Type().Kind() != TYPE {
 			c.report("Type expected", f.Expr.Loc())
 		} else {
 			functionScope.returnType = ReadTypeExpression(f.Expr)
@@ -62,9 +62,9 @@ func (f FunctionExpression) Loc() tokenizer.Loc {
 	}
 	return loc
 }
-func (f FunctionExpression) Type(ctx *Scope) ExpressionType {
+func (f FunctionExpression) Type() ExpressionType {
 	// FIXME: return type
-	return Function{f.Params.Type(ctx), nil}
+	return Function{f.Params.Type(), nil}
 }
 
 func ParseFunctionExpression(p *Parser) Expression {

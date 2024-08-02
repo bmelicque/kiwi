@@ -25,7 +25,7 @@ func (r Return) Check(c *Checker) {
 
 		if expected == nil {
 			c.report("Expected no return value", r.Loc())
-		} else if !expected.Match(r.Value.Type(c.scope)) {
+		} else if !expected.Match(r.Value.Type()) {
 			c.report("Type does not match expected return type", r.Value.Loc())
 		}
 	} else if expected != nil {

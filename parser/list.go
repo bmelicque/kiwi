@@ -9,11 +9,11 @@ type ListExpression struct {
 	loc      tokenizer.Loc
 }
 
-func (l ListExpression) Type(ctx *Scope) ExpressionType {
+func (l ListExpression) Type() ExpressionType {
 	if len(l.Elements) == 0 {
 		return List{Primitive{UNKNOWN}}
 	}
-	t := l.Elements[0].Type(ctx)
+	t := l.Elements[0].Type()
 	if t.Kind() == TYPE {
 		return t
 	}
@@ -28,8 +28,8 @@ func (l ListExpression) Check(c *Checker) {
 		}
 		el.Check(c)
 		if t == nil {
-			t = el.Type(c.scope)
-		} else if !t.Extends(el.Type(c.scope)) {
+			t = el.Type()
+		} else if !t.Extends(el.Type()) {
 			c.report("Types don't match", el.Loc())
 		}
 	}

@@ -16,7 +16,7 @@ func (e *Emitter) EmitAssignment(a parser.Assignment) {
 	} else if kind == tokenizer.DECLARE || kind == tokenizer.ASSIGN && a.Typing != nil {
 		e.Write("let ")
 	}
-	method, ok := a.Declared.(parser.PropertyAccessExpression)
+	method, ok := a.Declared.(*parser.PropertyAccessExpression)
 	if ok {
 		e.Emit(method.Expr.(parser.TupleExpression).Elements[0].(parser.TypedExpression).Typing)
 		e.Write("_")

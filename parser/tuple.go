@@ -9,16 +9,16 @@ type TupleExpression struct {
 	loc      tokenizer.Loc
 }
 
-func (t TupleExpression) Type(ctx *Scope) ExpressionType {
+func (t TupleExpression) Type() ExpressionType {
 	if len(t.Elements) == 0 {
 		return Primitive{NIL}
 	}
 	if len(t.Elements) == 1 {
-		return t.Elements[0].Type(ctx)
+		return t.Elements[0].Type()
 	}
 	types := make([]ExpressionType, len(t.Elements))
 	for i, element := range t.Elements {
-		types[i] = element.Type(ctx)
+		types[i] = element.Type()
 	}
 	return Tuple{types}
 }
