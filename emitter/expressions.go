@@ -35,10 +35,23 @@ func (e *Emitter) EmitBinaryExpression(expr parser.BinaryExpression) {
 }
 
 func (e *Emitter) EmitCallExpression(expr parser.CallExpression) {
-	e.Emit(expr.Callee)
-
-	e.Write("(")
 	args := expr.Args.(parser.TupleExpression) // This should be ensured by checker
+
+	access, ok := expr.Callee.(*parser.PropertyAccessExpression)
+	if ok && access.IsMethod() {
+		e.Write(stringify(access.Expr.Type()))
+		e.Write("_")
+		e.Emit(access.Property)
+		e.Write("(")
+		e.Emit(access.Expr)
+		if len(args.Elements) > 0 {
+			e.Write(", ")
+		}
+	} else {
+		e.Emit(expr.Callee)
+		e.Write("(")
+	}
+
 	for i, el := range args.Elements {
 		e.Emit(el)
 		if i != len(args.Elements)-1 {

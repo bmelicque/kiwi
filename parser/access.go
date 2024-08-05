@@ -64,7 +64,10 @@ type PropertyAccessExpression struct {
 	Expr     Expression
 	Property Expression
 	typing   ExpressionType
+	method   bool
 }
+
+func (p PropertyAccessExpression) IsMethod() bool { return p.method }
 
 func (p *PropertyAccessExpression) Loc() tokenizer.Loc {
 	return tokenizer.Loc{
@@ -86,6 +89,7 @@ func (p *PropertyAccessExpression) setType(ctx *Scope) {
 		return
 	}
 	if method, ok := ctx.FindMethod(prop, typing); ok {
+		p.method = true
 		p.typing = method.signature
 	} else {
 		p.typing = object.members[prop]
@@ -197,7 +201,10 @@ func ParseAccessExpression(p *Parser) Expression {
 		case tokenizer.DOT:
 			p.tokenizer.Consume()
 			property := fallback(p)
-			expression = &PropertyAccessExpression{expression, property, nil}
+			expression = &PropertyAccessExpression{
+				Expr:     expression,
+				Property: property,
+			}
 		case tokenizer.LBRACE:
 			if !IsType(expression) {
 				return expression
