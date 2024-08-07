@@ -84,7 +84,7 @@ func (p *PropertyAccessExpression) setType(ctx *Scope) {
 
 	typing := p.Expr.Type()
 	ref, _ := typing.(TypeRef)
-	object, ok := ref.ref.(Object)
+	object, ok := ref.Ref.(Object)
 	if !ok {
 		return
 	}
@@ -92,7 +92,7 @@ func (p *PropertyAccessExpression) setType(ctx *Scope) {
 		p.method = true
 		p.typing = method.signature
 	} else {
-		p.typing = object.members[prop]
+		p.typing = object.Members[prop]
 	}
 
 }
@@ -105,7 +105,7 @@ func (p *PropertyAccessExpression) Check(c *Checker) {
 		p.setType(c.scope)
 		typing := p.Expr.Type()
 		ref, _ := typing.(TypeRef)
-		if _, ok := ref.ref.(Object); !ok {
+		if _, ok := ref.Ref.(Object); !ok {
 			return
 		}
 		if p.typing == nil {
@@ -117,13 +117,13 @@ func (p *PropertyAccessExpression) Check(c *Checker) {
 }
 
 type ObjectExpression struct {
-	typing  Expression
+	Typing  Expression
 	Members []Expression
 	loc     tokenizer.Loc
 }
 
 func (o ObjectExpression) Loc() tokenizer.Loc   { return o.loc }
-func (o ObjectExpression) Type() ExpressionType { return o.typing.Type() }
+func (o ObjectExpression) Type() ExpressionType { return o.Typing.Type() }
 func (o ObjectExpression) Check(c *Checker) {
 	typing := getValidatedObjectType(c, o)
 
@@ -139,12 +139,12 @@ func (o ObjectExpression) Check(c *Checker) {
 			members[name] = true
 		}
 		if typing != nil {
-			checkMemberValue(c, member, typing.members[name])
+			checkMemberValue(c, member, typing.Members[name])
 		}
 	}
 
 	if typing != nil {
-		for name := range typing.members {
+		for name := range typing.Members {
 			if _, ok := members[name]; !ok {
 				c.report(fmt.Sprintf("Missing key '%v'", name), o.Loc())
 			}
@@ -152,14 +152,14 @@ func (o ObjectExpression) Check(c *Checker) {
 	}
 }
 func getValidatedObjectType(c *Checker, s ObjectExpression) *Object {
-	if s.typing == nil {
+	if s.Typing == nil {
 		return nil
 	}
-	s.typing.Check(c)
-	typing, _ := s.typing.Type().(TypeRef)
-	object, ok := typing.ref.(Object)
+	s.Typing.Check(c)
+	typing, _ := s.Typing.Type().(TypeRef)
+	object, ok := typing.Ref.(Object)
 	if !ok {
-		c.report("Object type expected", s.typing.Loc())
+		c.report("Object type expected", s.Typing.Loc())
 		return nil
 	}
 	return &object
@@ -224,7 +224,7 @@ func ParseAccessExpression(p *Parser) Expression {
 				loc.End = p.tokenizer.Consume().Loc().End
 			}
 			return ObjectExpression{
-				typing:  expression,
+				Typing:  expression,
 				Members: members,
 				loc:     loc,
 			}

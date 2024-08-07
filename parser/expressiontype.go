@@ -57,10 +57,10 @@ func (p Primitive) Extends(t ExpressionType) bool {
 
 type TypeRef struct {
 	Name string
-	ref  ExpressionType
+	Ref  ExpressionType
 }
 
-func (r TypeRef) Kind() ExpressionTypeKind { return r.ref.Kind() }
+func (r TypeRef) Kind() ExpressionTypeKind { return r.Ref.Kind() }
 func (r TypeRef) Match(t ExpressionType) bool {
 	if typeRef, ok := t.(TypeRef); ok {
 		return typeRef.Name == r.Name
@@ -75,7 +75,7 @@ func (r TypeRef) Extends(t ExpressionType) bool {
 	if typeRef.Name == r.Name {
 		return true
 	}
-	return r.ref.Extends(typeRef.ref)
+	return r.Ref.Extends(typeRef.Ref)
 }
 
 type List struct {
@@ -162,7 +162,7 @@ func (f Function) Match(t ExpressionType) bool   { /* FIXME: */ return false }
 func (f Function) Extends(t ExpressionType) bool { /* FIXME: */ return false }
 
 type Object struct {
-	members map[string]ExpressionType
+	Members map[string]ExpressionType
 }
 
 func (o Object) Kind() ExpressionTypeKind    { return STRUCT }
@@ -172,8 +172,8 @@ func (o Object) Extends(t ExpressionType) bool {
 	if !ok {
 		return false
 	}
-	for member, typeA := range o.members {
-		typeB, ok := structB.members[member]
+	for member, typeA := range o.Members {
+		typeB, ok := structB.Members[member]
 		if !ok {
 			return false
 		}
@@ -181,8 +181,8 @@ func (o Object) Extends(t ExpressionType) bool {
 			return false
 		}
 	}
-	for member := range structB.members {
-		if _, ok := o.members[member]; !ok {
+	for member := range structB.Members {
+		if _, ok := o.Members[member]; !ok {
 			return false
 		}
 	}

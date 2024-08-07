@@ -7,7 +7,7 @@ import (
 )
 
 type ObjectDefinition struct {
-	members []Expression // []TypedExpression
+	Members []Expression // []TypedExpression
 	loc     tokenizer.Loc
 }
 
@@ -15,7 +15,7 @@ func (expr ObjectDefinition) Loc() tokenizer.Loc { return expr.loc }
 
 func (expr ObjectDefinition) Check(c *Checker) {
 	members := map[string][]tokenizer.Loc{}
-	for _, member := range expr.members {
+	for _, member := range expr.Members {
 		name, ok := CheckTypedIdentifier(c, member)
 		if ok {
 			members[name] = append(members[name], member.Loc())
@@ -33,10 +33,10 @@ func (expr ObjectDefinition) Check(c *Checker) {
 
 func (expr ObjectDefinition) Type() ExpressionType {
 	value := Object{map[string]ExpressionType{}}
-	for _, member := range expr.members {
+	for _, member := range expr.Members {
 		name := member.(TypedExpression).Expr.(*TokenExpression).Token.Text()
 		typing := member.Type()
-		value.members[name] = typing
+		value.Members[name] = typing
 	}
 	return Type{value}
 }

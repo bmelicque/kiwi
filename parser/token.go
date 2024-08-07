@@ -32,7 +32,7 @@ func (t *TokenExpression) setType(ctx *Scope) {
 			typing := variable.typing.(Type)
 			t.typing = TypeRef{
 				Name: t.Token.Text(),
-				ref:  typing.value,
+				Ref:  typing.value,
 			}
 			return
 		}

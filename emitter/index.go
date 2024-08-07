@@ -16,9 +16,10 @@ const (
 )
 
 type Emitter struct {
-	depth   int
-	flags   EmitterFlag
-	builder strings.Builder
+	depth    int
+	flags    EmitterFlag
+	builder  strings.Builder
+	thisName string
 }
 
 func MakeEmitter() *Emitter {
@@ -80,7 +81,12 @@ func (e *Emitter) Emit(node parser.Node) {
 	case parser.RangeExpression:
 		e.EmitRangeExpression(node)
 	case *parser.TokenExpression:
-		e.Write(node.Token.Text())
+		text := node.Token.Text()
+		if text == e.thisName {
+			e.Write("this")
+		} else {
+			e.Write(text)
+		}
 	case parser.TupleExpression:
 		e.EmitTupleExpression(node)
 	case parser.TypedExpression:

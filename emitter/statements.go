@@ -1,12 +1,84 @@
 package emitter
 
 import (
+	"fmt"
+
 	"github.com/bmelicque/test-parser/parser"
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
+const maxClassParamsLength = 66
+
+func (e *Emitter) emitParams(params []parser.Expression) []string {
+	names := make([]string, len(params))
+	length := 0
+	for i, member := range params {
+		name := member.(parser.TypedExpression).Expr.(*parser.TokenExpression).Token.Text()
+		names[i] = name
+		length += len(name) + 2
+	}
+
+	if length > maxClassParamsLength {
+		e.Write("\n")
+		for _, name := range names {
+			e.Write("        ")
+			e.Write(name)
+			e.Write(",\n")
+		}
+		e.Write("    ")
+	} else {
+		for i, name := range names {
+			e.Write(name)
+			if i != len(names)-1 {
+				e.Write(", ")
+			}
+		}
+	}
+	return names
+}
+
+func (e *Emitter) emitClass(a parser.Assignment) {
+	e.Write("class ")
+	e.Emit(a.Declared)
+	e.Write(" {\n    constructor(")
+	defer e.Write("    }\n}\n")
+
+	names := e.emitParams(a.Initializer.(parser.ObjectDefinition).Members)
+	e.Write(") {\n")
+	for _, name := range names {
+		e.Write(fmt.Sprintf("        this.%v = %v;\n", name, name))
+	}
+}
+
+func (e *Emitter) emitMethodDeclaration(method *parser.PropertyAccessExpression, function parser.FunctionExpression) {
+	expr := method.Expr.(parser.TupleExpression).Elements[0].(parser.TypedExpression)
+	e.Emit(expr.Typing)
+	e.Write(".prototype.")
+	e.Emit(method.Property)
+	e.Write(" = function (")
+	e.emitParams(function.Params.Elements)
+	e.Write(") ")
+
+	e.thisName = expr.Expr.(*parser.TokenExpression).Token.Text()
+	defer func() { e.thisName = "" }()
+	if function.Body != nil {
+		e.EmitBody(*function.Body)
+	} else {
+		e.Write("{ return ")
+		e.Emit(function.Expr)
+		e.Write(" }")
+	}
+	e.Write("\n")
+}
+
 func (e *Emitter) EmitAssignment(a parser.Assignment) {
 	if parser.IsType(a.Declared) {
+		e.emitClass(a)
+		return
+	}
+
+	if method, ok := a.Declared.(*parser.PropertyAccessExpression); ok {
+		e.emitMethodDeclaration(method, a.Initializer.(parser.FunctionExpression))
 		return
 	}
 
@@ -16,20 +88,11 @@ func (e *Emitter) EmitAssignment(a parser.Assignment) {
 	} else if kind == tokenizer.DECLARE || kind == tokenizer.ASSIGN && a.Typing != nil {
 		e.Write("let ")
 	}
-	method, ok := a.Declared.(*parser.PropertyAccessExpression)
-	if ok {
-		e.Emit(method.Expr.(parser.TupleExpression).Elements[0].(parser.TypedExpression).Typing)
-		e.Write("_")
-		e.Emit(method.Property)
-	} else {
-		e.Emit(a.Declared)
-	}
+
+	e.Emit(a.Declared)
 	e.Write(" = ")
-	if ok {
-		e.emitMethod(a.Initializer.(parser.FunctionExpression), method.Expr.(parser.TupleExpression).Elements[0].(parser.TypedExpression))
-	} else {
-		e.Emit(a.Initializer)
-	}
+	e.Emit(a.Initializer)
+
 	if _, ok := a.Initializer.(parser.FunctionExpression); !ok {
 		e.Write(";")
 	}

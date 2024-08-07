@@ -35,30 +35,17 @@ func (e *Emitter) EmitBinaryExpression(expr parser.BinaryExpression) {
 }
 
 func (e *Emitter) EmitCallExpression(expr parser.CallExpression) {
+	e.Emit(expr.Callee)
+	e.Write("(")
+	defer e.Write(")")
+
 	args := expr.Args.(parser.TupleExpression) // This should be ensured by checker
-
-	access, ok := expr.Callee.(*parser.PropertyAccessExpression)
-	if ok && access.IsMethod() {
-		e.Write(stringify(access.Expr.Type()))
-		e.Write("_")
-		e.Emit(access.Property)
-		e.Write("(")
-		e.Emit(access.Expr)
-		if len(args.Elements) > 0 {
-			e.Write(", ")
-		}
-	} else {
-		e.Emit(expr.Callee)
-		e.Write("(")
-	}
-
 	for i, el := range args.Elements {
 		e.Emit(el)
 		if i != len(args.Elements)-1 {
 			e.Write(", ")
 		}
 	}
-	e.Write(")")
 }
 
 func (e *Emitter) EmitFunctionExpression(f parser.FunctionExpression) {
@@ -80,15 +67,6 @@ func (e *Emitter) EmitFunctionExpression(f parser.FunctionExpression) {
 	}
 }
 
-func (e *Emitter) emitMethod(f parser.FunctionExpression, self parser.Expression) {
-	e.Write("(")
-	e.Emit(self)
-	if len(f.Params.Elements) > 0 {
-		e.Write(", ")
-	}
-	e.EmitFunctionExpression(f)
-}
-
 func (e *Emitter) EmitListExpression(l parser.ListExpression) {
 	e.Write("[")
 	for i, el := range l.Elements {
@@ -100,19 +78,31 @@ func (e *Emitter) EmitListExpression(l parser.ListExpression) {
 	e.Write("]")
 }
 
+func findMemberByName(members []parser.Expression, name string) parser.Expression {
+	for _, member := range members {
+		expr := member.(parser.TypedExpression)
+		text := expr.Expr.(*parser.TokenExpression).Token.Text()
+		if text == name {
+			return expr.Typing
+		}
+	}
+	return nil
+}
+
 func (e *Emitter) EmitObjectExpression(o parser.ObjectExpression) {
-	e.Write("{")
+	e.Emit(o.Typing)
+	e.Write("(")
+	defer e.Write(")")
+	typing := o.Typing.Type().(parser.TypeRef).Ref.(parser.Object)
 	max := len(o.Members) - 1
-	for i, member := range o.Members {
-		member := member.(parser.TypedExpression)
-		e.Emit(member.Expr)
-		e.Write(": ")
-		e.Emit(member.Typing)
+	i := 0
+	for name := range typing.Members {
+		e.Emit(findMemberByName(o.Members, name))
 		if i != max {
 			e.Write(", ")
 		}
+		i++
 	}
-	e.Write("}")
 }
 
 func (e *Emitter) EmitPropertyAccessExpression(p *parser.PropertyAccessExpression) {
