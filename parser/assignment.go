@@ -46,7 +46,7 @@ func checkDeclarationTyping(c *Checker, a Assignment) {
 	typing, ok := a.Typing.Type().(Type)
 	if !ok {
 		c.report("Typing expected", a.Typing.Loc())
-	} else if !typing.value.Extends(a.Initializer.Type()) {
+	} else if !typing.Value.Extends(a.Initializer.Type()) {
 		c.report("Initializer type does not match declared type", a.Loc())
 	}
 }
@@ -55,7 +55,7 @@ func getDeclarationTyping(c *Checker, a Assignment) ExpressionType {
 	if a.Typing == nil {
 		return a.Initializer.Type()
 	}
-	return a.Typing.Type().(Type).value
+	return a.Typing.Type().(Type).Value
 }
 
 func checkDeclaration(c *Checker, a Assignment) {
@@ -108,7 +108,7 @@ func checkDeclaration(c *Checker, a Assignment) {
 		}
 
 		method, ok := declared.Property.(*TokenExpression)
-		if !ok || IsType(method) {
+		if !ok || IsTypeToken(method) {
 			c.report("Method name expected", declared.Property.Loc())
 			break
 		}

@@ -1,0 +1,66 @@
+package checker
+
+import (
+	"fmt"
+	"unicode"
+
+	"github.com/bmelicque/test-parser/parser"
+	"github.com/bmelicque/test-parser/tokenizer"
+)
+
+type Literal struct {
+	parser.TokenExpression
+}
+
+func (l Literal) Type() ExpressionType {
+	switch l.Token.Kind() {
+	case tokenizer.NUMBER:
+		return Primitive{NUMBER}
+	case tokenizer.BOOLEAN:
+		return Primitive{BOOLEAN}
+	case tokenizer.STRING:
+		return Primitive{STRING}
+	case tokenizer.STR_KW:
+		return Type{Primitive{STRING}}
+	case tokenizer.NUM_KW:
+		return Type{Primitive{NUMBER}}
+	case tokenizer.BOOL_KW:
+		return Type{Primitive{BOOLEAN}}
+	default:
+		panic(fmt.Sprintf("Unknown typing kind: %v (not implemented yet)", l.Token.Kind()))
+	}
+}
+
+type Identifier struct {
+	parser.TokenExpression
+	typing ExpressionType
+	isType bool
+}
+
+func (l Identifier) Type() ExpressionType { return l.typing }
+
+type TokenExpression struct {
+	parser.TokenExpression
+	typing ExpressionType
+}
+
+func (t *TokenExpression) Type() ExpressionType { return t.typing }
+
+func (c *Checker) checkToken(t *parser.TokenExpression) Expression {
+	if t.Token.Kind() != tokenizer.IDENTIFIER {
+		return &Literal{*t}
+	}
+
+	var typing ExpressionType
+	name := t.Token.Text()
+	if variable, ok := c.scope.Find(name); ok {
+		c.scope.ReadAt(name, t.Loc())
+		typing = variable.typing
+	}
+	isType := unicode.IsUpper(rune(name[0]))
+	if isType {
+		typing = TypeRef{name, typing.(Type).Value}
+		isType = true
+	}
+	return &Identifier{*t, typing, isType}
+}

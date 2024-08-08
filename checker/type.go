@@ -1,6 +1,9 @@
-package parser
+package checker
 
-import "github.com/bmelicque/test-parser/tokenizer"
+import (
+	"github.com/bmelicque/test-parser/parser"
+	"github.com/bmelicque/test-parser/tokenizer"
+)
 
 type ExpressionTypeKind int
 
@@ -189,7 +192,7 @@ func (o Object) Extends(t ExpressionType) bool {
 	return true
 }
 
-func ReadTypeExpression(expr Expression) ExpressionType {
+func ReadTypeExpression(expr parser.Expression) ExpressionType {
 	switch expr := expr.(type) {
 	case *TokenExpression:
 		switch expr.Token.Kind() {

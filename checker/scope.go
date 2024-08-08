@@ -1,4 +1,4 @@
-package parser
+package checker
 
 import (
 	"github.com/bmelicque/test-parser/tokenizer"
@@ -33,6 +33,14 @@ func NewScope() *Scope {
 	}
 }
 
+func NewShadowScope() *Scope {
+	return &Scope{
+		variables: map[string]*Variable{},
+		methods:   map[string][]Method{},
+		shadow:    true,
+	}
+}
+
 func (s Scope) Find(name string) (*Variable, bool) {
 	variable, ok := s.variables[name]
 	if ok {
@@ -44,7 +52,7 @@ func (s Scope) Find(name string) (*Variable, bool) {
 	return nil, false
 }
 
-func (s Scope) FindMethod(name string, typing ExpressionType) (*Method, bool) {
+func (s Scope) FindMethod(name string, typing ExpressionType) (*MethodDeclaration, bool) {
 	methods, ok := s.methods[name]
 	if !ok {
 		return nil, false
@@ -85,7 +93,7 @@ func (s *Scope) Add(name string, declaredAt tokenizer.Loc, typing ExpressionType
 }
 
 func (s *Scope) AddMethod(name string, declaredAt tokenizer.Loc, self ExpressionType, signature Function) {
-	s.methods[name] = append(s.methods[name], Method{self, signature, declaredAt, []tokenizer.Loc{}})
+	s.methods[name] = append(s.methods[name], MethodDeclaration{self, signature, declaredAt, []tokenizer.Loc{}})
 }
 
 func (s *Scope) WriteAt(name string, loc tokenizer.Loc) {
@@ -106,34 +114,4 @@ func (s *Scope) ReadAt(name string, loc tokenizer.Loc) {
 
 func (s Scope) GetReturnType() ExpressionType {
 	return s.returnType
-}
-
-type Checker struct {
-	errors []ParserError
-	scope  *Scope
-}
-
-func (c *Checker) report(message string, loc tokenizer.Loc) {
-	c.errors = append(c.errors, ParserError{message, loc})
-}
-func (c Checker) GetReport() []ParserError {
-	return c.errors
-}
-
-func MakeChecker() *Checker {
-	return &Checker{errors: []ParserError{}, scope: NewScope()}
-}
-
-func (c *Checker) PushScope(scope *Scope) {
-	scope.outer = c.scope
-	c.scope = scope
-}
-
-func (c *Checker) DropScope() {
-	for _, info := range c.scope.variables {
-		if len(info.reads) == 0 {
-			c.report("Unused variable", info.declaredAt)
-		}
-	}
-	c.scope = c.scope.outer
 }

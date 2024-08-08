@@ -72,7 +72,7 @@ func (e *Emitter) emitMethodDeclaration(method *parser.PropertyAccessExpression,
 }
 
 func (e *Emitter) EmitAssignment(a parser.Assignment) {
-	if parser.IsType(a.Declared) {
+	if parser.IsTypeToken(a.Declared) {
 		e.emitClass(a)
 		return
 	}

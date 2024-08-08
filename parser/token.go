@@ -28,11 +28,11 @@ func (t *TokenExpression) setType(ctx *Scope) {
 		if !ok {
 			break
 		}
-		if IsType(t) {
+		if IsTypeToken(t) {
 			typing := variable.typing.(Type)
 			t.typing = TypeRef{
 				Name: t.Token.Text(),
-				Ref:  typing.value,
+				Ref:  typing.Value,
 			}
 			return
 		}

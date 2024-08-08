@@ -1,8 +1,7 @@
-package parser
+package checker
 
 import (
-	"slices"
-
+	"github.com/bmelicque/test-parser/parser"
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
@@ -57,13 +56,17 @@ func (expr BinaryExpression) Loc() tokenizer.Loc {
 /*******************
  *  TYPE CHECKING  *
  *******************/
-func (expr BinaryExpression) Check(c *Checker) {
+func (c *Checker) Check(expr parser.BinaryExpression) BinaryExpression {
+	var left Expression
 	if expr.Left != nil {
-		expr.Left.Check(c)
+		left = c.CheckExpression(expr.Left)
 	}
+	var right Expression
 	if expr.Right != nil {
-		expr.Right.Check(c)
+		right = c.CheckExpression(expr.Right)
 	}
+
+	binary := BinaryExpression{left, right, expr.Operator}
 	switch expr.Operator.Kind() {
 	case
 		tokenizer.ADD,
@@ -76,21 +79,22 @@ func (expr BinaryExpression) Check(c *Checker) {
 		tokenizer.GREATER,
 		tokenizer.LEQ,
 		tokenizer.GEQ:
-		expr.checkArithmetic(c)
+		c.checkArithmetic(binary)
 	case tokenizer.CONCAT:
-		expr.checkConcat(c)
+		c.checkConcat(binary)
 	case
 		tokenizer.LAND,
 		tokenizer.LOR:
-		expr.checkEq(c)
+		c.checkEq(binary)
 	case
 		tokenizer.EQ,
 		tokenizer.NEQ:
 		// TODO: check that types overlap
 	}
+	return binary
 }
 
-func (expr BinaryExpression) checkLogical(c *Checker) {
+func (c *Checker) checkLogical(expr BinaryExpression) {
 	if expr.Left != nil && !(Primitive{BOOLEAN}).Extends(expr.Left.Type()) {
 		c.report("The left-hand side of a logical operation must be a boolean", expr.Left.Loc())
 	}
@@ -98,7 +102,7 @@ func (expr BinaryExpression) checkLogical(c *Checker) {
 		c.report("The right-hand side of a logical operation must be a boolean", expr.Right.Loc())
 	}
 }
-func (expr BinaryExpression) checkEq(c *Checker) {
+func (c *Checker) checkEq(expr BinaryExpression) {
 	if expr.Left == nil || expr.Right == nil {
 		return
 	}
@@ -108,7 +112,7 @@ func (expr BinaryExpression) checkEq(c *Checker) {
 		c.report("Types don't match", expr.Loc())
 	}
 }
-func (expr BinaryExpression) checkConcat(c *Checker) {
+func (c *Checker) checkConcat(expr BinaryExpression) {
 	var left ExpressionType
 	if expr.Left != nil {
 		left = expr.Left.Type()
@@ -124,58 +128,11 @@ func (expr BinaryExpression) checkConcat(c *Checker) {
 		c.report("The right-hand side of concatenation must be a string or a list", expr.Right.Loc())
 	}
 }
-func (expr BinaryExpression) checkArithmetic(c *Checker) {
+func (c *Checker) checkArithmetic(expr BinaryExpression) {
 	if expr.Left != nil && !(Primitive{NUMBER}).Extends(expr.Left.Type()) {
 		c.report("The left-hand side of an arithmetic operation must be a number", expr.Left.Loc())
 	}
 	if expr.Right != nil && !(Primitive{NUMBER}).Extends(expr.Right.Type()) {
 		c.report("The right-hand side of an arithmetic operation must be a number", expr.Right.Loc())
 	}
-}
-
-/******************************
- *  PARSING HELPER FUNCTIONS  *
- ******************************/
-func (BinaryExpression) Parse(p *Parser) Expression {
-	return parseLogicalOr(p)
-}
-func parseBinary(p *Parser, operators []tokenizer.TokenKind, fallback func(p *Parser) Expression) Expression {
-	expression := fallback(p)
-	next := p.tokenizer.Peek()
-	for slices.Contains(operators, next.Kind()) {
-		operator := p.tokenizer.Consume()
-		right := fallback(p)
-		expression = BinaryExpression{expression, right, operator}
-		next = p.tokenizer.Peek()
-	}
-	return expression
-}
-func parseLogicalOr(p *Parser) Expression {
-	return parseBinary(p, []tokenizer.TokenKind{tokenizer.LOR}, parseLogicalAnd)
-}
-func parseLogicalAnd(p *Parser) Expression {
-	return parseBinary(p, []tokenizer.TokenKind{tokenizer.LAND}, parseEquality)
-}
-func parseEquality(p *Parser) Expression {
-	return parseBinary(p, []tokenizer.TokenKind{tokenizer.EQ, tokenizer.NEQ}, parseComparison)
-}
-func parseComparison(p *Parser) Expression {
-	return parseBinary(p, []tokenizer.TokenKind{tokenizer.LESS, tokenizer.LEQ, tokenizer.GEQ, tokenizer.GREATER}, parseAddition)
-}
-func parseAddition(p *Parser) Expression {
-	return parseBinary(p, []tokenizer.TokenKind{tokenizer.ADD, tokenizer.CONCAT, tokenizer.SUB}, parseMultiplication)
-}
-func parseMultiplication(p *Parser) Expression {
-	return parseBinary(p, []tokenizer.TokenKind{tokenizer.MUL, tokenizer.DIV, tokenizer.MOD}, parseExponentiation)
-}
-func parseExponentiation(p *Parser) Expression {
-	expression := ParseAccessExpression(p)
-	next := p.tokenizer.Peek()
-	for next.Kind() == tokenizer.POW {
-		operator := p.tokenizer.Consume()
-		right := parseExponentiation(p)
-		expression = BinaryExpression{expression, right, operator}
-		next = p.tokenizer.Peek()
-	}
-	return expression
 }

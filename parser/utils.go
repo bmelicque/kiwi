@@ -30,7 +30,7 @@ func ParseList(p *Parser, until tokenizer.TokenKind, callback func()) {
 	}
 }
 
-func IsType(expr Expression) bool {
+func IsTypeToken(expr Expression) bool {
 	token, ok := expr.(*TokenExpression)
 	if !ok {
 		return false
