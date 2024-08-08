@@ -45,10 +45,10 @@ func (c *Checker) dropScope() {
 	c.scope = c.scope.outer
 }
 
-func (c *Checker) CheckExpression(node parser.Expression) Expression {
+func (c *Checker) CheckExpression(node parser.Node) Expression {
 	switch node := node.(type) {
 	case *parser.TokenExpression:
-		return c.checkToken(node)
+		return c.checkToken(node, true)
 	}
 	panic(fmt.Sprintf("Cannot check type '%v' (not implemented yet)", reflect.TypeOf(node)))
 }

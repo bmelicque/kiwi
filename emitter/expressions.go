@@ -78,7 +78,7 @@ func (e *Emitter) EmitListExpression(l parser.ListExpression) {
 	e.Write("]")
 }
 
-func findMemberByName(members []parser.Expression, name string) parser.Expression {
+func findMemberByName(members []parser.Node, name string) parser.Node {
 	for _, member := range members {
 		expr := member.(parser.TypedExpression)
 		text := expr.Expr.(*parser.TokenExpression).Token.Text()

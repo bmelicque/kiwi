@@ -5,7 +5,7 @@ import (
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
-func Precedence(expr parser.Expression) int8 {
+func Precedence(expr parser.Node) int8 {
 	switch expr := expr.(type) {
 	case parser.BinaryExpression:
 		switch expr.Operator.Kind() {

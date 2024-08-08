@@ -52,7 +52,7 @@ func (s Scope) Find(name string) (*Variable, bool) {
 	return nil, false
 }
 
-func (s Scope) FindMethod(name string, typing ExpressionType) (*MethodDeclaration, bool) {
+func (s Scope) FindMethod(name string, typing ExpressionType) (*Method, bool) {
 	methods, ok := s.methods[name]
 	if !ok {
 		return nil, false
@@ -93,7 +93,7 @@ func (s *Scope) Add(name string, declaredAt tokenizer.Loc, typing ExpressionType
 }
 
 func (s *Scope) AddMethod(name string, declaredAt tokenizer.Loc, self ExpressionType, signature Function) {
-	s.methods[name] = append(s.methods[name], MethodDeclaration{self, signature, declaredAt, []tokenizer.Loc{}})
+	s.methods[name] = append(s.methods[name], Method{self, signature, declaredAt, []tokenizer.Loc{}})
 }
 
 func (s *Scope) WriteAt(name string, loc tokenizer.Loc) {

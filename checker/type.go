@@ -192,7 +192,7 @@ func (o Object) Extends(t ExpressionType) bool {
 	return true
 }
 
-func ReadTypeExpression(expr parser.Expression) ExpressionType {
+func ReadTypeExpression(expr parser.Node) ExpressionType {
 	switch expr := expr.(type) {
 	case *TokenExpression:
 		switch expr.Token.Kind() {

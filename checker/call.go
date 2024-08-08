@@ -21,6 +21,7 @@ func (c CallExpression) Type() ExpressionType {
 		return nil
 	}
 }
+
 func (c *Checker) checkCallExpression(expr parser.CallExpression) *CallExpression {
 	callee := c.CheckExpression(expr.Callee)
 	args, ok := c.CheckExpression(expr.Args).(TupleExpression)

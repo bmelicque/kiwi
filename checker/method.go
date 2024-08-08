@@ -17,7 +17,7 @@ type MethodDeclaration struct {
 	loc         tokenizer.Loc
 }
 
-func (c *Checker) checkMethodDeclarationReceiver(expr parser.Expression) (Receiver, bool) {
+func (c *Checker) checkMethodDeclarationReceiver(expr parser.Node) (Receiver, bool) {
 	tuple, ok := expr.(parser.TupleExpression)
 	if !ok || len(tuple.Elements) != 1 {
 		return Receiver{}, false
@@ -33,15 +33,15 @@ func (c *Checker) checkMethodDeclarationReceiver(expr parser.Expression) (Receiv
 	}
 	return Receiver{*param.Identifier, *typing}, true
 }
-func (c *Checker) checkMethodDeclarationName(expr parser.Expression) *Identifier {
+func (c *Checker) checkMethodDeclarationName(expr parser.Node) *Identifier {
 	token, ok := expr.(*parser.TokenExpression)
 	if !ok {
 		return nil
 	}
-	identifier, _ := c.checkToken(token).(*Identifier)
+	identifier, _ := c.checkToken(token, false).(*Identifier)
 	return identifier
 }
-func (c *Checker) checkMethodDeclarationFunction(receiver Receiver, expr parser.Expression) Expression {
+func (c *Checker) checkMethodDeclarationFunction(receiver Receiver, expr parser.Node) Expression {
 	scope := NewShadowScope()
 	scope.Add(receiver.Name.Token.Text(), receiver.Name.Loc(), receiver.Typing.Type().(Type).Value)
 	c.pushScope(scope)

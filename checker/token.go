@@ -46,7 +46,7 @@ type TokenExpression struct {
 
 func (t *TokenExpression) Type() ExpressionType { return t.typing }
 
-func (c *Checker) checkToken(t *parser.TokenExpression) Expression {
+func (c *Checker) checkToken(t *parser.TokenExpression, report bool) Expression {
 	if t.Token.Kind() != tokenizer.IDENTIFIER {
 		return &Literal{*t}
 	}

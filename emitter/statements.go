@@ -9,7 +9,7 @@ import (
 
 const maxClassParamsLength = 66
 
-func (e *Emitter) emitParams(params []parser.Expression) []string {
+func (e *Emitter) emitParams(params []parser.Node) []string {
 	names := make([]string, len(params))
 	length := 0
 	for i, member := range params {

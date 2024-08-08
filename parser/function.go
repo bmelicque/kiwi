@@ -68,7 +68,7 @@ func (f FunctionExpression) Type() ExpressionType {
 }
 
 func ParseFunctionExpression(p *Parser) Expression {
-	expr := ParseTupleExpression(p)
+	expr := parseTupleExpression(p)
 
 	tuple, ok := expr.(TupleExpression)
 	if !ok {

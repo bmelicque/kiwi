@@ -7,7 +7,7 @@ import (
 )
 
 type ExpressionStatement struct {
-	Expr Expression
+	Expr Node
 }
 
 func (s ExpressionStatement) Loc() tokenizer.Loc { return s.Expr.Loc() }
@@ -18,9 +18,9 @@ func (s ExpressionStatement) Check(c *Checker) {
 }
 
 type Assignment struct {
-	Declared    Expression // "value", "Type", "(value Type).method", "(value Type).(..Trait)"
-	Initializer Expression
-	Typing      Expression
+	Declared    Node // "value", "Type", "(value Type).method", "(value Type).(..Trait)"
+	Initializer Node
+	Typing      Node
 	Operator    tokenizer.Token
 }
 

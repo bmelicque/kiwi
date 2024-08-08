@@ -5,9 +5,9 @@ import (
 )
 
 type TypedExpression struct {
-	Expr     Expression
+	Expr     Node
 	operator tokenizer.Token
-	Typing   Expression
+	Typing   Node
 }
 
 func (t TypedExpression) Type() ExpressionType {
