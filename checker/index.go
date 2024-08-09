@@ -52,3 +52,11 @@ func (c *Checker) CheckExpression(node parser.Node) Expression {
 	}
 	panic(fmt.Sprintf("Cannot check type '%v' (not implemented yet)", reflect.TypeOf(node)))
 }
+
+func (c *Checker) Check(node parser.Node) Node {
+	switch node := node.(type) {
+	case *parser.TokenExpression:
+		return c.checkToken(node, true)
+	}
+	panic(fmt.Sprintf("Cannot check type '%v' (not implemented yet)", reflect.TypeOf(node)))
+}

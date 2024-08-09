@@ -194,7 +194,7 @@ func (o Object) Extends(t ExpressionType) bool {
 
 func ReadTypeExpression(expr parser.Node) ExpressionType {
 	switch expr := expr.(type) {
-	case *TokenExpression:
+	case Literal:
 		switch expr.Token.Kind() {
 		case tokenizer.BOOL_KW:
 			return Primitive{BOOLEAN}

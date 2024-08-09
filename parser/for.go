@@ -5,13 +5,13 @@ import (
 )
 
 type For struct {
-	keyword   tokenizer.Token
-	Statement Statement // ExpressionStatement holding a condition OR Assignment
+	Keyword   tokenizer.Token
+	Statement Node // ExpressionStatement holding a condition OR Assignment
 	Body      *Body
 }
 
 func (f For) Loc() tokenizer.Loc {
-	loc := f.keyword.Loc()
+	loc := f.Keyword.Loc()
 	if f.Body != nil {
 		loc.End = f.Body.Loc().End
 	} else if f.Statement != nil {
@@ -20,46 +20,9 @@ func (f For) Loc() tokenizer.Loc {
 	return loc
 }
 
-func (f For) Check(c *Checker) {
-	if f.Statement == nil {
-		return
-	}
-
-	scope := NewScope()
-	scope.returnType = c.scope.returnType
-	switch statement := f.Statement.(type) {
-	case ExpressionStatement:
-		if statement.Expr.Type() != (Primitive{BOOLEAN}) {
-			c.report("Boolean expected", statement.Loc())
-		}
-	case Assignment:
-		declared, ok := statement.Declared.(*TokenExpression)
-		if !ok || declared.Token.Kind() != tokenizer.IDENTIFIER {
-			c.report("Identifier expected", statement.Declared.Loc())
-		} else {
-			text := declared.Token.Text()
-			if text != "_" {
-				scope.Add(text, declared.Loc(), statement.Initializer.Type())
-			}
-		}
-		if statement.Operator.Kind() != tokenizer.DECLARE && statement.Operator.Kind() != tokenizer.DEFINE {
-			c.report("':=' or '::' expected", statement.Operator.Loc())
-		}
-		if _, ok := statement.Initializer.(RangeExpression); !ok {
-			c.report("Range expression expected", statement.Initializer.Loc())
-		}
-	default:
-		c.report("Condition or declaration expected", statement.Loc())
-	}
-
-	c.PushScope(scope)
-	f.Body.Check(c)
-	c.DropScope()
-}
-
-func ParseForLoop(p *Parser) Statement {
+func ParseForLoop(p *Parser) Node {
 	statement := For{}
-	statement.keyword = p.tokenizer.Consume()
+	statement.Keyword = p.tokenizer.Consume()
 
 	if p.tokenizer.Peek().Kind() != tokenizer.LBRACE {
 		statement.Statement = ParseAssignment(p)

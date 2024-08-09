@@ -10,6 +10,8 @@ type Body struct {
 	loc        tokenizer.Loc
 }
 
+func (b Body) Loc() tokenizer.Loc { return b.loc }
+
 func (c *Checker) checkBody(body parser.Body) Body {
 	var ended bool
 	var unreachable tokenizer.Loc

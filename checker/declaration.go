@@ -11,8 +11,11 @@ import (
 type VariableDeclaration struct {
 	Pattern     Expression
 	Initializer Expression
+	loc         tokenizer.Loc
 	constant    bool
 }
+
+func (vd VariableDeclaration) Loc() tokenizer.Loc { return vd.loc }
 
 func (c *Checker) declareIdentifier(declared parser.Node, typing ExpressionType) (Identifier, error) {
 	token, ok := declared.(parser.TokenExpression)
@@ -64,5 +67,5 @@ func (c *Checker) checkVariableDeclaration(a parser.Assignment) VariableDeclarat
 	default:
 		c.report("Invalid pattern", declared.Loc())
 	}
-	return VariableDeclaration{pattern, init, constant}
+	return VariableDeclaration{pattern, init, a.Loc(), constant}
 }
