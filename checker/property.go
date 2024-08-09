@@ -11,13 +11,13 @@ type PropertyAccessExpression struct {
 	typing   ExpressionType
 }
 
-func (p *PropertyAccessExpression) Loc() tokenizer.Loc {
+func (p PropertyAccessExpression) Loc() tokenizer.Loc {
 	return tokenizer.Loc{
 		Start: p.Expr.Loc().Start,
 		End:   p.Property.Loc().End,
 	}
 }
-func (p *PropertyAccessExpression) Type() ExpressionType { return p.typing }
+func (p PropertyAccessExpression) Type() ExpressionType { return p.typing }
 
 // Returns the type of the given object as a `TypeRef{Object{}}`
 func getObjectType(expr Expression) (TypeRef, bool) {

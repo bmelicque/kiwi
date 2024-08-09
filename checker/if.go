@@ -11,6 +11,13 @@ type If struct {
 	Body      Body
 }
 
+func (i If) Loc() tokenizer.Loc {
+	return tokenizer.Loc{
+		Start: i.Keyword.Loc().Start,
+		End:   i.Body.Loc().End,
+	}
+}
+
 func (c *Checker) checkIf(node parser.IfElse) If {
 	condition := c.CheckExpression(node.Condition)
 	if condition.Type().Kind() != BOOLEAN {

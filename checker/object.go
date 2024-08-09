@@ -62,8 +62,8 @@ func (c *Checker) checkObjectExpression(expr parser.ObjectExpression) ObjectExpr
 		c.report("Expected object type", expr.Typing.Loc())
 	}
 
-	var membersSet map[string]bool
 	var members []ObjectExpressionMember
+	membersSet := map[string]bool{}
 	for _, node := range expr.Members {
 		member, k := c.checkObjectExpressionMember(node)
 		if !k {

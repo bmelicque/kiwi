@@ -36,7 +36,7 @@ func (f FatArrowFunction) Type() ExpressionType {
 	return Function{f.Params.Type(), f.ReturnType.Type().(Type).Value}
 }
 
-func (c *Checker) checkFunctionExpression(f parser.FunctionExpression) Node {
+func (c *Checker) checkFunctionExpression(f parser.FunctionExpression) Expression {
 	c.pushScope(NewScope())
 	defer c.dropScope()
 

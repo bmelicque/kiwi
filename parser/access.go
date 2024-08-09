@@ -31,7 +31,6 @@ func (c CallExpression) Loc() tokenizer.Loc {
 type PropertyAccessExpression struct {
 	Expr     Node
 	Property Node
-	typing   ExpressionType
 	method   bool
 }
 

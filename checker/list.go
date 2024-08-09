@@ -10,6 +10,8 @@ type ListExpression struct {
 	loc      tokenizer.Loc
 }
 
+func (l ListExpression) Loc() tokenizer.Loc { return l.loc }
+
 func (l ListExpression) Type() ExpressionType {
 	if len(l.Elements) == 0 {
 		return List{Primitive{UNKNOWN}}

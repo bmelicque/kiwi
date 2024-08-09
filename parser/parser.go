@@ -25,7 +25,7 @@ func (p Parser) GetReport() []ParserError {
 	return p.errors
 }
 
-func MakeParser(tokenizer tokenizer.Tokenizer, scope Scope) *Parser {
+func MakeParser(tokenizer tokenizer.Tokenizer) *Parser {
 	return &Parser{tokenizer, nil}
 }
 

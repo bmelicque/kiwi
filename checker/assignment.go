@@ -11,6 +11,17 @@ type Assignment struct {
 	Operator tokenizer.Token
 }
 
+func (a Assignment) Loc() tokenizer.Loc {
+	loc := a.Operator.Loc()
+	if a.Pattern != nil {
+		loc.Start = a.Pattern.Loc().Start
+	}
+	if a.Value != nil {
+		loc.End = a.Value.Loc().End
+	}
+	return loc
+}
+
 func (c *Checker) checkAssignment(assignment parser.Assignment) Assignment {
 	pattern := c.CheckExpression(assignment.Declared)
 	value := c.CheckExpression(assignment.Initializer)

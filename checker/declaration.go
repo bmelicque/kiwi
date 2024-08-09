@@ -20,11 +20,11 @@ func (vd VariableDeclaration) Loc() tokenizer.Loc { return vd.loc }
 func (c *Checker) declareIdentifier(declared parser.Node, typing ExpressionType) (Identifier, error) {
 	token, ok := declared.(parser.TokenExpression)
 	if !ok {
-		return Identifier{}, errors.New("Identifier expected")
+		return Identifier{}, errors.New("identifier expected")
 	}
 	identifier, ok := c.checkToken(&token, false).(Identifier)
 	if !ok {
-		return Identifier{}, errors.New("Identifier expected")
+		return Identifier{}, errors.New("identifier expected")
 	}
 	name := identifier.Token.Text()
 
@@ -32,7 +32,7 @@ func (c *Checker) declareIdentifier(declared parser.Node, typing ExpressionType)
 	_, isTypeTyping := typing.(Type)
 
 	if isTypeIdentifier != isTypeTyping {
-		return Identifier{}, errors.New("Types don't match")
+		return Identifier{}, errors.New("types don't match")
 	}
 
 	c.scope.Add(name, declared.Loc(), typing)

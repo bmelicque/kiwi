@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/bmelicque/test-parser/checker"
 	"github.com/bmelicque/test-parser/emitter"
 	"github.com/bmelicque/test-parser/parser"
 	"github.com/bmelicque/test-parser/tokenizer"
@@ -28,11 +29,11 @@ func main() {
 	}
 	defer t.Dispose()
 
-	p := parser.MakeParser(t, parser.Scope{})
-	c := parser.MakeChecker()
+	p := parser.MakeParser(t)
+	c := checker.MakeChecker()
 	program := p.ParseProgram()
 	for _, statement := range program {
-		statement.Check(c)
+		c.Check(statement)
 	}
 	errors := append(p.GetReport(), c.GetReport()...)
 	if len(errors) == 0 {

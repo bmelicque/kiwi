@@ -17,6 +17,8 @@ type MethodDeclaration struct {
 	loc         tokenizer.Loc
 }
 
+func (m MethodDeclaration) Loc() tokenizer.Loc { return m.loc }
+
 func (c *Checker) checkMethodDeclarationReceiver(expr parser.Node) (Receiver, bool) {
 	tuple, ok := expr.(parser.TupleExpression)
 	if !ok || len(tuple.Elements) != 1 {
@@ -62,6 +64,7 @@ func (c *Checker) checkMethodDeclaration(a parser.Assignment) MethodDeclaration 
 	identifier := c.checkMethodDeclarationName(left.Property)
 	if identifier == nil {
 		c.report("Expected method name", left.Property.Loc())
+		identifier = &Identifier{}
 	}
 
 	init := c.checkMethodDeclarationFunction(receiver, a.Initializer)
