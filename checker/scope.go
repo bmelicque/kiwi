@@ -84,6 +84,9 @@ func (s Scope) Has(name string) bool {
 }
 
 func (s *Scope) Add(name string, declaredAt tokenizer.Loc, typing ExpressionType) {
+	if name == "" || name == "_" {
+		return
+	}
 	s.variables[name] = &Variable{
 		declaredAt: declaredAt,
 		typing:     typing,

@@ -53,10 +53,7 @@ func (expr BinaryExpression) Loc() tokenizer.Loc {
 	return loc
 }
 
-/*******************
- *  TYPE CHECKING  *
- *******************/
-func (c *Checker) Check(expr parser.BinaryExpression) BinaryExpression {
+func (c *Checker) checkBinaryExpression(expr parser.BinaryExpression) BinaryExpression {
 	var left Expression
 	if expr.Left != nil {
 		left = c.CheckExpression(expr.Left)
@@ -66,7 +63,6 @@ func (c *Checker) Check(expr parser.BinaryExpression) BinaryExpression {
 		right = c.CheckExpression(expr.Right)
 	}
 
-	binary := BinaryExpression{left, right, expr.Operator}
 	switch expr.Operator.Kind() {
 	case
 		tokenizer.ADD,
@@ -79,60 +75,60 @@ func (c *Checker) Check(expr parser.BinaryExpression) BinaryExpression {
 		tokenizer.GREATER,
 		tokenizer.LEQ,
 		tokenizer.GEQ:
-		c.checkArithmetic(binary)
+		c.checkArithmetic(left, right)
 	case tokenizer.CONCAT:
-		c.checkConcat(binary)
+		c.checkConcat(left, right)
 	case
 		tokenizer.LAND,
 		tokenizer.LOR:
-		c.checkEq(binary)
+		c.checkLogical(left, right)
 	case
 		tokenizer.EQ,
 		tokenizer.NEQ:
-		// TODO: check that types overlap
+		c.checkEq(left, right)
 	}
-	return binary
+	return BinaryExpression{left, right, expr.Operator}
 }
 
-func (c *Checker) checkLogical(expr BinaryExpression) {
-	if expr.Left != nil && !(Primitive{BOOLEAN}).Extends(expr.Left.Type()) {
-		c.report("The left-hand side of a logical operation must be a boolean", expr.Left.Loc())
+func (c *Checker) checkLogical(left Expression, right Expression) {
+	if left != nil && !(Primitive{BOOLEAN}).Extends(left.Type()) {
+		c.report("The left-hand side of a logical operation must be a boolean", left.Loc())
 	}
-	if expr.Right != nil && !(Primitive{BOOLEAN}).Extends(expr.Right.Type()) {
-		c.report("The right-hand side of a logical operation must be a boolean", expr.Right.Loc())
+	if right != nil && !(Primitive{BOOLEAN}).Extends(right.Type()) {
+		c.report("The right-hand side of a logical operation must be a boolean", right.Loc())
 	}
 }
-func (c *Checker) checkEq(expr BinaryExpression) {
-	if expr.Left == nil || expr.Right == nil {
+func (c *Checker) checkEq(left Expression, right Expression) {
+	if left == nil || right == nil {
 		return
 	}
-	left := expr.Left.Type()
-	right := expr.Right.Type()
-	if !left.Extends(right) && !right.Extends(left) {
-		c.report("Types don't match", expr.Loc())
+	leftType := left.Type()
+	rightType := right.Type()
+	if !leftType.Extends(rightType) && !rightType.Extends(leftType) {
+		c.report("Types don't match", tokenizer.Loc{Start: left.Loc().Start, End: right.Loc().End})
 	}
 }
-func (c *Checker) checkConcat(expr BinaryExpression) {
-	var left ExpressionType
-	if expr.Left != nil {
-		left = expr.Left.Type()
+func (c *Checker) checkConcat(left Expression, right Expression) {
+	var leftType ExpressionType
+	if left != nil {
+		leftType = left.Type()
 	}
-	var right ExpressionType
-	if expr.Right != nil {
-		right = expr.Right.Type()
+	var rightType ExpressionType
+	if right != nil {
+		rightType = right.Type()
 	}
-	if left != nil && !(Primitive{STRING}).Extends(left) && !(List{Primitive{UNKNOWN}}).Extends(left) {
-		c.report("The left-hand side of concatenation must be a string or a list", expr.Left.Loc())
+	if leftType != nil && !(Primitive{STRING}).Extends(leftType) && !(List{Primitive{UNKNOWN}}).Extends(leftType) {
+		c.report("The left-hand side of concatenation must be a string or a list", left.Loc())
 	}
-	if right != nil && !(Primitive{STRING}).Extends(right) && !(List{Primitive{UNKNOWN}}).Extends(right) {
-		c.report("The right-hand side of concatenation must be a string or a list", expr.Right.Loc())
+	if rightType != nil && !(Primitive{STRING}).Extends(rightType) && !(List{Primitive{UNKNOWN}}).Extends(rightType) {
+		c.report("The right-hand side of concatenation must be a string or a list", right.Loc())
 	}
 }
-func (c *Checker) checkArithmetic(expr BinaryExpression) {
-	if expr.Left != nil && !(Primitive{NUMBER}).Extends(expr.Left.Type()) {
-		c.report("The left-hand side of an arithmetic operation must be a number", expr.Left.Loc())
+func (c *Checker) checkArithmetic(left Expression, right Expression) {
+	if left != nil && !(Primitive{NUMBER}).Extends(left.Type()) {
+		c.report("The left-hand side of an arithmetic operation must be a number", left.Loc())
 	}
-	if expr.Right != nil && !(Primitive{NUMBER}).Extends(expr.Right.Type()) {
-		c.report("The right-hand side of an arithmetic operation must be a number", expr.Right.Loc())
+	if right != nil && !(Primitive{NUMBER}).Extends(right.Type()) {
+		c.report("The right-hand side of an arithmetic operation must be a number", right.Loc())
 	}
 }

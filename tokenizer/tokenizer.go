@@ -62,6 +62,16 @@ const (
 	SLIM_ARR        // ->
 	FAT_ARR         // =>
 
+	ADD_ASSIGN    // +=
+	CONCAT_ASSIGN // ++=
+	SUB_ASSIGN    // -=
+	MUL_ASSIGN    // *=
+	POW_ASSIGN    // **=
+	DIV_ASSIGN    // /=
+	MOD_ASSIGN    // %=
+	LAND_ASSIGN   // &&=
+	LOR_ASSIGN    // ||=
+
 	LBRACKET // [
 	RBRACKET // ]
 	LPAREN   // (

@@ -37,14 +37,8 @@ type Identifier struct {
 	isType bool
 }
 
+func (i Identifier) Loc() tokenizer.Loc   { return i.TokenExpression.Loc() }
 func (l Identifier) Type() ExpressionType { return l.typing }
-
-type TokenExpression struct {
-	parser.TokenExpression
-	typing ExpressionType
-}
-
-func (t *TokenExpression) Type() ExpressionType { return t.typing }
 
 func (c *Checker) checkToken(t *parser.TokenExpression, report bool) Expression {
 	if t.Token.Kind() != tokenizer.IDENTIFIER {
