@@ -5,17 +5,11 @@ import (
 )
 
 type Body struct {
-	Statements []Statement
+	Statements []Node
 	loc        tokenizer.Loc
 }
 
 func (b Body) Loc() tokenizer.Loc { return b.loc }
-func (b Body) Check(c *Checker) {
-	for _, statement := range b.Statements {
-		statement.Check(c)
-	}
-	// TODO: look for unreachable code
-}
 
 func ParseBody(p *Parser) *Body {
 	body := Body{}
@@ -26,7 +20,7 @@ func ParseBody(p *Parser) *Body {
 		p.report("'{' expected", token.Loc())
 	}
 
-	body.Statements = []Statement{}
+	body.Statements = []Node{}
 	for p.tokenizer.Peek().Kind() != tokenizer.RBRACE && p.tokenizer.Peek().Kind() != tokenizer.EOF {
 		body.Statements = append(body.Statements, ParseStatement(p))
 	}
