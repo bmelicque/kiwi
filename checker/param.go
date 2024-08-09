@@ -27,12 +27,18 @@ func (p Param) Loc() tokenizer.Loc {
 	return loc
 }
 
-func (p Param) Type() ExpressionType { return nil }
+func (p Param) Type() ExpressionType {
+	if p.Typing == nil {
+		return nil
+	}
+	typing, _ := p.Typing.Type().(Type)
+	return typing.Value
+}
 
 func (c *Checker) checkParam(expr parser.TypedExpression) Param {
 	var identifier *Identifier
 	if token, ok := expr.Expr.(*parser.TokenExpression); ok {
-		identifier, _ = c.checkToken(token).(*Identifier)
+		identifier, _ = c.checkToken(token, false).(*Identifier)
 	}
 	if identifier == nil {
 		c.report("Identifier expected", expr.Expr.Loc())

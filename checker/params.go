@@ -12,14 +12,8 @@ type Params struct {
 
 func (p Params) Loc() tokenizer.Loc { return p.loc }
 func (p Params) Type() ExpressionType {
-	if len(p.Elements) == 0 {
-		return Primitive{NIL}
-	}
-	if len(p.Elements) == 1 {
-		return p.Elements[0].Type()
-	}
-	types := make([]ExpressionType, len(p.Elements))
-	for i, element := range p.Elements {
+	types := make([]ExpressionType, len(p.Params))
+	for i, element := range p.Params {
 		types[i] = element.Type()
 	}
 	return Tuple{types}
