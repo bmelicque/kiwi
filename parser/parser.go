@@ -29,8 +29,8 @@ func MakeParser(tokenizer tokenizer.Tokenizer, scope Scope) *Parser {
 	return &Parser{tokenizer, nil}
 }
 
-func (p *Parser) ParseProgram() []Statement {
-	statements := []Statement{}
+func (p *Parser) ParseProgram() []Node {
+	statements := []Node{}
 
 	for p.tokenizer.Peek().Kind() != tokenizer.EOF {
 		statements = append(statements, ParseStatement(p))
@@ -45,10 +45,10 @@ func (p *Parser) ParseProgram() []Statement {
 	return statements
 }
 
-func ParseStatement(p *Parser) Statement {
+func ParseStatement(p *Parser) Node {
 	switch p.tokenizer.Peek().Kind() {
 	case tokenizer.IF_KW:
-		return ParseIfElse(p)
+		return ParseIf(p)
 	case tokenizer.FOR_KW:
 		return ParseForLoop(p)
 	case tokenizer.RETURN_KW:
@@ -58,7 +58,7 @@ func ParseStatement(p *Parser) Statement {
 	}
 }
 
-func ParseExpression(p *Parser) Expression {
+func ParseExpression(p *Parser) Node {
 	expr := ParseRange(p)
 	// TODO: stop at line breaks?
 	// TODO: handle EOF
