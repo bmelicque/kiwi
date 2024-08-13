@@ -115,7 +115,7 @@ func (e *Emitter) emitMethodDeclaration(method checker.MethodDeclaration) {
 	e.Emit(method.Receiver.Typing)
 	e.Write(".prototype.")
 	e.Emit(method.Name)
-	e.Write(" = function (")
+	e.Write(" = function ")
 
 	e.thisName = method.Receiver.Name.Text()
 	defer func() { e.thisName = "" }()
@@ -123,13 +123,13 @@ func (e *Emitter) emitMethodDeclaration(method checker.MethodDeclaration) {
 	switch init := method.Initializer.(type) {
 	case checker.FatArrowFunction:
 		e.emitParams(init.Params)
-		e.Write(") ")
+		e.Write(" ")
 		e.emitBody(init.Body)
 	case checker.SlimArrowFunction:
 		e.emitParams(init.Params)
-		e.Write(") { return ")
+		e.Write(" { return ")
 		e.Emit(init.Expr)
-		e.Write("}")
+		e.Write(" }")
 	}
 	e.Write("\n")
 }

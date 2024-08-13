@@ -133,6 +133,9 @@ func (tuple Tuple) Extends(t ExpressionType) bool {
 		}
 		return true
 	default:
+		if len(tuple.elements) == 1 {
+			return tuple.elements[0].Extends(t)
+		}
 		return false
 	}
 }

@@ -29,23 +29,26 @@ func (c *Checker) checkMethodDeclarationReceiver(expr parser.Node) (Receiver, bo
 		return Receiver{}, false
 	}
 	param := c.checkParam(typed)
-	typing, ok := param.Typing.(*Identifier)
+	typing, ok := param.Typing.(Identifier)
 	if !ok {
 		return Receiver{}, false
 	}
-	return Receiver{param.Identifier, *typing}, true
+	return Receiver{param.Identifier, typing}, true
 }
-func (c *Checker) checkMethodDeclarationName(expr parser.Node) *Identifier {
+func (c *Checker) checkMethodDeclarationName(expr parser.Node) Identifier {
 	token, ok := expr.(parser.TokenExpression)
 	if !ok {
-		return nil
+		return Identifier{}
 	}
-	identifier, _ := c.checkToken(token, false).(*Identifier)
+	identifier, _ := c.checkToken(token, false).(Identifier)
 	return identifier
 }
 func (c *Checker) checkMethodDeclarationFunction(receiver Receiver, expr parser.Node) Expression {
 	scope := NewShadowScope()
-	scope.Add(receiver.Name.Token.Text(), receiver.Name.Loc(), receiver.Typing.Type().(Type).Value)
+	name := receiver.Name.Token.Text()
+	declaredAt := receiver.Name.Loc()
+	typing := receiver.Typing.Type().(Type).Value
+	scope.Add(name, declaredAt, typing)
 	c.pushScope(scope)
 	defer c.dropScope()
 
@@ -62,9 +65,8 @@ func (c *Checker) checkMethodDeclaration(a parser.Assignment) MethodDeclaration 
 	}
 
 	identifier := c.checkMethodDeclarationName(left.Property)
-	if identifier == nil {
+	if identifier == (Identifier{}) {
 		c.report("Expected method name", left.Property.Loc())
-		identifier = &Identifier{}
 	}
 
 	init := c.checkMethodDeclarationFunction(receiver, a.Initializer)
@@ -72,9 +74,15 @@ func (c *Checker) checkMethodDeclaration(a parser.Assignment) MethodDeclaration 
 		c.report("Expected function type", a.Initializer.Loc())
 	}
 
+	name := identifier.Text()
+	declaredAt := receiver.Name.Loc()
+	typing := receiver.Typing.Type().(Type).Value
+	signature := init.Type().(Function)
+	c.scope.AddMethod(name, declaredAt, typing, signature)
+
 	return MethodDeclaration{
 		Receiver:    receiver,
-		Name:        *identifier,
+		Name:        identifier,
 		Initializer: init,
 		loc:         tokenizer.Loc{Start: start, End: init.Loc().End},
 	}

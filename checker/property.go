@@ -47,7 +47,7 @@ func (c *Checker) checkPropertyAccess(expr parser.PropertyAccessExpression) Prop
 	if method, ok := c.scope.FindMethod(name, object); ok {
 		typing = method.signature
 	} else {
-		typing = object.Ref.(Object).Members[name]
+		typing = object.Ref.(Object).Members[name].(Type).Value
 	}
 
 	return PropertyAccessExpression{

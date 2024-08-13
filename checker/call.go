@@ -37,11 +37,10 @@ func (c *Checker) checkCallExpression(expr parser.CallExpression) CallExpression
 	if !ok {
 		c.report("Tuple expression expected", args.Loc())
 	}
-
 	calleeType, ok := callee.Type().(Function)
 	if !ok {
 		c.report("Function type expected", callee.Loc())
-	} else if !(args.Type().Extends(calleeType.params)) {
+	} else if !(calleeType.params.Extends(args.Type())) {
 		c.report("Arguments types don't match expected parameters types", args.Loc())
 	}
 

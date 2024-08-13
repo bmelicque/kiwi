@@ -53,11 +53,7 @@ func (s Scope) Find(name string) (*Variable, bool) {
 }
 
 func (s Scope) FindMethod(name string, typing ExpressionType) (*Method, bool) {
-	methods, ok := s.methods[name]
-	if !ok {
-		return nil, false
-	}
-	for _, method := range methods {
+	for _, method := range s.methods[name] {
 		found := method.self
 		if f, ok := found.(Type); ok {
 			found = f.Value
