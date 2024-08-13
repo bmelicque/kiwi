@@ -66,7 +66,7 @@ func (c *Checker) CheckExpression(node parser.Node) Expression {
 		return c.checkPropertyAccess(*node)
 	case parser.RangeExpression:
 		return c.checkRangeExpression(node)
-	case *parser.TokenExpression:
+	case parser.TokenExpression:
 		return c.checkToken(node, true)
 	case parser.TupleExpression:
 		return c.checkTuple(node)

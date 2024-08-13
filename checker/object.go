@@ -19,7 +19,7 @@ type ObjectExpression struct {
 }
 
 func (o ObjectExpression) Loc() tokenizer.Loc   { return o.loc }
-func (o ObjectExpression) Type() ExpressionType { return o.Typing.Type() }
+func (o ObjectExpression) Type() ExpressionType { return o.Typing.Type().(Type).Value }
 
 func getObjectExpressionTyping(expr Expression) (Object, bool) {
 	typing, ok := expr.Type().(Type)
@@ -46,7 +46,7 @@ func (c *Checker) checkObjectExpressionMember(node parser.Node) (ObjectExpressio
 	if !ok {
 		return ObjectExpressionMember{}, false
 	}
-	name, ok := c.checkToken(&token, false).(Identifier)
+	name, ok := c.checkToken(token, false).(Identifier)
 	if !ok {
 		return ObjectExpressionMember{}, false
 	}
@@ -72,7 +72,8 @@ func (c *Checker) checkObjectExpression(expr parser.ObjectExpression) ObjectExpr
 		}
 		name := member.Name.Token.Text()
 		membersSet[name] = true
-		if ok && !object.Members[name].Match(member.Value.Type()) {
+		expectedType := object.Members[name].(Type).Value
+		if ok && !expectedType.Match(member.Value.Type()) {
 			c.report("Types don't match", node.Loc())
 		}
 		members = append(members, member)

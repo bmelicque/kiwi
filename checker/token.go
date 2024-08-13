@@ -37,18 +37,24 @@ type Identifier struct {
 	isType bool
 }
 
-func (i Identifier) Loc() tokenizer.Loc   { return i.TokenExpression.Loc() }
-func (l Identifier) Type() ExpressionType { return l.typing }
+func (i Identifier) Loc() tokenizer.Loc { return i.TokenExpression.Loc() }
+func (i Identifier) Type() ExpressionType {
+	if i.isType {
+		return Type{i.typing}
+	} else {
+		return i.typing
+	}
+}
 
-func (c *Checker) checkToken(t *parser.TokenExpression, report bool) Expression {
+func (c *Checker) checkToken(t parser.TokenExpression, report bool) Expression {
 	if t.Token.Kind() != tokenizer.IDENTIFIER {
-		return Literal{*t}
+		return Literal{t}
 	}
 
 	name := t.Token.Text()
 	isType := unicode.IsUpper(rune(name[0]))
 	if !report {
-		return Identifier{*t, nil, isType}
+		return Identifier{t, nil, isType}
 	}
 
 	var typing ExpressionType
@@ -60,5 +66,5 @@ func (c *Checker) checkToken(t *parser.TokenExpression, report bool) Expression 
 		typing = TypeRef{name, typing.(Type).Value}
 		isType = true
 	}
-	return Identifier{*t, typing, isType}
+	return Identifier{t, typing, isType}
 }

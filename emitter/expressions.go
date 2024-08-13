@@ -80,7 +80,7 @@ func (e *Emitter) emitObjectExpression(o checker.ObjectExpression) {
 	e.Emit(o.Typing)
 	e.Write("(")
 	defer e.Write(")")
-	typing := o.Typing.Type().(checker.TypeRef).Ref.(checker.Object)
+	typing := o.Typing.Type().(checker.Type).Value.(checker.TypeRef).Ref.(checker.Object)
 	max := len(o.Members) - 1
 	i := 0
 	for name := range typing.Members {

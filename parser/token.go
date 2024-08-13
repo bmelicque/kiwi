@@ -14,7 +14,7 @@ func (TokenExpression) Parse(p *Parser) Node {
 	token := p.tokenizer.Consume()
 	switch token.Kind() {
 	case tokenizer.BOOLEAN, tokenizer.NUMBER, tokenizer.STRING, tokenizer.IDENTIFIER, tokenizer.BOOL_KW, tokenizer.NUM_KW, tokenizer.STR_KW:
-		return &TokenExpression{token}
+		return TokenExpression{token}
 	}
 	p.report("Expression expected", token.Loc())
 	return nil

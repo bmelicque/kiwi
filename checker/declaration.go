@@ -22,7 +22,7 @@ func (c *Checker) declareIdentifier(declared parser.Node, typing ExpressionType)
 	if !ok {
 		return Identifier{}, errors.New("identifier expected")
 	}
-	identifier, ok := c.checkToken(&token, false).(Identifier)
+	identifier, ok := c.checkToken(token, false).(Identifier)
 	if !ok {
 		return Identifier{}, errors.New("identifier expected")
 	}
@@ -46,8 +46,8 @@ func (c *Checker) checkVariableDeclaration(a parser.Assignment) VariableDeclarat
 	constant := a.Operator.Kind() == tokenizer.DEFINE
 
 	switch declared := a.Declared.(type) {
-	case *parser.TokenExpression:
-		pattern, err = c.declareIdentifier(*declared, init.Type())
+	case parser.TokenExpression:
+		pattern, err = c.declareIdentifier(declared, init.Type())
 		if err != nil {
 			c.report(err.Error(), declared.Loc())
 		}

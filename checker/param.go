@@ -37,7 +37,7 @@ func (p Param) Type() ExpressionType {
 
 func (c *Checker) checkParam(expr parser.TypedExpression) Param {
 	var identifier Identifier
-	if token, ok := expr.Expr.(*parser.TokenExpression); ok {
+	if token, ok := expr.Expr.(parser.TokenExpression); ok {
 		identifier, _ = c.checkToken(token, false).(Identifier)
 	}
 	if identifier == (Identifier{}) {
