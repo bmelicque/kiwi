@@ -31,19 +31,24 @@ func main() {
 
 	p := parser.MakeParser(t)
 	c := checker.MakeChecker()
-	program := p.ParseProgram()
-	for _, statement := range program {
-		c.Check(statement)
+	parsed := p.ParseProgram()
+	program := make([]checker.Node, len(parsed))
+	for i, statement := range parsed {
+		program[i] = c.Check(statement)
 	}
-	errors := append(p.GetReport(), c.GetReport()...)
-	if len(errors) == 0 {
+	parserErrors := p.GetReport()
+	checkerErrors := c.GetReport()
+	if len(parserErrors)+len(checkerErrors) == 0 {
 		e := emitter.MakeEmitter()
 		for _, statement := range program {
 			e.Emit(statement)
 		}
 		fmt.Printf("%+v\n", e.String())
 	} else {
-		for _, err := range errors {
+		for _, err := range parserErrors {
+			fmt.Printf("Error at line %v, col. %v: %v\n", err.Loc.Start.Line, err.Loc.Start.Col, err.Message)
+		}
+		for _, err := range checkerErrors {
 			fmt.Printf("Error at line %v, col. %v: %v\n", err.Loc.Start.Line, err.Loc.Start.Col, err.Message)
 		}
 	}

@@ -42,19 +42,23 @@ func (l Identifier) Type() ExpressionType { return l.typing }
 
 func (c *Checker) checkToken(t *parser.TokenExpression, report bool) Expression {
 	if t.Token.Kind() != tokenizer.IDENTIFIER {
-		return &Literal{*t}
+		return Literal{*t}
+	}
+
+	name := t.Token.Text()
+	isType := unicode.IsUpper(rune(name[0]))
+	if !report {
+		return Identifier{*t, nil, isType}
 	}
 
 	var typing ExpressionType
-	name := t.Token.Text()
 	if variable, ok := c.scope.Find(name); ok {
 		c.scope.ReadAt(name, t.Loc())
 		typing = variable.typing
 	}
-	isType := unicode.IsUpper(rune(name[0]))
 	if isType {
 		typing = TypeRef{name, typing.(Type).Value}
 		isType = true
 	}
-	return &Identifier{*t, typing, isType}
+	return Identifier{*t, typing, isType}
 }

@@ -12,7 +12,7 @@ type VariableDeclaration struct {
 	Pattern     Expression
 	Initializer Expression
 	loc         tokenizer.Loc
-	constant    bool
+	Constant    bool
 }
 
 func (vd VariableDeclaration) Loc() tokenizer.Loc { return vd.loc }
@@ -46,8 +46,8 @@ func (c *Checker) checkVariableDeclaration(a parser.Assignment) VariableDeclarat
 	constant := a.Operator.Kind() == tokenizer.DEFINE
 
 	switch declared := a.Declared.(type) {
-	case parser.TokenExpression:
-		pattern, err = c.declareIdentifier(declared, init.Type())
+	case *parser.TokenExpression:
+		pattern, err = c.declareIdentifier(*declared, init.Type())
 		if err != nil {
 			c.report(err.Error(), declared.Loc())
 		}

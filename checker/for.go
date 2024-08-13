@@ -85,7 +85,7 @@ func (c *Checker) checkForRangeLoop(node parser.For) ForRange {
 		Declaration: RangeDeclaration{
 			Pattern:  declaration.Pattern,
 			Range:    r,
-			Constant: declaration.constant,
+			Constant: declaration.Constant,
 		},
 		Body: body,
 	}

@@ -34,7 +34,7 @@ func (c *Checker) checkObjectDefinition(node parser.ObjectDefinition) ObjectDefi
 	for i, member := range node.Members {
 		if member, ok := member.(parser.TypedExpression); ok {
 			param := c.checkParam(member)
-			members[i] = ObjectMemberDefinition{*param.Identifier, param.Typing}
+			members[i] = ObjectMemberDefinition{param.Identifier, param.Typing}
 			locs[param.Identifier.Text()] = append(locs[param.Identifier.Text()], member.Expr.Loc())
 		}
 	}

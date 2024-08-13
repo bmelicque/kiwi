@@ -88,6 +88,8 @@ func (c *Checker) Check(node parser.Node) Node {
 		return c.checkVariableDeclaration(node)
 	case parser.Body:
 		return c.checkBody(node)
+	case parser.ExpressionStatement:
+		return c.checkExpressionStatement(node)
 	case parser.For:
 		return c.checkLoop(node)
 	case parser.IfElse:

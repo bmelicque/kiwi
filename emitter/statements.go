@@ -2,18 +2,18 @@ package emitter
 
 import (
 	"fmt"
+	"unicode"
 
-	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
+	"github.com/bmelicque/test-parser/checker"
 )
 
 const maxClassParamsLength = 66
 
-func (e *Emitter) emitParams(params []parser.Node) []string {
+func (e *Emitter) emitClassParams(params []checker.ObjectMemberDefinition) []string {
 	names := make([]string, len(params))
 	length := 0
 	for i, member := range params {
-		name := member.(parser.TypedExpression).Expr.(*parser.TokenExpression).Token.Text()
+		name := member.Name.Token.Text()
 		names[i] = name
 		length += len(name) + 2
 	}
@@ -37,127 +37,134 @@ func (e *Emitter) emitParams(params []parser.Node) []string {
 	return names
 }
 
-func (e *Emitter) emitClass(a parser.Assignment) {
+func (e *Emitter) emitClass(declaration checker.VariableDeclaration) {
 	e.Write("class ")
-	e.Emit(a.Declared)
+	e.Emit(declaration.Pattern)
 	e.Write(" {\n    constructor(")
 	defer e.Write("    }\n}\n")
 
-	names := e.emitParams(a.Initializer.(parser.ObjectDefinition).Members)
+	names := e.emitClassParams(declaration.Initializer.(checker.ObjectDefinition).Members)
 	e.Write(") {\n")
 	for _, name := range names {
 		e.Write(fmt.Sprintf("        this.%v = %v;\n", name, name))
 	}
 }
 
-func (e *Emitter) emitMethodDeclaration(method *parser.PropertyAccessExpression, function parser.FunctionExpression) {
-	expr := method.Expr.(parser.TupleExpression).Elements[0].(parser.TypedExpression)
-	e.Emit(expr.Typing)
-	e.Write(".prototype.")
-	e.Emit(method.Property)
-	e.Write(" = function (")
-	e.emitParams(function.Params.Elements)
-	e.Write(") ")
-
-	e.thisName = expr.Expr.(*parser.TokenExpression).Token.Text()
-	defer func() { e.thisName = "" }()
-	if function.Body != nil {
-		e.EmitBody(*function.Body)
-	} else {
-		e.Write("{ return ")
-		e.Emit(function.Expr)
-		e.Write(" }")
-	}
-	e.Write("\n")
-}
-
-func (e *Emitter) EmitAssignment(a parser.Assignment) {
-	if parser.IsTypeToken(a.Declared) {
-		e.emitClass(a)
-		return
-	}
-
-	if method, ok := a.Declared.(*parser.PropertyAccessExpression); ok {
-		e.emitMethodDeclaration(method, a.Initializer.(parser.FunctionExpression))
-		return
-	}
-
-	kind := a.Operator.Kind()
-	if kind == tokenizer.DEFINE {
-		e.Write("const ")
-	} else if kind == tokenizer.DECLARE || kind == tokenizer.ASSIGN && a.Typing != nil {
-		e.Write("let ")
-	}
-
-	e.Emit(a.Declared)
+func (e *Emitter) emitAssignment(a checker.Assignment) {
+	e.Emit(a.Pattern)
 	e.Write(" = ")
-	e.Emit(a.Initializer)
-
-	if _, ok := a.Initializer.(parser.FunctionExpression); !ok {
-		e.Write(";")
-	}
-	e.Write("\n")
+	e.Emit(a.Value)
+	e.Write(";\n")
 }
 
-func (e *Emitter) EmitBody(b parser.Body) {
+func (e *Emitter) emitBody(b checker.Body) {
 	e.Write("{")
 	if len(b.Statements) == 0 {
 		e.Write("}")
 		return
 	}
 	e.Write("\n")
-
+	defer func() {
+		e.Indent()
+		e.Write("}\n")
+	}()
 	e.depth += 1
+	defer func() { e.depth -= 1 }()
 	for _, statement := range b.Statements {
 		e.Indent()
 		e.Emit(statement)
 	}
-	e.depth -= 1
-
-	e.Indent()
-	e.Write("}\n")
 }
 
-func (e *Emitter) EmitExpressionStatement(s parser.ExpressionStatement) {
+func (e *Emitter) emitExpressionStatement(s checker.ExpressionStatement) {
 	e.Emit(s.Expr)
 	e.Write(";\n")
 }
 
-func (e *Emitter) EmitFor(f parser.For) {
-	if assignment, ok := f.Statement.(parser.Assignment); ok {
-		e.Write("for (const ")
-		e.Emit(assignment.Declared)
-		e.Write(" of ")
-		e.Emit(assignment.Initializer)
-	} else {
-		e.Write("while (")
-		if f.Statement != nil {
-			// FIXME: ';' at the end of the statement, body should handle where to put ';'
-			e.Emit(f.Statement)
-		} else {
-			e.Write("true")
-		}
-	}
+func (e *Emitter) emitFor(f checker.For) {
+	e.Write("while (")
+	e.Emit(f.Condition)
 	e.Write(") ")
-
-	e.Emit(*f.Body)
+	e.Emit(f.Body)
 }
 
-// TODO: handle alternate
-func (e *Emitter) EmitIfElse(i parser.IfElse) {
+func (e *Emitter) emitForRange(f checker.ForRange) {
+	e.Write("for (")
+	if f.Declaration.Constant {
+		e.Write("const")
+	} else {
+		e.Write("let")
+	}
+	e.Write(" ")
+	// FIXME: tuples...
+	e.Emit(f.Declaration.Pattern)
+	e.Write(" of ")
+	e.Emit(f.Declaration.Range)
+	e.Write(") ")
+	e.Emit(f.Body)
+}
+
+func (e *Emitter) emitIf(i checker.If) {
 	e.Write("if (")
 	e.Emit(i.Condition)
-	e.Write(")")
-
-	e.Write(" ")
-	e.Emit(*i.Body)
+	e.Write(") ")
+	e.Emit(i.Body)
 }
 
-func (e *Emitter) EmitReturn(r parser.Return) {
+func (e *Emitter) emitMethodDeclaration(method checker.MethodDeclaration) {
+	e.Emit(method.Receiver.Typing)
+	e.Write(".prototype.")
+	e.Emit(method.Name)
+	e.Write(" = function (")
+
+	e.thisName = method.Receiver.Name.Text()
+	defer func() { e.thisName = "" }()
+
+	switch init := method.Initializer.(type) {
+	case checker.FatArrowFunction:
+		e.emitParams(init.Params)
+		e.Write(") ")
+		e.emitBody(init.Body)
+	case checker.SlimArrowFunction:
+		e.emitParams(init.Params)
+		e.Write(") { return ")
+		e.Emit(init.Expr)
+		e.Write("}")
+	}
+	e.Write("\n")
+}
+
+func (e *Emitter) emitReturn(r checker.Return) {
 	e.Write("return")
 	if r.Value != nil {
 		e.Write(" ")
 		e.Emit(r.Value)
 	}
 	e.Write(";\n")
+}
+
+func (e *Emitter) emitVariableDeclaration(declaration checker.VariableDeclaration) {
+	if isTypeIdentifier(declaration.Pattern) {
+		e.emitClass(declaration)
+		return
+	}
+
+	if declaration.Constant {
+		e.Write("const ")
+	} else {
+		e.Write("let ")
+	}
+
+	e.Emit(declaration.Pattern)
+	e.Write(" = ")
+	e.Emit(declaration.Initializer)
+	e.Write(";\n")
+}
+
+func isTypeIdentifier(expr checker.Expression) bool {
+	identifier, ok := expr.(checker.Identifier)
+	if !ok {
+		return false
+	}
+	return unicode.IsUpper(rune(identifier.Token.Text()[0]))
 }

@@ -6,13 +6,13 @@ import (
 )
 
 type Param struct {
-	Identifier *Identifier
+	Identifier Identifier
 	Typing     Expression // TODO: TypeExpression
 }
 
 func (p Param) Loc() tokenizer.Loc {
 	var loc tokenizer.Loc
-	if p.Identifier != nil {
+	if p.Identifier != (Identifier{}) {
 		loc.Start = p.Identifier.Loc().Start
 	} else {
 		loc.Start = p.Typing.Loc().Start
@@ -36,11 +36,11 @@ func (p Param) Type() ExpressionType {
 }
 
 func (c *Checker) checkParam(expr parser.TypedExpression) Param {
-	var identifier *Identifier
+	var identifier Identifier
 	if token, ok := expr.Expr.(*parser.TokenExpression); ok {
-		identifier, _ = c.checkToken(token, false).(*Identifier)
+		identifier, _ = c.checkToken(token, false).(Identifier)
 	}
-	if identifier == nil {
+	if identifier == (Identifier{}) {
 		c.report("Identifier expected", expr.Expr.Loc())
 	}
 

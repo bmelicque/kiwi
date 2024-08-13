@@ -33,7 +33,7 @@ func (c *Checker) checkMethodDeclarationReceiver(expr parser.Node) (Receiver, bo
 	if !ok {
 		return Receiver{}, false
 	}
-	return Receiver{*param.Identifier, *typing}, true
+	return Receiver{param.Identifier, *typing}, true
 }
 func (c *Checker) checkMethodDeclarationName(expr parser.Node) *Identifier {
 	token, ok := expr.(*parser.TokenExpression)
