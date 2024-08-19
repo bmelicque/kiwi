@@ -5,8 +5,8 @@ import (
 )
 
 type RangeExpression struct {
-	Left     Expression
-	Right    Expression
+	Left     Node
+	Right    Node
 	Operator tokenizer.Token
 }
 
@@ -25,45 +25,10 @@ func (r RangeExpression) Loc() tokenizer.Loc {
 	return loc
 }
 
-func (r RangeExpression) Type() ExpressionType {
-	var typing ExpressionType
-	if r.Left != nil {
-		typing = r.Left.Type()
-	} else if r.Right != nil {
-		typing = r.Right.Type()
-	}
-	return Range{typing}
-}
-
-func (r RangeExpression) Check(c *Checker) {
-	var typing ExpressionType
-	if r.Left != nil {
-		r.Left.Check(c)
-		typing = r.Left.Type()
-	}
-	if r.Right != nil {
-		r.Right.Check(c)
-		if typing == nil {
-			typing = r.Right.Type()
-		} else if !typing.Match(r.Right.Type()) {
-			c.report("Types don't match", r.Loc())
-		}
-	}
-
-	// FIXME:
-	if typing != (Primitive{NUMBER}) {
-		c.report("Number type expected", r.Loc())
-	}
-
-	if r.Operator.Kind() == tokenizer.RANGE_INCLUSIVE && r.Right == nil {
-		c.report("Right operand expected", r.Operator.Loc())
-	}
-}
-
-func ParseRange(p *Parser) Expression {
+func ParseRange(p *Parser) Node {
 	token := p.tokenizer.Peek()
 
-	var left Expression
+	var left Node
 	if token.Kind() != tokenizer.RANGE_INCLUSIVE && token.Kind() != tokenizer.RANGE_EXCLUSIVE {
 		left = BinaryExpression{}.Parse(p)
 	}

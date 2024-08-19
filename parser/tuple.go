@@ -5,43 +5,20 @@ import (
 )
 
 type TupleExpression struct {
-	Elements []Expression
+	Elements []Node
 	loc      tokenizer.Loc
-}
-
-func (t TupleExpression) Type() ExpressionType {
-	if len(t.Elements) == 0 {
-		return Primitive{NIL}
-	}
-	if len(t.Elements) == 1 {
-		return t.Elements[0].Type()
-	}
-	types := make([]ExpressionType, len(t.Elements))
-	for i, element := range t.Elements {
-		types[i] = element.Type()
-	}
-	return Tuple{types}
-}
-
-func (l TupleExpression) Check(c *Checker) {
-	for _, el := range l.Elements {
-		if el != nil {
-			el.Check(c)
-		}
-	}
-
 }
 
 func (t TupleExpression) Loc() tokenizer.Loc {
 	return t.loc
 }
 
-func ParseTupleExpression(p *Parser) Expression {
+func parseTupleExpression(p *Parser) Node {
 	lparen := p.tokenizer.Consume()
 	loc := tokenizer.Loc{}
 	loc.Start = lparen.Loc().Start
 
-	elements := []Expression{}
+	var elements []Node
 	ParseList(p, tokenizer.RPAREN, func() {
 		elements = append(elements, ParseTypedExpression(p))
 	})

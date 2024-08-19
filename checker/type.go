@@ -1,6 +1,9 @@
-package parser
+package checker
 
-import "github.com/bmelicque/test-parser/tokenizer"
+import (
+	"github.com/bmelicque/test-parser/parser"
+	"github.com/bmelicque/test-parser/tokenizer"
+)
 
 type ExpressionTypeKind int
 
@@ -31,15 +34,15 @@ type ExpressionType interface {
 }
 
 type Type struct {
-	value ExpressionType
+	Value ExpressionType
 }
 
 func (t Type) Kind() ExpressionTypeKind { return TYPE }
 func (t Type) Match(testType ExpressionType) bool {
-	return testType.Kind() == TYPE && t.value.Match(testType.(Type).value)
+	return testType.Kind() == TYPE && t.Value.Match(testType.(Type).Value)
 }
 func (t Type) Extends(testType ExpressionType) bool {
-	return testType.Kind() == TYPE && t.value.Extends(testType.(Type).value)
+	return testType.Kind() == TYPE && t.Value.Extends(testType.(Type).Value)
 }
 
 type Primitive struct {
@@ -130,6 +133,9 @@ func (tuple Tuple) Extends(t ExpressionType) bool {
 		}
 		return true
 	default:
+		if len(tuple.elements) == 1 {
+			return tuple.elements[0].Extends(t)
+		}
 		return false
 	}
 }
@@ -189,9 +195,9 @@ func (o Object) Extends(t ExpressionType) bool {
 	return true
 }
 
-func ReadTypeExpression(expr Expression) ExpressionType {
+func ReadTypeExpression(expr parser.Node) ExpressionType {
 	switch expr := expr.(type) {
-	case *TokenExpression:
+	case Literal:
 		switch expr.Token.Kind() {
 		case tokenizer.BOOL_KW:
 			return Primitive{BOOLEAN}

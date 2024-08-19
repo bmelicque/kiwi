@@ -1,11 +1,12 @@
 package emitter
 
 import (
+	"github.com/bmelicque/test-parser/checker"
 	"github.com/bmelicque/test-parser/parser"
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
-func (e *Emitter) EmitBinaryExpression(expr parser.BinaryExpression) {
+func (e *Emitter) emitBinaryExpression(expr checker.BinaryExpression) {
 	precedence := Precedence(expr)
 	if expr.Left != nil {
 		left := Precedence(expr.Left)
@@ -34,12 +35,12 @@ func (e *Emitter) EmitBinaryExpression(expr parser.BinaryExpression) {
 	}
 }
 
-func (e *Emitter) EmitCallExpression(expr parser.CallExpression) {
+func (e *Emitter) emitCallExpression(expr checker.CallExpression) {
 	e.Emit(expr.Callee)
 	e.Write("(")
 	defer e.Write(")")
 
-	args := expr.Args.(parser.TupleExpression) // This should be ensured by checker
+	args := expr.Args // This should be ensured by checker
 	for i, el := range args.Elements {
 		e.Emit(el)
 		if i != len(args.Elements)-1 {
@@ -48,26 +49,13 @@ func (e *Emitter) EmitCallExpression(expr parser.CallExpression) {
 	}
 }
 
-func (e *Emitter) EmitFunctionExpression(f parser.FunctionExpression) {
-	length := len(f.Params.Elements)
-	for i, param := range f.Params.Elements {
-		e.Emit(param)
-		if i != length-1 {
-			e.Write(", ")
-		}
-	}
-	e.Write(")")
-
+func (e *Emitter) emitFatArrowFunction(f checker.FatArrowFunction) {
+	e.emitParams(f.Params)
 	e.Write(" => ")
-
-	if f.Operator.Kind() == tokenizer.SLIM_ARR {
-		e.Emit(f.Expr)
-	} else { // FAT_ARR
-		e.Emit(*f.Body)
-	}
+	e.Emit(f.Body)
 }
 
-func (e *Emitter) EmitListExpression(l parser.ListExpression) {
+func (e *Emitter) emitListExpression(l checker.ListExpression) {
 	e.Write("[")
 	for i, el := range l.Elements {
 		e.Emit(el)
@@ -78,22 +66,21 @@ func (e *Emitter) EmitListExpression(l parser.ListExpression) {
 	e.Write("]")
 }
 
-func findMemberByName(members []parser.Expression, name string) parser.Expression {
+func findMemberByName(members []checker.ObjectExpressionMember, name string) parser.Node {
 	for _, member := range members {
-		expr := member.(parser.TypedExpression)
-		text := expr.Expr.(*parser.TokenExpression).Token.Text()
+		text := member.Name.Token.Text()
 		if text == name {
-			return expr.Typing
+			return member.Value
 		}
 	}
 	return nil
 }
 
-func (e *Emitter) EmitObjectExpression(o parser.ObjectExpression) {
+func (e *Emitter) emitObjectExpression(o checker.ObjectExpression) {
 	e.Emit(o.Typing)
 	e.Write("(")
 	defer e.Write(")")
-	typing := o.Typing.Type().(parser.TypeRef).Ref.(parser.Object)
+	typing := o.Typing.Type().(checker.Type).Value.(checker.TypeRef).Ref.(checker.Object)
 	max := len(o.Members) - 1
 	i := 0
 	for name := range typing.Members {
@@ -105,13 +92,25 @@ func (e *Emitter) EmitObjectExpression(o parser.ObjectExpression) {
 	}
 }
 
-func (e *Emitter) EmitPropertyAccessExpression(p *parser.PropertyAccessExpression) {
+func (e *Emitter) emitParams(params checker.Params) {
+	e.Write("(")
+	length := len(params.Params)
+	for i, param := range params.Params {
+		e.Emit(param.Identifier)
+		if i != length-1 {
+			e.Write(", ")
+		}
+	}
+	e.Write(")")
+}
+
+func (e *Emitter) emitPropertyAccessExpression(p checker.PropertyAccessExpression) {
 	e.Emit(p.Expr)
 	e.Write(".")
 	e.Emit(p.Property)
 }
 
-func (e *Emitter) EmitRangeExpression(r parser.RangeExpression) {
+func (e *Emitter) emitRangeExpression(r checker.RangeExpression) {
 	e.AddFlag(RangeFlag)
 
 	e.Write("range(")
@@ -136,7 +135,13 @@ func (e *Emitter) EmitRangeExpression(r parser.RangeExpression) {
 	e.Write(")")
 }
 
-func (e *Emitter) EmitTupleExpression(t parser.TupleExpression) {
+func (e *Emitter) emitSlimArrowFunction(f checker.SlimArrowFunction) {
+	e.emitParams(f.Params)
+	e.Write(" => ")
+	e.Emit(f.Expr)
+}
+
+func (e *Emitter) emitTupleExpression(t checker.TupleExpression) {
 	if len(t.Elements) == 1 {
 		e.Emit(t.Elements[0])
 		return

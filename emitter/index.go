@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/bmelicque/test-parser/parser"
+	"github.com/bmelicque/test-parser/checker"
 )
 
 type EmitterFlag int
@@ -48,49 +48,56 @@ func (e Emitter) String() string {
 	return e.builder.String()
 }
 
-func (e *Emitter) Emit(node parser.Node) {
+func (e *Emitter) Emit(node interface{}) {
 	switch node := node.(type) {
 	// Statements
-	case parser.Assignment:
-		e.EmitAssignment(node)
-	case parser.Body:
-		e.EmitBody(node)
-	case parser.ExpressionStatement:
-		e.EmitExpressionStatement(node)
-	case parser.For:
-		e.EmitFor(node)
-	case parser.IfElse:
-		e.EmitIfElse(node)
-	case parser.Return:
-		e.EmitReturn(node)
+	case checker.Assignment:
+		e.emitAssignment(node)
+	case checker.Body:
+		e.emitBody(node)
+	case checker.ExpressionStatement:
+		e.emitExpressionStatement(node)
+	case checker.For:
+		e.emitFor(node)
+	case checker.ForRange:
+		e.emitForRange(node)
+	case checker.If:
+		e.emitIf(node)
+	case checker.MethodDeclaration:
+		e.emitMethodDeclaration(node)
+	case checker.Return:
+		e.emitReturn(node)
+	case checker.VariableDeclaration:
+		e.emitVariableDeclaration(node)
 
 	// Expressions
-	case parser.BinaryExpression:
-		e.EmitBinaryExpression(node)
-	case parser.CallExpression:
-		e.EmitCallExpression(node)
-	case parser.FunctionExpression:
-		e.Write("(")
-		e.EmitFunctionExpression(node)
-	case parser.ListExpression:
-		e.EmitListExpression(node)
-	case parser.ObjectExpression:
-		e.EmitObjectExpression(node)
-	case *parser.PropertyAccessExpression:
-		e.EmitPropertyAccessExpression(node)
-	case parser.RangeExpression:
-		e.EmitRangeExpression(node)
-	case *parser.TokenExpression:
+	case checker.BinaryExpression:
+		e.emitBinaryExpression(node)
+	case checker.CallExpression:
+		e.emitCallExpression(node)
+	case checker.FatArrowFunction:
+		e.emitFatArrowFunction(node)
+	case checker.Identifier:
 		text := node.Token.Text()
 		if text == e.thisName {
 			e.Write("this")
 		} else {
 			e.Write(text)
 		}
-	case parser.TupleExpression:
-		e.EmitTupleExpression(node)
-	case parser.TypedExpression:
-		e.Emit(node.Expr)
+	case checker.ListExpression:
+		e.emitListExpression(node)
+	case checker.Literal:
+		e.Write(node.Token.Text())
+	case checker.ObjectExpression:
+		e.emitObjectExpression(node)
+	case checker.PropertyAccessExpression:
+		e.emitPropertyAccessExpression(node)
+	case checker.RangeExpression:
+		e.emitRangeExpression(node)
+	case checker.SlimArrowFunction:
+		e.emitSlimArrowFunction(node)
+	case checker.TupleExpression:
+		e.emitTupleExpression(node)
 
 	default:
 		panic(fmt.Sprintf("Cannot emit type '%v' (not implemented yet)", reflect.TypeOf(node)))

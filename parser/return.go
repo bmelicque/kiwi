@@ -5,36 +5,19 @@ import (
 )
 
 type Return struct {
-	operator tokenizer.Token
-	Value    Expression
+	Operator tokenizer.Token
+	Value    Node
 }
 
 func (r Return) Loc() tokenizer.Loc {
-	loc := r.operator.Loc()
+	loc := r.Operator.Loc()
 	if r.Value != nil {
 		loc.End = r.Value.Loc().End
 	}
 	return loc
 }
 
-func (r Return) Check(c *Checker) {
-	expected := c.scope.returnType
-
-	if r.Value != nil {
-		r.Value.Check(c)
-
-		if expected == nil {
-			c.report("Expected no return value", r.Loc())
-		} else if !expected.Match(r.Value.Type()) {
-			c.report("Type does not match expected return type", r.Value.Loc())
-		}
-	} else if expected != nil {
-		c.report("Expected return value", r.Loc())
-
-	}
-}
-
-func ParseReturn(p *Parser) Statement {
+func ParseReturn(p *Parser) Node {
 	keyword := p.tokenizer.Consume()
 
 	if p.tokenizer.Peek().Kind() == tokenizer.EOL {

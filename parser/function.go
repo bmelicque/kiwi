@@ -7,50 +7,8 @@ import (
 type FunctionExpression struct {
 	Params   TupleExpression
 	Operator tokenizer.Token // -> or =>
-	Expr     Expression      // return value for '->', return type for '=>'
+	Expr     Node            // return value for '->', return type for '=>'
 	Body     *Body
-}
-
-func (f FunctionExpression) Check(c *Checker) {
-	functionScope := NewScope()
-
-	for _, param := range f.Params.Elements {
-		name, ok := CheckTypedIdentifier(c, param)
-		if ok {
-			typing := ReadTypeExpression(param.(TypedExpression).Typing)
-			identifier := param.(TypedExpression).Expr.(*TokenExpression)
-			functionScope.Add(name, identifier.Loc(), typing)
-		}
-	}
-
-	if f.Operator.Kind() == tokenizer.SLIM_ARR {
-		if f.Expr != nil {
-			f.Expr.Check(c)
-			if f.Expr.Type().Kind() == TYPE {
-				c.report("Expression expected", f.Expr.Loc())
-			}
-		}
-
-		if f.Body != nil {
-			c.report("Function body should be a single statement", f.Body.Loc())
-		}
-		return
-	}
-
-	if f.Expr != nil {
-		f.Expr.Check(c)
-		if f.Expr.Type().Kind() != TYPE {
-			c.report("Type expected", f.Expr.Loc())
-		} else {
-			functionScope.returnType = ReadTypeExpression(f.Expr)
-		}
-	}
-
-	if f.Body != nil {
-		c.PushScope(functionScope)
-		f.Body.Check(c)
-		c.DropScope()
-	}
 }
 
 func (f FunctionExpression) Loc() tokenizer.Loc {
@@ -62,13 +20,9 @@ func (f FunctionExpression) Loc() tokenizer.Loc {
 	}
 	return loc
 }
-func (f FunctionExpression) Type() ExpressionType {
-	// FIXME: return type
-	return Function{f.Params.Type(), nil}
-}
 
-func ParseFunctionExpression(p *Parser) Expression {
-	expr := ParseTupleExpression(p)
+func ParseFunctionExpression(p *Parser) Node {
+	expr := parseTupleExpression(p)
 
 	tuple, ok := expr.(TupleExpression)
 	if !ok {
