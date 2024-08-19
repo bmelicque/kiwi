@@ -44,7 +44,7 @@ func (c *Checker) checkParam(expr parser.TypedExpression) Param {
 		c.report("Identifier expected", expr.Expr.Loc())
 	}
 
-	typing := c.CheckExpression(expr.Typing)
+	typing := c.checkExpression(expr.Typing)
 	if _, ok := typing.Type().(Type); !ok {
 		c.report("Typing expected", expr.Typing.Loc())
 		typing = nil

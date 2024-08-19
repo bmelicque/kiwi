@@ -57,7 +57,7 @@ func (c *Checker) checkForLoop(node parser.For) For {
 	}
 }
 func (c *Checker) checkForRangeLoop(node parser.For) ForRange {
-	declaration, ok := c.Check(node).(VariableDeclaration)
+	declaration, ok := c.Check(node.Statement).(VariableDeclaration)
 	if !ok {
 		c.report("Expected boolean condition or range declaration", node.Statement.Loc())
 	}
@@ -93,7 +93,7 @@ func (c *Checker) checkForRangeLoop(node parser.For) ForRange {
 
 func (c *Checker) checkLoop(node parser.For) Node {
 	switch node.Statement.(type) {
-	case VariableDeclaration:
+	case parser.Assignment:
 		return c.checkForRangeLoop(node)
 	default:
 		return c.checkForLoop(node)

@@ -30,7 +30,7 @@ func (c *Checker) checkListExpression(node parser.ListExpression) ListExpression
 		if element == nil {
 			continue
 		}
-		elements[i] = c.CheckExpression(element)
+		elements[i] = c.checkExpression(element)
 		if typing == nil {
 			typing = elements[i].Type()
 		} else if !typing.Extends(elements[i].Type()) {

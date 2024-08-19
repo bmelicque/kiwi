@@ -19,10 +19,12 @@ func ParseBody(p *Parser) *Body {
 	if token.Kind() != tokenizer.LBRACE {
 		p.report("'{' expected", token.Loc())
 	}
+	p.tokenizer.DiscardLineBreaks()
 
 	body.Statements = []Node{}
 	for p.tokenizer.Peek().Kind() != tokenizer.RBRACE && p.tokenizer.Peek().Kind() != tokenizer.EOF {
 		body.Statements = append(body.Statements, ParseStatement(p))
+		p.tokenizer.DiscardLineBreaks()
 	}
 
 	token = p.tokenizer.Consume()

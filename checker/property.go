@@ -31,13 +31,13 @@ func getObjectType(expr Expression) (TypeRef, bool) {
 	return ref, true
 }
 func (c *Checker) checkPropertyAccess(expr parser.PropertyAccessExpression) PropertyAccessExpression {
-	left := c.CheckExpression(expr.Expr)
+	left := c.checkExpression(expr.Expr)
 	object, ok := getObjectType(left)
 	if !ok {
 		c.report("Expected object type", expr.Expr.Loc())
 	}
 
-	property, ok := c.CheckExpression(expr.Property).(Identifier)
+	property, ok := c.checkExpression(expr.Property).(Identifier)
 	if !ok {
 		c.report("Expected identifier", expr.Property.Loc())
 	}

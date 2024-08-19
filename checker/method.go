@@ -52,7 +52,7 @@ func (c *Checker) checkMethodDeclarationFunction(receiver Receiver, expr parser.
 	c.pushScope(scope)
 	defer c.dropScope()
 
-	return c.CheckExpression(expr)
+	return c.checkExpression(expr)
 }
 
 func (c *Checker) checkMethodDeclaration(a parser.Assignment) MethodDeclaration {

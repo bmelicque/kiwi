@@ -42,7 +42,7 @@ func (c *Checker) declareIdentifier(declared parser.Node, typing ExpressionType)
 func (c *Checker) checkVariableDeclaration(a parser.Assignment) VariableDeclaration {
 	var pattern Expression
 	var err error
-	init := c.CheckExpression(a.Initializer)
+	init := c.checkExpression(a.Initializer)
 	constant := a.Operator.Kind() == tokenizer.DEFINE
 
 	switch declared := a.Declared.(type) {
@@ -52,12 +52,13 @@ func (c *Checker) checkVariableDeclaration(a parser.Assignment) VariableDeclarat
 			c.report(err.Error(), declared.Loc())
 		}
 	case parser.TupleExpression:
-		if _, ok := init.Type().(Tuple); !ok {
+		tuple, ok := init.Type().(Tuple)
+		if !ok {
 			c.report("Pattern doesn't match initializer type", declared.Loc())
 		}
 		elements := make([]Expression, len(declared.Elements))
 		for i, element := range declared.Elements {
-			identifier, err := c.declareIdentifier(element, init.Type())
+			identifier, err := c.declareIdentifier(element, tuple.elements[i])
 			if err != nil {
 				c.report(err.Error(), declared.Loc())
 			}

@@ -23,8 +23,8 @@ func (a Assignment) Loc() tokenizer.Loc {
 }
 
 func (c *Checker) checkAssignment(assignment parser.Assignment) Assignment {
-	pattern := c.CheckExpression(assignment.Declared)
-	value := c.CheckExpression(assignment.Initializer)
+	pattern := c.checkExpression(assignment.Declared)
+	value := c.checkExpression(assignment.Initializer)
 
 	if !pattern.Type().Match(value.Type()) {
 		c.report("Types don't match", assignment.Loc())

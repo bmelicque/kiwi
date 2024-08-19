@@ -18,18 +18,19 @@ func (c *Checker) checkBody(body parser.Body) Body {
 
 	statements := make([]Node, len(body.Statements))
 	for i, node := range body.Statements {
-		statement := c.CheckExpression(node)
+		statement := c.Check(node)
 		statements[i] = statement
 
-		if isEndStatement(statement) && !ended {
-			ended = true
-			unreachable.Start = node.Loc().Start
-		}
 		if ended {
+			if unreachable.Start == (tokenizer.Position{}) {
+				unreachable.Start = node.Loc().Start
+			}
 			unreachable.End = node.Loc().End
+		} else if isEndStatement(statement) {
+			ended = true
 		}
 	}
-	if ended {
+	if unreachable != (tokenizer.Loc{}) {
 		c.report("Detected unreachable code", unreachable)
 	}
 

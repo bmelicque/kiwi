@@ -12,5 +12,5 @@ type ExpressionStatement struct {
 func (e ExpressionStatement) Loc() tokenizer.Loc { return e.Expr.Loc() }
 
 func (c *Checker) checkExpressionStatement(expr parser.ExpressionStatement) ExpressionStatement {
-	return ExpressionStatement{c.CheckExpression(expr.Expr)}
+	return ExpressionStatement{c.checkExpression(expr.Expr)}
 }

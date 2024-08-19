@@ -27,7 +27,7 @@ func (t TupleExpression) Type() ExpressionType {
 func (c *Checker) checkTuple(tuple parser.TupleExpression) TupleExpression {
 	elements := make([]Expression, len(tuple.Elements))
 	for i, element := range tuple.Elements {
-		elements[i] = c.CheckExpression(element)
+		elements[i] = c.checkExpression(element)
 	}
 	return TupleExpression{elements, tuple.Loc()}
 }

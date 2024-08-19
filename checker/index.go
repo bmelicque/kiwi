@@ -48,7 +48,7 @@ func (c *Checker) dropScope() {
 	c.scope = c.scope.outer
 }
 
-func (c *Checker) CheckExpression(node parser.Node) Expression {
+func (c *Checker) checkExpression(node parser.Node) Expression {
 	switch node := node.(type) {
 	case parser.BinaryExpression:
 		return c.checkBinaryExpression(node)
@@ -97,6 +97,6 @@ func (c *Checker) Check(node parser.Node) Node {
 	case parser.Return:
 		return c.checkReturnStatement(node)
 	default:
-		return c.CheckExpression(node)
+		return c.checkExpression(node)
 	}
 }

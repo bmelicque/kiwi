@@ -32,8 +32,8 @@ func (c CallExpression) Type() ExpressionType {
 }
 
 func (c *Checker) checkCallExpression(expr parser.CallExpression) CallExpression {
-	callee := c.CheckExpression(expr.Callee)
-	args, ok := c.CheckExpression(expr.Args).(TupleExpression)
+	callee := c.checkExpression(expr.Callee)
+	args, ok := c.checkExpression(expr.Args).(TupleExpression)
 	if !ok {
 		c.report("Tuple expression expected", args.Loc())
 	}

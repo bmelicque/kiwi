@@ -39,10 +39,10 @@ func (r RangeExpression) Type() ExpressionType {
 func (c *Checker) checkRangeExpression(expr parser.RangeExpression) RangeExpression {
 	var left, right Expression
 	if expr.Left != nil {
-		left = c.CheckExpression(expr.Left)
+		left = c.checkExpression(expr.Left)
 	}
 	if expr.Right != nil {
-		right = c.CheckExpression(expr.Right)
+		right = c.checkExpression(expr.Right)
 	}
 
 	if left != nil && right != nil && !left.Type().Match(right.Type()) {

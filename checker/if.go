@@ -19,7 +19,7 @@ func (i If) Loc() tokenizer.Loc {
 }
 
 func (c *Checker) checkIf(node parser.IfElse) If {
-	condition := c.CheckExpression(node.Condition)
+	condition := c.checkExpression(node.Condition)
 	if condition.Type().Kind() != BOOLEAN {
 		c.report("Expected boolean condition", node.Condition.Loc())
 	}

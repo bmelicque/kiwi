@@ -56,11 +56,11 @@ func (expr BinaryExpression) Loc() tokenizer.Loc {
 func (c *Checker) checkBinaryExpression(expr parser.BinaryExpression) BinaryExpression {
 	var left Expression
 	if expr.Left != nil {
-		left = c.CheckExpression(expr.Left)
+		left = c.checkExpression(expr.Left)
 	}
 	var right Expression
 	if expr.Right != nil {
-		right = c.CheckExpression(expr.Right)
+		right = c.checkExpression(expr.Right)
 	}
 
 	switch expr.Operator.Kind() {

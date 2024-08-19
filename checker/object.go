@@ -51,12 +51,12 @@ func (c *Checker) checkObjectExpressionMember(node parser.Node) (ObjectExpressio
 		return ObjectExpressionMember{}, false
 	}
 
-	value := c.CheckExpression(member.Typing)
+	value := c.checkExpression(member.Typing)
 	return ObjectExpressionMember{name, value}, true
 }
 
 func (c *Checker) checkObjectExpression(expr parser.ObjectExpression) ObjectExpression {
-	typing := c.CheckExpression(expr.Typing)
+	typing := c.checkExpression(expr.Typing)
 	object, ok := getObjectExpressionTyping(typing)
 	if !ok {
 		c.report("Expected object type", expr.Typing.Loc())

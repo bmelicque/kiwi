@@ -48,7 +48,7 @@ func (c *Checker) checkFunctionExpression(f parser.FunctionExpression) Expressio
 		}
 	}
 
-	expr := c.CheckExpression(f.Expr)
+	expr := c.checkExpression(f.Expr)
 
 	switch f.Operator.Kind() {
 	case tokenizer.SLIM_ARR:

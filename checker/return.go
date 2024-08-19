@@ -30,7 +30,7 @@ func (c *Checker) checkReturnStatement(statement parser.Return) Return {
 
 	var value Expression
 	if statement.Value != nil {
-		value = c.CheckExpression(statement.Value)
+		value = c.checkExpression(statement.Value)
 	}
 	return Return{
 		Operator: statement.Operator,
