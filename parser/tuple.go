@@ -18,7 +18,7 @@ func (t TupleExpression) Loc() tokenizer.Loc {
 func (p *Parser) parseTupleExpression() Node {
 	var elements []Node
 	ParseList(p, tokenizer.ILLEGAL, func() {
-		elements = append(elements, ParseTypedExpression(p))
+		elements = append(elements, p.parseTypedExpression())
 	})
 
 	// FIXME: len == 0

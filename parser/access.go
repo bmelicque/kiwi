@@ -36,7 +36,7 @@ type PropertyAccessExpression struct {
 
 func (p PropertyAccessExpression) IsMethod() bool { return p.method }
 
-func (p *PropertyAccessExpression) Loc() tokenizer.Loc {
+func (p PropertyAccessExpression) Loc() tokenizer.Loc {
 	return tokenizer.Loc{
 		Start: p.Expr.Loc().Start,
 		End:   p.Property.Loc().End,
@@ -53,7 +53,7 @@ func (o ObjectExpression) Loc() tokenizer.Loc { return o.loc }
 
 var operators = []tokenizer.TokenKind{tokenizer.LPAREN, tokenizer.DOT, tokenizer.LBRACE}
 
-func ParseAccessExpression(p *Parser) Node {
+func (p *Parser) parseAccessExpression() Node {
 	expression := fallback(p)
 	next := p.tokenizer.Peek()
 	for slices.Contains(operators, next.Kind()) {
@@ -64,10 +64,12 @@ func ParseAccessExpression(p *Parser) Node {
 		case tokenizer.DOT:
 			p.tokenizer.Consume()
 			property := fallback(p)
-			expression = &PropertyAccessExpression{
+			expression = PropertyAccessExpression{
 				Expr:     expression,
 				Property: property,
 			}
+
+		// TODO: remove this and make it TypedExpression(Expression, Body)
 		case tokenizer.LBRACE:
 			if !IsTypeToken(expression) {
 				return expression
@@ -76,7 +78,7 @@ func ParseAccessExpression(p *Parser) Node {
 			p.tokenizer.Consume()
 			var members []Node
 			ParseList(p, tokenizer.RBRACE, func() {
-				members = append(members, ParseTypedExpression(p))
+				members = append(members, p.parseTypedExpression())
 			})
 			loc := tokenizer.Loc{
 				Start: expression.Loc().Start,
@@ -105,7 +107,9 @@ func fallback(p *Parser) Node {
 	case tokenizer.LBRACKET:
 		return ListExpression{}.Parse(p)
 	case tokenizer.LBRACE:
-		return ParseObjectDefinition(p)
+		if p.allowBodyParsing {
+			return ParseBody(p)
+		}
 	}
 	return p.parseTokenExpression()
 }

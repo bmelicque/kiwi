@@ -72,7 +72,6 @@ func (c *Checker) checkExpression(node parser.Node) Expression {
 		return c.checkToken(node, true)
 	case parser.TupleExpression:
 		return c.checkTuple(node)
-
 	}
 	panic(fmt.Sprintf("Cannot check type '%v' (not implemented yet)", reflect.TypeOf(node)))
 }

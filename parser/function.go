@@ -34,7 +34,7 @@ func (p *Parser) parseFunctionExpression() Node {
 		p.report("Expression expected", next.Loc())
 	}
 
-	res := FunctionExpression{paren, operator, ParseExpression(p), nil}
+	res := FunctionExpression{paren, operator, ParseRange(p), nil}
 	if operator.Kind() == tokenizer.FAT_ARR {
 		res.Body = ParseBody(p)
 	}

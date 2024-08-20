@@ -20,7 +20,10 @@ func (p *Parser) parseParenthesizedExpression() ParenthesizedExpression {
 		loc.End = p.tokenizer.Consume().Loc().End
 		return ParenthesizedExpression{nil, loc}
 	}
+	outer := p.allowBodyParsing
+	p.allowBodyParsing = true
 	expr := ParseExpression(p)
+	p.allowBodyParsing = outer
 	next = p.tokenizer.Peek()
 	if next.Kind() != tokenizer.RPAREN {
 		p.report("')' expected", next.Loc())

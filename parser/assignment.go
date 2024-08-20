@@ -1,8 +1,6 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
@@ -32,7 +30,7 @@ func (a Assignment) Loc() tokenizer.Loc {
 	return loc
 }
 
-func ParseAssignment(p *Parser) Node {
+func (p *Parser) parseAssignment() Node {
 	expr := ParseExpression(p)
 
 	var typing Node
@@ -53,7 +51,6 @@ func ParseAssignment(p *Parser) Node {
 	default:
 		return ExpressionStatement{expr}
 	}
-	fmt.Printf("%+v\n", p.tokenizer.Peek())
 	init := ParseExpression(p)
 	return Assignment{expr, init, typing, operator}
 }

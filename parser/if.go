@@ -17,9 +17,12 @@ func (i IfElse) Loc() tokenizer.Loc {
 	}
 }
 
-func ParseIf(p *Parser) Node {
+func (p *Parser) parseIf() Node {
 	keyword := p.tokenizer.Consume()
+	outer := p.allowBodyParsing
+	p.allowBodyParsing = false
 	condition := ParseExpression(p)
+	p.allowBodyParsing = outer
 	body := ParseBody(p)
 	return IfElse{keyword, condition, body}
 }

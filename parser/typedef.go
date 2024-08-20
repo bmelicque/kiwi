@@ -1,5 +1,7 @@
 package parser
 
+// TODO: this will disappear and merge with Body
+
 import (
 	"github.com/bmelicque/test-parser/tokenizer"
 )
@@ -17,7 +19,7 @@ func ParseObjectDefinition(p *Parser) Node {
 
 	members := []Node{}
 	ParseList(p, tokenizer.RBRACE, func() {
-		members = append(members, ParseTypedExpression(p))
+		members = append(members, p.parseTypedExpression())
 	})
 
 	next := p.tokenizer.Peek()

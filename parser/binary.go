@@ -64,7 +64,7 @@ func parseMultiplication(p *Parser) Node {
 	return parseBinary(p, []tokenizer.TokenKind{tokenizer.MUL, tokenizer.DIV, tokenizer.MOD}, parseExponentiation)
 }
 func parseExponentiation(p *Parser) Node {
-	expression := ParseAccessExpression(p)
+	expression := p.parseAccessExpression()
 	next := p.tokenizer.Peek()
 	for next.Kind() == tokenizer.POW {
 		operator := p.tokenizer.Consume()
