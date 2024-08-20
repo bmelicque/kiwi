@@ -90,6 +90,10 @@ func (e *Emitter) Emit(node interface{}) {
 		e.Write(node.Token.Text())
 	case checker.ObjectExpression:
 		e.emitObjectExpression(node)
+	case checker.ParenthesizedExpression:
+		e.Write("(")
+		e.Emit(node.Expr)
+		e.Write(")")
 	case checker.PropertyAccessExpression:
 		e.emitPropertyAccessExpression(node)
 	case checker.RangeExpression:

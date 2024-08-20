@@ -127,7 +127,7 @@ func (tuple Tuple) Extends(t ExpressionType) bool {
 			return false
 		}
 		for i := 0; i < len(t.elements); i += 1 {
-			if !tuple.elements[i].Extends(t.elements[i]) {
+			if tuple.elements[i] != nil && !tuple.elements[i].Extends(t.elements[i]) {
 				return false
 			}
 		}

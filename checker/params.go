@@ -19,9 +19,18 @@ func (p Params) Type() ExpressionType {
 	return Tuple{types}
 }
 
-func (c *Checker) checkParams(params parser.TupleExpression) Params {
-	elements := make([]Param, len(params.Elements))
-	for i, element := range params.Elements {
+func (c *Checker) checkParams(params parser.ParenthesizedExpression) Params {
+	tuple, ok := params.Expr.(parser.TupleExpression)
+	if !ok {
+		param, ok := params.Expr.(parser.TypedExpression)
+		if !ok {
+			c.report("Expected typed identifier", param.Expr.Loc())
+			return Params{}
+		}
+		return Params{[]Param{c.checkParam(param)}, params.Loc()}
+	}
+	elements := make([]Param, len(tuple.Elements))
+	for i, element := range tuple.Elements {
 		if param, ok := element.(parser.TypedExpression); ok {
 			elements[i] = c.checkParam(param)
 		}

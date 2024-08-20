@@ -22,11 +22,11 @@ func (t TypedExpression) Loc() tokenizer.Loc {
 }
 
 func ParseTypedExpression(p *Parser) Node {
-	expr := ParseExpression(p)
+	expr := ParseRange(p)
 	if p.tokenizer.Peek().Kind() != tokenizer.COLON {
 		return expr
 	}
 	operator := p.tokenizer.Consume()
-	typing := ParseExpression(p)
+	typing := ParseRange(p)
 	return TypedExpression{expr, operator, typing}
 }

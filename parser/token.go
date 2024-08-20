@@ -10,7 +10,7 @@ type TokenExpression struct {
 
 func (t TokenExpression) Loc() tokenizer.Loc { return t.Token.Loc() }
 
-func (TokenExpression) Parse(p *Parser) Node {
+func (p *Parser) parseTokenExpression() Node {
 	token := p.tokenizer.Consume()
 	switch token.Kind() {
 	case tokenizer.BOOLEAN, tokenizer.NUMBER, tokenizer.STRING, tokenizer.IDENTIFIER, tokenizer.BOOL_KW, tokenizer.NUM_KW, tokenizer.STR_KW:

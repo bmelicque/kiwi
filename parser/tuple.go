@@ -6,28 +6,27 @@ import (
 
 type TupleExpression struct {
 	Elements []Node
-	loc      tokenizer.Loc
 }
 
 func (t TupleExpression) Loc() tokenizer.Loc {
-	return t.loc
+	return tokenizer.Loc{
+		Start: t.Elements[0].Loc().Start,
+		End:   t.Elements[len(t.Elements)-1].Loc().End,
+	}
 }
 
-func parseTupleExpression(p *Parser) Node {
-	lparen := p.tokenizer.Consume()
-	loc := tokenizer.Loc{}
-	loc.Start = lparen.Loc().Start
-
+func (p *Parser) parseTupleExpression() Node {
 	var elements []Node
-	ParseList(p, tokenizer.RPAREN, func() {
+	ParseList(p, tokenizer.ILLEGAL, func() {
 		elements = append(elements, ParseTypedExpression(p))
 	})
 
-	next := p.tokenizer.Peek()
-	if next.Kind() != tokenizer.RPAREN {
-		p.report("')' expected", next.Loc())
+	// FIXME: len == 0
+	if len(elements) == 0 {
+		return nil
 	}
-	loc.End = p.tokenizer.Consume().Loc().End
-
-	return TupleExpression{elements, loc}
+	if len(elements) == 1 {
+		return elements[0]
+	}
+	return TupleExpression{elements}
 }

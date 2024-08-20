@@ -59,7 +59,7 @@ func ParseStatement(p *Parser) Node {
 }
 
 func ParseExpression(p *Parser) Node {
-	expr := ParseRange(p)
+	expr := p.parseTupleExpression()
 	// TODO: stop at line breaks?
 	// TODO: handle EOF
 	// TODO: provide a recover token? (e.g. parse until COMMA or EOL for example)

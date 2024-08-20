@@ -59,7 +59,7 @@ func ParseAccessExpression(p *Parser) Node {
 	for slices.Contains(operators, next.Kind()) {
 		switch next.Kind() {
 		case tokenizer.LPAREN:
-			args := parseTupleExpression(p)
+			args := p.parseParenthesizedExpression()
 			expression = CallExpression{expression, args}
 		case tokenizer.DOT:
 			p.tokenizer.Consume()
@@ -72,6 +72,7 @@ func ParseAccessExpression(p *Parser) Node {
 			if !IsTypeToken(expression) {
 				return expression
 			}
+			// TODO: parseTuple
 			p.tokenizer.Consume()
 			var members []Node
 			ParseList(p, tokenizer.RBRACE, func() {
@@ -100,11 +101,11 @@ func ParseAccessExpression(p *Parser) Node {
 func fallback(p *Parser) Node {
 	switch p.tokenizer.Peek().Kind() {
 	case tokenizer.LPAREN:
-		return ParseFunctionExpression(p)
+		return p.parseFunctionExpression()
 	case tokenizer.LBRACKET:
 		return ListExpression{}.Parse(p)
 	case tokenizer.LBRACE:
 		return ParseObjectDefinition(p)
 	}
-	return TokenExpression{}.Parse(p)
+	return p.parseTokenExpression()
 }

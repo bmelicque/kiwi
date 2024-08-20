@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"fmt"
+
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
@@ -35,7 +37,6 @@ func ParseAssignment(p *Parser) Node {
 
 	var typing Node
 	var operator tokenizer.Token
-	var loc tokenizer.Loc
 	next := p.tokenizer.Peek()
 	switch next.Kind() {
 	case tokenizer.COLON:
@@ -52,15 +53,7 @@ func ParseAssignment(p *Parser) Node {
 	default:
 		return ExpressionStatement{expr}
 	}
+	fmt.Printf("%+v\n", p.tokenizer.Peek())
 	init := ParseExpression(p)
-	loc = operator.Loc()
-	if expr != nil {
-		loc.Start = expr.Loc().Start
-	} else if typing != nil {
-		loc.Start = typing.Loc().Start
-	}
-	if init != nil {
-		loc.End = init.Loc().End
-	}
 	return Assignment{expr, init, typing, operator}
 }

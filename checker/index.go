@@ -62,6 +62,8 @@ func (c *Checker) checkExpression(node parser.Node) Expression {
 		return c.checkObjectDefinition(node)
 	case parser.ObjectExpression:
 		return c.checkObjectExpression(node)
+	case parser.ParenthesizedExpression:
+		return c.checkParenthesizedExpression(node)
 	case *parser.PropertyAccessExpression:
 		return c.checkPropertyAccess(*node)
 	case parser.RangeExpression:

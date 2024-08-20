@@ -5,7 +5,7 @@ import (
 )
 
 type FunctionExpression struct {
-	Params   TupleExpression
+	Params   ParenthesizedExpression
 	Operator tokenizer.Token // -> or =>
 	Expr     Node            // return value for '->', return type for '=>'
 	Body     *Body
@@ -21,16 +21,11 @@ func (f FunctionExpression) Loc() tokenizer.Loc {
 	return loc
 }
 
-func ParseFunctionExpression(p *Parser) Node {
-	expr := parseTupleExpression(p)
-
-	tuple, ok := expr.(TupleExpression)
-	if !ok {
-		return tuple
-	}
+func (p *Parser) parseFunctionExpression() Node {
+	paren := p.parseParenthesizedExpression()
 	next := p.tokenizer.Peek()
 	if next.Kind() != tokenizer.SLIM_ARR && next.Kind() != tokenizer.FAT_ARR {
-		return tuple
+		return paren
 	}
 	operator := p.tokenizer.Consume()
 
@@ -39,7 +34,7 @@ func ParseFunctionExpression(p *Parser) Node {
 		p.report("Expression expected", next.Loc())
 	}
 
-	res := FunctionExpression{tuple, operator, ParseExpression(p), nil}
+	res := FunctionExpression{paren, operator, ParseExpression(p), nil}
 	if operator.Kind() == tokenizer.FAT_ARR {
 		res.Body = ParseBody(p)
 	}

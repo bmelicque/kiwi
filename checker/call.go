@@ -33,15 +33,22 @@ func (c CallExpression) Type() ExpressionType {
 
 func (c *Checker) checkCallExpression(expr parser.CallExpression) CallExpression {
 	callee := c.checkExpression(expr.Callee)
-	args, ok := c.checkExpression(expr.Args).(TupleExpression)
+	paren, ok := c.checkExpression(expr.Args).(ParenthesizedExpression)
 	if !ok {
-		c.report("Tuple expression expected", args.Loc())
+		c.report("Expected arguments", expr.Args.Loc())
+	}
+	args, ok := paren.Expr.(TupleExpression)
+	if !ok {
+		args = TupleExpression{
+			Elements: []Expression{paren.Expr},
+			loc:      paren.Expr.Loc(),
+		}
 	}
 	calleeType, ok := callee.Type().(Function)
 	if !ok {
 		c.report("Function type expected", callee.Loc())
 	} else if !(calleeType.params.Extends(args.Type())) {
-		c.report("Arguments types don't match expected parameters types", args.Loc())
+		c.report("Arguments types don't match expected parameters types", expr.Args.Loc())
 	}
 
 	return CallExpression{callee, args}

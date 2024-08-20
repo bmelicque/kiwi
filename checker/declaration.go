@@ -45,7 +45,11 @@ func (c *Checker) checkVariableDeclaration(a parser.Assignment) VariableDeclarat
 	init := c.checkExpression(a.Initializer)
 	constant := a.Operator.Kind() == tokenizer.DEFINE
 
-	switch declared := a.Declared.(type) {
+	declared := a.Declared
+	if d, ok := declared.(parser.ParenthesizedExpression); ok {
+		declared = d.Expr
+	}
+	switch declared := declared.(type) {
 	case parser.TokenExpression:
 		pattern, err = c.declareIdentifier(declared, init.Type())
 		if err != nil {

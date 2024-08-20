@@ -9,13 +9,17 @@ import (
 func ParseList(p *Parser, until tokenizer.TokenKind, callback func()) {
 	p.tokenizer.DiscardLineBreaks()
 	next := p.tokenizer.Peek()
+outer:
 	for next.Kind() != until && next.Kind() != tokenizer.EOF {
 		callback()
 
 		// handle bad tokens before comma
 		next = p.tokenizer.Peek()
 		for next.Kind() != until && next.Kind() != tokenizer.COMMA && next.Kind() != tokenizer.EOF {
-			p.report("',' expected", ParseExpression(p).Loc())
+			if until == tokenizer.ILLEGAL {
+				break outer
+			}
+			p.report("',' expected", next.Loc())
 			next = p.tokenizer.Peek()
 		}
 
