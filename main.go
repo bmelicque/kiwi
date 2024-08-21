@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/bmelicque/test-parser/checker"
 	"github.com/bmelicque/test-parser/emitter"
@@ -39,11 +40,17 @@ func main() {
 	parserErrors := p.GetReport()
 	checkerErrors := c.GetReport()
 	if len(parserErrors)+len(checkerErrors) == 0 {
-		e := emitter.MakeEmitter()
-		for _, statement := range program {
-			e.Emit(statement)
+		f, err := os.Create("out.js")
+		if err != nil {
+			log.Fatal(err)
 		}
-		fmt.Printf("%+v\n", e.String())
+		defer f.Close()
+
+		_, err = f.WriteString(emitter.EmitProgram(program))
+		if err != nil {
+			log.Fatal(err)
+		}
+		f.Sync()
 	} else {
 		for _, err := range parserErrors {
 			fmt.Printf("Error at line %v, col. %v: %v\n", err.Loc.Start.Line, err.Loc.Start.Col, err.Message)

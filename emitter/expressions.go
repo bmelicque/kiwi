@@ -11,59 +11,59 @@ func (e *Emitter) emitBinaryExpression(expr checker.BinaryExpression) {
 	if expr.Left != nil {
 		left := Precedence(expr.Left)
 		if left < precedence {
-			e.Write("(")
+			e.write("(")
 		}
-		e.Emit(expr.Left)
+		e.emit(expr.Left)
 		if left < precedence {
-			e.Write(")")
+			e.write(")")
 		}
 	}
 
-	e.Write(" ")
-	e.Write(expr.Operator.Text())
-	e.Write(" ")
+	e.write(" ")
+	e.write(expr.Operator.Text())
+	e.write(" ")
 
 	if expr.Right != nil {
 		right := Precedence(expr.Right)
 		if right < precedence {
-			e.Write("(")
+			e.write("(")
 		}
-		e.Emit(expr.Right)
+		e.emit(expr.Right)
 		if right < precedence {
-			e.Write(")")
+			e.write(")")
 		}
 	}
 }
 
 func (e *Emitter) emitCallExpression(expr checker.CallExpression) {
-	e.Emit(expr.Callee)
-	e.Write("(")
-	defer e.Write(")")
+	e.emit(expr.Callee)
+	e.write("(")
+	defer e.write(")")
 
 	args := expr.Args // This should be ensured by checker
 	for i, el := range args.Elements {
-		e.Emit(el)
+		e.emit(el)
 		if i != len(args.Elements)-1 {
-			e.Write(", ")
+			e.write(", ")
 		}
 	}
 }
 
 func (e *Emitter) emitFatArrowFunction(f checker.FatArrowFunction) {
 	e.emitParams(f.Params)
-	e.Write(" => ")
-	e.Emit(f.Body)
+	e.write(" => ")
+	e.emit(f.Body)
 }
 
 func (e *Emitter) emitListExpression(l checker.ListExpression) {
-	e.Write("[")
+	e.write("[")
 	for i, el := range l.Elements {
-		e.Emit(el)
+		e.emit(el)
 		if i != len(l.Elements)-1 {
-			e.Write(", ")
+			e.write(", ")
 		}
 	}
-	e.Write("]")
+	e.write("]")
 }
 
 func findMemberByName(members []checker.ObjectExpressionMember, name string) parser.Node {
@@ -77,82 +77,82 @@ func findMemberByName(members []checker.ObjectExpressionMember, name string) par
 }
 
 func (e *Emitter) emitObjectExpression(o checker.ObjectExpression) {
-	e.Emit(o.Typing)
-	e.Write("(")
-	defer e.Write(")")
+	e.emit(o.Typing)
+	e.write("(")
+	defer e.write(")")
 	typing := o.Typing.Type().(checker.Type).Value.(checker.TypeRef).Ref.(checker.Object)
 	max := len(o.Members) - 1
 	i := 0
 	for name := range typing.Members {
-		e.Emit(findMemberByName(o.Members, name))
+		e.emit(findMemberByName(o.Members, name))
 		if i != max {
-			e.Write(", ")
+			e.write(", ")
 		}
 		i++
 	}
 }
 
 func (e *Emitter) emitParams(params checker.Params) {
-	e.Write("(")
+	e.write("(")
 	length := len(params.Params)
 	for i, param := range params.Params {
-		e.Emit(param.Identifier)
+		e.emit(param.Identifier)
 		if i != length-1 {
-			e.Write(", ")
+			e.write(", ")
 		}
 	}
-	e.Write(")")
+	e.write(")")
 }
 
 func (e *Emitter) emitPropertyAccessExpression(p checker.PropertyAccessExpression) {
-	e.Emit(p.Expr)
-	e.Write(".")
-	e.Emit(p.Property)
+	e.emit(p.Expr)
+	e.write(".")
+	e.emit(p.Property)
 }
 
 func (e *Emitter) emitRangeExpression(r checker.RangeExpression) {
-	e.AddFlag(RangeFlag)
+	e.addFlag(RangeFlag)
 
-	e.Write("range(")
+	e.write("_range(")
 
 	if r.Left != nil {
-		e.Emit(r.Left)
+		e.emit(r.Left)
 	} else {
-		e.Write("0")
+		e.write("0")
 	}
 
-	e.Write(", ")
+	e.write(", ")
 
 	if r.Right != nil {
-		e.Emit(r.Right)
+		e.emit(r.Right)
 		if r.Operator.Kind() == tokenizer.RANGE_INCLUSIVE {
-			e.Write(" + 1")
+			e.write(" + 1")
 		}
 	} else {
-		e.Write("1")
+		e.write("1")
 	}
 
-	e.Write(")")
+	e.write(")")
 }
 
 func (e *Emitter) emitSlimArrowFunction(f checker.SlimArrowFunction) {
 	e.emitParams(f.Params)
-	e.Write(" => ")
-	e.Emit(f.Expr)
+	e.write(" => ")
+	e.emit(f.Expr)
 }
 
 func (e *Emitter) emitTupleExpression(t checker.TupleExpression) {
 	if len(t.Elements) == 1 {
-		e.Emit(t.Elements[0])
+		e.emit(t.Elements[0])
 		return
 	}
-	e.Write("[")
+	e.write("[")
 	length := len(t.Elements)
 	for i, el := range t.Elements {
-		e.Emit(el)
+		e.emit(el)
 		if i != length-1 {
-			e.Write(", ")
+			e.write(", ")
 		}
 	}
-	e.Write("]")
+	e.write("]")
 }

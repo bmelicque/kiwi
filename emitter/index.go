@@ -22,7 +22,7 @@ type Emitter struct {
 	thisName string
 }
 
-func MakeEmitter() *Emitter {
+func makeEmitter() *Emitter {
 	return &Emitter{
 		depth:   0,
 		flags:   NoFlags,
@@ -30,25 +30,29 @@ func MakeEmitter() *Emitter {
 	}
 }
 
-func (e *Emitter) AddFlag(flag EmitterFlag) {
+func (e *Emitter) addFlag(flag EmitterFlag) {
 	e.flags |= flag
 }
 
-func (e *Emitter) Write(str string) {
+func (e *Emitter) hasFlag(flag EmitterFlag) bool {
+	return (e.flags & flag) != NoFlags
+}
+
+func (e *Emitter) write(str string) {
 	e.builder.WriteString(str)
 }
 
-func (e *Emitter) Indent() {
+func (e *Emitter) indent() {
 	for i := 0; i < e.depth; i++ {
 		e.builder.WriteString("    ")
 	}
 }
 
-func (e Emitter) String() string {
+func (e Emitter) string() string {
 	return e.builder.String()
 }
 
-func (e *Emitter) Emit(node interface{}) {
+func (e *Emitter) emit(node interface{}) {
 	switch node := node.(type) {
 	// Statements
 	case checker.Assignment:
@@ -80,20 +84,20 @@ func (e *Emitter) Emit(node interface{}) {
 	case checker.Identifier:
 		text := node.Token.Text()
 		if text == e.thisName {
-			e.Write("this")
+			e.write("this")
 		} else {
-			e.Write(text)
+			e.write(text)
 		}
 	case checker.ListExpression:
 		e.emitListExpression(node)
 	case checker.Literal:
-		e.Write(node.Token.Text())
+		e.write(node.Token.Text())
 	case checker.ObjectExpression:
 		e.emitObjectExpression(node)
 	case checker.ParenthesizedExpression:
-		e.Write("(")
-		e.Emit(node.Expr)
-		e.Write(")")
+		e.write("(")
+		e.emit(node.Expr)
+		e.write(")")
 	case checker.PropertyAccessExpression:
 		e.emitPropertyAccessExpression(node)
 	case checker.RangeExpression:
@@ -106,4 +110,15 @@ func (e *Emitter) Emit(node interface{}) {
 	default:
 		panic(fmt.Sprintf("Cannot emit type '%v' (not implemented yet)", reflect.TypeOf(node)))
 	}
+}
+
+func EmitProgram(nodes []checker.Node) string {
+	e := makeEmitter()
+	for _, node := range nodes {
+		e.emit(node)
+	}
+	if e.hasFlag(RangeFlag) {
+		e.write("function* _range(start, end) {\n    while (start < end) yield start++;\n}\n")
+	}
+	return e.string()
 }

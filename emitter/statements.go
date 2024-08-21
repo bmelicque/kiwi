@@ -19,18 +19,18 @@ func (e *Emitter) emitClassParams(params []checker.ObjectMemberDefinition) []str
 	}
 
 	if length > maxClassParamsLength {
-		e.Write("\n")
+		e.write("\n")
 		for _, name := range names {
-			e.Write("        ")
-			e.Write(name)
-			e.Write(",\n")
+			e.write("        ")
+			e.write(name)
+			e.write(",\n")
 		}
-		e.Write("    ")
+		e.write("    ")
 	} else {
 		for i, name := range names {
-			e.Write(name)
+			e.write(name)
 			if i != len(names)-1 {
-				e.Write(", ")
+				e.write(", ")
 			}
 		}
 	}
@@ -38,84 +38,84 @@ func (e *Emitter) emitClassParams(params []checker.ObjectMemberDefinition) []str
 }
 
 func (e *Emitter) emitClass(declaration checker.VariableDeclaration) {
-	e.Write("class ")
-	e.Emit(declaration.Pattern)
-	e.Write(" {\n    constructor(")
-	defer e.Write("    }\n}\n")
+	e.write("class ")
+	e.emit(declaration.Pattern)
+	e.write(" {\n    constructor(")
+	defer e.write("    }\n}\n")
 
 	names := e.emitClassParams(declaration.Initializer.(checker.ObjectDefinition).Members)
-	e.Write(") {\n")
+	e.write(") {\n")
 	for _, name := range names {
-		e.Write(fmt.Sprintf("        this.%v = %v;\n", name, name))
+		e.write(fmt.Sprintf("        this.%v = %v;\n", name, name))
 	}
 }
 
 func (e *Emitter) emitAssignment(a checker.Assignment) {
-	e.Emit(a.Pattern)
-	e.Write(" = ")
-	e.Emit(a.Value)
-	e.Write(";\n")
+	e.emit(a.Pattern)
+	e.write(" = ")
+	e.emit(a.Value)
+	e.write(";\n")
 }
 
 func (e *Emitter) emitBody(b checker.Body) {
-	e.Write("{")
+	e.write("{")
 	if len(b.Statements) == 0 {
-		e.Write("}")
+		e.write("}")
 		return
 	}
-	e.Write("\n")
+	e.write("\n")
 	defer func() {
-		e.Indent()
-		e.Write("}\n")
+		e.indent()
+		e.write("}\n")
 	}()
 	e.depth += 1
 	defer func() { e.depth -= 1 }()
 	for _, statement := range b.Statements {
-		e.Indent()
-		e.Emit(statement)
+		e.indent()
+		e.emit(statement)
 	}
 }
 
 func (e *Emitter) emitExpressionStatement(s checker.ExpressionStatement) {
-	e.Emit(s.Expr)
-	e.Write(";\n")
+	e.emit(s.Expr)
+	e.write(";\n")
 }
 
 func (e *Emitter) emitFor(f checker.For) {
-	e.Write("while (")
-	e.Emit(f.Condition)
-	e.Write(") ")
-	e.Emit(f.Body)
+	e.write("while (")
+	e.emit(f.Condition)
+	e.write(") ")
+	e.emit(f.Body)
 }
 
 func (e *Emitter) emitForRange(f checker.ForRange) {
-	e.Write("for (")
+	e.write("for (")
 	if f.Declaration.Constant {
-		e.Write("const")
+		e.write("const")
 	} else {
-		e.Write("let")
+		e.write("let")
 	}
-	e.Write(" ")
+	e.write(" ")
 	// FIXME: tuples...
-	e.Emit(f.Declaration.Pattern)
-	e.Write(" of ")
-	e.Emit(f.Declaration.Range)
-	e.Write(") ")
-	e.Emit(f.Body)
+	e.emit(f.Declaration.Pattern)
+	e.write(" of ")
+	e.emit(f.Declaration.Range)
+	e.write(") ")
+	e.emit(f.Body)
 }
 
 func (e *Emitter) emitIf(i checker.If) {
-	e.Write("if (")
-	e.Emit(i.Condition)
-	e.Write(") ")
-	e.Emit(i.Body)
+	e.write("if (")
+	e.emit(i.Condition)
+	e.write(") ")
+	e.emit(i.Body)
 }
 
 func (e *Emitter) emitMethodDeclaration(method checker.MethodDeclaration) {
-	e.Emit(method.Receiver.Typing)
-	e.Write(".prototype.")
-	e.Emit(method.Name)
-	e.Write(" = function ")
+	e.emit(method.Receiver.Typing)
+	e.write(".prototype.")
+	e.emit(method.Name)
+	e.write(" = function ")
 
 	e.thisName = method.Receiver.Name.Text()
 	defer func() { e.thisName = "" }()
@@ -123,24 +123,24 @@ func (e *Emitter) emitMethodDeclaration(method checker.MethodDeclaration) {
 	switch init := method.Initializer.(type) {
 	case checker.FatArrowFunction:
 		e.emitParams(init.Params)
-		e.Write(" ")
+		e.write(" ")
 		e.emitBody(init.Body)
 	case checker.SlimArrowFunction:
 		e.emitParams(init.Params)
-		e.Write(" { return ")
-		e.Emit(init.Expr)
-		e.Write(" }")
+		e.write(" { return ")
+		e.emit(init.Expr)
+		e.write(" }")
 	}
-	e.Write("\n")
+	e.write("\n")
 }
 
 func (e *Emitter) emitReturn(r checker.Return) {
-	e.Write("return")
+	e.write("return")
 	if r.Value != nil {
-		e.Write(" ")
-		e.Emit(r.Value)
+		e.write(" ")
+		e.emit(r.Value)
 	}
-	e.Write(";\n")
+	e.write(";\n")
 }
 
 func (e *Emitter) emitVariableDeclaration(declaration checker.VariableDeclaration) {
@@ -150,15 +150,19 @@ func (e *Emitter) emitVariableDeclaration(declaration checker.VariableDeclaratio
 	}
 
 	if declaration.Constant {
-		e.Write("const ")
+		e.write("const ")
 	} else {
-		e.Write("let ")
+		e.write("let ")
 	}
 
-	e.Emit(declaration.Pattern)
-	e.Write(" = ")
-	e.Emit(declaration.Initializer)
-	e.Write(";\n")
+	e.emit(declaration.Pattern)
+	e.write(" = ")
+	e.emit(declaration.Initializer)
+	switch declaration.Initializer.(type) {
+	case checker.SlimArrowFunction, checker.FatArrowFunction:
+	default:
+		e.write(";\n")
+	}
 }
 
 func isTypeIdentifier(expr checker.Expression) bool {
