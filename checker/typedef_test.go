@@ -55,3 +55,20 @@ func TestObjectDescriptionDuplicates(t *testing.T) {
 		t.Fatalf("Expected 2 members, got %v", len(object.Members))
 	}
 }
+
+func TestObjectDescriptionColons(t *testing.T) {
+	checker := MakeChecker()
+	checker.checkObjectDefinition(parser.ObjectDefinition{
+		Members: []parser.Node{
+			parser.TypedExpression{
+				Expr:   parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "n", tokenizer.Loc{}}},
+				Typing: parser.TokenExpression{Token: testToken{tokenizer.NUM_KW, "number", tokenizer.Loc{}}},
+				Colon:  true,
+			},
+		},
+	})
+
+	if len(checker.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %v: %#v", len(checker.errors), checker.errors)
+	}
+}

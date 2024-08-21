@@ -50,5 +50,9 @@ func (c *Checker) checkParam(expr parser.TypedExpression) Param {
 		typing = nil
 	}
 
+	if expr.Colon {
+		c.report("Expected type (no use of ':')", expr.Typing.Loc())
+	}
+
 	return Param{identifier, typing}
 }

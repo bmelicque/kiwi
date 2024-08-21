@@ -7,6 +7,7 @@ import (
 type TypedExpression struct {
 	Expr   Node
 	Typing Node
+	Colon  bool
 }
 
 func (t TypedExpression) Loc() tokenizer.Loc {
@@ -19,15 +20,18 @@ func (t TypedExpression) Loc() tokenizer.Loc {
 
 func (p *Parser) parseTypedExpression() Node {
 	expr := ParseRange(p)
+	colon := false
 	if p.tokenizer.Peek().Kind() == tokenizer.COLON {
-		// p.report("Params and members don't use colons", p.tokenizer.Consume().Loc())
 		p.tokenizer.Consume()
+		colon = true
 	}
-	p.allowEmptyExpr = true
+	if !colon {
+		p.allowEmptyExpr = true
+	}
 	typing := ParseRange(p)
 	p.allowEmptyExpr = false
 	if typing == nil {
 		return expr
 	}
-	return TypedExpression{expr, typing}
+	return TypedExpression{expr, typing, colon}
 }

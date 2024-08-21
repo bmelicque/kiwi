@@ -49,7 +49,7 @@ func TestFunctionCall(t *testing.T) {
 	}
 }
 
-func TestInstanciation(t *testing.T) {
+func TestObjectExpression(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []tokenizer.Token{
 		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
 		testToken{tokenizer.LBRACE, "{", tokenizer.Loc{}},

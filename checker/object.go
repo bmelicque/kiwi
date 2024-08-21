@@ -42,6 +42,9 @@ func (c *Checker) checkObjectExpressionMember(node parser.Node) (ObjectExpressio
 	if !ok {
 		return ObjectExpressionMember{}, false
 	}
+	if !member.Colon {
+		c.report("Expected ':' between identifier and value", member.Loc())
+	}
 	token, ok := member.Expr.(parser.TokenExpression)
 	if !ok {
 		return ObjectExpressionMember{}, false
@@ -50,7 +53,6 @@ func (c *Checker) checkObjectExpressionMember(node parser.Node) (ObjectExpressio
 	if !ok {
 		return ObjectExpressionMember{}, false
 	}
-
 	value := c.checkExpression(member.Typing)
 	return ObjectExpressionMember{name, value}, true
 }
