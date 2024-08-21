@@ -24,10 +24,10 @@ func ParseForLoop(p *Parser) Node {
 	statement := For{}
 	statement.Keyword = p.tokenizer.Consume()
 
-	outer := p.allowBodyParsing
-	p.allowBodyParsing = false
+	outer := p.allowBraceParsing
+	p.allowBraceParsing = false
 	statement.Statement = p.parseAssignment()
-	p.allowBodyParsing = outer
+	p.allowBraceParsing = outer
 	statement.Body = ParseBody(p)
 
 	return statement

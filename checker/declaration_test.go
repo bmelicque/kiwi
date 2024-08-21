@@ -54,3 +54,29 @@ func TestTupleDeclaration(t *testing.T) {
 		t.Fatalf("Expected literal tuple, got %#v", assignment.Initializer)
 	}
 }
+
+func TestObjectDeclaration(t *testing.T) {
+	checker := MakeChecker()
+	assignment := checker.checkVariableDeclaration(parser.Assignment{
+		Declared: parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}}},
+		Operator: testToken{tokenizer.ASSIGN, "::", tokenizer.Loc{}},
+		Initializer: parser.ObjectDefinition{
+			Members: []parser.Node{
+				parser.TypedExpression{
+					Expr:   parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "n", tokenizer.Loc{}}},
+					Typing: parser.TokenExpression{Token: testToken{tokenizer.NUM_KW, "number", tokenizer.Loc{}}},
+				},
+			},
+		},
+	})
+
+	if len(checker.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", checker.errors)
+	}
+	if _, ok := assignment.Pattern.(Identifier); !ok {
+		t.Fatalf("Expected identifier 'n', got %#v", assignment.Pattern)
+	}
+	if _, ok := assignment.Initializer.(ObjectDefinition); !ok {
+		t.Fatalf("Expected ObjectDefinition, got %#v", assignment.Initializer)
+	}
+}

@@ -107,8 +107,8 @@ func fallback(p *Parser) Node {
 	case tokenizer.LBRACKET:
 		return ListExpression{}.Parse(p)
 	case tokenizer.LBRACE:
-		if p.allowBodyParsing {
-			return ParseBody(p)
+		if p.allowBraceParsing {
+			return p.parseObjectDefinition()
 		}
 	}
 	return p.parseTokenExpression()

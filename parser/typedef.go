@@ -13,7 +13,7 @@ type ObjectDefinition struct {
 
 func (expr ObjectDefinition) Loc() tokenizer.Loc { return expr.loc }
 
-func ParseObjectDefinition(p *Parser) Node {
+func (p *Parser) parseObjectDefinition() Node {
 	lbrace := p.tokenizer.Consume()
 	loc := lbrace.Loc()
 
