@@ -38,6 +38,9 @@ func ParseList(p *Parser, until tokenizer.TokenKind, callback func()) {
 			p.report("Expected end of line", next.Loc())
 		}
 		if !multiline && next.Kind() == tokenizer.EOL {
+			if until == tokenizer.ILLEGAL {
+				return
+			}
 			p.report("Expected no end of line", next.Loc())
 		}
 		p.tokenizer.DiscardLineBreaks()

@@ -20,7 +20,8 @@ func (t TypedExpression) Loc() tokenizer.Loc {
 func (p *Parser) parseTypedExpression() Node {
 	expr := ParseRange(p)
 	if p.tokenizer.Peek().Kind() == tokenizer.COLON {
-		p.report("Params and members don't use colons", p.tokenizer.Consume().Loc())
+		// p.report("Params and members don't use colons", p.tokenizer.Consume().Loc())
+		p.tokenizer.Consume()
 	}
 	p.allowEmptyExpr = true
 	typing := ParseRange(p)

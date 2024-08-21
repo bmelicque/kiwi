@@ -69,7 +69,6 @@ func (p *Parser) parseAccessExpression() Node {
 				Property: property,
 			}
 
-		// TODO: remove this and make it TypedExpression(Expression, Body)
 		case tokenizer.LBRACE:
 			if !IsTypeToken(expression) {
 				return expression
@@ -80,10 +79,7 @@ func (p *Parser) parseAccessExpression() Node {
 			ParseList(p, tokenizer.RBRACE, func() {
 				members = append(members, p.parseTypedExpression())
 			})
-			loc := tokenizer.Loc{
-				Start: expression.Loc().Start,
-				End:   members[len(members)-1].Loc().End,
-			}
+			loc := tokenizer.Loc{Start: expression.Loc().Start}
 			if p.tokenizer.Peek().Kind() != tokenizer.RBRACE {
 				p.report("'}' expected", p.tokenizer.Peek().Loc())
 			} else {

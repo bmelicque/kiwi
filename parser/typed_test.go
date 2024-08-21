@@ -33,7 +33,7 @@ func TestTypedExpressionWithColon(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected TypedExpression, got %#v", node)
 	}
-	if len(parser.errors) != 1 {
-		t.Fatalf("Expected to report error on colon")
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
 	}
 }

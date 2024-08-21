@@ -48,3 +48,24 @@ func TestFunctionCall(t *testing.T) {
 		t.Fatalf("Expected argument 42")
 	}
 }
+
+func TestInstanciation(t *testing.T) {
+	tokenizer := testTokenizer{tokens: []tokenizer.Token{
+		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
+		testToken{tokenizer.LBRACE, "{", tokenizer.Loc{}},
+		testToken{tokenizer.IDENTIFIER, "value", tokenizer.Loc{}},
+		testToken{tokenizer.COLON, ":", tokenizer.Loc{}},
+		testToken{tokenizer.NUMBER, "42", tokenizer.Loc{}},
+		testToken{tokenizer.RBRACE, "}", tokenizer.Loc{}},
+	}}
+	parser := MakeParser(&tokenizer)
+	node := ParseExpression(parser)
+
+	_, ok := node.(ObjectExpression)
+	if !ok {
+		t.Fatalf("Expected ObjectExpression, got %#v", node)
+	}
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
+	}
+}

@@ -77,6 +77,7 @@ func findMemberByName(members []checker.ObjectExpressionMember, name string) par
 }
 
 func (e *Emitter) emitObjectExpression(o checker.ObjectExpression) {
+	e.write("new ")
 	e.emit(o.Typing)
 	e.write("(")
 	defer e.write(")")
