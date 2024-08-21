@@ -1,13 +1,15 @@
 package emitter
 
 import (
-	"github.com/bmelicque/test-parser/parser"
+	"github.com/bmelicque/test-parser/checker"
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
-func Precedence(expr parser.Node) int8 {
+func Precedence(expr checker.Expression) uint8 {
 	switch expr := expr.(type) {
-	case parser.BinaryExpression:
+	case checker.TupleExpression:
+		return 1
+	case checker.BinaryExpression:
 		switch expr.Operator.Kind() {
 		case tokenizer.LOR:
 			return 4
@@ -24,15 +26,9 @@ func Precedence(expr parser.Node) int8 {
 		case tokenizer.POW:
 			return 14
 		}
-	case parser.CallExpression, *parser.PropertyAccessExpression:
+	case checker.CallExpression, checker.PropertyAccessExpression:
 		return 18
-	case parser.TupleExpression:
-		if len(expr.Elements) > 1 {
-			return 19
-		} else {
-			return Precedence(expr.Elements[0])
-		}
-	case *parser.TokenExpression:
+	case checker.Identifier, checker.Literal, checker.ParenthesizedExpression:
 		return 20
 	}
 	return 0
