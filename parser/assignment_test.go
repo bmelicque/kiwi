@@ -78,3 +78,33 @@ func TestObjectDeclaration(t *testing.T) {
 		t.Fatalf("Expected ObjectDefinition")
 	}
 }
+
+func TestMethodDeclaration(t *testing.T) {
+	tokenizer := testTokenizer{tokens: []tokenizer.Token{
+		testToken{tokenizer.LPAREN, "(", tokenizer.Loc{}},
+		testToken{tokenizer.IDENTIFIER, "t", tokenizer.Loc{}},
+		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
+		testToken{tokenizer.RPAREN, ")", tokenizer.Loc{}},
+		testToken{tokenizer.DOT, ".", tokenizer.Loc{}},
+		testToken{tokenizer.IDENTIFIER, "method", tokenizer.Loc{}},
+		testToken{tokenizer.DEFINE, "::", tokenizer.Loc{}},
+		testToken{tokenizer.LPAREN, "(", tokenizer.Loc{}},
+		testToken{tokenizer.RPAREN, ")", tokenizer.Loc{}},
+		testToken{tokenizer.SLIM_ARR, "->", tokenizer.Loc{}},
+		testToken{tokenizer.LPAREN, "(", tokenizer.Loc{}},
+		testToken{tokenizer.RPAREN, ")", tokenizer.Loc{}},
+	}}
+	parser := MakeParser(&tokenizer)
+	node := parser.parseAssignment()
+
+	expr, ok := node.(Assignment)
+	if !ok {
+		t.Fatalf("Expected Assignment, got %#v", node)
+	}
+	if _, ok := expr.Declared.(PropertyAccessExpression); !ok {
+		t.Fatalf("Expected method declaration")
+	}
+	if _, ok := expr.Initializer.(FunctionExpression); !ok {
+		t.Fatalf("Expected FunctionExpression")
+	}
+}

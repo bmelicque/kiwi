@@ -20,11 +20,11 @@ type MethodDeclaration struct {
 func (m MethodDeclaration) Loc() tokenizer.Loc { return m.loc }
 
 func (c *Checker) checkMethodDeclarationReceiver(expr parser.Node) (Receiver, bool) {
-	tuple, ok := expr.(parser.TupleExpression)
-	if !ok || len(tuple.Elements) != 1 {
+	paren, ok := expr.(parser.ParenthesizedExpression)
+	if !ok {
 		return Receiver{}, false
 	}
-	typed, ok := tuple.Elements[0].(parser.TypedExpression)
+	typed, ok := paren.Expr.(parser.TypedExpression)
 	if !ok {
 		return Receiver{}, false
 	}
@@ -56,7 +56,7 @@ func (c *Checker) checkMethodDeclarationFunction(receiver Receiver, expr parser.
 }
 
 func (c *Checker) checkMethodDeclaration(a parser.Assignment) MethodDeclaration {
-	left := a.Declared.(*parser.PropertyAccessExpression)
+	left := a.Declared.(parser.PropertyAccessExpression)
 
 	start := left.Expr.Loc().Start
 	receiver, ok := c.checkMethodDeclarationReceiver(left.Expr)

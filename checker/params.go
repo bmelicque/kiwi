@@ -20,6 +20,10 @@ func (p Params) Type() ExpressionType {
 }
 
 func (c *Checker) checkParams(params parser.ParenthesizedExpression) Params {
+	if params.Expr == nil {
+		return Params{[]Param{}, params.Loc()}
+	}
+
 	tuple, ok := params.Expr.(parser.TupleExpression)
 	if !ok {
 		param, ok := params.Expr.(parser.TypedExpression)

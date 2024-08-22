@@ -64,8 +64,8 @@ func (c *Checker) checkExpression(node parser.Node) Expression {
 		return c.checkObjectExpression(node)
 	case parser.ParenthesizedExpression:
 		return c.checkParenthesizedExpression(node)
-	case *parser.PropertyAccessExpression:
-		return c.checkPropertyAccess(*node)
+	case parser.PropertyAccessExpression:
+		return c.checkPropertyAccess(node)
 	case parser.RangeExpression:
 		return c.checkRangeExpression(node)
 	case parser.TokenExpression:
@@ -83,7 +83,7 @@ func (c *Checker) Check(node parser.Node) Node {
 		if operator != tokenizer.DECLARE && operator != tokenizer.DEFINE {
 			return c.checkAssignment(node)
 		}
-		if _, ok := node.Declared.(*parser.PropertyAccessExpression); ok {
+		if _, ok := node.Declared.(parser.PropertyAccessExpression); ok {
 			return c.checkMethodDeclaration(node)
 		}
 		return c.checkVariableDeclaration(node)

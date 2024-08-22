@@ -27,6 +27,32 @@ func TestPropertyAccess(t *testing.T) {
 	}
 }
 
+func TestMethodAccess(t *testing.T) {
+	tokenizer := testTokenizer{tokens: []tokenizer.Token{
+		testToken{tokenizer.LPAREN, "(", tokenizer.Loc{}},
+		testToken{tokenizer.IDENTIFIER, "t", tokenizer.Loc{}},
+		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
+		testToken{tokenizer.RPAREN, ")", tokenizer.Loc{}},
+		testToken{tokenizer.DOT, ".", tokenizer.Loc{}},
+		testToken{tokenizer.IDENTIFIER, "method", tokenizer.Loc{}},
+	}}
+	parser := MakeParser(&tokenizer)
+	node := parser.parseAccessExpression()
+
+	expr, ok := node.(PropertyAccessExpression)
+	if !ok {
+		t.Fatalf("Expected PropertyAccessExpression, got %#v", node)
+	}
+
+	if _, ok := expr.Expr.(ParenthesizedExpression); !ok {
+		t.Fatalf("Expected ParenthesizedExpression on LHS, got %#v", expr.Expr)
+	}
+
+	if _, ok := expr.Property.(TokenExpression); !ok {
+		t.Fatalf("Expected token 'method'")
+	}
+}
+
 func TestFunctionCall(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []tokenizer.Token{
 		testToken{tokenizer.IDENTIFIER, "f", tokenizer.Loc{}},

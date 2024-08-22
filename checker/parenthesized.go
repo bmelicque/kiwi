@@ -19,10 +19,12 @@ func (p ParenthesizedExpression) Type() ExpressionType {
 }
 
 func (c *Checker) checkParenthesizedExpression(expr parser.ParenthesizedExpression) ParenthesizedExpression {
+	var e Expression
+	if expr.Expr != nil {
+		e = c.checkExpression(expr.Expr)
+	}
 	return ParenthesizedExpression{
-		Expr: c.checkExpression(expr.Expr),
+		Expr: e,
 		loc:  expr.Loc(),
 	}
 }
-
-// TODO: Check
