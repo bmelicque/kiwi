@@ -9,8 +9,9 @@ import (
 // TODO: random access expression
 
 type CallExpression struct {
-	Callee Node
-	Args   Node
+	Callee   Node
+	TypeArgs Node
+	Args     Node
 }
 
 func (c CallExpression) Loc() tokenizer.Loc {
@@ -51,16 +52,24 @@ type ObjectExpression struct {
 
 func (o ObjectExpression) Loc() tokenizer.Loc { return o.loc }
 
-var operators = []tokenizer.TokenKind{tokenizer.LPAREN, tokenizer.DOT, tokenizer.LBRACE}
+var operators = []tokenizer.TokenKind{tokenizer.LESS, tokenizer.LPAREN, tokenizer.DOT, tokenizer.LBRACE}
 
 func (p *Parser) parseAccessExpression() Node {
 	expression := fallback(p)
 	next := p.tokenizer.Peek()
 	for slices.Contains(operators, next.Kind()) {
 		switch next.Kind() {
-		case tokenizer.LPAREN:
+		case tokenizer.LESS, tokenizer.LPAREN:
+			var typeArgs AngleExpression
+			if next.Kind() == tokenizer.LESS {
+				typeArgs = p.parseAngleExpression()
+			}
+			next = p.tokenizer.Peek()
+			if next.Kind() != tokenizer.LPAREN {
+				return CallExpression{expression, typeArgs, nil}
+			}
 			args := p.parseParenthesizedExpression()
-			expression = CallExpression{expression, args}
+			expression = CallExpression{expression, nil, args}
 		case tokenizer.DOT:
 			p.tokenizer.Consume()
 			property := fallback(p)
