@@ -135,3 +135,23 @@ func TestFatArrowFunctionWithArgs(t *testing.T) {
 		t.Fatalf("Expected Body, got nothing")
 	}
 }
+
+func TestFunctionWithTypeArgs(t *testing.T) {
+	parser := MakeParser(&testTokenizer{tokens: []tokenizer.Token{
+		testToken{tokenizer.LESS, "<", tokenizer.Loc{}},
+		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
+		testToken{tokenizer.GREATER, ">", tokenizer.Loc{}},
+		testToken{tokenizer.LPAREN, "(", tokenizer.Loc{}},
+		testToken{tokenizer.RPAREN, ")", tokenizer.Loc{}},
+		testToken{tokenizer.FAT_ARR, "=>", tokenizer.Loc{}},
+		testToken{tokenizer.LBRACE, "{", tokenizer.Loc{}},
+		testToken{tokenizer.RBRACE, "}", tokenizer.Loc{}},
+	}})
+	node := parser.parseFunctionExpression()
+
+	_, ok := node.(FunctionExpression)
+	if !ok {
+		t.Fatalf("Expected FunctionExpression, got %#v", node)
+		return
+	}
+}

@@ -98,7 +98,7 @@ func (p *Parser) parseAccessExpression() Node {
 
 func fallback(p *Parser) Node {
 	switch p.tokenizer.Peek().Kind() {
-	case tokenizer.LPAREN:
+	case tokenizer.LESS, tokenizer.LPAREN:
 		return p.parseFunctionExpression()
 	case tokenizer.LBRACKET:
 		return ListExpression{}.Parse(p)

@@ -5,10 +5,11 @@ import (
 )
 
 type FunctionExpression struct {
-	Params   ParenthesizedExpression
-	Operator tokenizer.Token // -> or =>
-	Expr     Node            // return value for '->', return type for '=>'
-	Body     *Body
+	TypeParams AngleExpression
+	Params     ParenthesizedExpression
+	Operator   tokenizer.Token // -> or =>
+	Expr       Node            // return value for '->', return type for '=>'
+	Body       *Body
 }
 
 func (f FunctionExpression) Loc() tokenizer.Loc {
@@ -22,9 +23,18 @@ func (f FunctionExpression) Loc() tokenizer.Loc {
 }
 
 func (p *Parser) parseFunctionExpression() Node {
-	paren := p.parseParenthesizedExpression()
+	angle := AngleExpression{}
+	if p.tokenizer.Peek().Kind() == tokenizer.LESS {
+		angle = p.parseAngleExpression()
+	}
+	paren := ParenthesizedExpression{}
+	if p.tokenizer.Peek().Kind() == tokenizer.LPAREN {
+		paren = p.parseParenthesizedExpression()
+	}
+
 	next := p.tokenizer.Peek()
 	if next.Kind() != tokenizer.SLIM_ARR && next.Kind() != tokenizer.FAT_ARR {
+		// FIXME: return either angle, paren or typed(angle, paren)
 		return paren
 	}
 	operator := p.tokenizer.Consume()
@@ -34,7 +44,7 @@ func (p *Parser) parseFunctionExpression() Node {
 		p.report("Expression expected", next.Loc())
 	}
 
-	res := FunctionExpression{paren, operator, ParseRange(p), nil}
+	res := FunctionExpression{angle, paren, operator, ParseRange(p), nil}
 	if operator.Kind() == tokenizer.FAT_ARR {
 		res.Body = ParseBody(p)
 	}
