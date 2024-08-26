@@ -155,3 +155,27 @@ func TestFunctionWithTypeArgs(t *testing.T) {
 		return
 	}
 }
+
+func TestFunctionGenericType(t *testing.T) {
+	parser := MakeParser(&testTokenizer{tokens: []tokenizer.Token{
+		testToken{tokenizer.LESS, "<", tokenizer.Loc{}},
+		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
+		testToken{tokenizer.GREATER, ">", tokenizer.Loc{}},
+		testToken{tokenizer.FAT_ARR, "->", tokenizer.Loc{}},
+		testToken{tokenizer.LBRACE, "{", tokenizer.Loc{}},
+		testToken{tokenizer.IDENTIFIER, "value", tokenizer.Loc{}},
+		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
+		testToken{tokenizer.RBRACE, "}", tokenizer.Loc{}},
+	}})
+	node := parser.parseFunctionExpression()
+
+	expr, ok := node.(FunctionExpression)
+	if !ok {
+		t.Fatalf("Expected FunctionExpression, got %#v", node)
+		return
+	}
+
+	if expr.Expr == nil {
+		t.Fatalf("Expected Expr")
+	}
+}

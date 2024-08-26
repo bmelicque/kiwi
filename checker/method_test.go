@@ -20,7 +20,7 @@ func TestMethodDeclaration(t *testing.T) {
 		},
 		Operator: testToken{tokenizer.DEFINE, "::", tokenizer.Loc{}},
 		Initializer: parser.FunctionExpression{
-			Params:   parser.ParenthesizedExpression{},
+			Params:   &parser.ParenthesizedExpression{},
 			Operator: testToken{tokenizer.SLIM_ARR, "->", tokenizer.Loc{}},
 			Expr:     parser.ParenthesizedExpression{},
 		},

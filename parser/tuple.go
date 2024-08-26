@@ -21,7 +21,6 @@ func (p *Parser) parseTupleExpression() Node {
 		elements = append(elements, p.parseTypedExpression())
 	})
 
-	// FIXME: len == 0
 	if len(elements) == 0 {
 		return nil
 	}

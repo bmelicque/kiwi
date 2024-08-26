@@ -1,6 +1,8 @@
 package checker
 
 import (
+	"unicode"
+
 	"github.com/bmelicque/test-parser/parser"
 	"github.com/bmelicque/test-parser/tokenizer"
 )
@@ -19,19 +21,10 @@ func (p Params) Type() ExpressionType {
 	return Tuple{types}
 }
 
-func (c *Checker) checkParams(params parser.ParenthesizedExpression) Params {
-	if params.Expr == nil {
-		return Params{[]Param{}, params.Loc()}
-	}
-
-	tuple, ok := params.Expr.(parser.TupleExpression)
+func (c *Checker) checkParams(params parser.Node) Params {
+	tuple, ok := params.(parser.TupleExpression)
 	if !ok {
-		param, ok := params.Expr.(parser.TypedExpression)
-		if !ok {
-			c.report("Expected typed identifier", param.Expr.Loc())
-			return Params{}
-		}
-		return Params{[]Param{c.checkParam(param)}, params.Loc()}
+		return c.checkSingleParams(params)
 	}
 	elements := make([]Param, len(tuple.Elements))
 	for i, element := range tuple.Elements {
@@ -40,4 +33,22 @@ func (c *Checker) checkParams(params parser.ParenthesizedExpression) Params {
 		}
 	}
 	return Params{elements, params.Loc()}
+}
+
+func (c *Checker) checkSingleParams(params parser.Node) Params {
+	switch param := params.(type) {
+	case parser.TypedExpression:
+		return Params{[]Param{c.checkParam(param)}, params.Loc()}
+	case parser.TokenExpression:
+		identifier, ok := c.checkToken(param, false).(Identifier)
+		if !ok {
+			break
+		}
+		if !unicode.IsUpper(rune(identifier.Token.Text()[0])) {
+			c.report("Expected a type identifier", identifier.Loc())
+		}
+		return Params{[]Param{{identifier, nil}}, params.Loc()}
+	}
+	c.report("Expected typed identifier", params.Loc())
+	return Params{}
 }
