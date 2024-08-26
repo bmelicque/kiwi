@@ -58,27 +58,27 @@ func (p Primitive) Extends(t ExpressionType) bool {
 	return p.Kind() == t.Kind() || p.Kind() == UNKNOWN || t.Kind() == UNKNOWN
 }
 
-type TypeRef struct {
+type TypeAlias struct {
 	Name string
 	Ref  ExpressionType
 }
 
-func (r TypeRef) Kind() ExpressionTypeKind { return r.Ref.Kind() }
-func (r TypeRef) Match(t ExpressionType) bool {
-	if typeRef, ok := t.(TypeRef); ok {
-		return typeRef.Name == r.Name
+func (t TypeAlias) Kind() ExpressionTypeKind { return t.Ref.Kind() }
+func (ta TypeAlias) Match(t ExpressionType) bool {
+	if typeRef, ok := t.(TypeAlias); ok {
+		return typeRef.Name == ta.Name
 	}
 	return false
 }
-func (r TypeRef) Extends(t ExpressionType) bool {
-	typeRef, ok := t.(TypeRef)
+func (ta TypeAlias) Extends(t ExpressionType) bool {
+	typeRef, ok := t.(TypeAlias)
 	if !ok {
 		return false
 	}
-	if typeRef.Name == r.Name {
+	if typeRef.Name == ta.Name {
 		return true
 	}
-	return r.Ref.Extends(typeRef.Ref)
+	return ta.Ref.Extends(typeRef.Ref)
 }
 
 type List struct {

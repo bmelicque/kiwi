@@ -37,14 +37,8 @@ type Identifier struct {
 	isType bool
 }
 
-func (i Identifier) Loc() tokenizer.Loc { return i.TokenExpression.Loc() }
-func (i Identifier) Type() ExpressionType {
-	if i.isType {
-		return Type{i.typing}
-	} else {
-		return i.typing
-	}
-}
+func (i Identifier) Loc() tokenizer.Loc   { return i.TokenExpression.Loc() }
+func (i Identifier) Type() ExpressionType { return i.typing }
 
 func (c *Checker) checkToken(t parser.TokenExpression, report bool) Expression {
 	if t.Token.Kind() != tokenizer.IDENTIFIER {
@@ -61,10 +55,6 @@ func (c *Checker) checkToken(t parser.TokenExpression, report bool) Expression {
 	if variable, ok := c.scope.Find(name); ok {
 		c.scope.ReadAt(name, t.Loc())
 		typing = variable.typing
-	}
-	if isType {
-		typing = TypeRef{name, typing.(Type).Value}
-		isType = true
 	}
 	return Identifier{t, typing, isType}
 }

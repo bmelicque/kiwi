@@ -29,7 +29,13 @@ func (c *Checker) declareIdentifier(declared parser.Node, typing ExpressionType)
 	name := identifier.Token.Text()
 
 	isTypeIdentifier := unicode.IsUpper(rune(name[0]))
-	_, isTypeTyping := typing.(Type)
+	ttype, isTypeTyping := typing.(Type)
+	if isTypeTyping {
+		typing = TypeAlias{name, ttype.Value}
+	}
+	if isTypeIdentifier {
+		typing = Type{typing}
+	}
 
 	if isTypeIdentifier != isTypeTyping {
 		return Identifier{}, errors.New("types don't match")

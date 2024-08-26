@@ -9,7 +9,7 @@ import (
 
 func TestObjectExpression(t *testing.T) {
 	checker := MakeChecker()
-	checker.scope.Add("Type", tokenizer.Loc{}, Type{Object{map[string]ExpressionType{"n": Type{Primitive{NUMBER}}}}})
+	checker.scope.Add("Type", tokenizer.Loc{}, Type{TypeAlias{"Type", Object{map[string]ExpressionType{"n": Type{Primitive{NUMBER}}}}}})
 	checker.checkObjectExpression(parser.ObjectExpression{
 		Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Type"}},
 		Members: []parser.Node{
@@ -28,7 +28,7 @@ func TestObjectExpression(t *testing.T) {
 
 func TestObjectExpressionColons(t *testing.T) {
 	checker := MakeChecker()
-	checker.scope.Add("Type", tokenizer.Loc{}, Type{Object{map[string]ExpressionType{"n": Type{Primitive{NUMBER}}}}})
+	checker.scope.Add("Type", tokenizer.Loc{}, Type{TypeAlias{"Type", Object{map[string]ExpressionType{"n": Type{Primitive{NUMBER}}}}}})
 	checker.checkObjectExpression(parser.ObjectExpression{
 		Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Type"}},
 		Members: []parser.Node{

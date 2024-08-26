@@ -20,13 +20,13 @@ func (p PropertyAccessExpression) Loc() tokenizer.Loc {
 func (p PropertyAccessExpression) Type() ExpressionType { return p.typing }
 
 // Returns the type of the given object as a `TypeRef{Object{}}`
-func getObjectType(expr Expression) (TypeRef, bool) {
-	ref, ok := expr.Type().(TypeRef)
+func getObjectType(expr Expression) (TypeAlias, bool) {
+	ref, ok := expr.Type().(TypeAlias)
 	if !ok {
-		return TypeRef{}, false
+		return TypeAlias{}, false
 	}
 	if _, ok := ref.Ref.(Object); !ok {
-		return TypeRef{}, false
+		return TypeAlias{}, false
 	}
 	return ref, true
 }

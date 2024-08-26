@@ -26,7 +26,7 @@ func getObjectExpressionTyping(expr Expression) (Object, bool) {
 	if !ok {
 		return Object{}, false
 	}
-	ref, ok := typing.Value.(TypeRef)
+	ref, ok := typing.Value.(TypeAlias)
 	if !ok {
 		return Object{}, false
 	}
