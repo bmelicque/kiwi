@@ -52,21 +52,22 @@ type ObjectExpression struct {
 
 func (o ObjectExpression) Loc() tokenizer.Loc { return o.loc }
 
-var operators = []tokenizer.TokenKind{tokenizer.LESS, tokenizer.LPAREN, tokenizer.DOT, tokenizer.LBRACE}
+var operators = []tokenizer.TokenKind{tokenizer.LBRACKET, tokenizer.LPAREN, tokenizer.DOT, tokenizer.LBRACE}
 
 func (p *Parser) parseAccessExpression() Node {
 	expression := fallback(p)
 	next := p.tokenizer.Peek()
 	for slices.Contains(operators, next.Kind()) {
 		switch next.Kind() {
-		case tokenizer.LESS, tokenizer.LPAREN:
-			var typeArgs AngleExpression
-			if next.Kind() == tokenizer.LESS {
-				typeArgs = p.parseAngleExpression()
+		case tokenizer.LBRACKET, tokenizer.LPAREN:
+			var typeArgs BracketedExpression
+			if next.Kind() == tokenizer.LBRACKET {
+				typeArgs = p.parseBracketedExpression()
 			}
 			next = p.tokenizer.Peek()
 			if next.Kind() != tokenizer.LPAREN {
-				return CallExpression{expression, typeArgs, nil}
+				expression = CallExpression{expression, typeArgs, nil}
+				break
 			}
 			args := p.parseParenthesizedExpression()
 			expression = CallExpression{expression, nil, args}
@@ -107,10 +108,10 @@ func (p *Parser) parseAccessExpression() Node {
 
 func fallback(p *Parser) Node {
 	switch p.tokenizer.Peek().Kind() {
-	case tokenizer.LESS, tokenizer.LPAREN:
+	case tokenizer.LBRACKET, tokenizer.LPAREN:
 		return p.parseFunctionExpression()
-	case tokenizer.LBRACKET:
-		return ListExpression{}.Parse(p)
+	// case tokenizer.LBRACKET:
+	// 	return ListExpression{}.Parse(p)
 	case tokenizer.LBRACE:
 		if p.allowBraceParsing {
 			return p.parseObjectDefinition()

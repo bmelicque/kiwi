@@ -14,11 +14,10 @@ func (e ParserError) Error() string {
 }
 
 type Parser struct {
-	tokenizer          tokenizer.Tokenizer
-	errors             []ParserError
-	allowEmptyExpr     bool
-	allowBraceParsing  bool
-	allowAngleBrackets bool
+	tokenizer         tokenizer.Tokenizer
+	errors            []ParserError
+	allowEmptyExpr    bool
+	allowBraceParsing bool
 }
 
 func (p *Parser) report(message string, loc tokenizer.Loc) {

@@ -78,9 +78,9 @@ func TestFunctionCall(t *testing.T) {
 func TestFunctionCallWithTypeArgs(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []tokenizer.Token{
 		testToken{tokenizer.IDENTIFIER, "f", tokenizer.Loc{}},
-		testToken{tokenizer.LESS, "<", tokenizer.Loc{}},
+		testToken{tokenizer.LBRACKET, "[", tokenizer.Loc{}},
 		testToken{tokenizer.IDENTIFIER, "number", tokenizer.Loc{}},
-		testToken{tokenizer.GREATER, ">", tokenizer.Loc{}},
+		testToken{tokenizer.RBRACKET, "]", tokenizer.Loc{}},
 		testToken{tokenizer.LPAREN, "(", tokenizer.Loc{}},
 		testToken{tokenizer.NUMBER, "42", tokenizer.Loc{}},
 		testToken{tokenizer.RPAREN, ")", tokenizer.Loc{}},

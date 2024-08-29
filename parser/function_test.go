@@ -138,9 +138,9 @@ func TestFatArrowFunctionWithArgs(t *testing.T) {
 
 func TestFunctionWithTypeArgs(t *testing.T) {
 	parser := MakeParser(&testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.LESS, "<", tokenizer.Loc{}},
+		testToken{tokenizer.LBRACKET, "[", tokenizer.Loc{}},
 		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
-		testToken{tokenizer.GREATER, ">", tokenizer.Loc{}},
+		testToken{tokenizer.RBRACKET, "]", tokenizer.Loc{}},
 		testToken{tokenizer.LPAREN, "(", tokenizer.Loc{}},
 		testToken{tokenizer.RPAREN, ")", tokenizer.Loc{}},
 		testToken{tokenizer.FAT_ARR, "=>", tokenizer.Loc{}},
@@ -158,9 +158,9 @@ func TestFunctionWithTypeArgs(t *testing.T) {
 
 func TestFunctionGenericType(t *testing.T) {
 	parser := MakeParser(&testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.LESS, "<", tokenizer.Loc{}},
+		testToken{tokenizer.LBRACKET, "[", tokenizer.Loc{}},
 		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
-		testToken{tokenizer.GREATER, ">", tokenizer.Loc{}},
+		testToken{tokenizer.RBRACKET, "]", tokenizer.Loc{}},
 		testToken{tokenizer.FAT_ARR, "->", tokenizer.Loc{}},
 		testToken{tokenizer.LBRACE, "{", tokenizer.Loc{}},
 		testToken{tokenizer.IDENTIFIER, "value", tokenizer.Loc{}},

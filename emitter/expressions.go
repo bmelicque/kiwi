@@ -55,17 +55,6 @@ func (e *Emitter) emitFatArrowFunction(f checker.FatArrowFunction) {
 	e.emit(f.Body)
 }
 
-func (e *Emitter) emitListExpression(l checker.ListExpression) {
-	e.write("[")
-	for i, el := range l.Elements {
-		e.emit(el)
-		if i != len(l.Elements)-1 {
-			e.write(", ")
-		}
-	}
-	e.write("]")
-}
-
 func findMemberByName(members []checker.ObjectExpressionMember, name string) parser.Node {
 	for _, member := range members {
 		text := member.Name.Token.Text()

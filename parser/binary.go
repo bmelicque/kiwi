@@ -52,13 +52,7 @@ func parseLogicalAnd(p *Parser) Node {
 	return parseBinary(p, []tokenizer.TokenKind{tokenizer.LAND}, parseEquality)
 }
 func parseEquality(p *Parser) Node {
-	var fallback func(*Parser) Node
-	if p.allowAngleBrackets {
-		fallback = parseComparison
-	} else {
-		fallback = parseAddition
-	}
-	return parseBinary(p, []tokenizer.TokenKind{tokenizer.EQ, tokenizer.NEQ}, fallback)
+	return parseBinary(p, []tokenizer.TokenKind{tokenizer.EQ, tokenizer.NEQ}, parseComparison)
 }
 func parseComparison(p *Parser) Node {
 	return parseBinary(p, []tokenizer.TokenKind{tokenizer.LESS, tokenizer.LEQ, tokenizer.GEQ, tokenizer.GREATER}, parseAddition)

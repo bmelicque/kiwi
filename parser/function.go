@@ -5,7 +5,7 @@ import (
 )
 
 type FunctionExpression struct {
-	TypeParams *AngleExpression
+	TypeParams *BracketedExpression
 	Params     *ParenthesizedExpression
 	Operator   tokenizer.Token // -> or =>
 	Expr       Node            // return value for '->', return type for '=>'
@@ -23,10 +23,10 @@ func (f FunctionExpression) Loc() tokenizer.Loc {
 }
 
 func (p *Parser) parseFunctionExpression() Node {
-	var angle *AngleExpression
-	if p.tokenizer.Peek().Kind() == tokenizer.LESS {
-		a := p.parseAngleExpression()
-		angle = &a
+	var brackets *BracketedExpression
+	if p.tokenizer.Peek().Kind() == tokenizer.LBRACKET {
+		b := p.parseBracketedExpression()
+		brackets = &b
 	}
 	var paren *ParenthesizedExpression
 	if p.tokenizer.Peek().Kind() == tokenizer.LPAREN {
@@ -46,7 +46,7 @@ func (p *Parser) parseFunctionExpression() Node {
 		p.report("Expression expected", next.Loc())
 	}
 
-	res := FunctionExpression{angle, paren, operator, ParseRange(p), nil}
+	res := FunctionExpression{brackets, paren, operator, ParseRange(p), nil}
 	if operator.Kind() == tokenizer.FAT_ARR {
 		res.Body = ParseBody(p)
 	}

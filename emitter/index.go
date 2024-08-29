@@ -88,8 +88,6 @@ func (e *Emitter) emit(node interface{}) {
 		} else {
 			e.write(text)
 		}
-	case checker.ListExpression:
-		e.emitListExpression(node)
 	case checker.Literal:
 		e.write(node.Token.Text())
 	case checker.ObjectExpression:

@@ -34,7 +34,7 @@ func TestSlimArrowFunction(t *testing.T) {
 func TestGenericTypeDeclaration(t *testing.T) {
 	checker := MakeChecker()
 	expr := checker.checkFunctionExpression(parser.FunctionExpression{
-		TypeParams: &parser.AngleExpression{Expr: parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}}}},
+		TypeParams: &parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}}}},
 		Operator:   testToken{tokenizer.SLIM_ARR, "->", tokenizer.Loc{}},
 		Expr: parser.ObjectDefinition{Members: []parser.Node{
 			parser.TypedExpression{
@@ -56,7 +56,7 @@ func TestGenericTypeDeclaration(t *testing.T) {
 func TestGenericFunctionExpression(t *testing.T) {
 	checker := MakeChecker()
 	expr := checker.checkFunctionExpression(parser.FunctionExpression{
-		TypeParams: &parser.AngleExpression{Expr: parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}}}},
+		TypeParams: &parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}}}},
 		Params: &parser.ParenthesizedExpression{Expr: parser.TypedExpression{
 			Expr:   parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "value", tokenizer.Loc{}}},
 			Typing: parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}}},

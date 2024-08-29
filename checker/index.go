@@ -56,8 +56,6 @@ func (c *Checker) checkExpression(node parser.Node) Expression {
 		return c.checkCallExpression(node)
 	case parser.FunctionExpression:
 		return c.checkFunctionExpression(node)
-	case parser.ListExpression:
-		return c.checkListExpression(node)
 	case parser.ObjectDefinition:
 		return c.checkObjectDefinition(node)
 	case parser.ObjectExpression:
