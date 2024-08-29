@@ -43,7 +43,11 @@ func (e *Emitter) emitClass(declaration checker.VariableDeclaration) {
 	e.write(" {\n    constructor(")
 	defer e.write("    }\n}\n")
 
-	names := e.emitClassParams(declaration.Initializer.(checker.ObjectDefinition).Members)
+	object := declaration.Initializer.(checker.ObjectDefinition)
+	if generic, ok := declaration.Initializer.(checker.GenericTypeDef); ok {
+		object = generic.Expr.(checker.ObjectDefinition)
+	}
+	names := e.emitClassParams(object.Members)
 	e.write(") {\n")
 	for _, name := range names {
 		e.write(fmt.Sprintf("        this.%v = %v;\n", name, name))
