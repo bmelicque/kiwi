@@ -10,8 +10,8 @@ import (
 
 type CallExpression struct {
 	Callee   Node
-	TypeArgs Node
-	Args     Node
+	TypeArgs *BracketedExpression
+	Args     *ParenthesizedExpression
 }
 
 func (c CallExpression) Loc() tokenizer.Loc {
@@ -66,11 +66,11 @@ func (p *Parser) parseAccessExpression() Node {
 			}
 			next = p.tokenizer.Peek()
 			if next.Kind() != tokenizer.LPAREN {
-				expression = CallExpression{expression, typeArgs, nil}
+				expression = CallExpression{expression, &typeArgs, nil}
 				break
 			}
 			args := p.parseParenthesizedExpression()
-			expression = CallExpression{expression, nil, args}
+			expression = CallExpression{expression, nil, &args}
 		case tokenizer.DOT:
 			p.tokenizer.Consume()
 			property := fallback(p)

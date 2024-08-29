@@ -70,7 +70,7 @@ func TestFunctionCall(t *testing.T) {
 	if _, ok := expr.Callee.(TokenExpression); !ok {
 		t.Fatalf("Expected token 'f'")
 	}
-	if _, ok := expr.Args.(ParenthesizedExpression); !ok {
+	if expr.Args == nil {
 		t.Fatalf("Expected argument 42")
 	}
 }
@@ -95,8 +95,33 @@ func TestFunctionCallWithTypeArgs(t *testing.T) {
 	if _, ok := expr.Callee.(TokenExpression); !ok {
 		t.Fatalf("Expected token 'f'")
 	}
-	if _, ok := expr.Args.(ParenthesizedExpression); !ok {
+	if expr.Args == nil {
 		t.Fatalf("Expected argument 42")
+	}
+}
+
+func TestGenericTypeCall(t *testing.T) {
+	tokenizer := testTokenizer{tokens: []tokenizer.Token{
+		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
+		testToken{tokenizer.LBRACKET, "[", tokenizer.Loc{}},
+		testToken{tokenizer.IDENTIFIER, "number", tokenizer.Loc{}},
+		testToken{tokenizer.RBRACKET, "]", tokenizer.Loc{}},
+	}}
+	parser := MakeParser(&tokenizer)
+	node := parser.parseAccessExpression()
+
+	expr, ok := node.(CallExpression)
+	if !ok {
+		t.Fatalf("Expected CallExpression, got %#v", node)
+	}
+	if _, ok := expr.Callee.(TokenExpression); !ok {
+		t.Fatalf("Expected token 'Type'")
+	}
+	if expr.TypeArgs == nil {
+		t.Fatalf("Expected type args")
+	}
+	if expr.Args != nil {
+		t.Fatalf("Expected no args")
 	}
 }
 
