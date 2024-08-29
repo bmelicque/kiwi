@@ -38,7 +38,7 @@ func TestObjectDescription(t *testing.T) {
 
 func TestObjectDescriptionWithIdentifierType(t *testing.T) {
 	checker := MakeChecker()
-	checker.scope.Add("Type", tokenizer.Loc{}, Type{TypeAlias{"Type", Object{map[string]ExpressionType{}}}})
+	checker.scope.Add("Type", tokenizer.Loc{}, Type{TypeAlias{Name: "Type", Ref: Object{map[string]ExpressionType{}}}})
 	object := checker.checkObjectDefinition(parser.ObjectDefinition{
 		Members: []parser.Node{
 			parser.TypedExpression{

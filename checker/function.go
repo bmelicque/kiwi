@@ -50,7 +50,7 @@ func (g GenericTypeDef) Loc() tokenizer.Loc {
 	}
 }
 func (g GenericTypeDef) Type() ExpressionType {
-	return Function{g.TypeParams.Type(), g.Expr.Type().(Type).Value}
+	return Function{g.TypeParams.Type(), g.Expr.Type()}
 }
 
 func (c *Checker) checkFunctionExpression(f parser.FunctionExpression) Expression {

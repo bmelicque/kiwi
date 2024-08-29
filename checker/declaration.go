@@ -29,16 +29,8 @@ func (c *Checker) declareIdentifier(declared parser.Node, typing ExpressionType)
 	name := identifier.Token.Text()
 
 	isTypeIdentifier := unicode.IsUpper(rune(name[0]))
-	ttype, isTypeTyping := typing.(Type)
-	if isTypeTyping {
-		typing = TypeAlias{name, ttype.Value}
-	}
 	if isTypeIdentifier {
-		typing = Type{typing}
-	}
-
-	if isTypeIdentifier != isTypeTyping {
-		return Identifier{}, errors.New("types don't match")
+		return Identifier{}, errors.New("no type expected")
 	}
 
 	c.scope.Add(name, declared.Loc(), typing)

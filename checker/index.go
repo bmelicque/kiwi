@@ -78,11 +78,11 @@ func (c *Checker) Check(node parser.Node) Node {
 	switch node := node.(type) {
 	case parser.Assignment:
 		operator := node.Operator.Kind()
-		if operator != tokenizer.DECLARE && operator != tokenizer.DEFINE {
-			return c.checkAssignment(node)
+		if operator == tokenizer.DEFINE {
+			return c.checkDefinition(node)
 		}
-		if _, ok := node.Declared.(parser.PropertyAccessExpression); ok {
-			return c.checkMethodDeclaration(node)
+		if operator != tokenizer.DECLARE {
+			return c.checkAssignment(node)
 		}
 		return c.checkVariableDeclaration(node)
 	case parser.Body:

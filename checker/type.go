@@ -59,26 +59,41 @@ func (p Primitive) Extends(t ExpressionType) bool {
 }
 
 type TypeAlias struct {
-	Name string
-	Ref  ExpressionType
+	Name   string
+	Params []ExpressionType
+	Ref    ExpressionType
 }
 
 func (t TypeAlias) Kind() ExpressionTypeKind { return t.Ref.Kind() }
 func (ta TypeAlias) Match(t ExpressionType) bool {
-	if typeRef, ok := t.(TypeAlias); ok {
-		return typeRef.Name == ta.Name
-	}
-	return false
-}
-func (ta TypeAlias) Extends(t ExpressionType) bool {
-	typeRef, ok := t.(TypeAlias)
+	alias, ok := t.(TypeAlias)
 	if !ok {
 		return false
 	}
-	if typeRef.Name == ta.Name {
-		return true
+	if alias.Name != ta.Name {
+		return false
 	}
-	return ta.Ref.Extends(typeRef.Ref)
+	for i, param := range ta.Params {
+		if param != nil && !param.Match(alias.Params[i]) {
+			return false
+		}
+	}
+	return true
+}
+func (ta TypeAlias) Extends(t ExpressionType) bool {
+	alias, ok := t.(TypeAlias)
+	if !ok {
+		return false
+	}
+	if alias.Name != ta.Name && !ta.Ref.Extends(alias.Ref) {
+		return false
+	}
+	for i, param := range ta.Params {
+		if param != nil && !param.Extends(alias.Params[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 type List struct {
