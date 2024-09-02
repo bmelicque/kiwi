@@ -70,10 +70,11 @@ func (c *Checker) checkIdentifierDefinition(a parser.Assignment) VariableDeclara
 
 func (c *Checker) declareType(identifier Identifier, init Expression) {
 	t := init.Type()
-	if t.Kind() != TYPE {
+	if tok, ok := t.(Type); ok {
+		t = Type{TypeAlias{Name: identifier.Text(), Ref: tok.Value}}
+	} else {
 		c.report("Type expected", init.Loc())
 	}
-
 	c.scope.Add(identifier.Text(), identifier.Loc(), t)
 }
 func (c *Checker) declareFunction(identifier Identifier, init Expression) {

@@ -37,4 +37,17 @@ func TestObjectDeclaration(t *testing.T) {
 	if _, ok := declaration.Initializer.(ObjectDefinition); !ok {
 		t.Fatalf("Expected ObjectDefinition, got %#v", declaration.Initializer)
 	}
+
+	variable, _ := checker.scope.Find("Type")
+	if variable == nil {
+		t.Fatalf("Expected type to be added to scope")
+		return
+	}
+	typing, ok := variable.typing.(Type)
+	if !ok {
+		t.Fatalf("Expected 'Type' type")
+	}
+	if _, ok := typing.Value.(TypeAlias); !ok {
+		t.Fatalf("Expected 'TypeAlias' subtype, got %#v", typing.Value)
+	}
 }

@@ -18,7 +18,11 @@ func (f SlimArrowFunction) Loc() tokenizer.Loc {
 	}
 }
 func (f SlimArrowFunction) Type() ExpressionType {
-	return Function{f.Params.Type(), f.Expr.Type()}
+	tp := []string{}
+	for i, param := range f.TypeParams.Params {
+		tp[i] = param.Identifier.Token.Text()
+	}
+	return Function{tp, f.Params.Type().(Tuple), f.Expr.Type()}
 }
 
 type FatArrowFunction struct {
@@ -35,7 +39,11 @@ func (f FatArrowFunction) Loc() tokenizer.Loc {
 	}
 }
 func (f FatArrowFunction) Type() ExpressionType {
-	return Function{f.Params.Type(), f.ReturnType.Type().(Type).Value}
+	tp := []string{}
+	for i, param := range f.TypeParams.Params {
+		tp[i] = param.Identifier.Token.Text()
+	}
+	return Function{tp, f.Params.Type().(Tuple), f.ReturnType.Type().(Type).Value}
 }
 
 type GenericTypeDef struct {
@@ -50,21 +58,19 @@ func (g GenericTypeDef) Loc() tokenizer.Loc {
 	}
 }
 func (g GenericTypeDef) Type() ExpressionType {
-	return Function{g.TypeParams.Type(), g.Expr.Type()}
+	tp := []string{}
+	for i, param := range g.TypeParams.Params {
+		tp[i] = param.Identifier.Token.Text()
+	}
+	return Function{tp, Tuple{}, g.Expr.Type()}
 }
 
 func (c *Checker) checkFunctionExpression(f parser.FunctionExpression) Expression {
 	c.pushScope(NewScope())
 	defer c.dropScope()
 
-	typeParams := Params{}
-	if f.TypeParams != nil {
-		typeParams = c.handleFunctionParams(f.TypeParams.Expr, f.TypeParams.Loc())
-	}
-	params := Params{}
-	if f.Params != nil {
-		params = c.handleFunctionParams(f.Params.Expr, f.Params.Loc())
-	}
+	typeParams := c.handleFunctionTypeParams(f.TypeParams)
+	params := c.handleFunctionParams(f.Params)
 	expr := c.checkExpression(f.Expr)
 
 	switch f.Operator.Kind() {
@@ -94,17 +100,40 @@ func (c *Checker) checkFunctionExpression(f parser.FunctionExpression) Expressio
 	}
 }
 
-func (c *Checker) handleFunctionParams(expr parser.Node, defaultLoc tokenizer.Loc) Params {
-	params := Params{[]Param{}, defaultLoc}
-	if expr != nil {
-		params = c.checkParams(expr)
+func (c *Checker) handleFunctionTypeParams(expr *parser.BracketedExpression) Params {
+	if expr == nil {
+		return Params{}
 	}
+	if expr.Expr == nil {
+		return Params{[]Param{}, expr.Loc()}
+	}
+	params := c.checkParams(expr.Expr)
 	for _, param := range params.Params {
-		var typing Type
 		if param.Typing == nil {
-			c.scope.Add(param.Identifier.Text(), param.Loc(), Type{Primitive{UNKNOWN}})
+			name := param.Identifier.Text()
+			t := Type{TypeAlias{Name: name, Ref: Generic{Name: name}}}
+			c.scope.Add(name, param.Loc(), t)
 		} else {
-			typing, _ = param.Typing.Type().(Type)
+			// TODO: constrained generic
+		}
+	}
+	return params
+}
+
+func (c *Checker) handleFunctionParams(expr *parser.ParenthesizedExpression) Params {
+	if expr == nil {
+		return Params{}
+	}
+	if expr.Expr == nil {
+		return Params{[]Param{}, expr.Loc()}
+	}
+	params := c.checkParams(expr.Expr)
+	for _, param := range params.Params {
+		if param.Typing == nil {
+			c.report("Typing expected", param.Loc())
+			c.scope.Add(param.Identifier.Text(), param.Loc(), Primitive{UNKNOWN})
+		} else {
+			typing, _ := param.Typing.Type().(Type)
 			c.scope.Add(param.Identifier.Text(), param.Loc(), typing.Value)
 		}
 	}

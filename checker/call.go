@@ -6,8 +6,9 @@ import (
 )
 
 type CallExpression struct {
-	Callee Expression
-	Args   TupleExpression
+	Callee   Expression
+	TypeArgs *TupleExpression
+	Args     *TupleExpression
 }
 
 func (c CallExpression) Loc() tokenizer.Loc {
@@ -18,6 +19,7 @@ func (c CallExpression) Loc() tokenizer.Loc {
 	return loc
 }
 
+// FIXME:
 func (c CallExpression) Type() ExpressionType {
 	callee := c.Callee
 	if callee == nil {
@@ -25,31 +27,87 @@ func (c CallExpression) Type() ExpressionType {
 	}
 
 	if calleeType, ok := callee.Type().(Function); ok {
-		return calleeType.returned
+		return calleeType.Returned
 	} else {
 		return nil
 	}
 }
 
-func (c *Checker) checkCallExpression(expr parser.CallExpression) CallExpression {
+func (c *Checker) checkCallExpression(expr parser.CallExpression) Expression {
 	callee := c.checkExpression(expr.Callee)
-	paren, ok := c.checkExpression(expr.Args).(ParenthesizedExpression)
-	if !ok {
-		c.report("Expected arguments", expr.Args.Loc())
-	}
-	args, ok := paren.Expr.(TupleExpression)
-	if !ok {
-		args = TupleExpression{
-			Elements: []Expression{paren.Expr},
-			loc:      paren.Expr.Loc(),
-		}
-	}
-	calleeType, ok := callee.Type().(Function)
-	if !ok {
-		c.report("Function type expected", callee.Loc())
-	} else if !(calleeType.params.Extends(args.Type())) {
-		c.report("Arguments types don't match expected parameters types", expr.Args.Loc())
+	if expr.Args == nil && expr.TypeArgs == nil {
+		return callee
 	}
 
-	return CallExpression{callee, args}
+	var typeArgs *TupleExpression
+	if expr.TypeArgs != nil && expr.TypeArgs.Expr != nil {
+		ex := c.checkExpression(expr.TypeArgs.Expr)
+		if e, ok := ex.(TupleExpression); !ok {
+			typeArgs = &e
+		} else {
+			typeArgs = &TupleExpression{[]Expression{ex}, ex.Loc()}
+		}
+	}
+
+	var args *TupleExpression
+	if expr.TypeArgs != nil && expr.Args.Expr != nil {
+		ex := c.checkExpression(expr.Args.Expr)
+		if e, ok := ex.(TupleExpression); !ok {
+			args = &e
+		} else {
+			args = &TupleExpression{[]Expression{ex}, ex.Loc()}
+		}
+	}
+
+	if callee.Type() != nil && callee.Type().Kind() == TYPE {
+		// TODO: make sure callee is a generic type
+		// TODO: check if number of args match
+	} else {
+		c.checkFunctionCallee(callee, typeArgs, args)
+	}
+
+	return CallExpression{callee, typeArgs, args}
+}
+
+func (c *Checker) checkFunctionCallee(callee Expression, typeArgs *TupleExpression, args *TupleExpression) {
+	function, ok := callee.Type().(Function)
+	if !ok {
+		c.report("Function type expected", callee.Loc())
+		return
+	}
+
+	c.pushScope(NewScope())
+	defer c.dropScope()
+	c.addTypeArgsToScope(typeArgs, function.TypeParams)
+
+	// TODO: get type args if any
+
+	// TODO: check if type args match number of type params
+	// TODO: create good function type from type args
+	// TODO: check if args match params form good function type
+}
+
+func (c *Checker) addTypeArgsToScope(args *TupleExpression, params []string) {
+	var l int
+	if args != nil {
+		l = len(args.Elements)
+	}
+
+	if l > len(params) {
+		loc := args.Elements[len(params)].Loc()
+		loc.End = args.Elements[len(args.Elements)-1].Loc().End
+		c.report("Too many type arguments", loc)
+	}
+
+	for i, param := range params {
+		var arg Expression
+		if i < l {
+			arg = args.Elements[i]
+		}
+		if arg != nil {
+			c.scope.Add(param, arg.Loc(), arg.Type())
+		} else {
+			c.scope.Add(param, tokenizer.Loc{}, Deferred{})
+		}
+	}
 }
