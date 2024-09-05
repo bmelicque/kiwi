@@ -19,8 +19,25 @@ type ObjectExpression struct {
 	loc      tokenizer.Loc
 }
 
-func (o ObjectExpression) Loc() tokenizer.Loc   { return o.loc }
-func (o ObjectExpression) Type() ExpressionType { return o.Typing.Type().(Type).Value }
+func (o ObjectExpression) Loc() tokenizer.Loc { return o.loc }
+func (o ObjectExpression) Type() ExpressionType {
+	typing := o.Typing.Type()
+	t, ok := typing.(Type)
+	if !ok {
+		return typing
+	}
+	alias, ok := t.Value.(TypeAlias)
+	if !ok {
+		return typing
+	}
+	if o.TypeArgs != nil {
+		alias.Args = make([]ExpressionType, len(o.TypeArgs.Elements))
+		for i, arg := range o.TypeArgs.Elements {
+			alias.Args[i] = arg.Type()
+		}
+	}
+	return Type{alias}
+}
 
 func (c *Checker) checkObjectExpressionMember(node parser.Node) (ObjectExpressionMember, bool) {
 	member, ok := node.(parser.TypedExpression)
@@ -44,7 +61,12 @@ func (c *Checker) checkObjectExpressionMember(node parser.Node) (ObjectExpressio
 
 func (c *Checker) checkObjectExpression(expr parser.ObjectExpression) ObjectExpression {
 	typing := c.checkExpression(expr.Typing)
-	object, ok := handleGenericType(c, typing, expr.TypeArgs)
+	typeArgs := checkTypeArgs(c, expr.TypeArgs)
+	alias, ok := handleGenericType(c, typing)
+	if ok {
+		c.addTypeArgsToScope(typeArgs, alias.Params)
+	}
+	object := alias.Ref.(Object)
 
 	var members []ObjectExpressionMember
 	membersSet := map[string]bool{}
@@ -72,27 +94,26 @@ func (c *Checker) checkObjectExpression(expr parser.ObjectExpression) ObjectExpr
 	}
 
 	return ObjectExpression{
-		Typing:  typing,
-		Members: members,
+		Typing:   typing,
+		TypeArgs: typeArgs,
+		Members:  members,
+		loc:      expr.Loc(),
 	}
 }
 
-func handleGenericType(c *Checker, expr Expression, typeArgs *parser.BracketedExpression) (Object, bool) {
+func handleGenericType(c *Checker, expr Expression) (TypeAlias, bool) {
 	t, ok := expr.Type().(Type)
 	if !ok {
 		c.report("Typing expected", expr.Loc())
-		return Object{}, false
+		return TypeAlias{}, false
 	}
 	alias, ok := t.Value.(TypeAlias)
 	if !ok {
 		c.report("Type alias expected", expr.Loc())
-		return Object{}, false
+		return TypeAlias{}, false
 	}
-	args := checkTypeArgs(c, typeArgs)
-	c.addTypeArgsToScope(args, alias.Params)
-	object, ok := alias.Ref.(Object)
-	if !ok {
+	if _, ok := alias.Ref.(Object); !ok {
 		c.report("Object reference expected", expr.Loc())
 	}
-	return object, ok
+	return alias, ok
 }
