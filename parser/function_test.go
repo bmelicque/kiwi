@@ -161,7 +161,7 @@ func TestFunctionGenericType(t *testing.T) {
 		testToken{tokenizer.LBRACKET, "[", tokenizer.Loc{}},
 		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
 		testToken{tokenizer.RBRACKET, "]", tokenizer.Loc{}},
-		testToken{tokenizer.FAT_ARR, "->", tokenizer.Loc{}},
+		testToken{tokenizer.SLIM_ARR, "->", tokenizer.Loc{}},
 		testToken{tokenizer.LBRACE, "{", tokenizer.Loc{}},
 		testToken{tokenizer.IDENTIFIER, "value", tokenizer.Loc{}},
 		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},

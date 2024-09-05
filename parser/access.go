@@ -70,7 +70,7 @@ func (p *Parser) parseAccessExpression() Node {
 			if next.Kind() == tokenizer.LPAREN {
 				args := p.parseParenthesizedExpression()
 				expression = CallExpression{expression, nil, &args}
-			} else if next.Kind() == tokenizer.LBRACE {
+			} else if next.Kind() == tokenizer.LBRACE && p.allowBraceParsing {
 				p.tokenizer.Consume()
 				var members []Node
 				ParseList(p, tokenizer.RBRACE, func() {
@@ -102,7 +102,7 @@ func (p *Parser) parseAccessExpression() Node {
 			}
 
 		case tokenizer.LBRACE:
-			if !IsTypeToken(expression) {
+			if !p.allowBraceParsing {
 				return expression
 			}
 			// TODO: parseTuple

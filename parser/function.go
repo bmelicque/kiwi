@@ -46,7 +46,16 @@ func (p *Parser) parseFunctionExpression() Node {
 		p.report("Expression expected", next.Loc())
 	}
 
-	res := FunctionExpression{brackets, paren, operator, ParseRange(p), nil}
+	var expr Node
+	if operator.Kind() == tokenizer.FAT_ARR {
+		old := p.allowBraceParsing
+		p.allowBraceParsing = false
+		expr = ParseRange(p)
+		p.allowBraceParsing = old
+	} else {
+		expr = ParseRange(p)
+	}
+	res := FunctionExpression{brackets, paren, operator, expr, nil}
 	if operator.Kind() == tokenizer.FAT_ARR {
 		res.Body = ParseBody(p)
 	}
