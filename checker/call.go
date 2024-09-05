@@ -40,15 +40,7 @@ func (c *Checker) checkCallExpression(expr parser.CallExpression) Expression {
 		return callee
 	}
 
-	var typeArgs *TupleExpression
-	if expr.TypeArgs != nil && expr.TypeArgs.Expr != nil {
-		ex := c.checkExpression(expr.TypeArgs.Expr)
-		if e, ok := ex.(TupleExpression); !ok {
-			typeArgs = &e
-		} else {
-			typeArgs = &TupleExpression{[]Expression{ex}, ex.Loc()}
-		}
-	}
+	typeArgs := checkTypeArgs(c, expr.TypeArgs)
 
 	var args *TupleExpression
 	if expr.Args != nil {
@@ -63,14 +55,7 @@ func (c *Checker) checkCallExpression(expr parser.CallExpression) Expression {
 		}
 	}
 
-	var returned ExpressionType
-	if callee.Type() != nil && callee.Type().Kind() == TYPE {
-		// TODO: make sure callee is a generic type
-		// TODO: check if number of args match
-	} else {
-		returned = c.checkFunctionCallee(callee, typeArgs, args)
-	}
-
+	returned := c.checkFunctionCallee(callee, typeArgs, args)
 	return CallExpression{callee, typeArgs, args, returned}
 }
 
@@ -89,31 +74,6 @@ func (c *Checker) checkFunctionCallee(callee Expression, typeArgs *TupleExpressi
 	checkFunctionArgsNumber(c, args, params, callee.Loc())
 	checkFunctionArgs(c, args, params)
 	return function.Returned.build(c.scope, nil)
-}
-
-func (c *Checker) addTypeArgsToScope(args *TupleExpression, params []string) {
-	var l int
-	if args != nil {
-		l = len(args.Elements)
-	}
-
-	if l > len(params) {
-		loc := args.Elements[len(params)].Loc()
-		loc.End = args.Elements[len(args.Elements)-1].Loc().End
-		c.report("Too many type arguments", loc)
-	}
-
-	for i, param := range params {
-		var arg Expression
-		if i < l {
-			arg = args.Elements[i]
-		}
-		if arg != nil {
-			c.scope.Add(param, arg.Loc(), arg.Type())
-		} else {
-			c.scope.Add(param, tokenizer.Loc{}, Type{Generic{Name: param}})
-		}
-	}
 }
 
 func checkFunctionArgsNumber(c *Checker, args *TupleExpression, params []ExpressionType, loc tokenizer.Loc) {

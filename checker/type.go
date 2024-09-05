@@ -69,7 +69,7 @@ func (p Primitive) build(scope *Scope, c ExpressionType) ExpressionType { return
 
 type TypeAlias struct {
 	Name   string
-	Params []ExpressionType
+	Params []string // TODO: add constraints
 	Ref    ExpressionType
 }
 
@@ -79,30 +79,14 @@ func (ta TypeAlias) Match(t ExpressionType) bool {
 	if !ok {
 		return false
 	}
-	if alias.Name != ta.Name {
-		return false
-	}
-	for i, param := range ta.Params {
-		if param != nil && !param.Match(alias.Params[i]) {
-			return false
-		}
-	}
-	return true
+	return alias.Name != ta.Name
 }
 func (ta TypeAlias) Extends(t ExpressionType) bool {
 	alias, ok := t.(TypeAlias)
 	if !ok {
 		return false
 	}
-	if alias.Name != ta.Name && !ta.Ref.Extends(alias.Ref) {
-		return false
-	}
-	for i, param := range ta.Params {
-		if param != nil && !param.Extends(alias.Params[i]) {
-			return false
-		}
-	}
-	return true
+	return alias.Name == ta.Name && ta.Ref.Extends(alias.Ref)
 }
 
 func (ta TypeAlias) build(scope *Scope, compared ExpressionType) ExpressionType {

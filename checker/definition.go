@@ -92,9 +92,9 @@ func (c *Checker) declareGenericType(identifier Identifier, init GenericTypeDef)
 	}
 
 	t := TypeAlias{
-		Name:   identifier.Text(),
-		Params: params,
-		Ref:    init.Expr.Type(),
+		Name: identifier.Text(),
+		// TODO: Params: params,
+		Ref: init.Expr.Type(),
 	}
 	c.scope.Add(identifier.Text(), identifier.Loc(), t)
 }

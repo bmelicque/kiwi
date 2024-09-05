@@ -44,3 +44,30 @@ func TestObjectExpressionColons(t *testing.T) {
 		t.Fatalf("Expected 1 error, got %v, %#v", len(checker.errors), checker.errors)
 	}
 }
+
+func TestGenericObjectExpression(t *testing.T) {
+	checker := MakeChecker()
+	checker.scope.Add(
+		"Type",
+		tokenizer.Loc{},
+		Type{TypeAlias{
+			Name:   "Type",
+			Params: []string{"Type"},
+			Ref:    Object{map[string]ExpressionType{"value": Type{Generic{Name: "Type"}}}},
+		}},
+	)
+	checker.checkObjectExpression(parser.ObjectExpression{
+		Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Type"}},
+		Members: []parser.Node{
+			parser.TypedExpression{
+				Expr:   parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "value", tokenizer.Loc{}}},
+				Typing: parser.TokenExpression{Token: testToken{tokenizer.NUMBER, "42", tokenizer.Loc{}}},
+				Colon:  true,
+			},
+		},
+	})
+
+	if len(checker.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", checker.errors)
+	}
+}

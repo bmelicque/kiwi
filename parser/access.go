@@ -44,10 +44,12 @@ func (p PropertyAccessExpression) Loc() tokenizer.Loc {
 	}
 }
 
+// TODO: InstanceExpression
 type ObjectExpression struct {
-	Typing  Node
-	Members []Node
-	loc     tokenizer.Loc
+	Typing   Node
+	TypeArgs *BracketedExpression
+	Members  []Node
+	loc      tokenizer.Loc
 }
 
 func (o ObjectExpression) Loc() tokenizer.Loc { return o.loc }
@@ -59,16 +61,36 @@ func (p *Parser) parseAccessExpression() Node {
 	next := p.tokenizer.Peek()
 	for slices.Contains(operators, next.Kind()) {
 		switch next.Kind() {
-		case tokenizer.LBRACKET, tokenizer.LPAREN:
+		case tokenizer.LBRACKET:
 			var typeArgs BracketedExpression
 			if next.Kind() == tokenizer.LBRACKET {
 				typeArgs = p.parseBracketedExpression()
 			}
 			next = p.tokenizer.Peek()
-			if next.Kind() != tokenizer.LPAREN {
+			if next.Kind() == tokenizer.LPAREN {
+				args := p.parseParenthesizedExpression()
+				expression = CallExpression{expression, nil, &args}
+			} else if next.Kind() == tokenizer.LBRACE {
+				p.tokenizer.Consume()
+				var members []Node
+				ParseList(p, tokenizer.RBRACE, func() {
+					members = append(members, p.parseTypedExpression())
+				})
+				loc := tokenizer.Loc{Start: expression.Loc().Start}
+				if p.tokenizer.Peek().Kind() != tokenizer.RBRACE {
+					p.report("'}' expected", p.tokenizer.Peek().Loc())
+				} else {
+					loc.End = p.tokenizer.Consume().Loc().End
+				}
+				expression = ObjectExpression{
+					Typing:  expression,
+					Members: members,
+					loc:     loc,
+				}
+			} else {
 				expression = CallExpression{expression, &typeArgs, nil}
-				break
 			}
+		case tokenizer.LPAREN:
 			args := p.parseParenthesizedExpression()
 			expression = CallExpression{expression, nil, &args}
 		case tokenizer.DOT:
@@ -95,7 +117,7 @@ func (p *Parser) parseAccessExpression() Node {
 			} else {
 				loc.End = p.tokenizer.Consume().Loc().End
 			}
-			return ObjectExpression{
+			expression = ObjectExpression{
 				Typing:  expression,
 				Members: members,
 				loc:     loc,
