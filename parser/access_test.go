@@ -145,3 +145,32 @@ func TestObjectExpression(t *testing.T) {
 		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
 	}
 }
+
+func TestListInstanciation(t *testing.T) {
+	tokenizer := testTokenizer{tokens: []tokenizer.Token{
+		testToken{tokenizer.LBRACKET, "[", tokenizer.Loc{}},
+		testToken{tokenizer.RBRACKET, "]", tokenizer.Loc{}},
+		testToken{tokenizer.NUM_KW, "number", tokenizer.Loc{}},
+		testToken{tokenizer.LBRACE, "{", tokenizer.Loc{}},
+		testToken{tokenizer.NUMBER, "1", tokenizer.Loc{}},
+		testToken{tokenizer.COMMA, ",", tokenizer.Loc{}},
+		testToken{tokenizer.NUMBER, "2", tokenizer.Loc{}},
+		testToken{tokenizer.RBRACE, "}", tokenizer.Loc{}},
+	}}
+	parser := MakeParser(&tokenizer)
+	node := ParseExpression(parser)
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
+	}
+
+	object, ok := node.(ObjectExpression)
+	if !ok {
+		t.Fatalf("Expected ObjectExpression, got %#v", node)
+	}
+
+	_, ok = object.Typing.(ListTypeExpression)
+	if !ok {
+		t.Fatalf("Expected a list type, got %#v", object.Typing)
+	}
+}

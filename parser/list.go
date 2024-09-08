@@ -1,6 +1,8 @@
 package parser
 
-import "github.com/bmelicque/test-parser/tokenizer"
+import (
+	"github.com/bmelicque/test-parser/tokenizer"
+)
 
 type ListTypeExpression struct {
 	Bracketed BracketedExpression
@@ -28,7 +30,7 @@ func (p *Parser) parseListTypeExpression() Node {
 	default:
 		old := p.allowEmptyExpr
 		p.allowEmptyExpr = true
-		p.parseTokenExpression()
+		expr = p.parseTokenExpression()
 		p.allowEmptyExpr = old
 	}
 
