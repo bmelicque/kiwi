@@ -2,27 +2,27 @@ package parser
 
 import "github.com/bmelicque/test-parser/tokenizer"
 
-type ArrayType struct {
+type ListTypeExpression struct {
 	Bracketed BracketedExpression
 	Type      Node // Cannot be nil
 }
 
-func (a ArrayType) Loc() tokenizer.Loc {
-	end := a.Bracketed.Loc().End
-	if a.Type != nil {
-		end = a.Type.Loc().End
+func (l ListTypeExpression) Loc() tokenizer.Loc {
+	end := l.Bracketed.Loc().End
+	if l.Type != nil {
+		end = l.Type.Loc().End
 	}
-	return tokenizer.Loc{Start: a.Bracketed.loc.Start, End: end}
+	return tokenizer.Loc{Start: l.Bracketed.loc.Start, End: end}
 }
 
 // Returns either a BracketedExpression or an ArrayType
-func (p *Parser) parseArrayType() Node {
+func (p *Parser) parseListTypeExpression() Node {
 	brackets := p.parseBracketedExpression()
 
 	var expr Node
 	switch p.tokenizer.Peek().Kind() {
 	case tokenizer.LBRACKET:
-		expr = p.parseArrayType()
+		expr = p.parseListTypeExpression()
 	case tokenizer.LPAREN:
 		expr = p.parseParenthesizedExpression()
 	default:
@@ -35,5 +35,5 @@ func (p *Parser) parseArrayType() Node {
 	if expr == nil {
 		return brackets
 	}
-	return ArrayType{brackets, expr}
+	return ListTypeExpression{brackets, expr}
 }

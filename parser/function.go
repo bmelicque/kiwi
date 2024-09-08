@@ -30,9 +30,9 @@ func (p *Parser) parseFunctionExpression() Node {
 	var paren *ParenthesizedExpression
 
 	if p.tokenizer.Peek().Kind() == tokenizer.LBRACKET {
-		expr := p.parseArrayType()
-		if array, ok := getArrayType(expr); ok {
-			return array
+		expr := p.parseListTypeExpression()
+		if list, ok := getListType(expr); ok {
+			return list
 		}
 		brackets, paren = getBracketedParenthesized(expr)
 	}
@@ -50,7 +50,7 @@ func (p *Parser) parseFunctionExpression() Node {
 		if paren == nil {
 			return *brackets
 		}
-		return ArrayType{*brackets, *paren}
+		return ListTypeExpression{*brackets, *paren}
 	}
 	operator := p.tokenizer.Consume()
 
@@ -75,17 +75,17 @@ func (p *Parser) parseFunctionExpression() Node {
 	return res
 }
 
-func getArrayType(node Node) (ArrayType, bool) {
-	array, ok := node.(ArrayType)
+func getListType(node Node) (ListTypeExpression, bool) {
+	list, ok := node.(ListTypeExpression)
 	if !ok {
-		return ArrayType{}, false
+		return ListTypeExpression{}, false
 	}
 
-	if _, ok = array.Type.(ParenthesizedExpression); ok {
-		return ArrayType{}, false
+	if _, ok = list.Type.(ParenthesizedExpression); ok {
+		return ListTypeExpression{}, false
 	}
 
-	return array, true
+	return list, true
 }
 
 func getBracketedParenthesized(node Node) (*BracketedExpression, *ParenthesizedExpression) {
@@ -93,14 +93,14 @@ func getBracketedParenthesized(node Node) (*BracketedExpression, *ParenthesizedE
 		return &brackets, nil
 	}
 
-	array, ok := node.(ArrayType)
+	list, ok := node.(ListTypeExpression)
 	if !ok {
 		panic(fmt.Sprintf("parseArrayType should've returned a BracketedExpression or an ArrayType, got %#v\n", reflect.TypeOf(node)))
 	}
 
-	paren, ok := array.Type.(ParenthesizedExpression)
+	paren, ok := list.Type.(ParenthesizedExpression)
 	if !ok {
 		panic(fmt.Sprintf("expected Parenthesized expression after getArrayType, got %#v\n", reflect.TypeOf(node)))
 	}
-	return &array.Bracketed, &paren
+	return &list.Bracketed, &paren
 }
