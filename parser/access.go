@@ -58,72 +58,59 @@ var operators = []tokenizer.TokenKind{tokenizer.LBRACKET, tokenizer.LPAREN, toke
 
 func (p *Parser) parseAccessExpression() Node {
 	expression := fallback(p)
-	next := p.tokenizer.Peek()
-	for slices.Contains(operators, next.Kind()) {
-		switch next.Kind() {
-		case tokenizer.LBRACKET:
-			var typeArgs BracketedExpression
-			if next.Kind() == tokenizer.LBRACKET {
-				typeArgs = p.parseBracketedExpression()
-			}
-			next = p.tokenizer.Peek()
-			if next.Kind() == tokenizer.LPAREN {
-				args := p.parseParenthesizedExpression()
-				expression = CallExpression{expression, nil, &args}
-			} else if next.Kind() == tokenizer.LBRACE && p.allowBraceParsing {
-				p.tokenizer.Consume()
-				var members []Node
-				ParseList(p, tokenizer.RBRACE, func() {
-					members = append(members, p.parseTypedExpression())
-				})
-				loc := tokenizer.Loc{Start: expression.Loc().Start}
-				if p.tokenizer.Peek().Kind() != tokenizer.RBRACE {
-					p.report("'}' expected", p.tokenizer.Peek().Loc())
-				} else {
-					loc.End = p.tokenizer.Consume().Loc().End
-				}
-				expression = ObjectExpression{
-					Typing:  expression,
-					Members: members,
-					loc:     loc,
-				}
-			} else {
-				expression = CallExpression{expression, &typeArgs, nil}
-			}
-		case tokenizer.LPAREN:
-			args := p.parseParenthesizedExpression()
-			expression = CallExpression{expression, nil, &args}
-		case tokenizer.DOT:
-			p.tokenizer.Consume()
-			property := fallback(p)
-			expression = PropertyAccessExpression{
-				Expr:     expression,
-				Property: property,
-			}
-
-		case tokenizer.LBRACE:
-			if !p.allowBraceParsing {
-				return expression
-			}
-			// TODO: parseTuple
-			p.tokenizer.Consume()
-			var members []Node
-			ParseList(p, tokenizer.RBRACE, func() {
-				members = append(members, p.parseTypedExpression())
-			})
-			loc := tokenizer.Loc{Start: expression.Loc().Start}
-			if p.tokenizer.Peek().Kind() != tokenizer.RBRACE {
-				p.report("'}' expected", p.tokenizer.Peek().Loc())
-			} else {
-				loc.End = p.tokenizer.Consume().Loc().End
-			}
-			expression = ObjectExpression{
-				Typing:  expression,
-				Members: members,
-				loc:     loc,
-			}
+	for slices.Contains(operators, p.tokenizer.Peek().Kind()) {
+		if p.tokenizer.Peek().Kind() == tokenizer.LBRACE && !p.allowBraceParsing {
+			return expression
 		}
-		next = p.tokenizer.Peek()
+		expression = parseOneAccess(p, expression)
 	}
 	return expression
+}
+
+func parseOneAccess(p *Parser, expr Node) Node {
+	next := p.tokenizer.Peek()
+	switch next.Kind() {
+	case tokenizer.LBRACKET, tokenizer.LPAREN:
+		var typeArgs *BracketedExpression
+		if next.Kind() == tokenizer.LBRACKET {
+			b := p.parseBracketedExpression()
+			typeArgs = &b
+		}
+		var args *ParenthesizedExpression
+		if p.tokenizer.Peek().Kind() == tokenizer.LPAREN {
+			a := p.parseParenthesizedExpression()
+			args = &a
+		}
+		return CallExpression{expr, typeArgs, args}
+	case tokenizer.DOT:
+		p.tokenizer.Consume()
+		property := fallback(p)
+		return PropertyAccessExpression{
+			Expr:     expr,
+			Property: property,
+		}
+	case tokenizer.LBRACE:
+		if !p.allowBraceParsing {
+			return expr
+		}
+		// TODO: parseTuple
+		p.tokenizer.Consume()
+		var members []Node
+		ParseList(p, tokenizer.RBRACE, func() {
+			members = append(members, p.parseTypedExpression())
+		})
+		loc := tokenizer.Loc{Start: expr.Loc().Start}
+		if p.tokenizer.Peek().Kind() != tokenizer.RBRACE {
+			p.report("'}' expected", p.tokenizer.Peek().Loc())
+		} else {
+			loc.End = p.tokenizer.Consume().Loc().End
+		}
+		return ObjectExpression{
+			Typing:  expr,
+			Members: members,
+			loc:     loc,
+		}
+	default:
+		panic("switch should've been exhaustive!")
+	}
 }
