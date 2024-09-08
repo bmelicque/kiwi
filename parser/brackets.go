@@ -4,7 +4,7 @@ import (
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
-// Expression between angle brackets
+// Expression between brackets, such as `[Type]`
 type BracketedExpression struct {
 	Expr Node
 	loc  tokenizer.Loc
@@ -12,6 +12,9 @@ type BracketedExpression struct {
 
 func (b BracketedExpression) Loc() tokenizer.Loc { return b.loc }
 func (p *Parser) parseBracketedExpression() BracketedExpression {
+	if p.tokenizer.Peek().Kind() != tokenizer.LBRACKET {
+		panic("'[' expected!")
+	}
 	loc := p.tokenizer.Consume().Loc()
 
 	outer := p.allowEmptyExpr

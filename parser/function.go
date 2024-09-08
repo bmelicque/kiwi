@@ -1,6 +1,9 @@
 package parser
 
 import (
+	"fmt"
+	"reflect"
+
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
@@ -24,20 +27,30 @@ func (f FunctionExpression) Loc() tokenizer.Loc {
 
 func (p *Parser) parseFunctionExpression() Node {
 	var brackets *BracketedExpression
-	if p.tokenizer.Peek().Kind() == tokenizer.LBRACKET {
-		b := p.parseBracketedExpression()
-		brackets = &b
-	}
 	var paren *ParenthesizedExpression
-	if p.tokenizer.Peek().Kind() == tokenizer.LPAREN {
+
+	if p.tokenizer.Peek().Kind() == tokenizer.LBRACKET {
+		expr := p.parseArrayType()
+		if array, ok := getArrayType(expr); ok {
+			return array
+		}
+		brackets, paren = getBracketedParenthesized(expr)
+	}
+
+	if paren == nil && p.tokenizer.Peek().Kind() == tokenizer.LPAREN {
 		pa := p.parseParenthesizedExpression()
 		paren = &pa
 	}
 
 	next := p.tokenizer.Peek()
 	if next.Kind() != tokenizer.SLIM_ARR && next.Kind() != tokenizer.FAT_ARR {
-		// FIXME: return either angle, paren or typed(angle, paren)
-		return *paren
+		if brackets == nil {
+			return *paren
+		}
+		if paren == nil {
+			return *brackets
+		}
+		return ArrayType{*brackets, *paren}
 	}
 	operator := p.tokenizer.Consume()
 
@@ -60,4 +73,34 @@ func (p *Parser) parseFunctionExpression() Node {
 		res.Body = ParseBody(p)
 	}
 	return res
+}
+
+func getArrayType(node Node) (ArrayType, bool) {
+	array, ok := node.(ArrayType)
+	if !ok {
+		return ArrayType{}, false
+	}
+
+	if _, ok = array.Type.(ParenthesizedExpression); ok {
+		return ArrayType{}, false
+	}
+
+	return array, true
+}
+
+func getBracketedParenthesized(node Node) (*BracketedExpression, *ParenthesizedExpression) {
+	if brackets, ok := node.(BracketedExpression); ok {
+		return &brackets, nil
+	}
+
+	array, ok := node.(ArrayType)
+	if !ok {
+		panic(fmt.Sprintf("parseArrayType should've returned a BracketedExpression or an ArrayType, got %#v\n", reflect.TypeOf(node)))
+	}
+
+	paren, ok := array.Type.(ParenthesizedExpression)
+	if !ok {
+		panic(fmt.Sprintf("expected Parenthesized expression after getArrayType, got %#v\n", reflect.TypeOf(node)))
+	}
+	return &array.Bracketed, &paren
 }

@@ -127,17 +127,3 @@ func (p *Parser) parseAccessExpression() Node {
 	}
 	return expression
 }
-
-func fallback(p *Parser) Node {
-	switch p.tokenizer.Peek().Kind() {
-	case tokenizer.LBRACKET, tokenizer.LPAREN:
-		return p.parseFunctionExpression()
-	// case tokenizer.LBRACKET:
-	// 	return ListExpression{}.Parse(p)
-	case tokenizer.LBRACE:
-		if p.allowBraceParsing {
-			return p.parseObjectDefinition()
-		}
-	}
-	return p.parseTokenExpression()
-}
