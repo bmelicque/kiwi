@@ -10,7 +10,7 @@ import (
 
 func TestFunctionCall(t *testing.T) {
 	checker := MakeChecker()
-	checker.scope.Add("function", tokenizer.Loc{}, Function{[]string{}, Tuple{}, Primitive{NUMBER}})
+	checker.scope.Add("function", tokenizer.Loc{}, Function{[]Generic{}, Tuple{}, Primitive{NUMBER}})
 	checker.checkCallExpression(parser.CallExpression{
 		Callee: parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "function", tokenizer.Loc{}}},
 		Args:   parser.ParenthesizedExpression{Expr: nil},
@@ -27,7 +27,7 @@ func TestGenericFunctionCall(t *testing.T) {
 		"function",
 		tokenizer.Loc{},
 		Function{
-			[]string{"Type"},
+			[]Generic{{Name: "Type"}},
 			Tuple{[]ExpressionType{Generic{Name: "Type"}}},
 			Generic{Name: "Type"},
 		},

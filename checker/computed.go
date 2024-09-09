@@ -47,8 +47,25 @@ func (c *Checker) checkComputedAccessExpression(node parser.ComputedAccessExpres
 		}}
 	case Function:
 		// Generic function
+		c.pushScope(NewScope())
+		defer c.dropScope()
+		typeParams := append(t.TypeParams[:0:0], t.TypeParams...)
+		c.addTypeArgsToScope(prop, typeParams)
+		params := make([]ExpressionType, len(typeParams))
+		for i, param := range typeParams {
+			params[i] = param.build(c.scope, nil)
+		}
+		returned := t.Returned.build(c.scope, nil)
+		typing = Function{
+			TypeParams: typeParams,
+			Params:     Tuple{params},
+			Returned:   returned,
+		}
 	case List:
-		// Index access
+		if prop.Type().Kind() != NUMBER {
+			c.report("Number expected", prop.loc)
+		}
+		typing = t.Element
 	}
 
 	return ComputedAccessExpression{

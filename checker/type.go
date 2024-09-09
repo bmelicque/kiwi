@@ -226,7 +226,7 @@ func (r Range) build(scope *Scope, compared ExpressionType) ExpressionType {
 }
 
 type Function struct {
-	TypeParams []string
+	TypeParams []Generic
 	Params     Tuple
 	Returned   ExpressionType
 }

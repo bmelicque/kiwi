@@ -53,6 +53,37 @@ func TestGenericWithTypeArgs(t *testing.T) {
 	}
 
 	if memberType.Value.Kind() != NUMBER {
-		t.Fatalf("Member should've been set to Type{Primitive{NUMBER}}, got %#v", object)
+		t.Fatalf("Member should've been set to Type{Primitive{NUMBER}}, got %#v", memberType.Value)
+	}
+}
+
+func TestGenericFunctionWithTypeArgs(t *testing.T) {
+	checker := MakeChecker()
+	checker.scope.Add("function", tokenizer.Loc{}, Function{
+		TypeParams: []Generic{{Name: "Type"}},
+		Params:     Tuple{[]ExpressionType{Generic{Name: "Type"}}},
+		Returned:   Generic{Name: "Type"},
+	})
+
+	expr := checker.checkComputedAccessExpression(parser.ComputedAccessExpression{
+		Expr:     parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "function", tokenizer.Loc{}}},
+		Property: parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{tokenizer.NUM_KW, "number", tokenizer.Loc{}}}},
+	})
+
+	if len(checker.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", checker.errors)
+	}
+
+	function, ok := expr.typing.(Function)
+	if !ok {
+		t.Fatalf("Expected Function type, got %#v", expr.typing)
+	}
+
+	if function.Params.elements[0].Kind() != NUMBER {
+		t.Fatalf("Param should've been set to Primitive{NUMBER}, got %#v", function.Params.elements[0])
+	}
+
+	if function.Returned.Kind() != NUMBER {
+		t.Fatalf("Param should've been set to Primitive{NUMBER}, got %#v", function.Returned)
 	}
 }
