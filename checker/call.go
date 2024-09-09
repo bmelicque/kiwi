@@ -7,8 +7,8 @@ import (
 
 type CallExpression struct {
 	Callee Expression
-	Args   *TupleExpression
-	Typing ExpressionType
+	Args   TupleExpression
+	typing ExpressionType
 }
 
 func (c CallExpression) Loc() tokenizer.Loc {
@@ -19,34 +19,22 @@ func (c CallExpression) Loc() tokenizer.Loc {
 	return loc
 }
 
-// FIXME:
-func (c CallExpression) Type() ExpressionType {
-	callee := c.Callee
-	if callee == nil {
-		return nil
-	}
-
-	if calleeType, ok := callee.Type().(Function); ok {
-		return calleeType.Returned
-	} else {
-		return nil
-	}
-}
+func (c CallExpression) Type() ExpressionType { return c.typing }
 
 func (c *Checker) checkCallExpression(expr parser.CallExpression) Expression {
 	callee := c.checkExpression(expr.Callee)
 
-	args := &TupleExpression{loc: expr.Args.Loc()}
+	args := TupleExpression{loc: expr.Args.Loc()}
 	if expr.Args.Expr != nil {
 		ex := c.checkExpression(expr.Args.Expr)
 		if e, ok := ex.(TupleExpression); ok {
-			args = &e
+			args = e
 		} else {
-			args = &TupleExpression{[]Expression{ex}, ex.Loc()}
+			args = TupleExpression{[]Expression{ex}, ex.Loc()}
 		}
 	}
 
-	returned := c.checkFunctionCallee(callee, args)
+	returned := c.checkFunctionCallee(callee, &args)
 	return CallExpression{callee, args, returned}
 }
 
@@ -59,7 +47,10 @@ func (c *Checker) checkFunctionCallee(callee Expression, args *TupleExpression) 
 
 	c.pushScope(NewScope())
 	defer c.dropScope()
-	// c.addTypeArgsToScope(typeArgs, function.TypeParams)
+	for _, param := range function.TypeParams {
+		// TODO: get declared location
+		c.scope.Add(param.Name, tokenizer.Loc{}, Type{param})
+	}
 
 	params := function.Params.elements
 	checkFunctionArgsNumber(c, args, params, callee.Loc())
@@ -94,8 +85,8 @@ func checkFunctionArgs(c *Checker, args *TupleExpression, params []ExpressionTyp
 	for i := 0; i < l; i++ {
 		element := args.Elements[i]
 		received := element.Type()
-		built := params[i].build(c.scope, received)
-		if !built.Extends(received) {
+		params[i] = params[i].build(c.scope, received)
+		if !params[i].Extends(received) {
 			c.report("Types don't match", element.Loc())
 		}
 	}
