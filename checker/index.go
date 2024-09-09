@@ -60,7 +60,7 @@ func (c *Checker) checkExpression(node parser.Node) Expression {
 		return c.checkListTypeExpression(node)
 	case parser.ObjectDefinition:
 		return c.checkObjectDefinition(node)
-	case parser.ObjectExpression:
+	case parser.InstanciationExpression:
 		return c.checkObjectExpression(node)
 	case parser.ParenthesizedExpression:
 		return c.checkParenthesizedExpression(node)

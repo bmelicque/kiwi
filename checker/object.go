@@ -59,7 +59,7 @@ func (c *Checker) checkObjectExpressionMember(node parser.Node) (ObjectExpressio
 	return ObjectExpressionMember{name, value}, true
 }
 
-func (c *Checker) checkObjectExpression(expr parser.ObjectExpression) ObjectExpression {
+func (c *Checker) checkObjectExpression(expr parser.InstanciationExpression) ObjectExpression {
 	typing := c.checkExpression(expr.Typing)
 	typeArgs := checkTypeArgs(c, expr.TypeArgs)
 	alias, ok := handleGenericType(c, typing)

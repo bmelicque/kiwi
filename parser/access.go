@@ -44,15 +44,14 @@ func (p PropertyAccessExpression) Loc() tokenizer.Loc {
 	}
 }
 
-// TODO: InstanceExpression
-type ObjectExpression struct {
+type InstanciationExpression struct {
 	Typing   Node
 	TypeArgs *BracketedExpression
 	Members  []Node
 	loc      tokenizer.Loc
 }
 
-func (o ObjectExpression) Loc() tokenizer.Loc { return o.loc }
+func (i InstanciationExpression) Loc() tokenizer.Loc { return i.loc }
 
 var operators = []tokenizer.TokenKind{tokenizer.LBRACKET, tokenizer.LPAREN, tokenizer.DOT, tokenizer.LBRACE}
 
@@ -105,7 +104,7 @@ func parseOneAccess(p *Parser, expr Node) Node {
 		} else {
 			loc.End = p.tokenizer.Consume().Loc().End
 		}
-		return ObjectExpression{
+		return InstanciationExpression{
 			Typing:  expr,
 			Members: members,
 			loc:     loc,

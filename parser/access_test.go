@@ -137,7 +137,7 @@ func TestObjectExpression(t *testing.T) {
 	parser := MakeParser(&tokenizer)
 	node := ParseExpression(parser)
 
-	_, ok := node.(ObjectExpression)
+	_, ok := node.(InstanciationExpression)
 	if !ok {
 		t.Fatalf("Expected ObjectExpression, got %#v", node)
 	}
@@ -164,7 +164,7 @@ func TestListInstanciation(t *testing.T) {
 		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
 	}
 
-	object, ok := node.(ObjectExpression)
+	object, ok := node.(InstanciationExpression)
 	if !ok {
 		t.Fatalf("Expected ObjectExpression, got %#v", node)
 	}

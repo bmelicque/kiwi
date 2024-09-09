@@ -10,7 +10,7 @@ import (
 func TestObjectExpression(t *testing.T) {
 	checker := MakeChecker()
 	checker.scope.Add("Type", tokenizer.Loc{}, Type{TypeAlias{Name: "Type", Ref: Object{map[string]ExpressionType{"n": Type{Primitive{NUMBER}}}}}})
-	checker.checkObjectExpression(parser.ObjectExpression{
+	checker.checkObjectExpression(parser.InstanciationExpression{
 		Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Type"}},
 		Members: []parser.Node{
 			parser.TypedExpression{
@@ -29,7 +29,7 @@ func TestObjectExpression(t *testing.T) {
 func TestObjectExpressionColons(t *testing.T) {
 	checker := MakeChecker()
 	checker.scope.Add("Type", tokenizer.Loc{}, Type{TypeAlias{Name: "Type", Ref: Object{map[string]ExpressionType{"n": Type{Primitive{NUMBER}}}}}})
-	checker.checkObjectExpression(parser.ObjectExpression{
+	checker.checkObjectExpression(parser.InstanciationExpression{
 		Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Type"}},
 		Members: []parser.Node{
 			parser.TypedExpression{
@@ -56,7 +56,7 @@ func TestGenericObjectExpression(t *testing.T) {
 			Ref:    Object{map[string]ExpressionType{"value": Type{Generic{Name: "Type"}}}},
 		}},
 	)
-	checker.checkObjectExpression(parser.ObjectExpression{
+	checker.checkObjectExpression(parser.InstanciationExpression{
 		Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Type"}},
 		Members: []parser.Node{
 			parser.TypedExpression{
