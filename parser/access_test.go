@@ -6,6 +6,28 @@ import (
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
+func TestComputedPropertyAccess(t *testing.T) {
+	tokenizer := testTokenizer{tokens: []tokenizer.Token{
+		testToken{tokenizer.IDENTIFIER, "n", tokenizer.Loc{}},
+		testToken{tokenizer.LBRACKET, "[", tokenizer.Loc{}},
+		testToken{tokenizer.IDENTIFIER, "p", tokenizer.Loc{}},
+		testToken{tokenizer.RBRACKET, "]", tokenizer.Loc{}},
+	}}
+	parser := MakeParser(&tokenizer)
+	node := parser.parseAccessExpression()
+
+	expr, ok := node.(ComputedAccessExpression)
+	if !ok {
+		t.Fatalf("Expected ComputedAccessExpression, got %#v", node)
+	}
+	if _, ok := expr.Expr.(TokenExpression); !ok {
+		t.Fatalf("Expected token 'n'")
+	}
+	if _, ok := expr.Property.Expr.(TokenExpression); !ok {
+		t.Fatalf("Expected token 'p'")
+	}
+}
+
 func TestPropertyAccess(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []tokenizer.Token{
 		testToken{tokenizer.IDENTIFIER, "n", tokenizer.Loc{}},
@@ -70,9 +92,6 @@ func TestFunctionCall(t *testing.T) {
 	if _, ok := expr.Callee.(TokenExpression); !ok {
 		t.Fatalf("Expected token 'f'")
 	}
-	if expr.Args == nil {
-		t.Fatalf("Expected argument 42")
-	}
 }
 
 func TestFunctionCallWithTypeArgs(t *testing.T) {
@@ -92,36 +111,10 @@ func TestFunctionCallWithTypeArgs(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected CallExpression, got %#v", node)
 	}
-	if _, ok := expr.Callee.(TokenExpression); !ok {
-		t.Fatalf("Expected token 'f'")
-	}
-	if expr.Args == nil {
-		t.Fatalf("Expected argument 42")
-	}
-}
 
-func TestGenericTypeCall(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
-		testToken{tokenizer.LBRACKET, "[", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "number", tokenizer.Loc{}},
-		testToken{tokenizer.RBRACKET, "]", tokenizer.Loc{}},
-	}}
-	parser := MakeParser(&tokenizer)
-	node := parser.parseAccessExpression()
+	if _, ok := expr.Callee.(ComputedAccessExpression); !ok {
+		t.Fatalf("Expected callee f[number], got %#v", node)
 
-	expr, ok := node.(CallExpression)
-	if !ok {
-		t.Fatalf("Expected CallExpression, got %#v", node)
-	}
-	if _, ok := expr.Callee.(TokenExpression); !ok {
-		t.Fatalf("Expected token 'Type'")
-	}
-	if expr.TypeArgs == nil {
-		t.Fatalf("Expected type args")
-	}
-	if expr.Args != nil {
-		t.Fatalf("Expected no args")
 	}
 }
 

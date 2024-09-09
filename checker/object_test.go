@@ -52,7 +52,7 @@ func TestGenericObjectExpression(t *testing.T) {
 		tokenizer.Loc{},
 		Type{TypeAlias{
 			Name:   "Type",
-			Params: []string{"Type"},
+			Params: []Generic{{Name: "Type"}},
 			Ref:    Object{map[string]ExpressionType{"value": Type{Generic{Name: "Type"}}}},
 		}},
 	)

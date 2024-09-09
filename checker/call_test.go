@@ -13,7 +13,7 @@ func TestFunctionCall(t *testing.T) {
 	checker.scope.Add("function", tokenizer.Loc{}, Function{[]string{}, Tuple{}, Primitive{NUMBER}})
 	checker.checkCallExpression(parser.CallExpression{
 		Callee: parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "function", tokenizer.Loc{}}},
-		Args:   &parser.ParenthesizedExpression{Expr: nil},
+		Args:   parser.ParenthesizedExpression{Expr: nil},
 	})
 
 	if len(checker.errors) != 0 {
@@ -34,7 +34,7 @@ func TestGenericFunctionCall(t *testing.T) {
 	)
 	expr := checker.checkCallExpression(parser.CallExpression{
 		Callee: parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "function", tokenizer.Loc{}}},
-		Args:   &parser.ParenthesizedExpression{Expr: parser.TokenExpression{Token: testToken{tokenizer.NUMBER, "42", tokenizer.Loc{}}}},
+		Args:   parser.ParenthesizedExpression{Expr: parser.TokenExpression{Token: testToken{tokenizer.NUMBER, "42", tokenizer.Loc{}}}},
 	})
 
 	if len(checker.errors) != 0 {

@@ -6,10 +6,9 @@ import (
 )
 
 type CallExpression struct {
-	Callee   Expression
-	TypeArgs *TupleExpression
-	Args     *TupleExpression
-	Typing   ExpressionType
+	Callee Expression
+	Args   *TupleExpression
+	Typing ExpressionType
 }
 
 func (c CallExpression) Loc() tokenizer.Loc {
@@ -36,17 +35,9 @@ func (c CallExpression) Type() ExpressionType {
 
 func (c *Checker) checkCallExpression(expr parser.CallExpression) Expression {
 	callee := c.checkExpression(expr.Callee)
-	if expr.Args == nil && expr.TypeArgs == nil {
-		return callee
-	}
 
-	typeArgs := checkTypeArgs(c, expr.TypeArgs)
-
-	var args *TupleExpression
-	if expr.Args != nil {
-		args = &TupleExpression{loc: expr.Args.Loc()}
-	}
-	if expr.Args != nil && expr.Args.Expr != nil {
+	args := &TupleExpression{loc: expr.Args.Loc()}
+	if expr.Args.Expr != nil {
 		ex := c.checkExpression(expr.Args.Expr)
 		if e, ok := ex.(TupleExpression); ok {
 			args = &e
@@ -55,11 +46,11 @@ func (c *Checker) checkCallExpression(expr parser.CallExpression) Expression {
 		}
 	}
 
-	returned := c.checkFunctionCallee(callee, typeArgs, args)
-	return CallExpression{callee, typeArgs, args, returned}
+	returned := c.checkFunctionCallee(callee, args)
+	return CallExpression{callee, args, returned}
 }
 
-func (c *Checker) checkFunctionCallee(callee Expression, typeArgs *TupleExpression, args *TupleExpression) ExpressionType {
+func (c *Checker) checkFunctionCallee(callee Expression, args *TupleExpression) ExpressionType {
 	function, ok := callee.Type().(Function)
 	if !ok {
 		c.report("Function type expected", callee.Loc())
@@ -68,7 +59,7 @@ func (c *Checker) checkFunctionCallee(callee Expression, typeArgs *TupleExpressi
 
 	c.pushScope(NewScope())
 	defer c.dropScope()
-	c.addTypeArgsToScope(typeArgs, function.TypeParams)
+	// c.addTypeArgsToScope(typeArgs, function.TypeParams)
 
 	params := function.Params.elements
 	checkFunctionArgsNumber(c, args, params, callee.Loc())
