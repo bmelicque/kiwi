@@ -5,7 +5,7 @@ import (
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
-func (c *Checker) addTypeArgsToScope(args *TupleExpression, params []string) {
+func (c *Checker) addTypeArgsToScope(args *TupleExpression, params []Generic) {
 	var l int
 	if args != nil {
 		l = len(args.Elements)
@@ -18,24 +18,35 @@ func (c *Checker) addTypeArgsToScope(args *TupleExpression, params []string) {
 	}
 
 	for i, param := range params {
-		var arg Expression
+		var loc tokenizer.Loc
+		var t ExpressionType
 		if i < l {
-			arg = args.Elements[i]
+			arg := args.Elements[i]
+			loc = arg.Loc()
+			typing, ok := arg.Type().(Type)
+			if ok {
+				t = typing.Value
+			} else {
+				c.report("Typing expected", arg.Loc())
+			}
 		}
-		if arg != nil {
-			c.scope.Add(param, arg.Loc(), arg.Type())
+		if t != nil && param.Value != nil && !param.Value.Extends(t) {
+			c.report("Type doesn't match", args.Elements[i].Loc())
 		} else {
-			c.scope.Add(param, tokenizer.Loc{}, Type{Generic{Name: param}})
+			params[i].Value = t
 		}
+		c.scope.Add(param.Name, loc, Type{Generic{Name: param.Name, Value: t}})
+		v, _ := c.scope.Find(param.Name)
+		v.reads = append(v.reads, loc)
 	}
 }
 
-func checkTypeArgs(c *Checker, expr *parser.BracketedExpression) *TupleExpression {
+func checkBracketed(c *Checker, expr *parser.BracketedExpression) *TupleExpression {
 	if expr == nil || expr.Expr == nil {
 		return nil
 	}
 	ex := c.checkExpression(expr.Expr)
-	if e, ok := ex.(TupleExpression); !ok {
+	if e, ok := ex.(TupleExpression); ok {
 		return &e
 	}
 	return &TupleExpression{[]Expression{ex}, ex.Loc()}

@@ -69,8 +69,7 @@ func (p Primitive) build(scope *Scope, c ExpressionType) ExpressionType { return
 
 type TypeAlias struct {
 	Name   string
-	Params []string // TODO: add constraints
-	Args   []ExpressionType
+	Params []Generic
 	Ref    ExpressionType
 }
 
@@ -83,11 +82,8 @@ func (ta TypeAlias) Match(t ExpressionType) bool {
 	if alias.Name != ta.Name {
 		return false
 	}
-	if len(alias.Args) != len(ta.Args) {
-		return false
-	}
-	for i, arg := range ta.Args {
-		if !arg.Match(alias.Args[i]) {
+	for i, param := range ta.Params {
+		if param.Value != nil && !param.Value.Match(alias.Params[i]) {
 			return false
 		}
 	}
@@ -101,11 +97,8 @@ func (ta TypeAlias) Extends(t ExpressionType) bool {
 	if alias.Name != ta.Name {
 		return false
 	}
-	if len(alias.Args) < len(ta.Args) {
-		return false
-	}
-	for i, arg := range ta.Args {
-		if !arg.Extends(alias.Args[i]) {
+	for i, param := range ta.Params {
+		if param.Value != nil && !param.Value.Extends(alias.Params[i]) {
 			return false
 		}
 	}
@@ -233,7 +226,7 @@ func (r Range) build(scope *Scope, compared ExpressionType) ExpressionType {
 }
 
 type Function struct {
-	TypeParams []string
+	TypeParams []Generic
 	Params     Tuple
 	Returned   ExpressionType
 }
@@ -273,12 +266,17 @@ func (o Object) Extends(t ExpressionType) bool {
 	return true
 }
 
-// FIXME:
-func (o Object) build(scope *Scope, compared ExpressionType) ExpressionType { return o }
+func (o Object) build(scope *Scope, compared ExpressionType) ExpressionType {
+	for name, member := range o.Members {
+		o.Members[name] = member.build(scope, compared)
+	}
+	return o
+}
 
 type Generic struct {
 	Name        string
 	Constraints ExpressionType
+	Value       ExpressionType
 }
 
 func (g Generic) Kind() ExpressionTypeKind {
@@ -306,11 +304,17 @@ func (g Generic) build(scope *Scope, compared ExpressionType) ExpressionType {
 	}
 	variable.reads = append(variable.reads, tokenizer.Loc{})
 	ok = isGenericType(variable.typing)
-	if ok {
-		variable.typing = compared
-		return compared
+	if !ok {
+		return variable.typing
 	}
-	return variable.typing
+	t := variable.typing.(Type)
+	generic := t.Value.(Generic)
+	if generic.Value == nil {
+		generic.Value = compared
+	}
+	t.Value = generic
+	variable.typing = t
+	return generic.Value
 }
 func isGenericType(typing ExpressionType) bool {
 	t, ok := typing.(Type)

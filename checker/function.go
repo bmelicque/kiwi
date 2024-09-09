@@ -18,9 +18,9 @@ func (f SlimArrowFunction) Loc() tokenizer.Loc {
 	}
 }
 func (f SlimArrowFunction) Type() ExpressionType {
-	tp := []string{}
+	tp := []Generic{}
 	for i, param := range f.TypeParams.Params {
-		tp[i] = param.Identifier.Token.Text()
+		tp[i] = Generic{Name: param.Identifier.Token.Text()}
 	}
 	return Function{tp, f.Params.Type().(Tuple), f.Expr.Type()}
 }
@@ -39,9 +39,9 @@ func (f FatArrowFunction) Loc() tokenizer.Loc {
 	}
 }
 func (f FatArrowFunction) Type() ExpressionType {
-	tp := []string{}
+	tp := []Generic{}
 	for i, param := range f.TypeParams.Params {
-		tp[i] = param.Identifier.Token.Text()
+		tp[i] = Generic{Name: param.Identifier.Token.Text()}
 	}
 	return Function{tp, f.Params.Type().(Tuple), f.ReturnType.Type().(Type).Value}
 }
@@ -58,9 +58,9 @@ func (g GenericTypeDef) Loc() tokenizer.Loc {
 	}
 }
 func (g GenericTypeDef) Type() ExpressionType {
-	tp := []string{}
+	tp := []Generic{}
 	for i, param := range g.TypeParams.Params {
-		tp[i] = param.Identifier.Token.Text()
+		tp[i] = Generic{Name: param.Identifier.Token.Text()}
 	}
 	return Function{tp, Tuple{}, g.Expr.Type()}
 }

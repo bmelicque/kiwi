@@ -6,29 +6,33 @@ import (
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
-// TODO: random access expression
+// Expr[Property]
+type ComputedAccessExpression struct {
+	Expr     Node
+	Property BracketedExpression
+}
 
+func (c ComputedAccessExpression) Loc() tokenizer.Loc {
+	return tokenizer.Loc{
+		Start: c.Expr.Loc().Start,
+		End:   c.Property.loc.End,
+	}
+}
+
+// Callee(...Args)
 type CallExpression struct {
-	Callee   Node
-	TypeArgs *BracketedExpression
-	Args     *ParenthesizedExpression
+	Callee Node
+	Args   ParenthesizedExpression
 }
 
 func (c CallExpression) Loc() tokenizer.Loc {
-	loc := tokenizer.Loc{}
-	if c.Callee != nil {
-		loc.Start = c.Callee.Loc().Start
-	} else {
-		loc.Start = c.Args.Loc().Start
+	return tokenizer.Loc{
+		Start: c.Callee.Loc().Start,
+		End:   c.Args.loc.End,
 	}
-	if c.Args != nil {
-		loc.End = c.Args.Loc().End
-	} else {
-		loc.End = c.Callee.Loc().End
-	}
-	return loc
 }
 
+// Expr.Property
 type PropertyAccessExpression struct {
 	Expr     Node
 	Property Node
@@ -44,6 +48,7 @@ func (p PropertyAccessExpression) Loc() tokenizer.Loc {
 	}
 }
 
+// Typing{...Members}
 type InstanciationExpression struct {
 	Typing   Node
 	TypeArgs *BracketedExpression
@@ -69,18 +74,10 @@ func (p *Parser) parseAccessExpression() Node {
 func parseOneAccess(p *Parser, expr Node) Node {
 	next := p.tokenizer.Peek()
 	switch next.Kind() {
-	case tokenizer.LBRACKET, tokenizer.LPAREN:
-		var typeArgs *BracketedExpression
-		if next.Kind() == tokenizer.LBRACKET {
-			b := p.parseBracketedExpression()
-			typeArgs = &b
-		}
-		var args *ParenthesizedExpression
-		if p.tokenizer.Peek().Kind() == tokenizer.LPAREN {
-			a := p.parseParenthesizedExpression()
-			args = &a
-		}
-		return CallExpression{expr, typeArgs, args}
+	case tokenizer.LBRACKET:
+		return ComputedAccessExpression{expr, p.parseBracketedExpression()}
+	case tokenizer.LPAREN:
+		return CallExpression{expr, p.parseParenthesizedExpression()}
 	case tokenizer.DOT:
 		p.tokenizer.Consume()
 		property := fallback(p)

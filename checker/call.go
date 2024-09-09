@@ -6,10 +6,9 @@ import (
 )
 
 type CallExpression struct {
-	Callee   Expression
-	TypeArgs *TupleExpression
-	Args     *TupleExpression
-	Typing   ExpressionType
+	Callee Expression
+	Args   TupleExpression
+	typing ExpressionType
 }
 
 func (c CallExpression) Loc() tokenizer.Loc {
@@ -20,46 +19,26 @@ func (c CallExpression) Loc() tokenizer.Loc {
 	return loc
 }
 
-// FIXME:
-func (c CallExpression) Type() ExpressionType {
-	callee := c.Callee
-	if callee == nil {
-		return nil
-	}
-
-	if calleeType, ok := callee.Type().(Function); ok {
-		return calleeType.Returned
-	} else {
-		return nil
-	}
-}
+func (c CallExpression) Type() ExpressionType { return c.typing }
 
 func (c *Checker) checkCallExpression(expr parser.CallExpression) Expression {
 	callee := c.checkExpression(expr.Callee)
-	if expr.Args == nil && expr.TypeArgs == nil {
-		return callee
-	}
 
-	typeArgs := checkTypeArgs(c, expr.TypeArgs)
-
-	var args *TupleExpression
-	if expr.Args != nil {
-		args = &TupleExpression{loc: expr.Args.Loc()}
-	}
-	if expr.Args != nil && expr.Args.Expr != nil {
+	args := TupleExpression{loc: expr.Args.Loc()}
+	if expr.Args.Expr != nil {
 		ex := c.checkExpression(expr.Args.Expr)
 		if e, ok := ex.(TupleExpression); ok {
-			args = &e
+			args = e
 		} else {
-			args = &TupleExpression{[]Expression{ex}, ex.Loc()}
+			args = TupleExpression{[]Expression{ex}, ex.Loc()}
 		}
 	}
 
-	returned := c.checkFunctionCallee(callee, typeArgs, args)
-	return CallExpression{callee, typeArgs, args, returned}
+	returned := c.checkFunctionCallee(callee, &args)
+	return CallExpression{callee, args, returned}
 }
 
-func (c *Checker) checkFunctionCallee(callee Expression, typeArgs *TupleExpression, args *TupleExpression) ExpressionType {
+func (c *Checker) checkFunctionCallee(callee Expression, args *TupleExpression) ExpressionType {
 	function, ok := callee.Type().(Function)
 	if !ok {
 		c.report("Function type expected", callee.Loc())
@@ -68,7 +47,10 @@ func (c *Checker) checkFunctionCallee(callee Expression, typeArgs *TupleExpressi
 
 	c.pushScope(NewScope())
 	defer c.dropScope()
-	c.addTypeArgsToScope(typeArgs, function.TypeParams)
+	for _, param := range function.TypeParams {
+		// TODO: get declared location
+		c.scope.Add(param.Name, tokenizer.Loc{}, Type{param})
+	}
 
 	params := function.Params.elements
 	checkFunctionArgsNumber(c, args, params, callee.Loc())
@@ -103,8 +85,8 @@ func checkFunctionArgs(c *Checker, args *TupleExpression, params []ExpressionTyp
 	for i := 0; i < l; i++ {
 		element := args.Elements[i]
 		received := element.Type()
-		built := params[i].build(c.scope, received)
-		if !built.Extends(received) {
+		params[i] = params[i].build(c.scope, received)
+		if !params[i].Extends(received) {
 			c.report("Types don't match", element.Loc())
 		}
 	}

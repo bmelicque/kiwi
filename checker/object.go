@@ -20,6 +20,8 @@ type ObjectExpression struct {
 }
 
 func (o ObjectExpression) Loc() tokenizer.Loc { return o.loc }
+
+// FIXME:
 func (o ObjectExpression) Type() ExpressionType {
 	typing := o.Typing.Type()
 	t, ok := typing.(Type)
@@ -29,12 +31,6 @@ func (o ObjectExpression) Type() ExpressionType {
 	alias, ok := t.Value.(TypeAlias)
 	if !ok {
 		return typing
-	}
-	if o.TypeArgs != nil {
-		alias.Args = make([]ExpressionType, len(o.TypeArgs.Elements))
-		for i, arg := range o.TypeArgs.Elements {
-			alias.Args[i] = arg.Type()
-		}
 	}
 	return Type{alias}
 }
@@ -61,7 +57,7 @@ func (c *Checker) checkObjectExpressionMember(node parser.Node) (ObjectExpressio
 
 func (c *Checker) checkObjectExpression(expr parser.InstanciationExpression) ObjectExpression {
 	typing := c.checkExpression(expr.Typing)
-	typeArgs := checkTypeArgs(c, expr.TypeArgs)
+	typeArgs := checkBracketed(c, expr.TypeArgs)
 	alias, ok := handleGenericType(c, typing)
 	if ok {
 		c.addTypeArgsToScope(typeArgs, alias.Params)
