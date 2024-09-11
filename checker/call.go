@@ -55,7 +55,11 @@ func (c *Checker) checkFunctionCallee(callee Expression, args *TupleExpression) 
 	params := function.Params.elements
 	checkFunctionArgsNumber(c, args, params, callee.Loc())
 	checkFunctionArgs(c, args, params)
-	return function.Returned.build(c.scope, nil)
+	t, ok := function.Returned.build(c.scope, nil)
+	if !ok {
+		c.report("Could not determine exact type", callee.Loc())
+	}
+	return t
 }
 
 func checkFunctionArgsNumber(c *Checker, args *TupleExpression, params []ExpressionType, loc tokenizer.Loc) {
@@ -82,10 +86,14 @@ func checkFunctionArgs(c *Checker, args *TupleExpression, params []ExpressionTyp
 	if len(args.Elements) < len(params) {
 		l = len(args.Elements)
 	}
+	var ok bool
 	for i := 0; i < l; i++ {
 		element := args.Elements[i]
 		received := element.Type()
-		params[i] = params[i].build(c.scope, received)
+		params[i], ok = params[i].build(c.scope, received)
+		if !ok {
+			c.report("Could not determine exact type", element.Loc())
+		}
 		if !params[i].Extends(received) {
 			c.report("Types don't match", element.Loc())
 		}

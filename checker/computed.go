@@ -39,7 +39,7 @@ func (c *Checker) checkComputedAccessExpression(node parser.ComputedAccessExpres
 		defer c.dropScope()
 		params := append(alias.Params[:0:0], alias.Params...)
 		c.addTypeArgsToScope(prop, params)
-		ref := alias.Ref.build(c.scope, nil)
+		ref, _ := alias.Ref.build(c.scope, nil)
 		typing = Type{TypeAlias{
 			Name:   alias.Name,
 			Params: params,
@@ -53,9 +53,9 @@ func (c *Checker) checkComputedAccessExpression(node parser.ComputedAccessExpres
 		c.addTypeArgsToScope(prop, typeParams)
 		params := make([]ExpressionType, len(typeParams))
 		for i, param := range typeParams {
-			params[i] = param.build(c.scope, nil)
+			params[i], _ = param.build(c.scope, nil)
 		}
-		returned := t.Returned.build(c.scope, nil)
+		returned, _ := t.Returned.build(c.scope, nil)
 		typing = Function{
 			TypeParams: typeParams,
 			Params:     Tuple{params},

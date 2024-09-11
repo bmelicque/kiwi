@@ -31,7 +31,7 @@ type ExpressionType interface {
 	Kind() ExpressionTypeKind
 	Match(ExpressionType) bool
 	Extends(ExpressionType) bool
-	build(*Scope, ExpressionType) ExpressionType
+	build(*Scope, ExpressionType) (ExpressionType, bool)
 }
 
 type Type struct {
@@ -45,12 +45,13 @@ func (t Type) Match(testType ExpressionType) bool {
 func (t Type) Extends(testType ExpressionType) bool {
 	return testType.Kind() == TYPE && t.Value.Extends(testType.(Type).Value)
 }
-func (t Type) build(scope *Scope, compared ExpressionType) ExpressionType {
+func (t Type) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	var value ExpressionType
 	if c, ok := compared.(Type); ok {
 		value = c.Value
 	}
-	return Type{t.Value.build(scope, value)}
+	v, ok := t.Value.build(scope, value)
+	return Type{v}, ok
 }
 
 type Primitive struct {
@@ -65,7 +66,7 @@ func (p Primitive) Extends(t ExpressionType) bool {
 	}
 	return p.Kind() == t.Kind() || p.Kind() == UNKNOWN || t.Kind() == UNKNOWN
 }
-func (p Primitive) build(scope *Scope, c ExpressionType) ExpressionType { return p }
+func (p Primitive) build(scope *Scope, c ExpressionType) (ExpressionType, bool) { return p, true }
 
 type TypeAlias struct {
 	Name   string
@@ -105,13 +106,14 @@ func (ta TypeAlias) Extends(t ExpressionType) bool {
 	return true
 }
 
-func (ta TypeAlias) build(scope *Scope, compared ExpressionType) ExpressionType {
+func (ta TypeAlias) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	var ref ExpressionType
 	if c, ok := compared.(TypeAlias); ok {
 		ref = c.Ref
 	}
-	ta.Ref.build(scope, ref)
-	return ta
+	ref, ok := ta.Ref.build(scope, ref)
+	ta.Ref = ref
+	return ta, ok
 }
 
 type List struct {
@@ -131,13 +133,14 @@ func (l List) Extends(t ExpressionType) bool {
 	}
 	return false
 }
-func (l List) build(scope *Scope, compared ExpressionType) ExpressionType {
+func (l List) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	var element ExpressionType
 	if c, ok := compared.(List); ok {
 		element = c.Element
 	}
-	l.Element = l.Element.build(scope, element)
-	return l
+	var ok bool
+	l.Element, ok = l.Element.build(scope, element)
+	return l, ok
 }
 
 type Tuple struct {
@@ -182,21 +185,21 @@ func (tuple Tuple) Extends(t ExpressionType) bool {
 }
 
 // FIXME: indexes
-func (t Tuple) build(scope *Scope, compared ExpressionType) ExpressionType {
-	if compared == nil {
+func (t Tuple) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
+	ok := true
+	c, k := compared.(Tuple)
+	if compared == nil || !k {
 		for i, el := range t.elements {
-			t.elements[i] = el.build(scope, nil)
+			t.elements[i], k = el.build(scope, nil)
+			ok = ok && k
 		}
-		return t
-	}
-	c, ok := compared.(Tuple)
-	if !ok {
-		return t
+		return t, ok
 	}
 	for i, el := range t.elements {
-		t.elements[i] = el.build(scope, c.elements[i])
+		t.elements[i], k = el.build(scope, c.elements[i])
+		ok = ok && k
 	}
-	return t
+	return t, ok
 }
 
 type Range struct {
@@ -216,13 +219,13 @@ func (r Range) Extends(t ExpressionType) bool {
 	}
 	return false
 }
-func (r Range) build(scope *Scope, compared ExpressionType) ExpressionType {
+func (r Range) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	var operands ExpressionType
 	if c, ok := compared.(Range); ok {
 		operands = c.operands
 	}
-	r.operands = r.operands.build(scope, operands)
-	return r
+	operands, ok := r.operands.build(scope, operands)
+	return Range{operands}, ok
 }
 
 type Function struct {
@@ -236,7 +239,7 @@ func (f Function) Match(t ExpressionType) bool   { /* FIXME: */ return false }
 func (f Function) Extends(t ExpressionType) bool { /* FIXME: */ return false }
 
 // FIXME: generics
-func (f Function) build(scope *Scope, compared ExpressionType) ExpressionType { return f }
+func (f Function) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) { return f, true }
 
 type Object struct {
 	Members map[string]ExpressionType
@@ -266,11 +269,14 @@ func (o Object) Extends(t ExpressionType) bool {
 	return true
 }
 
-func (o Object) build(scope *Scope, compared ExpressionType) ExpressionType {
+func (o Object) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
+	ok := true
 	for name, member := range o.Members {
-		o.Members[name] = member.build(scope, compared)
+		var k bool
+		o.Members[name], k = member.build(scope, compared)
+		ok = ok && k
 	}
-	return o
+	return o, ok
 }
 
 type Generic struct {
@@ -297,15 +303,15 @@ func (g Generic) Extends(t ExpressionType) bool {
 	}
 	return g.Constraints.Extends(t)
 }
-func (g Generic) build(scope *Scope, compared ExpressionType) ExpressionType {
+func (g Generic) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	variable, ok := scope.Find(g.Name)
 	if !ok {
-		return Primitive{UNKNOWN}
+		return Primitive{UNKNOWN}, false
 	}
 	variable.reads = append(variable.reads, tokenizer.Loc{})
 	ok = isGenericType(variable.typing)
 	if !ok {
-		return variable.typing
+		return variable.typing, true
 	}
 	t := variable.typing.(Type)
 	generic := t.Value.(Generic)
@@ -314,7 +320,7 @@ func (g Generic) build(scope *Scope, compared ExpressionType) ExpressionType {
 	}
 	t.Value = generic
 	variable.typing = t
-	return generic.Value
+	return generic.Value, generic.Value != nil
 }
 func isGenericType(typing ExpressionType) bool {
 	t, ok := typing.(Type)

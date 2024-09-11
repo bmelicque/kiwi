@@ -57,11 +57,11 @@ func TestGenericObjectExpression(t *testing.T) {
 		}},
 	)
 	checker.checkObjectExpression(parser.InstanciationExpression{
-		Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Generic"}},
+		Typing: parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "Generic", tokenizer.Loc{Start: tokenizer.Position{Col: 0}}}},
 		Members: []parser.Node{
 			parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "value", tokenizer.Loc{}}},
-				Typing: parser.TokenExpression{Token: testToken{tokenizer.NUMBER, "42", tokenizer.Loc{}}},
+				Expr:   parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "value", tokenizer.Loc{Start: tokenizer.Position{Col: 1}}}},
+				Typing: parser.TokenExpression{Token: testToken{tokenizer.NUMBER, "42", tokenizer.Loc{Start: tokenizer.Position{Col: 2}}}},
 				Colon:  true,
 			},
 		},

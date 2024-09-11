@@ -14,12 +14,14 @@ func TestBuildGeneric(t *testing.T) {
 
 	compared := List{Primitive{NUMBER}}
 
-	built := typing.build(scope, compared)
+	built, ok := typing.build(scope, compared)
+	if !ok {
+		t.Fatalf("Expected 'ok' to be true (no remaining generics)")
+	}
 
 	list, ok := built.(List)
 	if !ok {
 		t.Fatalf("Expected list type, got %v", reflect.TypeOf(list))
-		return
 	}
 
 	if _, ok = list.Element.(Primitive); !ok {

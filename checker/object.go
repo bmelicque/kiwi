@@ -69,6 +69,9 @@ func (c *Checker) checkObjectExpression(node parser.InstanciationExpression) Exp
 			// FIXME:
 			return ObjectExpression{}
 		}
+		c.pushScope(NewScope())
+		defer c.dropScope()
+		c.addTypeArgsToScope(nil, t.Params)
 		members := checkObjectMembers(c, &object, node.Members)
 		err := getMissingMembers(object.Members, members)
 		if err != "" {
@@ -99,7 +102,10 @@ func checkObjectMembers(c *Checker, object *Object, nodes []parser.Node) []Objec
 			continue
 		}
 		name := member.Name.Token.Text()
-		expectedType := object.Members[name].(Type).Value.build(c.scope, member.Value.Type())
+		expectedType, ok := object.Members[name].(Type).Value.build(c.scope, member.Value.Type())
+		if !ok {
+			c.report("Could not determine exact type", member.Value.Loc())
+		}
 		if !expectedType.Extends(member.Value.Type()) {
 			c.report("Types don't match", node.Loc())
 		}
