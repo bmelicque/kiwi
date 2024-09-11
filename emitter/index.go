@@ -79,6 +79,8 @@ func (e *Emitter) emit(node interface{}) {
 		e.emitBinaryExpression(node)
 	case checker.CallExpression:
 		e.emitCallExpression(node)
+	case checker.ComputedAccessExpression:
+		e.emitComputedAccessExpression(node)
 	case checker.FatArrowFunction:
 		e.emitFatArrowFunction(node)
 	case checker.Identifier:
@@ -88,6 +90,8 @@ func (e *Emitter) emit(node interface{}) {
 		} else {
 			e.write(text)
 		}
+	case checker.ListExpression:
+		e.emitListExpression(node)
 	case checker.Literal:
 		e.write(node.Token.Text())
 	case checker.ObjectExpression:

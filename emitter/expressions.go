@@ -49,6 +49,16 @@ func (e *Emitter) emitCallExpression(expr checker.CallExpression) {
 	}
 }
 
+func (e *Emitter) emitComputedAccessExpression(expr checker.ComputedAccessExpression) {
+	e.emit(expr.Expr)
+	t := expr.Expr.Type()
+	if _, ok := t.(checker.List); ok {
+		e.write("[")
+		e.emit(expr.Property)
+		e.write("]")
+	}
+}
+
 func (e *Emitter) emitFatArrowFunction(f checker.FatArrowFunction) {
 	e.emitParams(f.Params)
 	e.write(" => ")
@@ -63,6 +73,18 @@ func findMemberByName(members []checker.ObjectExpressionMember, name string) par
 		}
 	}
 	return nil
+}
+
+func (e *Emitter) emitListExpression(l checker.ListExpression) {
+	e.write("[")
+	max := len(l.Elements) - 1
+	for i, element := range l.Elements {
+		e.emit(element)
+		if i != max {
+			e.write(", ")
+		}
+	}
+	e.write("]")
 }
 
 func (e *Emitter) emitObjectExpression(o checker.ObjectExpression) {
