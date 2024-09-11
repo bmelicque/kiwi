@@ -52,22 +52,19 @@ func (c *Checker) checkObjectExpressionMember(node parser.Node) (ObjectExpressio
 	return ObjectExpressionMember{name, value}, true
 }
 
-func (c *Checker) checkObjectExpression(node parser.InstanciationExpression) Expression {
+func (c *Checker) checkInstanciationExpression(node parser.InstanciationExpression) Expression {
 	expr := c.checkExpression(node.Typing)
 	typing, ok := expr.Type().(Type)
 	if !ok {
-		// TODO: report
-		// TODO: check members
-		// FIXME:
-		return ObjectExpression{}
+		c.report("Type expected", node.Typing.Loc())
+		return ObjectExpression{Expr: expr, loc: node.Loc()}
 	}
 	switch t := typing.Value.(type) {
 	case TypeAlias:
 		object, ok := t.Ref.(Object)
 		if !ok {
 			c.report("Object type expected", expr.Loc())
-			// FIXME:
-			return ObjectExpression{}
+			return ObjectExpression{Expr: expr, typing: t, loc: node.Loc()}
 		}
 		c.pushScope(NewScope())
 		defer c.dropScope()
@@ -85,12 +82,29 @@ func (c *Checker) checkObjectExpression(node parser.InstanciationExpression) Exp
 			loc:     node.Loc(),
 		}
 	case List:
-		// TODO: if no member, return (report if still has generics? (not fully qualified?))
-		// TODO: build type from first member
-		// TODO: check every element against type
-		return ListExpression{}
+		if len(node.Members) == 0 {
+			return ListExpression{Expr: expr, Elements: nil, typing: t, loc: node.Loc()}
+		}
+		el := t.Element
+		members := make([]Expression, len(node.Members))
+		if alias, ok := t.Element.(TypeAlias); ok {
+			m := c.checkExpression(node.Members[0])
+			c.pushScope(NewScope())
+			defer c.dropScope()
+			c.addTypeArgsToScope(nil, alias.Params)
+			el, _ = t.Element.build(c.scope, m.Type())
+		}
+
+		tail := node.Members[1:]
+		for i, member := range tail {
+			members[i] = c.checkExpression(member)
+			if !el.Extends(members[i].Type()) {
+				c.report("Type doesn't match", member.Loc())
+			}
+		}
+		return ListExpression{Expr: expr, Elements: members, typing: t}
 	}
-	return ObjectExpression{}
+	return ObjectExpression{Expr: expr, loc: node.Loc()}
 }
 
 func checkObjectMembers(c *Checker, object *Object, nodes []parser.Node) []ObjectExpressionMember {

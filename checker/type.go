@@ -107,11 +107,15 @@ func (ta TypeAlias) Extends(t ExpressionType) bool {
 }
 
 func (ta TypeAlias) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
+	s := NewScope()
+	for _, param := range ta.Params {
+		s.Add(param.Name, tokenizer.Loc{}, param)
+	}
 	var ref ExpressionType
 	if c, ok := compared.(TypeAlias); ok {
 		ref = c.Ref
 	}
-	ref, ok := ta.Ref.build(scope, ref)
+	ref, ok := ta.Ref.build(s, ref)
 	ta.Ref = ref
 	return ta, ok
 }

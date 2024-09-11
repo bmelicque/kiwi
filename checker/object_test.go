@@ -10,7 +10,7 @@ import (
 func TestObjectExpression(t *testing.T) {
 	checker := MakeChecker()
 	checker.scope.Add("Type", tokenizer.Loc{}, Type{TypeAlias{Name: "Type", Ref: Object{map[string]ExpressionType{"n": Type{Primitive{NUMBER}}}}}})
-	checker.checkObjectExpression(parser.InstanciationExpression{
+	checker.checkInstanciationExpression(parser.InstanciationExpression{
 		Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Type"}},
 		Members: []parser.Node{
 			parser.TypedExpression{
@@ -29,7 +29,7 @@ func TestObjectExpression(t *testing.T) {
 func TestObjectExpressionColons(t *testing.T) {
 	checker := MakeChecker()
 	checker.scope.Add("Type", tokenizer.Loc{}, Type{TypeAlias{Name: "Type", Ref: Object{map[string]ExpressionType{"n": Type{Primitive{NUMBER}}}}}})
-	checker.checkObjectExpression(parser.InstanciationExpression{
+	checker.checkInstanciationExpression(parser.InstanciationExpression{
 		Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Type"}},
 		Members: []parser.Node{
 			parser.TypedExpression{
@@ -56,7 +56,7 @@ func TestGenericObjectExpression(t *testing.T) {
 			Ref:    Object{map[string]ExpressionType{"value": Type{Generic{Name: "Type"}}}},
 		}},
 	)
-	checker.checkObjectExpression(parser.InstanciationExpression{
+	checker.checkInstanciationExpression(parser.InstanciationExpression{
 		Typing: parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "Generic", tokenizer.Loc{Start: tokenizer.Position{Col: 0}}}},
 		Members: []parser.Node{
 			parser.TypedExpression{
@@ -64,6 +64,24 @@ func TestGenericObjectExpression(t *testing.T) {
 				Typing: parser.TokenExpression{Token: testToken{tokenizer.NUMBER, "42", tokenizer.Loc{Start: tokenizer.Position{Col: 2}}}},
 				Colon:  true,
 			},
+		},
+	})
+
+	if len(checker.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", checker.errors)
+	}
+}
+
+func TestListExpression(t *testing.T) {
+	checker := MakeChecker()
+	checker.checkInstanciationExpression(parser.InstanciationExpression{
+		Typing: parser.ListTypeExpression{
+			Bracketed: parser.BracketedExpression{},
+			Type:      parser.TokenExpression{Token: testToken{kind: tokenizer.NUM_KW, value: "number"}},
+		},
+		Members: []parser.Node{
+			parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "1"}},
+			parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "2"}},
 		},
 	})
 
