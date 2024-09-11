@@ -50,10 +50,9 @@ func (p PropertyAccessExpression) Loc() tokenizer.Loc {
 
 // Typing{...Members}
 type InstanciationExpression struct {
-	Typing   Node
-	TypeArgs *BracketedExpression
-	Members  []Node
-	loc      tokenizer.Loc
+	Typing  Node
+	Members []Node
+	loc     tokenizer.Loc
 }
 
 func (i InstanciationExpression) Loc() tokenizer.Loc { return i.loc }

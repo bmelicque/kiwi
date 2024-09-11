@@ -48,16 +48,16 @@ func TestObjectExpressionColons(t *testing.T) {
 func TestGenericObjectExpression(t *testing.T) {
 	checker := MakeChecker()
 	checker.scope.Add(
-		"Type",
+		"Generic",
 		tokenizer.Loc{},
 		Type{TypeAlias{
-			Name:   "Type",
+			Name:   "Generic",
 			Params: []Generic{{Name: "Type"}},
 			Ref:    Object{map[string]ExpressionType{"value": Type{Generic{Name: "Type"}}}},
 		}},
 	)
 	checker.checkObjectExpression(parser.InstanciationExpression{
-		Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Type"}},
+		Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Generic"}},
 		Members: []parser.Node{
 			parser.TypedExpression{
 				Expr:   parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "value", tokenizer.Loc{}}},

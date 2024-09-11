@@ -13,27 +13,24 @@ type ObjectExpressionMember struct {
 }
 
 type ObjectExpression struct {
-	Typing   Expression
-	TypeArgs *TupleExpression
-	Members  []ObjectExpressionMember
+	Expr    Expression
+	Members []ObjectExpressionMember
+	typing  TypeAlias
+	loc     tokenizer.Loc
+}
+
+func (o ObjectExpression) Loc() tokenizer.Loc   { return o.loc }
+func (o ObjectExpression) Type() ExpressionType { return o.typing }
+
+type ListExpression struct {
+	Expr     Expression
+	Elements []Expression
+	typing   List
 	loc      tokenizer.Loc
 }
 
-func (o ObjectExpression) Loc() tokenizer.Loc { return o.loc }
-
-// FIXME:
-func (o ObjectExpression) Type() ExpressionType {
-	typing := o.Typing.Type()
-	t, ok := typing.(Type)
-	if !ok {
-		return typing
-	}
-	alias, ok := t.Value.(TypeAlias)
-	if !ok {
-		return typing
-	}
-	return Type{alias}
-}
+func (l ListExpression) Loc() tokenizer.Loc   { return l.loc }
+func (l ListExpression) Type() ExpressionType { return l.typing }
 
 func (c *Checker) checkObjectExpressionMember(node parser.Node) (ObjectExpressionMember, bool) {
 	member, ok := node.(parser.TypedExpression)
@@ -55,61 +52,83 @@ func (c *Checker) checkObjectExpressionMember(node parser.Node) (ObjectExpressio
 	return ObjectExpressionMember{name, value}, true
 }
 
-func (c *Checker) checkObjectExpression(expr parser.InstanciationExpression) ObjectExpression {
-	typing := c.checkExpression(expr.Typing)
-	typeArgs := checkBracketed(c, expr.TypeArgs)
-	alias, ok := handleGenericType(c, typing)
-	if ok {
-		c.addTypeArgsToScope(typeArgs, alias.Params)
+func (c *Checker) checkObjectExpression(node parser.InstanciationExpression) Expression {
+	expr := c.checkExpression(node.Typing)
+	typing, ok := expr.Type().(Type)
+	if !ok {
+		// TODO: report
+		// TODO: check members
+		// FIXME:
+		return ObjectExpression{}
 	}
-	object := alias.Ref.(Object)
+	switch t := typing.Value.(type) {
+	case TypeAlias:
+		object, ok := t.Ref.(Object)
+		if !ok {
+			c.report("Object type expected", expr.Loc())
+			// FIXME:
+			return ObjectExpression{}
+		}
+		members := checkObjectMembers(c, &object, node.Members)
+		err := getMissingMembers(object.Members, members)
+		if err != "" {
+			c.report(fmt.Sprintf("Missing key(s) %v", err), node.Loc())
+		}
+		t.Ref = object
+		return ObjectExpression{
+			Expr:    expr,
+			Members: members,
+			typing:  t,
+			loc:     node.Loc(),
+		}
+	case List:
+		// TODO: if no member, return (report if still has generics? (not fully qualified?))
+		// TODO: build type from first member
+		// TODO: check every element against type
+		return ListExpression{}
+	}
+	return ObjectExpression{}
+}
 
+func checkObjectMembers(c *Checker, object *Object, nodes []parser.Node) []ObjectExpressionMember {
 	var members []ObjectExpressionMember
-	membersSet := map[string]bool{}
-	for _, node := range expr.Members {
-		member, k := c.checkObjectExpressionMember(node)
-		if !k {
+	for _, node := range nodes {
+		member, ok := c.checkObjectExpressionMember(node)
+		if !ok {
 			c.report("Expected member expression", node.Loc())
 			continue
 		}
 		name := member.Name.Token.Text()
-		membersSet[name] = true
 		expectedType := object.Members[name].(Type).Value.build(c.scope, member.Value.Type())
-		if ok && !expectedType.Match(member.Value.Type()) {
+		if !expectedType.Extends(member.Value.Type()) {
 			c.report("Types don't match", node.Loc())
 		}
+		object.Members[name] = Type{expectedType}
 		members = append(members, member)
 	}
-
-	if ok {
-		for name := range object.Members {
-			if _, ok := membersSet[name]; !ok {
-				c.report(fmt.Sprintf("Missing key '%v'", name), expr.Loc())
-			}
-		}
-	}
-
-	return ObjectExpression{
-		Typing:   typing,
-		TypeArgs: typeArgs,
-		Members:  members,
-		loc:      expr.Loc(),
-	}
+	return members
 }
 
-func handleGenericType(c *Checker, expr Expression) (TypeAlias, bool) {
-	t, ok := expr.Type().(Type)
-	if !ok {
-		c.report("Typing expected", expr.Loc())
-		return TypeAlias{}, false
+func getMissingMembers(expected map[string]ExpressionType, received []ObjectExpressionMember) string {
+	membersSet := map[string]bool{}
+	for name := range expected {
+		membersSet[name] = true
 	}
-	alias, ok := t.Value.(TypeAlias)
-	if !ok {
-		c.report("Type alias expected", expr.Loc())
-		return TypeAlias{}, false
+	for _, member := range received {
+		delete(membersSet, member.Name.Text())
 	}
-	if _, ok := alias.Ref.(Object); !ok {
-		c.report("Object reference expected", expr.Loc())
+
+	if len(membersSet) == 0 {
+		return ""
 	}
-	return alias, ok
+	var msg string
+	var i int
+	for member := range membersSet {
+		msg += fmt.Sprintf("'%v'", member)
+		if i != len(membersSet)-1 {
+			msg += ", "
+		}
+		i++
+	}
+	return msg
 }

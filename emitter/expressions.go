@@ -67,10 +67,10 @@ func findMemberByName(members []checker.ObjectExpressionMember, name string) par
 
 func (e *Emitter) emitObjectExpression(o checker.ObjectExpression) {
 	e.write("new ")
-	e.emit(o.Typing)
+	e.emit(o.Expr)
 	e.write("(")
 	defer e.write(")")
-	typing := o.Typing.Type().(checker.Type).Value.(checker.TypeAlias).Ref.(checker.Object)
+	typing := o.Expr.Type().(checker.Type).Value.(checker.TypeAlias).Ref.(checker.Object)
 	max := len(o.Members) - 1
 	i := 0
 	for name := range typing.Members {
