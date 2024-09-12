@@ -108,6 +108,7 @@ func (ta TypeAlias) Extends(t ExpressionType) bool {
 
 func (ta TypeAlias) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	s := NewScope()
+	s.outer = scope
 	for _, param := range ta.Params {
 		s.Add(param.Name, tokenizer.Loc{}, param)
 	}
@@ -242,8 +243,32 @@ func (f Function) Kind() ExpressionTypeKind      { return FUNCTION }
 func (f Function) Match(t ExpressionType) bool   { /* FIXME: */ return false }
 func (f Function) Extends(t ExpressionType) bool { /* FIXME: */ return false }
 
-// FIXME: generics
-func (f Function) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) { return f, true }
+func (f Function) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
+	ok := true
+	s := NewScope()
+	s.outer = scope
+	for _, param := range f.TypeParams {
+		s.Add(param.Name, tokenizer.Loc{}, param)
+	}
+	c, k := compared.(Function)
+	f.Params = Tuple{make([]ExpressionType, len(f.Params.elements))}
+	for i, param := range f.Params.elements {
+		var el ExpressionType
+		if len(c.Params.elements) > i {
+			el = c.Params.elements[i]
+		}
+		p, k := param.build(s, el)
+		ok = ok && k
+		f.Params.elements[i] = p
+	}
+	var r ExpressionType
+	if k {
+		r = c.Returned
+	}
+	f.Returned, k = f.Returned.build(s, r)
+	ok = ok && k
+	return f, ok
+}
 
 type Object struct {
 	Members map[string]ExpressionType
