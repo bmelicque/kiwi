@@ -103,8 +103,10 @@ func (c *Checker) checkInstanciationExpression(node parser.InstanciationExpressi
 			}
 		}
 		return ListExpression{Expr: expr, Elements: members, typing: t}
+	default:
+		c.report("Unexpected typing (expected object, list or sum type constructor)", expr.Loc())
+		return ObjectExpression{Expr: expr, loc: node.Loc()}
 	}
-	return ObjectExpression{Expr: expr, loc: node.Loc()}
 }
 
 func checkObjectMembers(c *Checker, object *Object, nodes []parser.Node) []ObjectExpressionMember {
