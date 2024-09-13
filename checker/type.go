@@ -23,6 +23,7 @@ const (
 	TUPLE
 	RANGE
 	STRUCT
+	SUM
 
 	FUNCTION
 )
@@ -302,10 +303,42 @@ func (o Object) build(scope *Scope, compared ExpressionType) (ExpressionType, bo
 	ok := true
 	for name, member := range o.Members {
 		var k bool
+		// FIXME: is compared an object?
 		o.Members[name], k = member.build(scope, compared)
 		ok = ok && k
 	}
 	return o, ok
+}
+
+type Sum struct {
+	Members map[string]ExpressionType
+}
+
+func (s Sum) Kind() ExpressionTypeKind    { return SUM }
+func (s Sum) Match(t ExpressionType) bool { return false }
+func (s Sum) Extends(t ExpressionType) bool {
+	// return true if exactly one member extends received type
+	found := false
+	for _, member := range s.Members {
+		if !member.Extends(t) {
+			continue
+		}
+		if found {
+			return false
+		}
+		found = true
+	}
+	return found
+}
+func (s Sum) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
+	ok := true
+	for name, member := range s.Members {
+		var k bool
+		// FIXME: is compared a sum type? should it work like this?
+		s.Members[name], k = member.build(scope, compared)
+		ok = ok && k
+	}
+	return s, ok
 }
 
 type Generic struct {
