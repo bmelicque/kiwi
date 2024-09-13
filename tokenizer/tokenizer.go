@@ -46,6 +46,8 @@ const (
 	MOD    // %
 	LAND   // &&
 	LOR    // ||
+	BAND   // &
+	BOR    // |
 
 	LESS    // <
 	GREATER // >
@@ -132,14 +134,6 @@ func (t token) Text() string {
 		return "==="
 	case NEQ:
 		return "!=="
-	// case "::":
-	// 	return token{DEFINE, loc}
-	// case ":=":
-	// 	return token{DECLARE, loc}
-	// case "..":
-	// 	return token{RANGE_INCLUSIVE, loc}
-	// case "..=":
-	// 	return token{RANGE_EXCLUSIVE, loc}
 	default:
 		return ""
 	}
@@ -173,7 +167,7 @@ var number = regexp.MustCompile(`^\d+`)
 var str = regexp.MustCompile(`^".+?[^\\]"`)
 var doubleQuoteString = regexp.MustCompile(`^"(.*?)[^\\]"`)
 var word = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9]*`)
-var operator = regexp.MustCompile(`^(\+\+?|->?|\*\*?|/|%|::|:=|\.\.=?|=>|<=?|>=?|={1,2}|!=)`)
+var operator = regexp.MustCompile(`^(\+\+?|->?|\*\*?|/|%|::|:=|\.\.=?|=>|<=?|>=?|={1,2}|!=|\|{1,2})`)
 var punctuation = regexp.MustCompile(`^(\[|\]|,|:|\(|\)|\{|\}|_|\.)`)
 
 func split(data []byte, atEOF bool) (advance int, token []byte, err error) {
@@ -278,6 +272,10 @@ func makeToken(text string, loc Loc) Token {
 		return token{LAND, loc}
 	case "||":
 		return token{LOR, loc}
+	case "&":
+		return token{BAND, loc}
+	case "|":
+		return token{BOR, loc}
 	case "<":
 		return token{LESS, loc}
 	case ">":
