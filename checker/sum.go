@@ -36,6 +36,9 @@ func (c *Checker) checkSumType(node parser.SumType) SumType {
 			typing[m.Name.Text()] = nil
 		}
 	}
+	if len(typing) < 2 {
+		c.report("At least 2 members expected", node.Loc())
+	}
 	return SumType{
 		Members: members,
 		typing:  Sum{typing},

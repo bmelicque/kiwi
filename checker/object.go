@@ -7,6 +7,16 @@ import (
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
+type PrimitiveExpression struct {
+	Expr   Expression
+	Value  Expression
+	typing Primitive
+	loc    tokenizer.Loc
+}
+
+func (p PrimitiveExpression) Loc() tokenizer.Loc   { return p.loc }
+func (p PrimitiveExpression) Type() ExpressionType { return p.typing }
+
 type ObjectExpressionMember struct {
 	Name  Identifier
 	Value Expression
@@ -60,6 +70,23 @@ func (c *Checker) checkInstanciationExpression(node parser.InstanciationExpressi
 		return ObjectExpression{Expr: expr, loc: node.Loc()}
 	}
 	switch t := typing.Value.(type) {
+	case Primitive:
+		var value Expression
+		if len(node.Members) != 1 {
+			c.report("Exactly 1 value expected", node.Loc())
+		}
+		if len(node.Members) > 0 {
+			value = c.checkExpression(node.Members[0])
+			if !t.Extends(value.Type()) {
+				c.report("Type doesn't match", value.Loc())
+			}
+		}
+		return PrimitiveExpression{
+			Expr:   expr,
+			Value:  value,
+			typing: t,
+			loc:    node.Loc(),
+		}
 	case TypeAlias:
 		object, ok := t.Ref.(Object)
 		if !ok {
