@@ -36,10 +36,7 @@ func (c CallExpression) Loc() tokenizer.Loc {
 type PropertyAccessExpression struct {
 	Expr     Node
 	Property Node
-	method   bool
 }
-
-func (p PropertyAccessExpression) IsMethod() bool { return p.method }
 
 func (p PropertyAccessExpression) Loc() tokenizer.Loc {
 	return tokenizer.Loc{
