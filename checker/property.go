@@ -90,5 +90,8 @@ func checkSumTypeConstructor(t Type, name string) ExpressionType {
 	if constructor == nil {
 		return alias
 	}
-	return constructor
+	return Type{Constructor{
+		From: constructor,
+		To:   t,
+	}}
 }

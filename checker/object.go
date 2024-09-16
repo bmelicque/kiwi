@@ -10,7 +10,7 @@ import (
 type PrimitiveExpression struct {
 	Expr   Expression
 	Value  Expression
-	typing Primitive
+	typing ExpressionType
 	loc    tokenizer.Loc
 }
 
@@ -25,7 +25,7 @@ type ObjectExpressionMember struct {
 type ObjectExpression struct {
 	Expr    Expression
 	Members []ObjectExpressionMember
-	typing  TypeAlias
+	typing  ExpressionType
 	loc     tokenizer.Loc
 }
 
@@ -35,7 +35,7 @@ func (o ObjectExpression) Type() ExpressionType { return o.typing }
 type ListExpression struct {
 	Expr     Expression
 	Elements []Expression
-	typing   List
+	typing   ExpressionType
 	loc      tokenizer.Loc
 }
 
@@ -69,7 +69,11 @@ func (c *Checker) checkInstanciationExpression(node parser.InstanciationExpressi
 		c.report("Type expected", node.Typing.Loc())
 		return ObjectExpression{Expr: expr, loc: node.Loc()}
 	}
-	switch t := typing.Value.(type) {
+	from := typing
+	if constructor, ok := typing.Value.(Constructor); ok {
+		from.Value = constructor.From
+	}
+	switch t := from.Value.(type) {
 	case Primitive:
 		var value Expression
 		if len(node.Members) != 1 {
@@ -84,7 +88,7 @@ func (c *Checker) checkInstanciationExpression(node parser.InstanciationExpressi
 		return PrimitiveExpression{
 			Expr:   expr,
 			Value:  value,
-			typing: t,
+			typing: getFinalType(typing),
 			loc:    node.Loc(),
 		}
 	case TypeAlias:
@@ -105,7 +109,7 @@ func (c *Checker) checkInstanciationExpression(node parser.InstanciationExpressi
 		return ObjectExpression{
 			Expr:    expr,
 			Members: members,
-			typing:  t,
+			typing:  getFinalType(typing),
 			loc:     node.Loc(),
 		}
 	case List:
@@ -129,7 +133,11 @@ func (c *Checker) checkInstanciationExpression(node parser.InstanciationExpressi
 				c.report("Type doesn't match", member.Loc())
 			}
 		}
-		return ListExpression{Expr: expr, Elements: members, typing: t}
+		return ListExpression{
+			Expr:     expr,
+			Elements: members,
+			typing:   getFinalType(typing),
+		}
 	default:
 		c.report("Unexpected typing (expected object, list or sum type constructor)", expr.Loc())
 		return ObjectExpression{Expr: expr, loc: node.Loc()}
@@ -180,4 +188,11 @@ func getMissingMembers(expected map[string]ExpressionType, received []ObjectExpr
 		i++
 	}
 	return msg
+}
+
+func getFinalType(t Type) ExpressionType {
+	if constructor, ok := t.Value.(Constructor); ok {
+		return constructor.To
+	}
+	return t
 }

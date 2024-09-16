@@ -66,7 +66,7 @@ func TestSumTypeConstructor2(t *testing.T) {
 		t.Fatalf("Expected type, got %#v", expr.typing)
 	}
 
-	if typing.Value.Kind() != NUMBER {
-		t.Fatalf("Expected number, got %#v", typing.Value)
+	if typing.Value.Kind() != CONSTRUCTOR {
+		t.Fatalf("Expected constructor, got %#v", typing.Value)
 	}
 }

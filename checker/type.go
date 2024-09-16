@@ -26,6 +26,7 @@ const (
 	SUM
 
 	FUNCTION
+	CONSTRUCTOR
 )
 
 type ExpressionType interface {
@@ -391,6 +392,31 @@ func isGenericType(typing ExpressionType) bool {
 	}
 	_, ok = t.Value.(Generic)
 	return ok
+}
+
+type Constructor struct {
+	From ExpressionType
+	To   ExpressionType
+}
+
+func (c Constructor) Kind() ExpressionTypeKind      { return CONSTRUCTOR }
+func (c Constructor) Match(t ExpressionType) bool   { return false }
+func (c Constructor) Extends(t ExpressionType) bool { return false }
+func (c Constructor) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
+	done := true
+	co, ok := compared.(Constructor)
+	if ok {
+		c.From, ok = c.From.build(scope, co.From)
+		done = done && ok
+		c.To, ok = c.To.build(scope, co.To)
+		done = done && ok
+	} else {
+		c.From, ok = c.From.build(scope, nil)
+		done = done && ok
+		c.To, ok = c.To.build(scope, nil)
+		done = done && ok
+	}
+	return c, done
 }
 
 func ReadTypeExpression(expr parser.Node) ExpressionType {
