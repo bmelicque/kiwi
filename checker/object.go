@@ -7,40 +7,34 @@ import (
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
-type PrimitiveExpression struct {
-	Expr   Expression
-	Value  Expression
-	typing ExpressionType
-	loc    tokenizer.Loc
-}
-
-func (p PrimitiveExpression) Loc() tokenizer.Loc   { return p.loc }
-func (p PrimitiveExpression) Type() ExpressionType { return p.typing }
-
 type ObjectExpressionMember struct {
 	Name  Identifier
 	Value Expression
 }
 
-type ObjectExpression struct {
-	Expr    Expression
-	Members []ObjectExpressionMember
-	typing  ExpressionType
-	loc     tokenizer.Loc
+func (o ObjectExpressionMember) Loc() tokenizer.Loc {
+	loc := o.Name.Loc()
+	if o.Value != nil {
+		loc.End = o.Value.Loc().End
+	}
+	return loc
+}
+func (o ObjectExpressionMember) Type() ExpressionType {
+	if o.Value == nil {
+		return nil
+	}
+	return o.Value.Type()
 }
 
-func (o ObjectExpression) Loc() tokenizer.Loc   { return o.loc }
-func (o ObjectExpression) Type() ExpressionType { return o.typing }
-
-type ListExpression struct {
-	Expr     Expression
-	Elements []Expression
-	typing   ExpressionType
-	loc      tokenizer.Loc
+type InstanceExpression struct {
+	Constructor Expression
+	Args        []Expression
+	typing      ExpressionType
+	loc         tokenizer.Loc
 }
 
-func (l ListExpression) Loc() tokenizer.Loc   { return l.loc }
-func (l ListExpression) Type() ExpressionType { return l.typing }
+func (i InstanceExpression) Loc() tokenizer.Loc   { return i.loc }
+func (i InstanceExpression) Type() ExpressionType { return i.typing }
 
 func (c *Checker) checkObjectExpressionMember(node parser.Node) (ObjectExpressionMember, bool) {
 	member, ok := node.(parser.TypedExpression)
@@ -67,7 +61,7 @@ func (c *Checker) checkInstanciationExpression(node parser.InstanciationExpressi
 	typing, ok := expr.Type().(Type)
 	if !ok {
 		c.report("Type expected", node.Typing.Loc())
-		return ObjectExpression{Expr: expr, loc: node.Loc()}
+		return InstanceExpression{Constructor: expr, loc: node.Loc()}
 	}
 	from := typing
 	if constructor, ok := typing.Value.(Constructor); ok {
@@ -85,17 +79,17 @@ func (c *Checker) checkInstanciationExpression(node parser.InstanciationExpressi
 				c.report("Type doesn't match", value.Loc())
 			}
 		}
-		return PrimitiveExpression{
-			Expr:   expr,
-			Value:  value,
-			typing: getFinalType(typing),
-			loc:    node.Loc(),
+		return InstanceExpression{
+			Constructor: expr,
+			Args:        []Expression{value},
+			typing:      getFinalType(typing),
+			loc:         node.Loc(),
 		}
 	case TypeAlias:
 		object, ok := t.Ref.(Object)
 		if !ok {
 			c.report("Object type expected", expr.Loc())
-			return ObjectExpression{Expr: expr, typing: t, loc: node.Loc()}
+			return InstanceExpression{Constructor: expr, typing: t, loc: node.Loc()}
 		}
 		c.pushScope(NewScope())
 		defer c.dropScope()
@@ -105,16 +99,20 @@ func (c *Checker) checkInstanciationExpression(node parser.InstanciationExpressi
 		if err != "" {
 			c.report(fmt.Sprintf("Missing key(s) %v", err), node.Loc())
 		}
+		args := make([]Expression, len(members))
+		for i := range members {
+			args[i] = members[i]
+		}
 		t.Ref = object
-		return ObjectExpression{
-			Expr:    expr,
-			Members: members,
-			typing:  getFinalType(typing),
-			loc:     node.Loc(),
+		return InstanceExpression{
+			Constructor: expr,
+			Args:        args,
+			typing:      getFinalType(typing),
+			loc:         node.Loc(),
 		}
 	case List:
 		if len(node.Members) == 0 {
-			return ListExpression{Expr: expr, Elements: nil, typing: t, loc: node.Loc()}
+			return InstanceExpression{Constructor: expr, Args: nil, typing: t, loc: node.Loc()}
 		}
 		el := t.Element
 		members := make([]Expression, len(node.Members))
@@ -133,14 +131,14 @@ func (c *Checker) checkInstanciationExpression(node parser.InstanciationExpressi
 				c.report("Type doesn't match", member.Loc())
 			}
 		}
-		return ListExpression{
-			Expr:     expr,
-			Elements: members,
-			typing:   getFinalType(typing),
+		return InstanceExpression{
+			Constructor: expr,
+			Args:        members,
+			typing:      getFinalType(typing),
 		}
 	default:
 		c.report("Unexpected typing (expected object, list or sum type constructor)", expr.Loc())
-		return ObjectExpression{Expr: expr, loc: node.Loc()}
+		return InstanceExpression{Constructor: expr, loc: node.Loc()}
 	}
 }
 

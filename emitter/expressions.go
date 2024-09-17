@@ -75,33 +75,60 @@ func findMemberByName(members []checker.ObjectExpressionMember, name string) par
 	return nil
 }
 
-func (e *Emitter) emitListExpression(l checker.ListExpression) {
+func (e *Emitter) emitListInstance(constructor checker.ListTypeExpression, args []checker.Expression) {
 	e.write("[")
-	max := len(l.Elements) - 1
-	for i, element := range l.Elements {
-		e.emit(element)
+	c := constructor.Expr
+	max := len(args) - 1
+	for i, arg := range args {
+		e.emitInstance(c, []checker.Expression{arg})
 		if i != max {
 			e.write(", ")
 		}
 	}
 	e.write("]")
 }
-
-func (e *Emitter) emitObjectExpression(o checker.ObjectExpression) {
+func (e *Emitter) emitObjectInstance(constructor checker.Identifier, args []checker.Expression) {
 	e.write("new ")
-	e.emit(o.Expr)
+	e.emit(constructor)
 	e.write("(")
 	defer e.write(")")
-	typing := o.Expr.Type().(checker.Type).Value.(checker.TypeAlias).Ref.(checker.Object)
-	max := len(o.Members) - 1
+	typing := constructor.Type().(checker.Type).Value.(checker.TypeAlias).Ref.(checker.Object)
+	max := len(args) - 1
 	i := 0
+	members := make([]checker.ObjectExpressionMember, len(args))
+	for i := range args {
+		members[i] = args[i].(checker.ObjectExpressionMember)
+	}
 	for name := range typing.Members {
-		e.emit(findMemberByName(o.Members, name))
+		e.emit(findMemberByName(members, name))
 		if i != max {
 			e.write(", ")
 		}
 		i++
 	}
+}
+func (e *Emitter) emitSumInstance(constructor checker.PropertyAccessExpression, args []checker.Expression) {
+	e.write("new ")
+	e.emit(constructor.Expr)
+	e.write("(\"")
+	e.emit(constructor.Property)
+	e.write("\", ")
+	c := e.constructors[constructor.Expr.(checker.Identifier).Text()][constructor.Property.Text()]
+	e.emitInstance(c, args)
+	e.write(")")
+}
+func (e *Emitter) emitInstance(constructor checker.Expression, args []checker.Expression) {
+	switch c := constructor.(type) {
+	case checker.ListTypeExpression:
+		e.emitListInstance(c, args)
+	case checker.PropertyAccessExpression:
+		e.emitSumInstance(c, args)
+	case checker.Identifier:
+		e.emitObjectInstance(c, args)
+	}
+}
+func (e *Emitter) emitInstanceExpression(expr checker.InstanceExpression) {
+	e.emitInstance(expr.Constructor, expr.Args)
 }
 
 func (e *Emitter) emitParams(params checker.Params) {

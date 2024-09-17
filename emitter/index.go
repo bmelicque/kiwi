@@ -16,17 +16,19 @@ const (
 )
 
 type Emitter struct {
-	depth    int
-	flags    EmitterFlag
-	builder  strings.Builder
-	thisName string
+	depth        int
+	flags        EmitterFlag
+	builder      strings.Builder
+	thisName     string
+	constructors map[string]map[string]checker.Expression
 }
 
 func makeEmitter() *Emitter {
 	return &Emitter{
-		depth:   0,
-		flags:   NoFlags,
-		builder: strings.Builder{},
+		depth:        0,
+		flags:        NoFlags,
+		builder:      strings.Builder{},
+		constructors: map[string]map[string]checker.Expression{},
 	}
 }
 
@@ -90,12 +92,10 @@ func (e *Emitter) emit(node interface{}) {
 		} else {
 			e.write(text)
 		}
-	case checker.ListExpression:
-		e.emitListExpression(node)
 	case checker.Literal:
 		e.write(node.Token.Text())
-	case checker.ObjectExpression:
-		e.emitObjectExpression(node)
+	case checker.InstanceExpression:
+		e.emitInstanceExpression(node)
 	case checker.ParenthesizedExpression:
 		e.write("(")
 		e.emit(node.Expr)

@@ -37,23 +37,6 @@ func (e *Emitter) emitClassParams(params []checker.ObjectMemberDefinition) []str
 	return names
 }
 
-func (e *Emitter) emitClass(declaration checker.VariableDeclaration) {
-	e.write("class ")
-	e.emit(declaration.Pattern)
-	e.write(" {\n    constructor(")
-	defer e.write("    }\n}\n")
-
-	object := declaration.Initializer.(checker.ObjectDefinition)
-	if generic, ok := declaration.Initializer.(checker.GenericTypeDef); ok {
-		object = generic.Expr.(checker.ObjectDefinition)
-	}
-	names := e.emitClassParams(object.Members)
-	e.write(") {\n")
-	for _, name := range names {
-		e.write(fmt.Sprintf("        this.%v = %v;\n", name, name))
-	}
-}
-
 func (e *Emitter) emitAssignment(a checker.Assignment) {
 	e.emit(a.Pattern)
 	e.write(" = ")
@@ -147,6 +130,22 @@ func (e *Emitter) emitReturn(r checker.Return) {
 	e.write(";\n")
 }
 
+func (e *Emitter) emitClass(declaration checker.VariableDeclaration) {
+	e.write("class ")
+	e.emit(declaration.Pattern)
+	e.write(" {\n    constructor(")
+	defer e.write("    }\n}\n")
+
+	object := declaration.Initializer.(checker.ObjectDefinition)
+	if generic, ok := declaration.Initializer.(checker.GenericTypeDef); ok {
+		object = generic.Expr.(checker.ObjectDefinition)
+	}
+	names := e.emitClassParams(object.Members)
+	e.write(") {\n")
+	for _, name := range names {
+		e.write(fmt.Sprintf("        this.%v = %v;\n", name, name))
+	}
+}
 func (e *Emitter) emitVariableDeclaration(declaration checker.VariableDeclaration) {
 	if isTypeIdentifier(declaration.Pattern) {
 		e.emitClass(declaration)
