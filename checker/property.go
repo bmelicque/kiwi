@@ -2,6 +2,7 @@ package checker
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/bmelicque/test-parser/parser"
 	"github.com/bmelicque/test-parser/tokenizer"
@@ -34,27 +35,27 @@ func getObjectType(expr Expression) (TypeAlias, bool) {
 }
 func (c *Checker) checkPropertyAccess(expr parser.PropertyAccessExpression) PropertyAccessExpression {
 	left := c.checkExpression(expr.Expr)
-	property, ok := c.checkExpression(expr.Property).(Identifier)
+	switch left.Type().(type) {
+	case Tuple:
+		return checkTupleIndexAccess(c, left, expr.Property)
+	case Type:
+		return checkSumTypeConstructorAccess(c, left, expr.Property)
+	default:
+		return checkObjectPropertyAccess(c, left, expr.Property)
+	}
+}
+
+// check accessing an object's property or method: object.property
+func checkObjectPropertyAccess(c *Checker, left Expression, right parser.Node) PropertyAccessExpression {
+	property, ok := c.checkExpression(right).(Identifier)
 	if !ok {
-		c.report("Expected identifier", expr.Property.Loc())
+		c.report("Identifier expected", right.Loc())
 	}
 	name := property.Token.Text()
 
-	if t, ok := left.Type().(Type); ok {
-		typing := checkSumTypeConstructor(t, name)
-		if typing == (Primitive{UNKNOWN}) {
-			c.report(fmt.Sprintf("Property '%v' doesn't exist on this type", name), expr.Loc())
-		}
-		return PropertyAccessExpression{
-			Expr:     left,
-			Property: property,
-			typing:   typing,
-		}
-	}
-
 	object, ok := getObjectType(left)
 	if !ok {
-		c.report("Expected object type", expr.Expr.Loc())
+		c.report("Object type expected", left.Loc())
 	}
 
 	var typing ExpressionType
@@ -71,7 +72,56 @@ func (c *Checker) checkPropertyAccess(expr parser.PropertyAccessExpression) Prop
 	}
 }
 
-func checkSumTypeConstructor(t Type, name string) ExpressionType {
+// check accessing a tuple's index: tuple.0
+func checkTupleIndexAccess(c *Checker, left Expression, right parser.Node) PropertyAccessExpression {
+	property, ok := c.checkExpression(right).(Literal)
+	if !ok || property.Type().Kind() != NUMBER {
+		c.report("Number expected", right.Loc())
+	}
+	typing := getTupleAccessType(c, property, left.Type())
+
+	return PropertyAccessExpression{
+		Expr:     left,
+		Property: Identifier{right.(parser.TokenExpression), property.Type(), false}, // FIXME:
+		typing:   typing,
+	}
+}
+func getTupleAccessType(c *Checker, property Literal, typing ExpressionType) ExpressionType {
+	if property.Type().Kind() != NUMBER {
+		return Primitive{UNKNOWN}
+	}
+	number, err := strconv.Atoi(property.Text())
+	if err != nil {
+		c.report("Integer expected", property.Loc())
+		return Primitive{UNKNOWN}
+	}
+	if number > len(typing.(Tuple).elements)-1 || number < 0 {
+		c.report("Index out of range", property.Loc())
+		return Primitive{UNKNOWN}
+	}
+	return typing.(Tuple).elements[number]
+}
+
+// check accessing a sum type's subconstructor: SumType.Constructor
+func checkSumTypeConstructorAccess(c *Checker, left Expression, right parser.Node) PropertyAccessExpression {
+	property, ok := c.checkExpression(right).(Identifier)
+	if !ok {
+		c.report("Identifier expected", right.Loc())
+	}
+	name := property.Token.Text()
+
+	typing := getSumTypeConstructor(left.Type().(Type), name)
+	if typing == (Primitive{UNKNOWN}) {
+		c.report(fmt.Sprintf("Property '%v' doesn't exist on this type", name), right.Loc())
+	}
+	return PropertyAccessExpression{
+		Expr:     left,
+		Property: property,
+		typing:   typing,
+	}
+}
+
+func getSumTypeConstructor(t Type, name string) ExpressionType {
 	alias, ok := t.Value.(TypeAlias)
 	if !ok {
 		return Primitive{UNKNOWN}

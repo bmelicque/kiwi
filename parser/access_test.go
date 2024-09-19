@@ -49,6 +49,27 @@ func TestPropertyAccess(t *testing.T) {
 	}
 }
 
+func TestTupleAccess(t *testing.T) {
+	tokenizer := testTokenizer{tokens: []tokenizer.Token{
+		testToken{kind: tokenizer.IDENTIFIER, value: "tuple"},
+		testToken{kind: tokenizer.DOT},
+		testToken{kind: tokenizer.NUMBER, value: "0"},
+	}}
+	parser := MakeParser(&tokenizer)
+	node := parser.parseAccessExpression()
+
+	expr, ok := node.(PropertyAccessExpression)
+	if !ok {
+		t.Fatalf("Expected PropertyAccessExpression, got %#v", node)
+	}
+	if _, ok := expr.Expr.(TokenExpression); !ok {
+		t.Fatalf("Expected token 'n'")
+	}
+	if _, ok := expr.Property.(TokenExpression); !ok {
+		t.Fatalf("Expected token 'p'")
+	}
+}
+
 func TestMethodAccess(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []tokenizer.Token{
 		testToken{tokenizer.LPAREN, "(", tokenizer.Loc{}},
