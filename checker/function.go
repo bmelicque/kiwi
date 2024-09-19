@@ -46,25 +46,6 @@ func (f FatArrowFunction) Type() ExpressionType {
 	return Function{tp, f.Params.Type().(Tuple), f.ReturnType.Type().(Type).Value}
 }
 
-type GenericTypeDef struct {
-	TypeParams Params
-	Expr       Expression
-}
-
-func (g GenericTypeDef) Loc() tokenizer.Loc {
-	return tokenizer.Loc{
-		Start: g.TypeParams.loc.Start,
-		End:   g.Expr.Loc().End,
-	}
-}
-func (g GenericTypeDef) Type() ExpressionType {
-	tp := []Generic{}
-	for i, param := range g.TypeParams.Params {
-		tp[i] = Generic{Name: param.Identifier.Token.Text()}
-	}
-	return Function{tp, Tuple{}, g.Expr.Type()}
-}
-
 func (c *Checker) checkFunctionExpression(f parser.FunctionExpression) Expression {
 	c.pushScope(NewScope())
 	defer c.dropScope()
@@ -73,18 +54,15 @@ func (c *Checker) checkFunctionExpression(f parser.FunctionExpression) Expressio
 	params := c.handleFunctionParams(f.Params)
 	expr := c.checkExpression(f.Expr)
 
+	if f.TypeParams != nil && f.Params == nil {
+		c.report("Parameters expected", f.Loc())
+	}
+
 	switch f.Operator.Kind() {
 	case tokenizer.SLIM_ARR:
 		if f.Body != nil {
 			pos := f.Expr.Loc().End
 			c.report("Expected no body", tokenizer.Loc{Start: pos, End: pos})
-		}
-		if f.TypeParams != nil && f.Params == nil {
-			_, returnsType := expr.Type().(Type)
-			if !returnsType {
-				c.report("Expected type", f.Expr.Loc())
-			}
-			return GenericTypeDef{typeParams, expr}
 		}
 		return SlimArrowFunction{typeParams, params, expr}
 	case tokenizer.FAT_ARR:

@@ -46,12 +46,10 @@ func (c *Checker) checkIdentifierDefinition(a parser.Assignment) VariableDeclara
 	name := identifier.Token.Text()
 	isTypeIdentifier := unicode.IsUpper(rune(name[0]))
 
-	if !isTypeIdentifier {
-		c.declareFunction(identifier, init)
-	} else if t, ok := init.(GenericTypeDef); ok {
-		c.declareGenericType(identifier, t)
-	} else {
+	if isTypeIdentifier {
 		c.declareType(identifier, init)
+	} else {
+		c.declareFunction(identifier, init)
 	}
 
 	return VariableDeclaration{
@@ -77,19 +75,6 @@ func (c *Checker) declareFunction(identifier Identifier, init Expression) {
 		c.report("Function type expected", init.Loc())
 	}
 
-	c.scope.Add(identifier.Text(), identifier.Loc(), t)
-}
-func (c *Checker) declareGenericType(identifier Identifier, init GenericTypeDef) {
-	params := make([]ExpressionType, len(init.TypeParams.Params))
-	for i, param := range init.TypeParams.Params {
-		params[i] = param.Typing.Type()
-	}
-
-	t := TypeAlias{
-		Name: identifier.Text(),
-		// TODO: Params: params,
-		Ref: init.Expr.Type(),
-	}
 	c.scope.Add(identifier.Text(), identifier.Loc(), t)
 }
 

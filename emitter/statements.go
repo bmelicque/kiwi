@@ -132,14 +132,12 @@ func (e *Emitter) emitReturn(r checker.Return) {
 
 func (e *Emitter) emitClass(declaration checker.VariableDeclaration) {
 	e.write("class ")
-	e.emit(declaration.Pattern)
+	identifier := getTypeIdentifier(declaration.Pattern)
+	e.emit(identifier)
 	e.write(" {\n    constructor(")
 	defer e.write("    }\n}\n")
 
 	object := declaration.Initializer.(checker.ObjectDefinition)
-	if generic, ok := declaration.Initializer.(checker.GenericTypeDef); ok {
-		object = generic.Expr.(checker.ObjectDefinition)
-	}
 	names := e.emitClassParams(object.Members)
 	e.write(") {\n")
 	for _, name := range names {
@@ -147,7 +145,7 @@ func (e *Emitter) emitClass(declaration checker.VariableDeclaration) {
 	}
 }
 func (e *Emitter) emitVariableDeclaration(declaration checker.VariableDeclaration) {
-	if isTypeIdentifier(declaration.Pattern) {
+	if isTypePattern(declaration.Pattern) {
 		e.emitClass(declaration)
 		return
 	}
@@ -168,10 +166,22 @@ func (e *Emitter) emitVariableDeclaration(declaration checker.VariableDeclaratio
 	}
 }
 
-func isTypeIdentifier(expr checker.Expression) bool {
+func isTypePattern(expr checker.Expression) bool {
+	c, ok := expr.(checker.ComputedAccessExpression)
+	if ok {
+		expr = c
+	}
 	identifier, ok := expr.(checker.Identifier)
 	if !ok {
 		return false
 	}
 	return unicode.IsUpper(rune(identifier.Token.Text()[0]))
+}
+func getTypeIdentifier(expr checker.Expression) string {
+	c, ok := expr.(checker.ComputedAccessExpression)
+	if ok {
+		expr = c
+	}
+	identifier := expr.(checker.Identifier)
+	return identifier.Text()
 }
