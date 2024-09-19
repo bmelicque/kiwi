@@ -7,17 +7,8 @@ import (
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
-type TypeDefinition struct {
-	Identifier  Identifier
-	Initializer Expression
-	loc         tokenizer.Loc
-}
-
-func (td TypeDefinition) Loc() tokenizer.Loc { return td.loc }
-
 func (c *Checker) checkDefinition(a parser.Assignment) Node {
 	var pattern Expression
-	init := c.checkExpression(a.Initializer)
 	constant := a.Operator.Kind() == tokenizer.DEFINE
 
 	declared := a.Declared
@@ -27,12 +18,15 @@ func (c *Checker) checkDefinition(a parser.Assignment) Node {
 	switch declared := declared.(type) {
 	case parser.TokenExpression:
 		return c.checkIdentifierDefinition(a)
+	case parser.ComputedAccessExpression:
+		return c.checkGenericTypeDefinition(a)
 	case parser.PropertyAccessExpression:
 		return c.checkMethodDeclaration(a)
 	default:
 		c.report("Invalid pattern", declared.Loc())
+		init := c.checkExpression(a.Initializer)
+		return VariableDeclaration{pattern, init, a.Loc(), constant}
 	}
-	return VariableDeclaration{pattern, init, a.Loc(), constant}
 }
 
 func (c *Checker) checkIdentifierDefinition(a parser.Assignment) VariableDeclaration {
@@ -97,4 +91,51 @@ func (c *Checker) declareGenericType(identifier Identifier, init GenericTypeDef)
 		Ref: init.Expr.Type(),
 	}
 	c.scope.Add(identifier.Text(), identifier.Loc(), t)
+}
+
+// check a generic type definition, like:  Generic[TypeParam] :: { value TypeParam }
+func (c *Checker) checkGenericTypeDefinition(a parser.Assignment) VariableDeclaration {
+	declared := a.Declared.(parser.ComputedAccessExpression)
+	identifier, ok := checkTypeIdentifier(c, declared.Expr)
+	if !ok {
+		c.report("Type identifier expected", declared.Expr.Loc())
+	}
+
+	var params Params
+	if declared.Property.Expr != nil {
+		params = c.checkParams(declared.Property.Expr)
+	}
+
+	c.pushScope(NewScope())
+	addTypeParamsToScope(c.scope, params)
+	init := c.checkExpression(a.Initializer)
+	c.dropScope()
+	addGenericTypeToScope(c, identifier, params, init)
+
+	return VariableDeclaration{
+		Pattern:     ComputedAccessExpression{Expr: identifier, Property: params},
+		Initializer: init,
+		loc:         a.Loc(),
+		Constant:    true,
+	}
+}
+func addGenericTypeToScope(c *Checker, identifier Identifier, params Params, init Expression) {
+	p := make([]Generic, len(params.Params))
+	for i, param := range params.Params {
+		p[i] = Generic{Name: param.Identifier.Text()}
+	}
+
+	t, ok := init.Type().(Type)
+	if !ok {
+		c.report("Type definition expected", init.Loc())
+		return
+	}
+
+	if identifier.Text() != "" {
+		c.scope.Add(identifier.Text(), identifier.Loc(), Type{TypeAlias{
+			Name:   identifier.Text(),
+			Params: p,
+			Ref:    t.Value,
+		}})
+	}
 }

@@ -108,15 +108,7 @@ func (c *Checker) handleFunctionTypeParams(expr *parser.BracketedExpression) Par
 		return Params{[]Param{}, expr.Loc()}
 	}
 	params := c.checkParams(expr.Expr)
-	for _, param := range params.Params {
-		if param.Typing == nil {
-			name := param.Identifier.Text()
-			t := Type{TypeAlias{Name: name, Ref: Generic{Name: name}}}
-			c.scope.Add(name, param.Loc(), t)
-		} else {
-			// TODO: constrained generic
-		}
-	}
+	addTypeParamsToScope(c.scope, params)
 	return params
 }
 

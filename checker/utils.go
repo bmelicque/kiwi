@@ -41,6 +41,18 @@ func (c *Checker) addTypeArgsToScope(args *TupleExpression, params []Generic) {
 	}
 }
 
+func addTypeParamsToScope(scope *Scope, params Params) {
+	for _, param := range params.Params {
+		if param.Typing == nil {
+			name := param.Identifier.Text()
+			t := Type{TypeAlias{Name: name, Ref: Generic{Name: name}}}
+			scope.Add(name, param.Loc(), t)
+		} else {
+			// TODO: constrained generic
+		}
+	}
+}
+
 func checkBracketed(c *Checker, expr *parser.BracketedExpression) *TupleExpression {
 	if expr == nil || expr.Expr == nil {
 		return nil
@@ -50,4 +62,17 @@ func checkBracketed(c *Checker, expr *parser.BracketedExpression) *TupleExpressi
 		return &e
 	}
 	return &TupleExpression{[]Expression{ex}, ex.Loc()}
+}
+
+func checkTypeIdentifier(c *Checker, node parser.Node) (Identifier, bool) {
+	token, ok := node.(parser.TokenExpression)
+	if !ok {
+		return Identifier{}, false
+	}
+
+	identifier, ok := c.checkToken(token, false).(Identifier)
+	if !ok {
+		return Identifier{}, false
+	}
+	return identifier, identifier.isType
 }

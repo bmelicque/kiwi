@@ -51,3 +51,26 @@ func TestObjectDeclaration(t *testing.T) {
 		t.Fatalf("Expected 'TypeAlias' subtype, got %#v", typing.Value)
 	}
 }
+
+func TestGenericObjectDefinition(t *testing.T) {
+	checker := MakeChecker()
+	checker.checkDefinition(parser.Assignment{
+		Declared: parser.ComputedAccessExpression{
+			Expr:     parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Generic"}},
+			Property: parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "TypeParam"}}},
+		},
+		Operator: testToken{tokenizer.ASSIGN, "::", tokenizer.Loc{}},
+		Initializer: parser.ObjectDefinition{
+			Members: []parser.Node{
+				parser.TypedExpression{
+					Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "value"}},
+					Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "TypeParam"}},
+				},
+			},
+		},
+	})
+
+	if len(checker.errors) > 0 {
+		t.Fatalf("Expected no errors, got %v: %#v", len(checker.errors), checker.errors)
+	}
+}

@@ -62,23 +62,8 @@ func checkSumTypeMember(c *Checker, node parser.Node) (SumTypeMember, bool) {
 	}
 
 	identifier, ok := checkTypeIdentifier(c, node)
+	if !ok {
+		c.report("Type identifier expected", node.Loc())
+	}
 	return SumTypeMember{Name: identifier}, ok
-}
-
-func checkTypeIdentifier(c *Checker, node parser.Node) (Identifier, bool) {
-	token, ok := node.(parser.TokenExpression)
-	if !ok {
-		c.report("Identifier expected", node.Loc())
-		return Identifier{}, false
-	}
-
-	identifier, ok := c.checkToken(token, false).(Identifier)
-	if !ok {
-		c.report("Identifier expected", node.Loc())
-		return Identifier{}, false
-	}
-	if !identifier.isType {
-		c.report("Pascal-case expected", node.Loc())
-	}
-	return identifier, ok
 }
