@@ -13,6 +13,7 @@ type EmitterFlag int
 const (
 	NoFlags   EmitterFlag = 0
 	RangeFlag EmitterFlag = 1 << iota
+	SumFlag
 )
 
 type Emitter struct {
@@ -121,6 +122,13 @@ func EmitProgram(nodes []checker.Node) string {
 	}
 	if e.hasFlag(RangeFlag) {
 		e.write("function* _range(start, end) {\n    while (start < end) yield start++;\n}\n")
+	}
+	if e.hasFlag(SumFlag) {
+		e.write("class _Sum {\n")
+		e.write("    constructor(_tag, _value) {\n")
+		e.write("        this._tag = _tag;\n")
+		e.write("        if (arguments.length > 0) { this._value = _value }\n")
+		e.write("    }\n}\n")
 	}
 	return e.string()
 }
