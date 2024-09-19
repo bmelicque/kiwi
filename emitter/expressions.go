@@ -154,8 +154,14 @@ func (e *Emitter) emitParams(params checker.Params) {
 
 func (e *Emitter) emitPropertyAccessExpression(p checker.PropertyAccessExpression) {
 	e.emit(p.Expr)
-	e.write(".")
-	e.emit(p.Property)
+	if p.Expr.Type().Kind() == checker.TUPLE {
+		e.write("[")
+		e.emit(p.Property)
+		e.write("]")
+	} else {
+		e.write(".")
+		e.emit(p.Property)
+	}
 }
 
 func (e *Emitter) emitRangeExpression(r checker.RangeExpression) {
