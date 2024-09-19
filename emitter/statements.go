@@ -13,7 +13,7 @@ func (e *Emitter) emitClassParams(params []checker.ObjectMemberDefinition) []str
 	names := make([]string, len(params))
 	length := 0
 	for i, member := range params {
-		name := member.Name.Token.Text()
+		name := getSanitizedName(member.Name.Token.Text())
 		names[i] = name
 		length += len(name) + 2
 	}

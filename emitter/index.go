@@ -87,12 +87,7 @@ func (e *Emitter) emit(node interface{}) {
 	case checker.FatArrowFunction:
 		e.emitFatArrowFunction(node)
 	case checker.Identifier:
-		text := node.Token.Text()
-		if text == e.thisName {
-			e.write("this")
-		} else {
-			e.write(text)
-		}
+		e.emitIdentifier(node)
 	case checker.Literal:
 		e.write(node.Token.Text())
 	case checker.InstanceExpression:

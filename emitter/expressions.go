@@ -65,6 +65,15 @@ func (e *Emitter) emitFatArrowFunction(f checker.FatArrowFunction) {
 	e.emit(f.Body)
 }
 
+func (e *Emitter) emitIdentifier(i checker.Identifier) {
+	text := i.Token.Text()
+	if text == e.thisName {
+		e.write("this")
+		return
+	}
+	e.write(getSanitizedName(text))
+}
+
 func findMemberByName(members []checker.ObjectExpressionMember, name string) parser.Node {
 	for _, member := range members {
 		text := member.Name.Token.Text()
