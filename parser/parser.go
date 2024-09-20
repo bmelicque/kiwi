@@ -18,6 +18,7 @@ type Parser struct {
 	errors            []ParserError
 	allowEmptyExpr    bool
 	allowBraceParsing bool
+	allowCallExpr     bool
 }
 
 func (p *Parser) report(message string, loc tokenizer.Loc) {
@@ -28,7 +29,7 @@ func (p Parser) GetReport() []ParserError {
 }
 
 func MakeParser(tokenizer tokenizer.Tokenizer) *Parser {
-	return &Parser{tokenizer: tokenizer, allowBraceParsing: true}
+	return &Parser{tokenizer: tokenizer, allowBraceParsing: true, allowCallExpr: true}
 }
 
 func (p *Parser) ParseProgram() []Node {

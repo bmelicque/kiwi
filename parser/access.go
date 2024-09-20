@@ -59,7 +59,10 @@ var operators = []tokenizer.TokenKind{tokenizer.LBRACKET, tokenizer.LPAREN, toke
 func (p *Parser) parseAccessExpression() Node {
 	expression := fallback(p)
 	for slices.Contains(operators, p.tokenizer.Peek().Kind()) {
-		if p.tokenizer.Peek().Kind() == tokenizer.LBRACE && !p.allowBraceParsing {
+		next := p.tokenizer.Peek().Kind()
+		isForbidden := next == tokenizer.LBRACE && !p.allowBraceParsing ||
+			next == tokenizer.LPAREN && !p.allowCallExpr
+		if isForbidden {
 			return expression
 		}
 		expression = parseOneAccess(p, expression)
@@ -76,7 +79,10 @@ func parseOneAccess(p *Parser, expr Node) Node {
 		return CallExpression{expr, p.parseParenthesizedExpression()}
 	case tokenizer.DOT:
 		p.tokenizer.Consume()
+		tmp := p.allowCallExpr
+		p.allowCallExpr = false
 		property := fallback(p)
+		p.allowCallExpr = tmp
 		return PropertyAccessExpression{
 			Expr:     expr,
 			Property: property,

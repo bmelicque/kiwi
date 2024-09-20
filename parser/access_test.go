@@ -96,6 +96,42 @@ func TestMethodAccess(t *testing.T) {
 	}
 }
 
+func TestTraitDefinition(t *testing.T) {
+	tokenizer := testTokenizer{tokens: []tokenizer.Token{
+		testToken{kind: tokenizer.LPAREN},
+		testToken{kind: tokenizer.IDENTIFIER, value: "Self"},
+		testToken{kind: tokenizer.RPAREN},
+		testToken{kind: tokenizer.DOT},
+		testToken{kind: tokenizer.LBRACE},
+		testToken{kind: tokenizer.IDENTIFIER, value: "method"},
+		testToken{kind: tokenizer.LPAREN},
+		testToken{kind: tokenizer.RPAREN},
+		testToken{kind: tokenizer.SLIM_ARR},
+		testToken{kind: tokenizer.IDENTIFIER, value: "Self"},
+		testToken{kind: tokenizer.RBRACE},
+	}}
+
+	parser := MakeParser(&tokenizer)
+	node := parser.parseAccessExpression()
+
+	if len(parser.errors) > 0 {
+		t.Fatalf("Got %v parsing errors: %#v", len(parser.errors), parser.errors)
+	}
+
+	expr, ok := node.(PropertyAccessExpression)
+	if !ok {
+		t.Fatalf("Expected PropertyAccessExpression, got %#v", node)
+	}
+
+	if _, ok := expr.Expr.(ParenthesizedExpression); !ok {
+		t.Fatalf("Expected ParenthesizedExpression, got %#v", expr.Expr)
+	}
+
+	if _, ok := expr.Property.(ObjectDefinition); !ok {
+		t.Fatalf("Expected ObjectDefinition, got %#v", expr.Property)
+	}
+}
+
 func TestFunctionCall(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []tokenizer.Token{
 		testToken{tokenizer.IDENTIFIER, "f", tokenizer.Loc{}},
