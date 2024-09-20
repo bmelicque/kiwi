@@ -46,58 +46,188 @@ func (f FatArrowFunction) Type() ExpressionType {
 	return Function{tp, f.Params.Type().(Tuple), f.ReturnType.Type().(Type).Value}
 }
 
+type FunctionTypeExpression struct {
+	TypeParams Params
+	Params     []Expression // Identifier | Literal
+	Expr       Expression
+}
+
+func (f FunctionTypeExpression) Loc() tokenizer.Loc {
+	var start tokenizer.Position
+	if len(f.TypeParams.Params) > 0 {
+		start = f.TypeParams.loc.Start
+	} else if len(f.Params) > 0 {
+		start = f.Params[0].Loc().Start
+	} else {
+		start = f.Expr.Loc().Start
+	}
+	var end tokenizer.Position
+	if f.Expr != nil {
+		end = f.Loc().End
+	} else if len(f.Params) > 0 {
+		end = f.Params[len(f.Params)-1].Loc().End
+	} else {
+		end = f.TypeParams.loc.End
+	}
+	return tokenizer.Loc{Start: start, End: end}
+}
+func (f FunctionTypeExpression) Type() ExpressionType {
+	tp := []Generic{}
+	for i, param := range f.TypeParams.Params {
+		tp[i] = Generic{Name: param.Identifier.Token.Text()}
+	}
+	p := Tuple{make([]ExpressionType, len(f.Params))}
+	for i, param := range f.Params {
+		t, _ := param.Type().(Type)
+		p.elements[i] = t.Value
+	}
+	return Type{Function{tp, p, f.Expr.Type().(Type).Value}}
+}
+
 func (c *Checker) checkFunctionExpression(f parser.FunctionExpression) Expression {
 	c.pushScope(NewScope())
 	defer c.dropScope()
-
-	typeParams := c.handleFunctionTypeParams(f.TypeParams)
-	params := c.handleFunctionParams(f.Params)
-	expr := c.checkExpression(f.Expr)
 
 	if f.TypeParams != nil && f.Params == nil {
 		c.report("Parameters expected", f.Loc())
 	}
 
-	switch f.Operator.Kind() {
-	case tokenizer.SLIM_ARR:
-		if f.Body != nil {
-			pos := f.Expr.Loc().End
-			c.report("Expected no body", tokenizer.Loc{Start: pos, End: pos})
-		}
-		return SlimArrowFunction{typeParams, params, expr}
-	case tokenizer.FAT_ARR:
+	isType, ok := isFunctionType(f.Params)
+	if !ok && f.Operator.Kind() == tokenizer.FAT_ARR {
+		return checkFatArrowFunction(c, f)
+	}
+	if !ok {
+		return checkUnknownFunctionExpression(c, f)
+	}
+	if isType {
+		return checkFunctionTypeExpression(c, f)
+	}
+
+	if f.Operator.Kind() == tokenizer.FAT_ARR {
+		return checkFatArrowFunction(c, f)
+	}
+	return checkSlimArrowFunction(c, f)
+}
+
+// [TypeParam](param Type) => ReturnType { body }
+func checkFatArrowFunction(c *Checker, f parser.FunctionExpression) FatArrowFunction {
+	typeParams := checkTypeParams(c, f.TypeParams)
+	addTypeParamsToScope(c.scope, typeParams)
+	var params Params
+	if f.Params != nil && f.Params.Expr != nil {
+		params = c.checkParams(f.Params.Expr)
+		addParamsToScope(c, params)
+	}
+	var expr Expression
+	if f.Expr != nil {
+		expr = c.checkExpression(f.Expr)
 		typing, ok := expr.Type().(Type)
 		if !ok {
-			c.report("Expected type", f.Expr.Loc())
+			c.report("Type expected", expr.Loc())
 		}
 		c.scope.returnType = typing.Value
-		body := c.checkBody(*f.Body)
-		return FatArrowFunction{typeParams, params, expr, body}
-	default:
-		panic("Unexpected token while checking function expression")
 	}
+	body := c.checkBody(*f.Body)
+	return FatArrowFunction{typeParams, params, expr, body}
 }
 
-func (c *Checker) handleFunctionTypeParams(expr *parser.BracketedExpression) Params {
+// [TypeParam](param Type) -> returnValue
+func checkSlimArrowFunction(c *Checker, f parser.FunctionExpression) SlimArrowFunction {
+	typeParams := checkTypeParams(c, f.TypeParams)
+	addTypeParamsToScope(c.scope, typeParams)
+	var params Params
+	if f.Params != nil && f.Params.Expr != nil {
+		params = c.checkParams(f.Params.Expr)
+		addParamsToScope(c, params)
+	}
+	var expr Expression
+	if f.Expr != nil {
+		expr = c.checkExpression(f.Expr)
+		if expr.Type().Kind() == TYPE {
+			c.report("Value expected, got type", expr.Loc())
+		}
+	}
+	if f.Body != nil {
+		c.report("No body expected", f.Body.Loc())
+	}
+	return SlimArrowFunction{typeParams, params, expr}
+}
+
+// [TypeParam](Param) -> ReturnType
+func checkFunctionTypeExpression(c *Checker, f parser.FunctionExpression) FunctionTypeExpression {
+	typeParams := checkTypeParams(c, f.TypeParams)
+	addTypeParamsToScope(c.scope, typeParams)
+	params := checkParamsForFunctionType(c, f.Params)
+	if f.Operator.Kind() == tokenizer.FAT_ARR {
+		c.report("'->' expected", f.Operator.Loc())
+	}
+	expr := checkFunctionTypeReturnedType(c, f)
+	if f.Body != nil {
+		c.report("No body expected", f.Body.Loc())
+	}
+	return FunctionTypeExpression{typeParams, params, expr}
+}
+func checkParamsForFunctionType(c *Checker, params *parser.ParenthesizedExpression) []Expression {
+	if params == nil || params.Expr == nil {
+		return nil
+	}
+
+	var checked []Expression
+	if tuple, ok := params.Expr.(parser.TupleExpression); ok {
+		checked = make([]Expression, len(tuple.Elements))
+	} else {
+		checked = []Expression{c.checkExpression(params.Expr)}
+	}
+	for _, el := range checked {
+		if el != nil && el.Type() != nil && el.Type().Kind() != TYPE {
+			c.report("Type expected", el.Loc())
+		}
+	}
+	return checked
+}
+func checkFunctionTypeReturnedType(c *Checker, f parser.FunctionExpression) Expression {
+	var expr Expression
+	if f.Expr != nil {
+		expr = c.checkExpression(f.Expr)
+	}
+	if expr == nil {
+		pos := f.Operator.Loc().End
+		c.report("Type expected", tokenizer.Loc{Start: pos, End: pos})
+	} else if expr.Type().Kind() != TYPE {
+		c.report("Type expected", expr.Loc())
+	}
+	return expr
+}
+
+// [TypeParam]() -> something
+func checkUnknownFunctionExpression(c *Checker, f parser.FunctionExpression) Expression {
+	typeParams := checkTypeParams(c, f.TypeParams)
+	addTypeParamsToScope(c.scope, typeParams)
+	if f.Body != nil {
+		c.report("No body expected", f.Body.Loc())
+	}
+	if f.Expr == nil {
+		return SlimArrowFunction{typeParams, Params{}, nil}
+	}
+
+	expr := c.checkExpression(f.Expr)
+	if expr.Type().Kind() == TYPE {
+		return FunctionTypeExpression{typeParams, []Expression{}, expr}
+	}
+	return SlimArrowFunction{typeParams, Params{}, expr}
+}
+
+func checkTypeParams(c *Checker, expr *parser.BracketedExpression) Params {
 	if expr == nil {
 		return Params{}
 	}
 	if expr.Expr == nil {
 		return Params{[]Param{}, expr.Loc()}
 	}
-	params := c.checkParams(expr.Expr)
-	addTypeParamsToScope(c.scope, params)
-	return params
+	return c.checkParams(expr.Expr)
 }
 
-func (c *Checker) handleFunctionParams(expr *parser.ParenthesizedExpression) Params {
-	if expr == nil {
-		return Params{}
-	}
-	if expr.Expr == nil {
-		return Params{[]Param{}, expr.Loc()}
-	}
-	params := c.checkParams(expr.Expr)
+func addParamsToScope(c *Checker, params Params) {
 	for _, param := range params.Params {
 		if param.Typing == nil {
 			c.report("Typing expected", param.Loc())
@@ -107,5 +237,23 @@ func (c *Checker) handleFunctionParams(expr *parser.ParenthesizedExpression) Par
 			c.scope.Add(param.Identifier.Text(), param.Loc(), typing.Value)
 		}
 	}
-	return params
+}
+
+// (isType, isDefined)
+func isFunctionType(params *parser.ParenthesizedExpression) (bool, bool) {
+	if params == nil || params.Expr == nil {
+		return false, false
+	}
+
+	var first parser.Node
+	if tuple, ok := params.Expr.(parser.TupleExpression); ok {
+		first = tuple.Elements[0]
+	} else {
+		first = params.Expr
+	}
+
+	if _, ok := first.(parser.TypedExpression); ok {
+		return false, true
+	}
+	return true, true
 }

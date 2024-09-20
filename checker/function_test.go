@@ -11,14 +11,14 @@ func TestSlimArrowFunction(t *testing.T) {
 	checker := MakeChecker()
 	expr := checker.checkFunctionExpression(parser.FunctionExpression{
 		Params: &parser.ParenthesizedExpression{Expr: parser.TypedExpression{
-			Expr:   parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "n", tokenizer.Loc{}}},
-			Typing: parser.TokenExpression{Token: testToken{tokenizer.NUM_KW, "number", tokenizer.Loc{}}},
+			Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "n"}},
+			Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.NUM_KW}},
 		}},
-		Operator: testToken{tokenizer.SLIM_ARR, "->", tokenizer.Loc{}},
+		Operator: testToken{kind: tokenizer.SLIM_ARR},
 		Expr: parser.BinaryExpression{
-			Right:    parser.TokenExpression{Token: testToken{tokenizer.NUMBER, "2", tokenizer.Loc{}}},
-			Left:     parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "n", tokenizer.Loc{}}},
-			Operator: testToken{tokenizer.MUL, "*", tokenizer.Loc{}},
+			Right:    parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "2"}},
+			Left:     parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "n"}},
+			Operator: testToken{kind: tokenizer.MUL},
 		},
 	})
 
@@ -34,13 +34,13 @@ func TestSlimArrowFunction(t *testing.T) {
 func TestGenericFunctionExpression(t *testing.T) {
 	checker := MakeChecker()
 	expr := checker.checkFunctionExpression(parser.FunctionExpression{
-		TypeParams: &parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}}}},
+		TypeParams: &parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Type"}}},
 		Params: &parser.ParenthesizedExpression{Expr: parser.TypedExpression{
-			Expr:   parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "value", tokenizer.Loc{}}},
-			Typing: parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}}},
+			Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "value"}},
+			Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Type"}},
 		}},
-		Operator: testToken{tokenizer.SLIM_ARR, "->", tokenizer.Loc{}},
-		Expr:     parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "value", tokenizer.Loc{}}},
+		Operator: testToken{kind: tokenizer.SLIM_ARR},
+		Expr:     parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "value"}},
 	})
 
 	if len(checker.errors) != 0 {
@@ -49,5 +49,22 @@ func TestGenericFunctionExpression(t *testing.T) {
 
 	if e, ok := expr.(SlimArrowFunction); !ok {
 		t.Fatalf("Expected SlimArrowFunction, got %#v", e)
+	}
+}
+
+func TestFunctionType(t *testing.T) {
+	checker := MakeChecker()
+	expr := checker.checkFunctionExpression(parser.FunctionExpression{
+		Params:   &parser.ParenthesizedExpression{Expr: parser.TokenExpression{Token: testToken{kind: tokenizer.NUM_KW}}},
+		Operator: testToken{kind: tokenizer.SLIM_ARR},
+		Expr:     parser.TokenExpression{Token: testToken{kind: tokenizer.NUM_KW}},
+	})
+
+	if len(checker.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", checker.errors)
+	}
+
+	if _, ok := expr.(FunctionTypeExpression); !ok {
+		t.Fatalf("Expected FunctionTypeExpression, got %#v", expr)
 	}
 }

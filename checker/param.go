@@ -37,6 +37,7 @@ func (p Param) Type() ExpressionType {
 
 func (c *Checker) checkParam(expr parser.TypedExpression) Param {
 	var identifier Identifier
+	// TODO: NUM_KW etc.
 	if token, ok := expr.Expr.(parser.TokenExpression); ok {
 		identifier, _ = c.checkToken(token, false).(Identifier)
 	}
@@ -44,10 +45,13 @@ func (c *Checker) checkParam(expr parser.TypedExpression) Param {
 		c.report("Identifier expected", expr.Expr.Loc())
 	}
 
-	typing := c.checkExpression(expr.Typing)
-	if _, ok := typing.Type().(Type); !ok {
-		c.report("Typing expected", expr.Typing.Loc())
-		typing = nil
+	var typing Expression
+	if expr.Typing != nil {
+		typing = c.checkExpression(expr.Typing)
+		if _, ok := typing.Type().(Type); !ok {
+			c.report("Typing expected", expr.Typing.Loc())
+			typing = nil
+		}
 	}
 
 	if expr.Colon {
