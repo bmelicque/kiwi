@@ -9,7 +9,10 @@ import (
 
 func TestMethodDeclaration(t *testing.T) {
 	checker := MakeChecker()
-	checker.scope.Add("Type", tokenizer.Loc{}, Type{Object{map[string]ExpressionType{"n": Type{Primitive{NUMBER}}}}})
+	checker.scope.Add("Type", tokenizer.Loc{}, Type{TypeAlias{
+		Name: "Type",
+		Ref:  Object{map[string]ExpressionType{"n": Type{Primitive{NUMBER}}}},
+	}})
 	checker.checkMethodDeclaration(parser.Assignment{
 		Declared: parser.PropertyAccessExpression{
 			Expr: parser.ParenthesizedExpression{Expr: parser.TypedExpression{

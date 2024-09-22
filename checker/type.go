@@ -27,6 +27,7 @@ const (
 
 	FUNCTION
 	CONSTRUCTOR
+	TRAIT
 )
 
 type ExpressionType interface {
@@ -71,9 +72,10 @@ func (p Primitive) Extends(t ExpressionType) bool {
 func (p Primitive) build(scope *Scope, c ExpressionType) (ExpressionType, bool) { return p, true }
 
 type TypeAlias struct {
-	Name   string
-	Params []Generic
-	Ref    ExpressionType
+	Name    string
+	Params  []Generic
+	Ref     ExpressionType
+	Methods map[string]ExpressionType
 }
 
 func (t TypeAlias) Kind() ExpressionTypeKind { return t.Ref.Kind() }
@@ -121,6 +123,13 @@ func (ta TypeAlias) build(scope *Scope, compared ExpressionType) (ExpressionType
 	ref, ok := ta.Ref.build(s, ref)
 	ta.Ref = ref
 	return ta, ok
+}
+
+func (ta *TypeAlias) registerMethod(name string, signature ExpressionType) {
+	if ta.Methods == nil {
+		ta.Methods = map[string]ExpressionType{}
+	}
+	ta.Methods[name] = signature
 }
 
 type List struct {
@@ -241,9 +250,26 @@ type Function struct {
 	Returned   ExpressionType
 }
 
-func (f Function) Kind() ExpressionTypeKind      { return FUNCTION }
-func (f Function) Match(t ExpressionType) bool   { /* FIXME: */ return false }
-func (f Function) Extends(t ExpressionType) bool { /* FIXME: */ return false }
+func (f Function) Kind() ExpressionTypeKind    { return FUNCTION }
+func (f Function) Match(t ExpressionType) bool { /* FIXME: */ return false }
+func (f Function) Extends(t ExpressionType) bool {
+	function, ok := t.(Function)
+	if !ok {
+		return false
+	}
+	if len(f.Params.elements) != len(function.Params.elements) {
+		return false
+	}
+	for i, param := range f.Params.elements {
+		if !param.Extends(function.Params.elements[i]) {
+			return false
+		}
+	}
+	if (f.Returned == nil) != (function.Returned == nil) {
+		return false
+	}
+	return f.Returned == nil || f.Returned.Extends(function.Returned)
+}
 
 func (f Function) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	ok := true
@@ -340,6 +366,36 @@ func (s Sum) build(scope *Scope, compared ExpressionType) (ExpressionType, bool)
 		ok = ok && k
 	}
 	return s, ok
+}
+
+type Trait struct {
+	Self    Generic
+	Members map[string]ExpressionType
+}
+
+func (t Trait) Kind() ExpressionTypeKind     { return TRAIT }
+func (t Trait) Match(et ExpressionType) bool { return false }
+func (t Trait) Extends(et ExpressionType) bool {
+	var receivedMethods map[string]ExpressionType
+	switch et := et.(type) {
+	case Trait:
+		receivedMethods = et.Members
+	case TypeAlias:
+		receivedMethods = et.Methods
+	default:
+		return false
+	}
+	for name, signature := range t.Members {
+		method, ok := receivedMethods[name]
+		if !ok || !signature.Extends(method) {
+			return false
+		}
+	}
+	return true
+}
+func (t Trait) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
+	// FIXME:
+	return t, true
 }
 
 type Generic struct {

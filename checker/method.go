@@ -55,6 +55,7 @@ func (c *Checker) checkMethodDeclarationFunction(receiver Receiver, expr parser.
 	return c.checkExpression(expr)
 }
 
+// checks method declaration (r Receiver).methodName :: functionExpression
 func (c *Checker) checkMethodDeclaration(a parser.Assignment) MethodDeclaration {
 	left := a.Declared.(parser.PropertyAccessExpression)
 
@@ -74,11 +75,7 @@ func (c *Checker) checkMethodDeclaration(a parser.Assignment) MethodDeclaration 
 		c.report("Expected function type", a.Initializer.Loc())
 	}
 
-	name := identifier.Text()
-	declaredAt := receiver.Name.Loc()
-	typing := receiver.Typing.Type().(Type).Value
-	signature := init.Type().(Function)
-	c.scope.AddMethod(name, declaredAt, typing, signature)
+	declareMethod(c, receiver, identifier, init.Type())
 
 	return MethodDeclaration{
 		Receiver:    receiver,
@@ -86,4 +83,28 @@ func (c *Checker) checkMethodDeclaration(a parser.Assignment) MethodDeclaration 
 		Initializer: init,
 		loc:         tokenizer.Loc{Start: start, End: init.Loc().End},
 	}
+}
+
+// add the method's signature to scope and to receiver type
+func declareMethod(c *Checker, receiver Receiver, identifier Identifier, init ExpressionType) {
+	if identifier == (Identifier{}) || receiver == (Receiver{}) {
+		return
+	}
+
+	name := identifier.Text()
+	declaredAt := receiver.Name.Loc()
+	typing, ok := receiver.Typing.Type().(Type)
+	if !ok {
+		return
+	}
+	alias, ok := typing.Value.(TypeAlias)
+	if !ok {
+		return
+	}
+	signature, ok := init.(Function)
+	if !ok {
+		return
+	}
+	c.scope.AddMethod(name, declaredAt, typing.Value, signature)
+	alias.registerMethod(name, signature)
 }

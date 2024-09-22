@@ -28,3 +28,32 @@ func TestBuildGeneric(t *testing.T) {
 		t.Fatalf("Expected primitive type, got %v", reflect.TypeOf(list.Element))
 	}
 }
+
+func TestFunctionExtends(t *testing.T) {
+	a := Function{Returned: Primitive{NUMBER}}
+	b := Function{Returned: Primitive{NUMBER}}
+
+	if !a.Extends(b) {
+		t.Fatalf("Should've extended!")
+	}
+}
+
+func TestTrait(t *testing.T) {
+	typing := TypeAlias{
+		Name: "Type",
+		Ref:  Object{map[string]ExpressionType{}},
+		Methods: map[string]ExpressionType{
+			"method": Function{Returned: Primitive{NUMBER}},
+		},
+	}
+	trait := Trait{
+		Self: Generic{Name: "_"},
+		Members: map[string]ExpressionType{
+			"method": Function{Returned: Primitive{NUMBER}},
+		},
+	}
+
+	if !trait.Extends(typing) {
+		t.Fatalf("Should've extended!")
+	}
+}
