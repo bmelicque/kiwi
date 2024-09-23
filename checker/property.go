@@ -22,6 +22,28 @@ func (p PropertyAccessExpression) Loc() tokenizer.Loc {
 }
 func (p PropertyAccessExpression) Type() ExpressionType { return p.typing }
 
+type TraitExpression struct {
+	Receiver ParenthesizedExpression // Receiver.Expr is an Identifier
+	Def      ObjectDefinition
+}
+
+func (t TraitExpression) Loc() tokenizer.Loc {
+	return tokenizer.Loc{
+		Start: t.Receiver.loc.Start,
+		End:   t.Def.loc.End,
+	}
+}
+func (t TraitExpression) Type() ExpressionType {
+	value := Trait{
+		Self:    Generic{Name: t.Receiver.Expr.(Identifier).Text()},
+		Members: map[string]ExpressionType{},
+	}
+	for _, member := range t.Def.Members {
+		value.Members[member.Name.Token.Text()] = member.Typing.Type()
+	}
+	return Type{value}
+}
+
 // Returns the type of the given object as a `TypeRef{Object{}}`
 func getObjectType(expr Expression) (TypeAlias, bool) {
 	ref, ok := expr.Type().(TypeAlias)
@@ -33,8 +55,14 @@ func getObjectType(expr Expression) (TypeAlias, bool) {
 	}
 	return ref, true
 }
-func (c *Checker) checkPropertyAccess(expr parser.PropertyAccessExpression) PropertyAccessExpression {
+func (c *Checker) checkPropertyAccess(expr parser.PropertyAccessExpression) Expression {
 	left := c.checkExpression(expr.Expr)
+	if _, ok := expr.Property.(parser.ObjectDefinition); ok {
+		trait := checkTraitExpression(c, left, expr.Property)
+		if trait != nil {
+			return trait
+		}
+	}
 	switch left.Type().(type) {
 	case Tuple:
 		return checkTupleIndexAccess(c, left, expr.Property)
@@ -144,4 +172,37 @@ func getSumTypeConstructor(t Type, name string) ExpressionType {
 		From: constructor,
 		To:   t,
 	}}
+}
+
+// check a trait expression: (ReceiverType).{ ..methods }
+func checkTraitExpression(c *Checker, left Expression, right parser.Node) Expression {
+	receiver, ok := left.(ParenthesizedExpression)
+	if !ok {
+		return nil
+	}
+	identifier, ok := receiver.Expr.(Identifier)
+	if !ok {
+		return nil
+	}
+	if !identifier.isType {
+		c.report("Type expected", identifier.Loc())
+	}
+
+	c.pushScope(NewScope())
+	defer c.dropScope()
+	name := identifier.Text()
+	c.scope.Add(name, identifier.Loc(), Type{TypeAlias{Name: name, Ref: Generic{Name: identifier.Text()}}})
+
+	def := c.checkObjectDefinition(right.(parser.ObjectDefinition)) // ensured by checkPropertyAccess
+	for _, member := range def.Members {
+		typing, _ := member.Typing.Type().(Type)
+		if typing.Value == nil || typing.Value.Kind() != FUNCTION {
+			c.report("Function type expected", member.Typing.Loc())
+		}
+	}
+
+	return TraitExpression{
+		Receiver: receiver,
+		Def:      def,
+	}
 }

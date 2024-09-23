@@ -23,7 +23,7 @@ func TestSumTypeConstructor1(t *testing.T) {
 	expr := checker.checkPropertyAccess(parser.PropertyAccessExpression{
 		Expr:     parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Sum"}},
 		Property: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "B"}},
-	})
+	}).(PropertyAccessExpression)
 
 	if len(checker.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", checker.errors)
@@ -55,7 +55,7 @@ func TestSumTypeConstructor2(t *testing.T) {
 	expr := checker.checkPropertyAccess(parser.PropertyAccessExpression{
 		Expr:     parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Sum"}},
 		Property: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "A"}},
-	})
+	}).(PropertyAccessExpression)
 
 	if len(checker.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", checker.errors)
@@ -81,7 +81,7 @@ func TestTupleIndexAccess(t *testing.T) {
 	expr := checker.checkPropertyAccess(parser.PropertyAccessExpression{
 		Expr:     parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "tuple"}},
 		Property: parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "1"}},
-	})
+	}).(PropertyAccessExpression)
 
 	if len(checker.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", checker.errors)
@@ -89,5 +89,35 @@ func TestTupleIndexAccess(t *testing.T) {
 
 	if expr.typing.Kind() != STRING {
 		t.Fatalf("Expected STRING, got %#v", expr.typing)
+	}
+}
+
+func TestTraitExpression(t *testing.T) {
+	checker := MakeChecker()
+	expr := checker.checkPropertyAccess(parser.PropertyAccessExpression{
+		Expr: parser.ParenthesizedExpression{Expr: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Self"}}},
+		Property: parser.ObjectDefinition{Members: []parser.Node{
+			parser.TypedExpression{
+				Expr: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "method"}},
+				Typing: parser.FunctionExpression{
+					Params:   &parser.ParenthesizedExpression{},
+					Operator: testToken{kind: tokenizer.SLIM_ARR},
+					Expr:     parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Self"}},
+				},
+			},
+		}},
+	})
+
+	if len(checker.errors) > 0 {
+		t.Fatalf("Got %v checking errors: %#v", len(checker.errors), checker.errors)
+	}
+
+	trait, ok := expr.(TraitExpression)
+	if !ok {
+		t.Fatalf("Expected TraitExpression, got %#v", expr)
+	}
+
+	if _, ok := trait.Receiver.Expr.(Identifier); !ok {
+		t.Fatalf("Expected Identifier, got %#v", trait.Receiver.Expr)
 	}
 }
