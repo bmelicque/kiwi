@@ -131,10 +131,14 @@ func (e *Emitter) emitReturn(r checker.Return) {
 }
 
 func (e *Emitter) emitClass(declaration checker.VariableDeclaration) {
+	init := declaration.Initializer.Type().(checker.Type).Value.Kind()
+	if init == checker.TRAIT {
+		return
+	}
 	e.write("class ")
 	identifier := getTypeIdentifier(declaration.Pattern)
 	e.emit(identifier)
-	if declaration.Initializer.Type().(checker.Type).Value.Kind() == checker.SUM {
+	if init == checker.SUM {
 		e.write(" extends _Sum {}")
 		e.addFlag(SumFlag)
 		return
