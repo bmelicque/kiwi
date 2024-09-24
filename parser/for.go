@@ -28,7 +28,7 @@ func ParseForLoop(p *Parser) Node {
 	p.allowBraceParsing = false
 	statement.Statement = p.parseAssignment()
 	p.allowBraceParsing = outer
-	statement.Body = ParseBody(p)
+	statement.Body = p.parseBody()
 
 	return statement
 }

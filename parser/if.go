@@ -23,6 +23,6 @@ func (p *Parser) parseIf() Node {
 	p.allowBraceParsing = false
 	condition := ParseExpression(p)
 	p.allowBraceParsing = outer
-	body := ParseBody(p)
+	body := p.parseBody()
 	return IfElse{keyword, condition, body}
 }

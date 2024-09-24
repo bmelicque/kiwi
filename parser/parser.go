@@ -36,7 +36,7 @@ func (p *Parser) ParseProgram() []Node {
 	statements := []Node{}
 
 	for p.tokenizer.Peek().Kind() != tokenizer.EOF {
-		statements = append(statements, ParseStatement(p))
+		statements = append(statements, p.parseStatement())
 		next := p.tokenizer.Peek().Kind()
 		if next == tokenizer.EOL {
 			p.tokenizer.DiscardLineBreaks()
@@ -48,10 +48,12 @@ func (p *Parser) ParseProgram() []Node {
 	return statements
 }
 
-func ParseStatement(p *Parser) Node {
+func (p *Parser) parseStatement() Node {
 	switch p.tokenizer.Peek().Kind() {
 	case tokenizer.IF_KW:
 		return p.parseIf()
+	case tokenizer.MATCH_KW:
+		return p.parseMatchStatement()
 	case tokenizer.FOR_KW:
 		return ParseForLoop(p)
 	case tokenizer.RETURN_KW:

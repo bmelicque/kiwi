@@ -34,6 +34,8 @@ const (
 	NUM_KW    // number
 	BOOL_KW   // boolean
 	IF_KW     // if
+	MATCH_KW  // match
+	CASE_KW   // case
 	FOR_KW    // for
 	RETURN_KW // return
 
@@ -83,7 +85,7 @@ const (
 
 	COMMA // ,
 	COLON // :
-	DOT   //.
+	DOT   // .
 )
 
 type Token interface {
@@ -250,6 +252,10 @@ func makeToken(text string, loc Loc) Token {
 		return token{BOOL_KW, loc}
 	case "if":
 		return token{IF_KW, loc}
+	case "match":
+		return token{MATCH_KW, loc}
+	case "case":
+		return token{CASE_KW, loc}
 	case "for":
 		return token{FOR_KW, loc}
 	case "return":

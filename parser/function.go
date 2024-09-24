@@ -70,7 +70,7 @@ func (p *Parser) parseFunctionExpression() Node {
 	}
 	res := FunctionExpression{brackets, paren, operator, expr, nil}
 	if operator.Kind() == tokenizer.FAT_ARR {
-		res.Body = ParseBody(p)
+		res.Body = p.parseBody()
 	}
 	return res
 }

@@ -11,7 +11,7 @@ type Body struct {
 
 func (b Body) Loc() tokenizer.Loc { return b.loc }
 
-func ParseBody(p *Parser) *Body {
+func (p *Parser) parseBody() *Body {
 	body := Body{}
 
 	token := p.tokenizer.Consume()
@@ -23,7 +23,7 @@ func ParseBody(p *Parser) *Body {
 
 	body.Statements = []Node{}
 	for p.tokenizer.Peek().Kind() != tokenizer.RBRACE && p.tokenizer.Peek().Kind() != tokenizer.EOF {
-		body.Statements = append(body.Statements, ParseStatement(p))
+		body.Statements = append(body.Statements, p.parseStatement())
 		p.tokenizer.DiscardLineBreaks()
 	}
 
