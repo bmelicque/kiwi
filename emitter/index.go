@@ -70,6 +70,8 @@ func (e *Emitter) emit(node interface{}) {
 		e.emitForRange(node)
 	case checker.If:
 		e.emitIf(node)
+	case checker.MatchStatement:
+		e.emitMatchStatement(node)
 	case checker.MethodDeclaration:
 		e.emitMethodDeclaration(node)
 	case checker.Return:

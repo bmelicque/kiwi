@@ -14,7 +14,7 @@ type MatchCase struct {
 	Statements []Node
 }
 
-func (m MatchCase) isCatchall() bool {
+func (m MatchCase) IsCatchall() bool {
 	if m.Pattern == nil {
 		return false
 	}
@@ -221,7 +221,7 @@ func detectUnreachableCases(c *Checker, cases []MatchCase) bool {
 		if foundCatchall {
 			foundUnreachable = true
 		}
-		if ca.isCatchall() {
+		if ca.IsCatchall() {
 			foundCatchall = true
 			catchall = ca.Pattern.Loc()
 		}
