@@ -15,14 +15,7 @@ type MatchCase struct {
 }
 
 func (m MatchCase) IsCatchall() bool {
-	if m.Pattern == nil {
-		return false
-	}
-	id, ok := m.Pattern.(Identifier)
-	if !ok {
-		return false
-	}
-	return id.Text() == "_"
+	return m.Typing.Text() == "_"
 }
 
 type MatchStatement struct {
@@ -132,6 +125,9 @@ func checkCaseTyping(c *Checker, subtyping parser.Node, typing ExpressionType) (
 	if !ok {
 		c.report("Type identifier expected", subtyping.Loc())
 		return Identifier{}, Primitive{UNKNOWN}
+	}
+	if identifier.Text() == "_" {
+		return identifier, Primitive{UNKNOWN}
 	}
 	if !identifier.isType {
 		c.report("Type identifier expected", subtyping.Loc())
