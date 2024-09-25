@@ -14,6 +14,17 @@ type MatchCase struct {
 	Statements []Node
 }
 
+func (m MatchCase) isCatchall() bool {
+	if m.Pattern == nil {
+		return false
+	}
+	id, ok := m.Pattern.(Identifier)
+	if !ok {
+		return false
+	}
+	return id.Text() == "_"
+}
+
 type MatchStatement struct {
 	Value Expression
 	Cases []MatchCase
@@ -36,6 +47,12 @@ func (c *Checker) checkMatchStatement(node parser.MatchStatement) Node {
 	cases := []MatchCase{}
 	for _, node := range nodes {
 		cases = append(cases, checkMatchCase(c, node, typing))
+	}
+
+	// TODO: checkExhaustiveness
+	ok := checkMatchExhaustiveness(c, cases, typing)
+	if !ok {
+		c.report("Non-exhaustive match (consider adding a catch-all)", node.Loc())
 	}
 
 	return MatchStatement{value, cases, node.Loc()}
@@ -165,4 +182,52 @@ func declareCasePattern(c *Checker, node parser.Node, t ExpressionType) Expressi
 		c.report("Invalid pattern", node.Loc())
 		return nil
 	}
+}
+
+func checkMatchExhaustiveness(c *Checker, cases []MatchCase, typing ExpressionType) bool {
+	found := map[string][]tokenizer.Loc{}
+	for _, ca := range cases {
+		name := ca.Typing.Text()
+		found[name] = append(found[name], ca.Typing.Loc())
+	}
+	for name, locs := range found {
+		if len(locs) > 1 {
+			for _, loc := range locs {
+				c.report(fmt.Sprintf("Duplicate case '%v'", name), loc)
+			}
+		}
+	}
+	catchAll := detectUnreachableCases(c, cases)
+	if catchAll {
+		return true
+	}
+	sum, ok := typing.(Sum)
+	if !ok {
+		return false
+	}
+	for name := range sum.Members {
+		if _, ok := found[name]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// return true if found a catch-all case
+func detectUnreachableCases(c *Checker, cases []MatchCase) bool {
+	var foundCatchall, foundUnreachable bool
+	var catchall tokenizer.Loc
+	for _, ca := range cases {
+		if foundCatchall {
+			foundUnreachable = true
+		}
+		if ca.isCatchall() {
+			foundCatchall = true
+			catchall = ca.Pattern.Loc()
+		}
+	}
+	if foundUnreachable {
+		c.report("Catch-all case should be last", catchall)
+	}
+	return foundCatchall
 }
