@@ -12,6 +12,12 @@ type ParenthesizedExpression struct {
 func (p ParenthesizedExpression) Loc() tokenizer.Loc {
 	return p.loc
 }
+func (p ParenthesizedExpression) Unwrap() Node {
+	if expr, ok := p.Expr.(ParenthesizedExpression); ok {
+		return expr.Unwrap()
+	}
+	return p.Expr
+}
 
 func (p *Parser) parseParenthesizedExpression() ParenthesizedExpression {
 	loc := p.tokenizer.Consume().Loc() // LPAREN
@@ -30,4 +36,12 @@ func (p *Parser) parseParenthesizedExpression() ParenthesizedExpression {
 	}
 	loc.End = p.tokenizer.Consume().Loc().End
 	return ParenthesizedExpression{expr, loc}
+}
+
+// unwrap parenthesized expressions
+func Unwrap(node Node) Node {
+	if paren, ok := node.(ParenthesizedExpression); ok {
+		return paren.Unwrap()
+	}
+	return node
 }

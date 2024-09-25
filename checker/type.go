@@ -131,6 +131,15 @@ func (ta *TypeAlias) registerMethod(name string, signature ExpressionType) {
 	}
 	ta.Methods[name] = signature
 }
+func (ta TypeAlias) implements(trait Trait) bool {
+	for name, signature := range trait.Members {
+		method, ok := ta.Methods[name]
+		if !ok || !signature.Extends(method) {
+			return false
+		}
+	}
+	return true
+}
 
 type List struct {
 	Element ExpressionType

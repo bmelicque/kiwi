@@ -95,6 +95,8 @@ func (c *Checker) Check(node parser.Node) Node {
 		return c.checkLoop(node)
 	case parser.IfElse:
 		return c.checkIf(node)
+	case parser.MatchStatement:
+		return c.checkMatchStatement(node)
 	case parser.Return:
 		return c.checkReturnStatement(node)
 	default:
