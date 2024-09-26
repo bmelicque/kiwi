@@ -173,7 +173,7 @@ func TestFunctionWithTypeArgs(t *testing.T) {
 		testToken{kind: tokenizer.LBRACE},
 		testToken{kind: tokenizer.RBRACE},
 	}})
-	node := parser.parseFunctionExpression()
+	node := ParseExpression(parser)
 
 	_, ok := node.(FunctionExpression)
 	if !ok {

@@ -51,6 +51,8 @@ const (
 	BAND   // &
 	BOR    // |
 
+	QUESTION_MARK // ?
+
 	LESS    // <
 	GREATER // >
 	LEQ     // <=
@@ -169,7 +171,7 @@ var number = regexp.MustCompile(`^\d+`)
 var str = regexp.MustCompile(`^".+?[^\\]"`)
 var doubleQuoteString = regexp.MustCompile(`^"(.*?)[^\\]"`)
 var word = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9]*`)
-var operator = regexp.MustCompile(`^(\+\+?|->?|\*\*?|/|%|::|:=|\.\.=?|=>|<=?|>=?|={1,2}|!=|\|{1,2})`)
+var operator = regexp.MustCompile(`^(\+\+?|->?|\*\*?|/|%|::|:=|\.\.=?|=>|<=?|>=?|={1,2}|!=|\|{1,2})|\?`)
 var punctuation = regexp.MustCompile(`^(\[|\]|,|:|\(|\)|\{|\}|_|\.)`)
 
 func split(data []byte, atEOF bool) (advance int, token []byte, err error) {
@@ -294,6 +296,8 @@ func makeToken(text string, loc Loc) Token {
 		return token{EQ, loc}
 	case "!=":
 		return token{NEQ, loc}
+	case "?":
+		return token{QUESTION_MARK, loc}
 	case "[":
 		return token{LBRACKET, loc}
 	case "]":
