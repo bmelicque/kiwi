@@ -11,6 +11,9 @@ type Variable struct {
 	reads      []tokenizer.Loc
 }
 
+func (v *Variable) readAt(loc tokenizer.Loc)  { v.reads = append(v.reads, loc) }
+func (v *Variable) writeAt(loc tokenizer.Loc) { v.writes = append(v.writes, loc) }
+
 type Method struct {
 	self       ExpressionType
 	signature  Function
@@ -86,8 +89,6 @@ func (s *Scope) Add(name string, declaredAt tokenizer.Loc, typing ExpressionType
 	s.variables[name] = &Variable{
 		declaredAt: declaredAt,
 		typing:     typing,
-		writes:     []tokenizer.Loc{},
-		reads:      []tokenizer.Loc{},
 	}
 }
 
@@ -99,7 +100,7 @@ func (s *Scope) WriteAt(name string, loc tokenizer.Loc) {
 	variable, ok := s.Find(name)
 	// TODO: panic on error
 	if ok {
-		variable.writes = append(variable.writes, loc)
+		variable.writeAt(loc)
 	}
 }
 
@@ -107,7 +108,7 @@ func (s *Scope) ReadAt(name string, loc tokenizer.Loc) {
 	variable, ok := s.Find(name)
 	// TODO: panic on error
 	if ok {
-		variable.reads = append(variable.reads, loc)
+		variable.readAt(loc)
 	}
 }
 

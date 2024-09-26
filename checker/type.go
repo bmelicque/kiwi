@@ -436,7 +436,7 @@ func (g Generic) build(scope *Scope, compared ExpressionType) (ExpressionType, b
 	if !ok {
 		return Primitive{UNKNOWN}, false
 	}
-	variable.reads = append(variable.reads, tokenizer.Loc{})
+	variable.readAt(tokenizer.Loc{})
 	ok = isGenericType(variable.typing)
 	if !ok {
 		return variable.typing, true

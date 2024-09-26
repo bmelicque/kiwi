@@ -37,7 +37,7 @@ func (c *Checker) addTypeArgsToScope(args *TupleExpression, params []Generic) {
 		}
 		c.scope.Add(param.Name, loc, Type{Generic{Name: param.Name, Value: t}})
 		v, _ := c.scope.Find(param.Name)
-		v.reads = append(v.reads, loc)
+		v.readAt(loc)
 	}
 }
 
