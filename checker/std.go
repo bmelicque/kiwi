@@ -1,5 +1,18 @@
 package checker
 
+func makeOptionType(t ExpressionType) TypeAlias {
+	return TypeAlias{
+		Name:   "Option",
+		Params: []Generic{{Name: "Type", Value: t}},
+		Ref: Sum{map[string]ExpressionType{
+			"Some": Type{Generic{Name: "Type", Value: t}},
+			"None": nil,
+		}},
+	}
+}
+
+var optionType = makeOptionType(nil)
+
 var std = Scope{
 	variables: map[string]*Variable{
 		"List": {
@@ -10,14 +23,7 @@ var std = Scope{
 			}},
 		},
 		"Option": {
-			typing: Type{TypeAlias{
-				Name:   "Option",
-				Params: []Generic{{Name: "Type"}},
-				Ref: Sum{map[string]ExpressionType{
-					"Some": Type{Generic{Name: "Type"}},
-					"None": nil,
-				}},
-			}},
+			typing: Type{optionType},
 		},
 		"Result": {
 			typing: Type{TypeAlias{

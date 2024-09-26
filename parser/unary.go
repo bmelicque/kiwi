@@ -5,14 +5,14 @@ import (
 )
 
 type UnaryExpression struct {
-	Token tokenizer.Token
-	Expr  Node
+	Operator tokenizer.Token
+	Operand  Node
 }
 
 func (u UnaryExpression) Loc() tokenizer.Loc {
-	loc := u.Token.Loc()
-	if u.Expr != nil {
-		loc.End = u.Loc().End
+	loc := u.Operator.Loc()
+	if u.Operand != nil {
+		loc.End = u.Operand.Loc().End
 	}
 	return loc
 }
