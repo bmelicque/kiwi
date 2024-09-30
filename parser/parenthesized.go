@@ -21,15 +21,22 @@ func (p ParenthesizedExpression) Unwrap() Node {
 
 func (p *Parser) parseParenthesizedExpression() ParenthesizedExpression {
 	loc := p.tokenizer.Consume().Loc() // LPAREN
+	p.tokenizer.DiscardLineBreaks()
 	next := p.tokenizer.Peek()
 	if next.Kind() == tokenizer.RPAREN {
 		loc.End = p.tokenizer.Consume().Loc().End
 		return ParenthesizedExpression{nil, loc}
 	}
-	outer := p.allowBraceParsing
+
+	outerBrace := p.allowBraceParsing
+	outerMultiline := p.multiline
 	p.allowBraceParsing = true
-	expr := ParseExpression(p)
-	p.allowBraceParsing = outer
+	p.multiline = true
+	expr := p.parseTupleExpression()
+	p.allowBraceParsing = outerBrace
+	p.multiline = outerMultiline
+
+	p.tokenizer.DiscardLineBreaks()
 	next = p.tokenizer.Peek()
 	if next.Kind() != tokenizer.RPAREN {
 		p.report("')' expected", next.Loc())

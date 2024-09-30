@@ -36,6 +36,7 @@ func (p *Parser) parseMatchStatement() Node {
 		return MatchStatement{Keyword: keyword, Value: condition}
 	}
 	p.tokenizer.Consume()
+	p.tokenizer.DiscardLineBreaks()
 
 	cases := []MatchCase{}
 	stopAt := []tokenizer.TokenKind{tokenizer.RBRACE, tokenizer.EOF}

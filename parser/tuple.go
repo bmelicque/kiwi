@@ -17,9 +17,31 @@ func (t TupleExpression) Loc() tokenizer.Loc {
 
 func (p *Parser) parseTupleExpression() Node {
 	var elements []Node
-	ParseList(p, tokenizer.ILLEGAL, func() {
-		elements = append(elements, p.parseSumType())
-	})
+	// TODO: remove parseList...
+
+	// parseList(p, tokenizer.ILLEGAL, func() {
+	// 	elements = append(elements, p.parseSumType())
+	// })
+
+	outer := p.allowEmptyExpr
+	p.allowEmptyExpr = true
+	for p.tokenizer.Peek().Kind() != tokenizer.EOF {
+		el := p.parseSumType()
+		if el == nil {
+			break
+		}
+		elements = append(elements, el)
+
+		if p.tokenizer.Peek().Kind() != tokenizer.COMMA {
+			break
+		}
+		p.tokenizer.Consume()
+
+		if p.multiline {
+			p.tokenizer.DiscardLineBreaks()
+		}
+	}
+	p.allowEmptyExpr = outer
 
 	if len(elements) == 0 {
 		return nil

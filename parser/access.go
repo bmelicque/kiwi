@@ -87,27 +87,6 @@ func parseOneAccess(p *Parser, expr Node) Node {
 			Expr:     expr,
 			Property: property,
 		}
-	case tokenizer.LBRACE:
-		if !p.allowBraceParsing {
-			return expr
-		}
-		// TODO: parseTuple
-		p.tokenizer.Consume()
-		var members []Node
-		ParseList(p, tokenizer.RBRACE, func() {
-			members = append(members, p.parseTypedExpression())
-		})
-		loc := tokenizer.Loc{Start: expr.Loc().Start}
-		if p.tokenizer.Peek().Kind() != tokenizer.RBRACE {
-			p.report("'}' expected", p.tokenizer.Peek().Loc())
-		} else {
-			loc.End = p.tokenizer.Consume().Loc().End
-		}
-		return InstanciationExpression{
-			Typing:  expr,
-			Members: members,
-			loc:     loc,
-		}
 	default:
 		panic("switch should've been exhaustive!")
 	}

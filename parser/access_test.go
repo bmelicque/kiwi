@@ -102,13 +102,13 @@ func TestTraitDefinition(t *testing.T) {
 		testToken{kind: tokenizer.IDENTIFIER, value: "Self"},
 		testToken{kind: tokenizer.RPAREN},
 		testToken{kind: tokenizer.DOT},
-		testToken{kind: tokenizer.LBRACE},
+		testToken{kind: tokenizer.LPAREN},
 		testToken{kind: tokenizer.IDENTIFIER, value: "method"},
 		testToken{kind: tokenizer.LPAREN},
 		testToken{kind: tokenizer.RPAREN},
 		testToken{kind: tokenizer.SLIM_ARR},
 		testToken{kind: tokenizer.IDENTIFIER, value: "Self"},
-		testToken{kind: tokenizer.RBRACE},
+		testToken{kind: tokenizer.RPAREN},
 	}}
 
 	parser := MakeParser(&tokenizer)
@@ -127,8 +127,8 @@ func TestTraitDefinition(t *testing.T) {
 		t.Fatalf("Expected ParenthesizedExpression, got %#v", expr.Expr)
 	}
 
-	if _, ok := expr.Property.(ObjectDefinition); !ok {
-		t.Fatalf("Expected ObjectDefinition, got %#v", expr.Property)
+	if _, ok := expr.Property.(ParenthesizedExpression); !ok {
+		t.Fatalf("Expected ParenthesizedExpression, got %#v", expr.Property)
 	}
 }
 
