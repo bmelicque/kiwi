@@ -1,13 +1,15 @@
 package checker
 
 import (
+	"fmt"
+
 	"github.com/bmelicque/test-parser/parser"
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 type CallExpression struct {
 	Callee Expression
-	Args   TupleExpression
+	Args   Params
 	typing ExpressionType
 }
 
@@ -23,26 +25,20 @@ func (c CallExpression) Type() ExpressionType { return c.typing }
 
 func (c *Checker) checkCallExpression(expr parser.CallExpression) Expression {
 	callee := c.checkExpression(expr.Callee)
-
-	args := TupleExpression{loc: expr.Args.Loc()}
-	if expr.Args.Expr != nil {
-		ex := c.checkExpression(expr.Args.Expr)
-		if e, ok := ex.(TupleExpression); ok {
-			args = e
-		} else {
-			args = TupleExpression{[]Expression{ex}, ex.Loc()}
-		}
+	_, isType := callee.Type().(Type)
+	if isType {
+		return checkInstanciation(c, expr)
 	}
 
-	returned := c.checkFunctionCallee(callee, &args)
-	return CallExpression{callee, args, returned}
+	return checkFunctionCall(c, callee, expr.Args)
 }
 
-func (c *Checker) checkFunctionCallee(callee Expression, args *TupleExpression) ExpressionType {
+// function(..args)
+func checkFunctionCall(c *Checker, callee Expression, node parser.ParenthesizedExpression) Expression {
 	function, ok := callee.Type().(Function)
 	if !ok {
-		c.report("Function type expected", callee.Loc())
-		return Primitive{UNKNOWN}
+		args := c.checkArguments(node)
+		return CallExpression{callee, args, nil}
 	}
 
 	c.pushScope(NewScope())
@@ -52,44 +48,34 @@ func (c *Checker) checkFunctionCallee(callee Expression, args *TupleExpression) 
 		c.scope.Add(param.Name, tokenizer.Loc{}, Type{param})
 	}
 
+	args := c.checkArguments(node)
 	params := function.Params.elements
-	checkFunctionArgsNumber(c, args, params, callee.Loc())
 	checkFunctionArgs(c, args, params)
 	t, ok := function.Returned.build(c.scope, nil)
 	if !ok {
 		c.report("Could not determine exact type", callee.Loc())
 	}
-	return t
+	checkFunctionArgsNumber(c, args, params)
+	return CallExpression{callee, args, t}
 }
-
-func checkFunctionArgsNumber(c *Checker, args *TupleExpression, params []ExpressionType, loc tokenizer.Loc) {
-	if args == nil {
-		c.report("Expected arguments", loc)
-		return
-	}
-
-	if len(params) < len(args.Elements) {
-		loc := args.Elements[len(params)].Loc()
-		loc.End = args.Elements[len(args.Elements)-1].Loc().End
+func checkFunctionArgsNumber(c *Checker, args Params, params []ExpressionType) {
+	if len(params) < len(args.Params) {
+		loc := args.Params[len(params)].Loc()
+		loc.End = args.Params[len(args.Params)-1].Loc().End
 		c.report("Too many arguments", loc)
 	}
-	if len(params) > len(args.Elements) {
+	if len(params) > len(args.Params) {
 		c.report("Missing argument(s)", args.Loc())
 	}
 }
-
-func checkFunctionArgs(c *Checker, args *TupleExpression, params []ExpressionType) {
-	if args == nil {
-		return
-	}
+func checkFunctionArgs(c *Checker, args Params, params []ExpressionType) {
 	l := len(params)
-	if len(args.Elements) < len(params) {
-		l = len(args.Elements)
+	if len(args.Params) < len(params) {
+		l = len(args.Params)
 	}
 	var ok bool
-	for i := 0; i < l; i++ {
-		element := args.Elements[i]
-		received := element.Type()
+	for i, element := range args.Params[:l] {
+		received := element.Complement.Type()
 		params[i], ok = params[i].build(c.scope, received)
 		if !ok {
 			c.report("Could not determine exact type", element.Loc())
@@ -98,4 +84,120 @@ func checkFunctionArgs(c *Checker, args *TupleExpression, params []ExpressionTyp
 			c.report("Types don't match", element.Loc())
 		}
 	}
+}
+
+// Primitive(value) | Object(key: value) | List(..values)
+func checkInstanciation(c *Checker, node parser.CallExpression) Expression {
+	expr := c.checkExpression(node.Callee)
+
+	typing := expr.Type().(Type)
+	from := typing
+	if constructor, ok := typing.Value.(Constructor); ok {
+		from.Value = constructor.From
+	}
+
+	switch t := from.Value.(type) {
+	case Primitive:
+		args := c.checkArguments(node.Args)
+		if len(args.Params) != 1 {
+			c.report("Exactly 1 value expected", node.Loc())
+		}
+		var value Expression
+		if len(args.Params) > 0 {
+			value = args.Params[0].Complement
+			if !t.Extends(value.Type()) {
+				c.report("Type doesn't match", value.Loc())
+			}
+		}
+		return CallExpression{
+			Callee: expr,
+			Args:   args,
+			typing: getFinalType(typing),
+		}
+	case TypeAlias:
+		object, ok := t.Ref.(Object)
+		if !ok {
+			c.report("Object type expected", expr.Loc())
+			return CallExpression{Callee: expr, typing: t}
+		}
+		c.pushScope(NewScope())
+		defer c.dropScope()
+		c.addTypeArgsToScope(nil, t.Params)
+		members := c.checkNamedArguments(node.Args)
+		reportExcessMembers(c, object.Members, members.Params)
+		reportMissingMembers(c, object.Members, members)
+		t.Ref = object
+		return CallExpression{
+			Callee: expr,
+			Args:   members,
+			typing: getFinalType(typing),
+		}
+	case List:
+		args := c.checkArguments(node.Args)
+		if len(args.Params) == 0 {
+			return CallExpression{Callee: expr, Args: args, typing: t}
+		}
+		first := args.Params[0].Complement
+		el := t.Element
+		if alias, ok := t.Element.(TypeAlias); ok {
+			c.pushScope(NewScope())
+			defer c.dropScope()
+			c.addTypeArgsToScope(nil, alias.Params)
+			el, _ = t.Element.build(c.scope, first.Type())
+		}
+
+		for _, arg := range args.Params[1:] {
+			if !el.Extends(arg.Complement.Type()) {
+				c.report("Type doesn't match", arg.Loc())
+			}
+		}
+		return CallExpression{
+			Callee: expr,
+			Args:   args,
+			typing: getFinalType(typing),
+		}
+	default:
+		c.report("Unexpected typing (expected object, list or sum type constructor)", expr.Loc())
+		return CallExpression{Callee: expr}
+	}
+}
+
+func reportExcessMembers(c *Checker, expected map[string]ExpressionType, received []Param) {
+	for _, param := range received {
+		name := param.Identifier.Text()
+		_, ok := expected[name]
+		if !ok {
+			c.report(fmt.Sprintf("Property '%v' doesn't exist on this type", name), param.loc)
+		}
+	}
+}
+func reportMissingMembers(c *Checker, expected map[string]ExpressionType, received Params) {
+	membersSet := map[string]bool{}
+	for name := range expected {
+		membersSet[name] = true
+	}
+	for _, member := range received.Params {
+		delete(membersSet, member.Identifier.Text())
+	}
+
+	if len(membersSet) == 0 {
+		return
+	}
+	var msg string
+	var i int
+	for member := range membersSet {
+		msg += fmt.Sprintf("'%v'", member)
+		if i != len(membersSet)-1 {
+			msg += ", "
+		}
+		i++
+	}
+	c.report(fmt.Sprintf("Missing key(s) %v", msg), received.loc)
+}
+
+func getFinalType(t Type) ExpressionType {
+	if constructor, ok := t.Value.(Constructor); ok {
+		return constructor.To
+	}
+	return t
 }

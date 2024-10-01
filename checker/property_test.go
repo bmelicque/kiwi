@@ -96,14 +96,12 @@ func TestTraitExpression(t *testing.T) {
 	checker := MakeChecker()
 	expr := checker.checkPropertyAccess(parser.PropertyAccessExpression{
 		Expr: parser.ParenthesizedExpression{Expr: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Self"}}},
-		Property: parser.ObjectDefinition{Members: []parser.Node{
-			parser.TypedExpression{
-				Expr: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "method"}},
-				Typing: parser.FunctionExpression{
-					Params:   &parser.ParenthesizedExpression{},
-					Operator: testToken{kind: tokenizer.SLIM_ARR},
-					Expr:     parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Self"}},
-				},
+		Property: parser.ParenthesizedExpression{Expr: parser.TypedExpression{
+			Expr: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "method"}},
+			Typing: parser.FunctionExpression{
+				Params:   &parser.ParenthesizedExpression{},
+				Operator: testToken{kind: tokenizer.SLIM_ARR},
+				Expr:     parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Self"}},
 			},
 		}},
 	})

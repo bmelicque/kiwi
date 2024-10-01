@@ -88,7 +88,7 @@ func (c *Checker) checkGenericTypeDefinition(a parser.Assignment) VariableDeclar
 
 	var params Params
 	if declared.Property.Expr != nil {
-		params = c.checkParams(declared.Property.Expr)
+		params = c.checkTypeParams(declared.Property)
 	}
 
 	c.pushScope(NewScope())

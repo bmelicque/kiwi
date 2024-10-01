@@ -37,8 +37,10 @@ func TestGenericFunctionCall(t *testing.T) {
 		},
 	)
 	expr := checker.checkCallExpression(parser.CallExpression{
-		Callee: parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "function", tokenizer.Loc{}}},
-		Args:   parser.ParenthesizedExpression{Expr: parser.TokenExpression{Token: testToken{tokenizer.NUMBER, "42", tokenizer.Loc{}}}},
+		Callee: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "function"}},
+		Args: parser.ParenthesizedExpression{
+			Expr: parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "42"}},
+		},
 	})
 
 	if len(checker.errors) != 0 {

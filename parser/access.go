@@ -45,15 +45,6 @@ func (p PropertyAccessExpression) Loc() tokenizer.Loc {
 	}
 }
 
-// Typing{...Members}
-type InstanciationExpression struct {
-	Typing  Node
-	Members []Node
-	loc     tokenizer.Loc
-}
-
-func (i InstanciationExpression) Loc() tokenizer.Loc { return i.loc }
-
 var operators = []tokenizer.TokenKind{tokenizer.LBRACKET, tokenizer.LPAREN, tokenizer.DOT, tokenizer.LBRACE}
 
 func (p *Parser) parseAccessExpression() Node {

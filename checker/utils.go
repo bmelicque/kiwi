@@ -43,7 +43,7 @@ func (c *Checker) addTypeArgsToScope(args *TupleExpression, params []Generic) {
 
 func addTypeParamsToScope(scope *Scope, params Params) {
 	for _, param := range params.Params {
-		if param.Typing == nil {
+		if param.Complement == nil {
 			name := param.Identifier.Text()
 			t := Type{TypeAlias{Name: name, Ref: Generic{Name: name}}}
 			scope.Add(name, param.Loc(), t)
@@ -61,7 +61,7 @@ func checkBracketed(c *Checker, expr *parser.BracketedExpression) *TupleExpressi
 	if e, ok := ex.(TupleExpression); ok {
 		return &e
 	}
-	return &TupleExpression{[]Expression{ex}, ex.Loc()}
+	return &TupleExpression{[]Expression{ex}, ex.Type(), ex.Loc()}
 }
 
 func checkTypeIdentifier(c *Checker, node parser.Node) (Identifier, bool) {

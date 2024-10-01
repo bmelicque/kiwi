@@ -66,7 +66,7 @@ func (c *Checker) checkVariableDeclaration(a parser.Assignment) VariableDeclarat
 			}
 			elements[i] = identifier
 		}
-		pattern = TupleExpression{elements, declared.Loc()}
+		pattern = TupleExpression{elements, nil, declared.Loc()}
 	default:
 		c.report("Invalid pattern", declared.Loc())
 	}
