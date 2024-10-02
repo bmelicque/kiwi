@@ -10,14 +10,12 @@ import (
 func TestObjectDeclaration(t *testing.T) {
 	checker := MakeChecker()
 	assignment := checker.checkDefinition(parser.Assignment{
-		Declared: parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}}},
-		Operator: testToken{tokenizer.ASSIGN, "::", tokenizer.Loc{}},
-		Initializer: parser.ObjectDefinition{
-			Members: []parser.Node{
-				parser.TypedExpression{
-					Expr:   parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "n", tokenizer.Loc{}}},
-					Typing: parser.TokenExpression{Token: testToken{tokenizer.NUM_KW, "number", tokenizer.Loc{}}},
-				},
+		Declared: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Type"}},
+		Operator: testToken{kind: tokenizer.ASSIGN},
+		Initializer: parser.ParenthesizedExpression{
+			Expr: parser.TypedExpression{
+				Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "n"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.NUM_KW}},
 			},
 		},
 	})
@@ -33,9 +31,6 @@ func TestObjectDeclaration(t *testing.T) {
 
 	if _, ok := declaration.Pattern.(Identifier); !ok {
 		t.Fatalf("Expected identifier 'n', got %#v", declaration.Pattern)
-	}
-	if _, ok := declaration.Initializer.(ObjectDefinition); !ok {
-		t.Fatalf("Expected ObjectDefinition, got %#v", declaration.Initializer)
 	}
 
 	variable, _ := checker.scope.Find("Type")
@@ -60,12 +55,10 @@ func TestGenericObjectDefinition(t *testing.T) {
 			Property: parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "TypeParam"}}},
 		},
 		Operator: testToken{tokenizer.ASSIGN, "::", tokenizer.Loc{}},
-		Initializer: parser.ObjectDefinition{
-			Members: []parser.Node{
-				parser.TypedExpression{
-					Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "value"}},
-					Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "TypeParam"}},
-				},
+		Initializer: parser.ParenthesizedExpression{
+			Expr: parser.TypedExpression{
+				Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "value"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "TypeParam"}},
 			},
 		},
 	})

@@ -45,15 +45,6 @@ func (p PropertyAccessExpression) Loc() tokenizer.Loc {
 	}
 }
 
-// Typing{...Members}
-type InstanciationExpression struct {
-	Typing  Node
-	Members []Node
-	loc     tokenizer.Loc
-}
-
-func (i InstanciationExpression) Loc() tokenizer.Loc { return i.loc }
-
 var operators = []tokenizer.TokenKind{tokenizer.LBRACKET, tokenizer.LPAREN, tokenizer.DOT, tokenizer.LBRACE}
 
 func (p *Parser) parseAccessExpression() Node {
@@ -86,27 +77,6 @@ func parseOneAccess(p *Parser, expr Node) Node {
 		return PropertyAccessExpression{
 			Expr:     expr,
 			Property: property,
-		}
-	case tokenizer.LBRACE:
-		if !p.allowBraceParsing {
-			return expr
-		}
-		// TODO: parseTuple
-		p.tokenizer.Consume()
-		var members []Node
-		ParseList(p, tokenizer.RBRACE, func() {
-			members = append(members, p.parseTypedExpression())
-		})
-		loc := tokenizer.Loc{Start: expr.Loc().Start}
-		if p.tokenizer.Peek().Kind() != tokenizer.RBRACE {
-			p.report("'}' expected", p.tokenizer.Peek().Loc())
-		} else {
-			loc.End = p.tokenizer.Consume().Loc().End
-		}
-		return InstanciationExpression{
-			Typing:  expr,
-			Members: members,
-			loc:     loc,
 		}
 	default:
 		panic("switch should've been exhaustive!")

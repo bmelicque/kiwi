@@ -54,15 +54,17 @@ func TestTupleAssignment(t *testing.T) {
 
 func TestObjectDeclaration(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
-		testToken{tokenizer.DEFINE, "::", tokenizer.Loc{}},
-		testToken{tokenizer.LBRACE, "{", tokenizer.Loc{}},
-		testToken{tokenizer.EOL, "\n", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "n", tokenizer.Loc{}},
-		testToken{tokenizer.NUM_KW, "number", tokenizer.Loc{}},
-		testToken{tokenizer.COMMA, ",", tokenizer.Loc{}},
-		testToken{tokenizer.EOL, "\n", tokenizer.Loc{}},
-		testToken{tokenizer.RBRACE, "}", tokenizer.Loc{}},
+		testToken{kind: tokenizer.IDENTIFIER, value: "Type"},
+		testToken{kind: tokenizer.DEFINE},
+		testToken{kind: tokenizer.LPAREN},
+		testToken{kind: tokenizer.EOL},
+
+		testToken{kind: tokenizer.IDENTIFIER, value: "n"},
+		testToken{kind: tokenizer.NUM_KW},
+		testToken{kind: tokenizer.COMMA},
+		testToken{kind: tokenizer.EOL},
+
+		testToken{kind: tokenizer.RPAREN},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAssignment()
@@ -74,8 +76,8 @@ func TestObjectDeclaration(t *testing.T) {
 	if _, ok := expr.Declared.(TokenExpression); !ok {
 		t.Fatalf("Expected identifier 'Type'")
 	}
-	if _, ok := expr.Initializer.(ObjectDefinition); !ok {
-		t.Fatalf("Expected ObjectDefinition")
+	if _, ok := expr.Initializer.(ParenthesizedExpression); !ok {
+		t.Fatalf("Expected ParenthesizedExpression")
 	}
 }
 

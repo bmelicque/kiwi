@@ -24,7 +24,7 @@ func (p PropertyAccessExpression) Type() ExpressionType { return p.typing }
 
 type TraitExpression struct {
 	Receiver ParenthesizedExpression // Receiver.Expr is an Identifier
-	Def      ObjectDefinition
+	Def      ParenthesizedExpression
 }
 
 func (t TraitExpression) Loc() tokenizer.Loc {
@@ -34,14 +34,10 @@ func (t TraitExpression) Loc() tokenizer.Loc {
 	}
 }
 func (t TraitExpression) Type() ExpressionType {
-	value := Trait{
+	return Trait{
 		Self:    Generic{Name: t.Receiver.Expr.(Identifier).Text()},
-		Members: map[string]ExpressionType{},
+		Members: t.Def.Type().(Type).Value.(Object).Members,
 	}
-	for _, member := range t.Def.Members {
-		value.Members[member.Name.Token.Text()] = member.Typing.Type()
-	}
-	return Type{value}
 }
 
 // Returns the type of the given object as a `TypeRef{Object{}}`
@@ -57,7 +53,7 @@ func getObjectType(expr Expression) (TypeAlias, bool) {
 }
 func (c *Checker) checkPropertyAccess(expr parser.PropertyAccessExpression) Expression {
 	left := c.checkExpression(expr.Expr)
-	if _, ok := expr.Property.(parser.ObjectDefinition); ok {
+	if _, ok := expr.Property.(parser.ParenthesizedExpression); ok {
 		trait := checkTraitExpression(c, left, expr.Property)
 		if trait != nil {
 			return trait
@@ -193,16 +189,46 @@ func checkTraitExpression(c *Checker, left Expression, right parser.Node) Expres
 	name := identifier.Text()
 	c.scope.Add(name, identifier.Loc(), Type{TypeAlias{Name: name, Ref: Generic{Name: identifier.Text()}}})
 
-	def := c.checkObjectDefinition(right.(parser.ObjectDefinition)) // ensured by checkPropertyAccess
-	for _, member := range def.Members {
-		typing, _ := member.Typing.Type().(Type)
-		if typing.Value == nil || typing.Value.Kind() != FUNCTION {
-			c.report("Function type expected", member.Typing.Loc())
-		}
-	}
+	paren := c.checkParenthesizedExpression(right.(parser.ParenthesizedExpression)) // ensured by checkPropertyAccess
+	validateTraitType(c, paren)
 
 	return TraitExpression{
 		Receiver: receiver,
-		Def:      def,
+		Def:      paren,
+	}
+}
+
+func validateTraitType(c *Checker, expr ParenthesizedExpression) {
+	ty, ok := expr.Type().(Type)
+	if !ok {
+		c.report("Object type expected", expr.Loc())
+		return
+	}
+	if _, ok := ty.Value.(Object); !ok {
+		c.report("Object type expected", expr.Loc())
+		return
+	}
+
+	tuple, ok := expr.Expr.(TupleExpression)
+	if !ok {
+		checkMethodDeclaration(c, expr.Expr)
+		return
+	}
+	for _, element := range tuple.Elements {
+		checkMethodDeclaration(c, element)
+	}
+}
+
+func checkMethodDeclaration(c *Checker, expr Expression) {
+	fmt.Printf("%#v\n", expr)
+	param, ok := expr.(Param)
+	if !ok {
+		c.report("Method declaration expected", expr.Loc())
+		return
+	}
+	fmt.Printf("%#v\n", param.Complement.Type())
+	typing, ok := param.Complement.Type().(Type)
+	if !ok || typing.Value == nil || typing.Value.Kind() != FUNCTION {
+		c.report("Function type expected", param.Complement.Loc())
 	}
 }

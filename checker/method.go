@@ -29,7 +29,7 @@ func (c *Checker) checkMethodDeclarationReceiver(expr parser.Node) (Receiver, bo
 		return Receiver{}, false
 	}
 	param := c.checkParam(typed)
-	typing, ok := param.Typing.(Identifier)
+	typing, ok := param.Complement.(Identifier)
 	if !ok {
 		return Receiver{}, false
 	}

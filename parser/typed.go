@@ -25,11 +25,12 @@ func (p *Parser) parseTypedExpression() Node {
 		p.tokenizer.Consume()
 		colon = true
 	}
+	outer := p.allowEmptyExpr
 	if !colon {
 		p.allowEmptyExpr = true
 	}
 	typing := ParseRange(p)
-	p.allowEmptyExpr = false
+	p.allowEmptyExpr = outer
 	if typing == nil {
 		return expr
 	}

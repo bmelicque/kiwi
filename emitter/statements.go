@@ -9,34 +9,6 @@ import (
 
 const maxClassParamsLength = 66
 
-func (e *Emitter) emitClassParams(params []checker.ObjectMemberDefinition) []string {
-	names := make([]string, len(params))
-	length := 0
-	for i, member := range params {
-		name := getSanitizedName(member.Name.Token.Text())
-		names[i] = name
-		length += len(name) + 2
-	}
-
-	if length > maxClassParamsLength {
-		e.write("\n")
-		for _, name := range names {
-			e.write("        ")
-			e.write(name)
-			e.write(",\n")
-		}
-		e.write("    ")
-	} else {
-		for i, name := range names {
-			e.write(name)
-			if i != len(names)-1 {
-				e.write(", ")
-			}
-		}
-	}
-	return names
-}
-
 func (e *Emitter) emitAssignment(a checker.Assignment) {
 	e.emit(a.Pattern)
 	e.write(" = ")
@@ -172,32 +144,68 @@ func (e *Emitter) emitReturn(r checker.Return) {
 	e.write(";\n")
 }
 
-func (e *Emitter) emitClass(declaration checker.VariableDeclaration) {
-	init := declaration.Initializer.Type().(checker.Type).Value.Kind()
-	if init == checker.TRAIT {
-		return
-	}
-	e.write("class ")
-	identifier := getTypeIdentifier(declaration.Pattern)
-	e.emit(identifier)
-	if init == checker.SUM {
-		e.write(" extends _Sum {}")
-		e.addFlag(SumFlag)
-		return
-	}
-	e.write(" {\n    constructor(")
-	defer e.write("    }\n}\n")
+func (e *Emitter) getClassParamNames(expr checker.Expression) []string {
+	params, ok := expr.(checker.TupleExpression)
+	if !ok {
+		param := expr.(checker.Param)
+		return []string{getSanitizedName(param.Identifier.Text())}
 
-	object := declaration.Initializer.(checker.ObjectDefinition)
-	names := e.emitClassParams(object.Members)
-	e.write(") {\n")
-	for _, name := range names {
-		e.write(fmt.Sprintf("        this.%v = %v;\n", name, name))
+	}
+
+	names := make([]string, len(params.Elements))
+	length := 0
+	for i, member := range params.Elements {
+		param := member.(checker.Param)
+		name := getSanitizedName(param.Identifier.Text())
+		names[i] = name
+		length += len(name) + 2
+	}
+
+	if length > maxClassParamsLength {
+		e.write("\n")
+		for _, name := range names {
+			e.write("        ")
+			e.write(name)
+			e.write(",\n")
+		}
+		e.write("    ")
+	} else {
+		for i, name := range names {
+			e.write(name)
+			if i != len(names)-1 {
+				e.write(", ")
+			}
+		}
+	}
+	return names
+}
+func (e *Emitter) emitTypeDeclaration(declaration checker.VariableDeclaration) {
+	init := declaration.Initializer.Type().(checker.Type).Value.Kind()
+	switch init {
+	case checker.TRAIT:
+		return
+	case checker.SUM:
+		e.addFlag(SumFlag)
+		e.write("class ")
+		e.emit(getTypeIdentifier(declaration.Pattern))
+		e.write(" extends _Sum {}\n")
+		return
+	default:
+		e.write("class ")
+		e.emit(getTypeIdentifier(declaration.Pattern))
+		e.write(" {\n    constructor(")
+		defer e.write("    }\n}\n")
+		object := declaration.Initializer.(checker.ParenthesizedExpression)
+		names := e.getClassParamNames(object.Expr)
+		e.write(") {\n")
+		for _, name := range names {
+			e.write(fmt.Sprintf("        this.%v = %v;\n", name, name))
+		}
 	}
 }
 func (e *Emitter) emitVariableDeclaration(declaration checker.VariableDeclaration) {
 	if isTypePattern(declaration.Pattern) {
-		e.emitClass(declaration)
+		e.emitTypeDeclaration(declaration)
 		return
 	}
 

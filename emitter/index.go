@@ -92,8 +92,6 @@ func (e *Emitter) emit(node interface{}) {
 		e.emitIdentifier(node)
 	case checker.Literal:
 		e.write(node.Token.Text())
-	case checker.InstanceExpression:
-		e.emitInstanceExpression(node)
 	case checker.ParenthesizedExpression:
 		e.write("(")
 		e.emit(node.Expr)
@@ -124,7 +122,7 @@ func EmitProgram(nodes []checker.Node) string {
 		e.write("class _Sum {\n")
 		e.write("    constructor(_tag, _value) {\n")
 		e.write("        this._tag = _tag;\n")
-		e.write("        if (arguments.length > 0) { this._value = _value }\n")
+		e.write("        if (arguments.length > 1) { this._value = _value }\n")
 		e.write("    }\n}\n")
 	}
 	return e.string()

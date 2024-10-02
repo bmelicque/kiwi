@@ -16,6 +16,7 @@ func (e ParserError) Error() string {
 type Parser struct {
 	tokenizer         tokenizer.Tokenizer
 	errors            []ParserError
+	multiline         bool
 	allowEmptyExpr    bool
 	allowBraceParsing bool
 	allowCallExpr     bool

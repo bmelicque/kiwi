@@ -111,11 +111,14 @@ func (c *Checker) checkFunctionExpression(f parser.FunctionExpression) Expressio
 
 // [TypeParam](param Type) => ReturnType { body }
 func checkFatArrowFunction(c *Checker, f parser.FunctionExpression) FatArrowFunction {
-	typeParams := checkTypeParams(c, f.TypeParams)
-	addTypeParamsToScope(c.scope, typeParams)
+	var typeParams Params
+	if f.TypeParams != nil {
+		typeParams = c.checkTypeParams(*f.TypeParams)
+		addTypeParamsToScope(c.scope, typeParams)
+	}
 	var params Params
 	if f.Params != nil && f.Params.Expr != nil {
-		params = c.checkParams(f.Params.Expr)
+		params = c.checkParams(*f.Params)
 		addParamsToScope(c, params)
 	}
 	var expr Expression
@@ -133,11 +136,14 @@ func checkFatArrowFunction(c *Checker, f parser.FunctionExpression) FatArrowFunc
 
 // [TypeParam](param Type) -> returnValue
 func checkSlimArrowFunction(c *Checker, f parser.FunctionExpression) SlimArrowFunction {
-	typeParams := checkTypeParams(c, f.TypeParams)
-	addTypeParamsToScope(c.scope, typeParams)
+	var typeParams Params
+	if f.TypeParams != nil {
+		typeParams = c.checkTypeParams(*f.TypeParams)
+		addTypeParamsToScope(c.scope, typeParams)
+	}
 	var params Params
 	if f.Params != nil && f.Params.Expr != nil {
-		params = c.checkParams(f.Params.Expr)
+		params = c.checkParams(*f.Params)
 		addParamsToScope(c, params)
 	}
 	var expr Expression
@@ -155,8 +161,11 @@ func checkSlimArrowFunction(c *Checker, f parser.FunctionExpression) SlimArrowFu
 
 // [TypeParam](Param) -> ReturnType
 func checkFunctionTypeExpression(c *Checker, f parser.FunctionExpression) FunctionTypeExpression {
-	typeParams := checkTypeParams(c, f.TypeParams)
-	addTypeParamsToScope(c.scope, typeParams)
+	var typeParams Params
+	if f.TypeParams != nil {
+		typeParams = c.checkTypeParams(*f.TypeParams)
+		addTypeParamsToScope(c.scope, typeParams)
+	}
 	params := checkParamsForFunctionType(c, f.Params)
 	if f.Operator.Kind() == tokenizer.FAT_ARR {
 		c.report("'->' expected", f.Operator.Loc())
@@ -201,8 +210,11 @@ func checkFunctionTypeReturnedType(c *Checker, f parser.FunctionExpression) Expr
 
 // [TypeParam]() -> something
 func checkUnknownFunctionExpression(c *Checker, f parser.FunctionExpression) Expression {
-	typeParams := checkTypeParams(c, f.TypeParams)
-	addTypeParamsToScope(c.scope, typeParams)
+	var typeParams Params
+	if f.TypeParams != nil {
+		typeParams = c.checkTypeParams(*f.TypeParams)
+		addTypeParamsToScope(c.scope, typeParams)
+	}
 	if f.Body != nil {
 		c.report("No body expected", f.Body.Loc())
 	}
@@ -217,23 +229,13 @@ func checkUnknownFunctionExpression(c *Checker, f parser.FunctionExpression) Exp
 	return SlimArrowFunction{typeParams, Params{}, expr}
 }
 
-func checkTypeParams(c *Checker, expr *parser.BracketedExpression) Params {
-	if expr == nil {
-		return Params{}
-	}
-	if expr.Expr == nil {
-		return Params{[]Param{}, expr.Loc()}
-	}
-	return c.checkParams(expr.Expr)
-}
-
 func addParamsToScope(c *Checker, params Params) {
 	for _, param := range params.Params {
-		if param.Typing == nil {
+		if param.Complement == nil {
 			c.report("Typing expected", param.Loc())
 			c.scope.Add(param.Identifier.Text(), param.Loc(), Primitive{UNKNOWN})
 		} else {
-			typing, _ := param.Typing.Type().(Type)
+			typing, _ := param.Complement.Type().(Type)
 			c.scope.Add(param.Identifier.Text(), param.Loc(), typing.Value)
 		}
 	}

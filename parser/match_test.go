@@ -15,9 +15,9 @@ func TestMatch(t *testing.T) {
 
 		testToken{kind: tokenizer.CASE_KW},
 		testToken{kind: tokenizer.IDENTIFIER, value: "Some"},
-		testToken{kind: tokenizer.LBRACE},
+		testToken{kind: tokenizer.LPAREN},
 		testToken{kind: tokenizer.IDENTIFIER, value: "s"},
-		testToken{kind: tokenizer.RBRACE},
+		testToken{kind: tokenizer.RPAREN},
 		testToken{kind: tokenizer.COLON},
 		testToken{kind: tokenizer.EOL},
 
