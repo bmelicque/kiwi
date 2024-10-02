@@ -122,7 +122,7 @@ func EmitProgram(nodes []checker.Node) string {
 		e.write("class _Sum {\n")
 		e.write("    constructor(_tag, _value) {\n")
 		e.write("        this._tag = _tag;\n")
-		e.write("        if (arguments.length > 0) { this._value = _value }\n")
+		e.write("        if (arguments.length > 1) { this._value = _value }\n")
 		e.write("    }\n}\n")
 	}
 	return e.string()

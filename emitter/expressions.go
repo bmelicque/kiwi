@@ -2,7 +2,6 @@ package emitter
 
 import (
 	"github.com/bmelicque/test-parser/checker"
-	"github.com/bmelicque/test-parser/parser"
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
@@ -35,15 +34,79 @@ func (e *Emitter) emitBinaryExpression(expr checker.BinaryExpression) {
 	}
 }
 
+func findMemberByName(members checker.Params, name string) checker.Node {
+	for _, member := range members.Params {
+		text := member.Identifier.Text()
+		if text == name {
+			return member.Complement
+		}
+	}
+	return nil
+}
+func (e *Emitter) emitListInstance(constructor checker.ListTypeExpression, args checker.Params) {
+	e.write("[")
+	c := constructor.Expr
+	max := len(args.Params) - 1
+	for _, arg := range args.Params[:max] {
+		e.emitInstance(c, checker.Params{Params: []checker.Param{arg}})
+		e.write(", ")
+	}
+	e.emitInstance(c, checker.Params{Params: []checker.Param{args.Params[max]}})
+	e.write("]")
+}
+func (e *Emitter) emitObjectInstance(constructor checker.Identifier, args checker.Params) {
+	e.write("new ")
+	e.emit(constructor)
+	e.write("(")
+	defer e.write(")")
+	typing := constructor.Type().(checker.Type).Value.(checker.TypeAlias).Ref.(checker.Object)
+	max := len(args.Params) - 1
+	i := 0
+	for name := range typing.Members {
+		e.emit(findMemberByName(args, name))
+		if i != max {
+			e.write(", ")
+		}
+		i++
+	}
+}
+func (e *Emitter) emitSumInstance(constructor checker.PropertyAccessExpression, args checker.Params) {
+	e.write("new ")
+	e.emit(constructor.Expr)
+	e.write("(\"")
+	e.emit(constructor.Property)
+	e.write("\", ")
+	c := e.constructors[constructor.Expr.(checker.Identifier).Text()][constructor.Property.Text()]
+	e.emitInstance(c, args)
+	e.write(")")
+}
+func (e *Emitter) emitInstance(constructor checker.Expression, args checker.Params) {
+	switch c := constructor.(type) {
+	case checker.ListTypeExpression:
+		e.emitListInstance(c, args)
+	case checker.PropertyAccessExpression:
+		e.emitSumInstance(c, args)
+	case checker.Identifier:
+		e.emitObjectInstance(c, args)
+	}
+}
+func (e *Emitter) emitInstanceExpression(expr checker.CallExpression) {
+	e.emitInstance(expr.Callee, expr.Args)
+}
 func (e *Emitter) emitCallExpression(expr checker.CallExpression) {
+	if expr.Callee.Type().Kind() == checker.TYPE {
+		e.emitInstanceExpression(expr)
+		return
+	}
+
 	e.emit(expr.Callee)
 	e.write("(")
 	defer e.write(")")
 
 	args := expr.Args // This should be ensured by checker
-	for i, el := range args.Elements {
+	for i, el := range args.Params {
 		e.emit(el)
-		if i != len(args.Elements)-1 {
+		if i != len(args.Params)-1 {
 			e.write(", ")
 		}
 	}
@@ -72,72 +135,6 @@ func (e *Emitter) emitIdentifier(i checker.Identifier) {
 		return
 	}
 	e.write(getSanitizedName(text))
-}
-
-func findMemberByName(members []checker.ObjectExpressionMember, name string) parser.Node {
-	for _, member := range members {
-		text := member.Name.Token.Text()
-		if text == name {
-			return member.Value
-		}
-	}
-	return nil
-}
-
-func (e *Emitter) emitListInstance(constructor checker.ListTypeExpression, args []checker.Expression) {
-	e.write("[")
-	c := constructor.Expr
-	max := len(args) - 1
-	for i, arg := range args {
-		e.emitInstance(c, []checker.Expression{arg})
-		if i != max {
-			e.write(", ")
-		}
-	}
-	e.write("]")
-}
-func (e *Emitter) emitObjectInstance(constructor checker.Identifier, args []checker.Expression) {
-	e.write("new ")
-	e.emit(constructor)
-	e.write("(")
-	defer e.write(")")
-	typing := constructor.Type().(checker.Type).Value.(checker.TypeAlias).Ref.(checker.Object)
-	max := len(args) - 1
-	i := 0
-	members := make([]checker.ObjectExpressionMember, len(args))
-	for i := range args {
-		members[i] = args[i].(checker.ObjectExpressionMember)
-	}
-	for name := range typing.Members {
-		e.emit(findMemberByName(members, name))
-		if i != max {
-			e.write(", ")
-		}
-		i++
-	}
-}
-func (e *Emitter) emitSumInstance(constructor checker.PropertyAccessExpression, args []checker.Expression) {
-	e.write("new ")
-	e.emit(constructor.Expr)
-	e.write("(\"")
-	e.emit(constructor.Property)
-	e.write("\", ")
-	c := e.constructors[constructor.Expr.(checker.Identifier).Text()][constructor.Property.Text()]
-	e.emitInstance(c, args)
-	e.write(")")
-}
-func (e *Emitter) emitInstance(constructor checker.Expression, args []checker.Expression) {
-	switch c := constructor.(type) {
-	case checker.ListTypeExpression:
-		e.emitListInstance(c, args)
-	case checker.PropertyAccessExpression:
-		e.emitSumInstance(c, args)
-	case checker.Identifier:
-		e.emitObjectInstance(c, args)
-	}
-}
-func (e *Emitter) emitInstanceExpression(expr checker.InstanceExpression) {
-	e.emitInstance(expr.Constructor, expr.Args)
 }
 
 func (e *Emitter) emitParams(params checker.Params) {
