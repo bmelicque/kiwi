@@ -30,8 +30,20 @@ func TestObjectType(t *testing.T) {
 		t.Fatalf("Expected 2 members, got %v", len(tuple.Elements))
 	}
 
-	if _, ok := tuple.Type().(Type); !ok {
+	ty, ok := tuple.Type().(Type)
+	if !ok {
 		t.Fatalf("Expected object type, got %#v", tuple.Type())
+	}
+	object, ok := ty.Value.(Object)
+	if !ok {
+		t.Fatalf("Expected object type, got %#v", tuple.Type())
+	}
+	n, ok := object.Members["n"]
+	if !ok {
+		t.Fatal("Couldn't find key 'n'")
+	}
+	if n.Kind() != NUMBER {
+		t.Fatal("Expected 'n' to be a number")
 	}
 }
 

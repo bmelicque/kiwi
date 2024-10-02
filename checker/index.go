@@ -70,6 +70,8 @@ func (c *Checker) checkExpression(node parser.Node) Expression {
 		return c.checkToken(node, true)
 	case parser.TupleExpression:
 		return c.checkTuple(node)
+	case parser.TypedExpression:
+		return c.checkParam(node)
 	case parser.UnaryExpression:
 		return c.checkUnaryExpression(node)
 	}

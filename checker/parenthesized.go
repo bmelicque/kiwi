@@ -18,17 +18,21 @@ func (p ParenthesizedExpression) Type() ExpressionType {
 	if p.Expr == nil {
 		return Primitive{NIL}
 	}
+	if param, ok := p.Expr.(Param); ok {
+		return Type{Object{map[string]ExpressionType{
+			param.Identifier.Text(): param.Complement.Type(),
+		}}}
+	}
 	return p.Expr.Type()
 }
 
-func (c *Checker) checkParenthesizedExpression(expr parser.ParenthesizedExpression) ParenthesizedExpression {
-	var e Expression
-	if expr.Expr != nil {
-		e = c.checkExpression(expr.Expr)
+func (c *Checker) checkParenthesizedExpression(node parser.ParenthesizedExpression) ParenthesizedExpression {
+	if node.Expr == nil {
+		return ParenthesizedExpression{loc: node.Loc()}
 	}
 	return ParenthesizedExpression{
-		Expr: e,
-		loc:  expr.Loc(),
+		Expr: c.checkExpression(node.Expr),
+		loc:  node.Loc(),
 	}
 }
 
@@ -123,6 +127,7 @@ func (p Param) Type() ExpressionType {
 	return typing.Value
 }
 
+// identifier Type
 func (c *Checker) checkParam(node parser.Node) Param {
 	expr, ok := node.(parser.TypedExpression)
 	if !ok {

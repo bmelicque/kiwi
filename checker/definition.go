@@ -1,8 +1,6 @@
 package checker
 
 import (
-	"unicode"
-
 	"github.com/bmelicque/test-parser/parser"
 	"github.com/bmelicque/test-parser/tokenizer"
 )
@@ -31,22 +29,19 @@ func (c *Checker) checkDefinition(a parser.Assignment) Node {
 
 func (c *Checker) checkIdentifierDefinition(a parser.Assignment) VariableDeclaration {
 	declared := a.Declared.(parser.TokenExpression)
-	init := c.checkExpression(a.Initializer)
-
 	identifier, ok := c.checkToken(declared, false).(Identifier)
 	if !ok {
 		c.report("Identifier expected", declared.Loc())
 		return VariableDeclaration{
 			Pattern:     identifier,
-			Initializer: init,
+			Initializer: c.checkExpression(a.Initializer),
 			loc:         a.Loc(),
 			Constant:    true,
 		}
 	}
-	name := identifier.Token.Text()
-	isTypeIdentifier := unicode.IsUpper(rune(name[0]))
 
-	if isTypeIdentifier {
+	init := c.checkExpression(a.Initializer)
+	if identifier.isType {
 		c.declareType(identifier, init)
 	} else {
 		c.declareFunction(identifier, init)

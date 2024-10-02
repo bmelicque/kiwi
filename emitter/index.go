@@ -92,8 +92,6 @@ func (e *Emitter) emit(node interface{}) {
 		e.emitIdentifier(node)
 	case checker.Literal:
 		e.write(node.Token.Text())
-	case checker.InstanceExpression:
-		e.emitInstanceExpression(node)
 	case checker.ParenthesizedExpression:
 		e.write("(")
 		e.emit(node.Expr)

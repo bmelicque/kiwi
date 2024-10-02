@@ -24,7 +24,7 @@ func (p PropertyAccessExpression) Type() ExpressionType { return p.typing }
 
 type TraitExpression struct {
 	Receiver ParenthesizedExpression // Receiver.Expr is an Identifier
-	Def      TupleExpression
+	Def      ParenthesizedExpression
 }
 
 func (t TraitExpression) Loc() tokenizer.Loc {
@@ -189,23 +189,46 @@ func checkTraitExpression(c *Checker, left Expression, right parser.Node) Expres
 	name := identifier.Text()
 	c.scope.Add(name, identifier.Loc(), Type{TypeAlias{Name: name, Ref: Generic{Name: identifier.Text()}}})
 
-	// FIXME:
 	paren := c.checkParenthesizedExpression(right.(parser.ParenthesizedExpression)) // ensured by checkPropertyAccess
-	tuple, ok := paren.Expr.(TupleExpression)
-	if tuple.IsObjectDef() {
-		for _, el := range tuple.Elements {
-			param := el.(Param)
-			typing, _ := param.Complement.Type().(Type)
-			if typing.Value == nil || typing.Value.Kind() != FUNCTION {
-				c.report("Function type expected", param.Complement.Loc())
-			}
-		}
-	} else {
-		c.report("Object type expected", paren.Loc())
-	}
+	validateTraitType(c, paren)
 
 	return TraitExpression{
 		Receiver: receiver,
-		Def:      tuple,
+		Def:      paren,
+	}
+}
+
+func validateTraitType(c *Checker, expr ParenthesizedExpression) {
+	ty, ok := expr.Type().(Type)
+	if !ok {
+		c.report("Object type expected", expr.Loc())
+		return
+	}
+	if _, ok := ty.Value.(Object); !ok {
+		c.report("Object type expected", expr.Loc())
+		return
+	}
+
+	tuple, ok := expr.Expr.(TupleExpression)
+	if !ok {
+		checkMethodDeclaration(c, expr.Expr)
+		return
+	}
+	for _, element := range tuple.Elements {
+		checkMethodDeclaration(c, element)
+	}
+}
+
+func checkMethodDeclaration(c *Checker, expr Expression) {
+	fmt.Printf("%#v\n", expr)
+	param, ok := expr.(Param)
+	if !ok {
+		c.report("Method declaration expected", expr.Loc())
+		return
+	}
+	fmt.Printf("%#v\n", param.Complement.Type())
+	typing, ok := param.Complement.Type().(Type)
+	if !ok || typing.Value == nil || typing.Value.Kind() != FUNCTION {
+		c.report("Function type expected", param.Complement.Loc())
 	}
 }

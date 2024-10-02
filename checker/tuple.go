@@ -106,7 +106,11 @@ func getTupleObjectType(elements []Expression) ExpressionType {
 		if !ok {
 			continue
 		}
-		value.Members[param.Identifier.Text()] = param.Complement.Type()
+		t, ok := param.Complement.Type().(Type)
+		if !ok {
+			continue
+		}
+		value.Members[param.Identifier.Text()] = t.Value
 	}
 	return Type{value}
 }

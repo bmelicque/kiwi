@@ -111,8 +111,11 @@ func (c *Checker) checkFunctionExpression(f parser.FunctionExpression) Expressio
 
 // [TypeParam](param Type) => ReturnType { body }
 func checkFatArrowFunction(c *Checker, f parser.FunctionExpression) FatArrowFunction {
-	typeParams := c.checkTypeParams(*f.TypeParams)
-	addTypeParamsToScope(c.scope, typeParams)
+	var typeParams Params
+	if f.TypeParams != nil {
+		typeParams = c.checkTypeParams(*f.TypeParams)
+		addTypeParamsToScope(c.scope, typeParams)
+	}
 	var params Params
 	if f.Params != nil && f.Params.Expr != nil {
 		params = c.checkParams(*f.Params)
@@ -133,8 +136,11 @@ func checkFatArrowFunction(c *Checker, f parser.FunctionExpression) FatArrowFunc
 
 // [TypeParam](param Type) -> returnValue
 func checkSlimArrowFunction(c *Checker, f parser.FunctionExpression) SlimArrowFunction {
-	typeParams := c.checkTypeParams(*f.TypeParams)
-	addTypeParamsToScope(c.scope, typeParams)
+	var typeParams Params
+	if f.TypeParams != nil {
+		typeParams = c.checkTypeParams(*f.TypeParams)
+		addTypeParamsToScope(c.scope, typeParams)
+	}
 	var params Params
 	if f.Params != nil && f.Params.Expr != nil {
 		params = c.checkParams(*f.Params)
@@ -155,8 +161,11 @@ func checkSlimArrowFunction(c *Checker, f parser.FunctionExpression) SlimArrowFu
 
 // [TypeParam](Param) -> ReturnType
 func checkFunctionTypeExpression(c *Checker, f parser.FunctionExpression) FunctionTypeExpression {
-	typeParams := c.checkTypeParams(*f.TypeParams)
-	addTypeParamsToScope(c.scope, typeParams)
+	var typeParams Params
+	if f.TypeParams != nil {
+		typeParams = c.checkTypeParams(*f.TypeParams)
+		addTypeParamsToScope(c.scope, typeParams)
+	}
 	params := checkParamsForFunctionType(c, f.Params)
 	if f.Operator.Kind() == tokenizer.FAT_ARR {
 		c.report("'->' expected", f.Operator.Loc())
@@ -201,8 +210,11 @@ func checkFunctionTypeReturnedType(c *Checker, f parser.FunctionExpression) Expr
 
 // [TypeParam]() -> something
 func checkUnknownFunctionExpression(c *Checker, f parser.FunctionExpression) Expression {
-	typeParams := c.checkTypeParams(*f.TypeParams)
-	addTypeParamsToScope(c.scope, typeParams)
+	var typeParams Params
+	if f.TypeParams != nil {
+		typeParams = c.checkTypeParams(*f.TypeParams)
+		addTypeParamsToScope(c.scope, typeParams)
+	}
 	if f.Body != nil {
 		c.report("No body expected", f.Body.Loc())
 	}
