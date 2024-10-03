@@ -68,6 +68,16 @@ func (e *Emitter) emitIf(i checker.If) {
 	e.emit(i.Condition)
 	e.write(") ")
 	e.emit(i.Body)
+	if i.Alternate == nil {
+		return
+	}
+	e.write(" else ")
+	switch alternate := i.Alternate.(type) {
+	case checker.Body:
+		e.emitBody(alternate)
+	case checker.If:
+		e.emitIf(alternate)
+	}
 }
 
 func (e *Emitter) emitMatchStatement(m checker.MatchStatement) {
