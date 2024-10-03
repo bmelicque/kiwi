@@ -51,8 +51,6 @@ func (p *Parser) ParseProgram() []Node {
 
 func (p *Parser) parseStatement() Node {
 	switch p.tokenizer.Peek().Kind() {
-	case tokenizer.IF_KW:
-		return p.parseIf()
 	case tokenizer.MATCH_KW:
 		return p.parseMatchStatement()
 	case tokenizer.FOR_KW:
@@ -65,12 +63,10 @@ func (p *Parser) parseStatement() Node {
 }
 
 func ParseExpression(p *Parser) Node {
-	expr := p.parseTupleExpression()
-	// TODO: stop at line breaks?
-	// TODO: handle EOF
-	// TODO: provide a recover token? (e.g. parse until COMMA or EOL for example)
-	// for expr == nil {
-	// 	expr = BinaryExpression{}.Parse(p)
-	// }
-	return expr
+	switch p.tokenizer.Peek().Kind() {
+	case tokenizer.IF_KW:
+		return p.parseIf()
+	default:
+		return p.parseTupleExpression()
+	}
 }

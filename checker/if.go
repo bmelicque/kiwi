@@ -8,16 +8,17 @@ import (
 type If struct {
 	Keyword   tokenizer.Token
 	Condition Expression
-	Body      Block
-	Alternate Node // If | Body
+	Block     Block
+	Alternate Expression // If | Body
 }
 
 func (i If) Loc() tokenizer.Loc {
 	return tokenizer.Loc{
 		Start: i.Keyword.Loc().Start,
-		End:   i.Body.Loc().End,
+		End:   i.Block.Loc().End,
 	}
 }
+func (i If) Type() ExpressionType { return i.Block.Type() }
 
 func (c *Checker) checkIf(node parser.IfElse) If {
 	condition := c.checkExpression(node.Condition)
@@ -28,20 +29,23 @@ func (c *Checker) checkIf(node parser.IfElse) If {
 	scope := NewScope()
 	scope.returnType = c.scope.returnType
 	c.pushScope(scope)
-	body := c.checkBlock(*node.Body)
+	block := c.checkBlock(*node.Body)
 	c.dropScope()
 
 	alternate := checkAlternate(c, node.Alternate)
+	if alternate != nil && !block.Type().Extends(alternate.Type()) {
+		c.report("Types of truthy and alternate blocks don't match", node.Loc())
+	}
 
 	return If{
 		Keyword:   node.Keyword,
 		Condition: condition,
-		Body:      body,
+		Block:     block,
 		Alternate: alternate,
 	}
 }
 
-func checkAlternate(c *Checker, alternate parser.Node) Node {
+func checkAlternate(c *Checker, alternate parser.Node) Expression {
 	if alternate == nil {
 		return nil
 	}

@@ -67,7 +67,7 @@ func (e *Emitter) emitIf(i checker.If) {
 	e.write("if (")
 	e.emit(i.Condition)
 	e.write(") ")
-	e.emit(i.Body)
+	e.emit(i.Block)
 	if i.Alternate == nil {
 		return
 	}

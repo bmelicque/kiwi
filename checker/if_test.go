@@ -7,21 +7,25 @@ import (
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
-func TestIfStatement(t *testing.T) {
+func TestIfExpression(t *testing.T) {
 	checker := MakeChecker()
 	expr := checker.checkIf(parser.IfElse{
 		Keyword:   testToken{kind: tokenizer.IF_KW},
 		Condition: parser.TokenExpression{Token: testToken{kind: tokenizer.BOOLEAN, value: "true"}},
-		Body:      &parser.Block{Statements: []parser.Node{}},
+		Body: &parser.Block{Statements: []parser.Node{
+			parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "42"}},
+		}},
 	})
 
 	if len(checker.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", checker.errors)
 	}
-	_ = expr
+	if expr.Type().Kind() != NUMBER {
+		t.Fatalf("Expected number type")
+	}
 }
 
-func TestIfStatementWithNonBoolean(t *testing.T) {
+func TestIfExpressionWithNonBoolean(t *testing.T) {
 	checker := MakeChecker()
 	expr := checker.checkIf(parser.IfElse{
 		Keyword:   testToken{kind: tokenizer.IF_KW},
@@ -35,7 +39,7 @@ func TestIfStatementWithNonBoolean(t *testing.T) {
 	_ = expr
 }
 
-func TestIfElseStatements(t *testing.T) {
+func TestIfElseExpression(t *testing.T) {
 	checker := MakeChecker()
 	expr := checker.checkIf(parser.IfElse{
 		Keyword:   testToken{kind: tokenizer.IF_KW},
@@ -55,7 +59,26 @@ func TestIfElseStatements(t *testing.T) {
 	}
 }
 
-func TestIfElseIfStatements(t *testing.T) {
+func TestIfElseExpressionTypeMismatch(t *testing.T) {
+	checker := MakeChecker()
+	// if true { 42 } else { "Hello, world!" }
+	checker.checkIf(parser.IfElse{
+		Keyword:   testToken{kind: tokenizer.IF_KW},
+		Condition: parser.TokenExpression{Token: testToken{kind: tokenizer.BOOLEAN, value: "true"}},
+		Body: &parser.Block{Statements: []parser.Node{
+			parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "42"}},
+		}},
+		Alternate: parser.Block{Statements: []parser.Node{
+			parser.TokenExpression{Token: testToken{kind: tokenizer.STRING, value: "\"Hello, world!\""}},
+		}},
+	})
+
+	if len(checker.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", checker.errors)
+	}
+}
+
+func TestIfElseIfExpression(t *testing.T) {
 	checker := MakeChecker()
 	// if false {} else if true {}
 	expr := checker.checkIf(parser.IfElse{
