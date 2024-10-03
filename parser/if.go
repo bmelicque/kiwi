@@ -7,6 +7,7 @@ import (
 type IfElse struct {
 	Keyword   tokenizer.Token
 	Condition Node
+	Alternate Node // IfElse | Body
 	Body      *Body
 }
 
@@ -24,5 +25,22 @@ func (p *Parser) parseIf() Node {
 	condition := ParseExpression(p)
 	p.allowBraceParsing = outer
 	body := p.parseBody()
-	return IfElse{keyword, condition, body}
+	alternate := parseAlternate(p)
+	return IfElse{keyword, condition, alternate, body}
+}
+
+func parseAlternate(p *Parser) Node {
+	if p.tokenizer.Peek().Kind() != tokenizer.ELSE_KW {
+		return nil
+	}
+	p.tokenizer.Consume() // "else"
+	switch p.tokenizer.Peek().Kind() {
+	case tokenizer.IF_KW:
+		return p.parseIf()
+	case tokenizer.LBRACE:
+		return *p.parseBody()
+	default:
+		p.report("Block expected", p.tokenizer.Peek().Loc())
+		return nil
+	}
 }

@@ -34,6 +34,7 @@ const (
 	NUM_KW    // number
 	BOOL_KW   // boolean
 	IF_KW     // if
+	ELSE_KW   //else
 	MATCH_KW  // match
 	CASE_KW   // case
 	FOR_KW    // for
@@ -254,6 +255,8 @@ func makeToken(text string, loc Loc) Token {
 		return token{BOOL_KW, loc}
 	case "if":
 		return token{IF_KW, loc}
+	case "else":
+		return token{ELSE_KW, loc}
 	case "match":
 		return token{MATCH_KW, loc}
 	case "case":
