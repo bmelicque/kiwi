@@ -50,7 +50,7 @@ func TestIfElseStatements(t *testing.T) {
 	if expr.Alternate == nil {
 		t.Fatalf("Expected alternate")
 	}
-	if _, ok := expr.Alternate.(Body); !ok {
+	if _, ok := expr.Alternate.(Block); !ok {
 		t.Fatalf("Expected body as alternate")
 	}
 }

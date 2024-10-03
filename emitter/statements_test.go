@@ -12,11 +12,11 @@ func TestIfElse(t *testing.T) {
 	emitter := makeEmitter()
 	emitter.emit(checker.If{
 		Condition: checker.Literal{parser.TokenExpression{Token: testToken{kind: tokenizer.BOOLEAN, value: "false"}}},
-		Body:      checker.Body{Statements: []checker.Node{}},
+		Body:      checker.Block{Statements: []checker.Node{}},
 		Alternate: checker.If{
 			Condition: checker.Literal{parser.TokenExpression{Token: testToken{kind: tokenizer.BOOLEAN, value: "false"}}},
-			Body:      checker.Body{Statements: []checker.Node{}},
-			Alternate: checker.Body{},
+			Body:      checker.Block{Statements: []checker.Node{}},
+			Alternate: checker.Block{},
 		},
 	})
 

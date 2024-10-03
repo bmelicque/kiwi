@@ -8,7 +8,7 @@ import (
 type For struct {
 	Keyword   tokenizer.Token
 	Condition Expression
-	Body      Body
+	Body      Block
 }
 
 func (f For) Loc() tokenizer.Loc {
@@ -30,7 +30,7 @@ type RangeDeclaration struct {
 type ForRange struct {
 	Keyword     tokenizer.Token
 	Declaration RangeDeclaration
-	Body        Body
+	Body        Block
 }
 
 func (f ForRange) Loc() tokenizer.Loc {
@@ -49,7 +49,7 @@ func (c *Checker) checkForLoop(node parser.For) For {
 		c.report("Expected boolean condition or range declaration", node.Statement.Loc())
 	}
 
-	body := c.checkBody(*node.Body)
+	body := c.checkBlock(*node.Body)
 	return For{
 		Keyword:   node.Keyword,
 		Condition: expr,
@@ -79,7 +79,7 @@ func (c *Checker) checkForRangeLoop(node parser.For) ForRange {
 		c.report("Expected identifier", declaration.Pattern.Loc())
 	}
 
-	body := c.checkBody(*node.Body)
+	body := c.checkBlock(*node.Body)
 	return ForRange{
 		Keyword: node.Keyword,
 		Declaration: RangeDeclaration{

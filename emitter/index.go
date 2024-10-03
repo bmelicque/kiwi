@@ -60,7 +60,7 @@ func (e *Emitter) emit(node interface{}) {
 	// Statements
 	case checker.Assignment:
 		e.emitAssignment(node)
-	case checker.Body:
+	case checker.Block:
 		e.emitBody(node)
 	case checker.ExpressionStatement:
 		e.emitExpressionStatement(node)

@@ -16,7 +16,7 @@ func (e *Emitter) emitAssignment(a checker.Assignment) {
 	e.write(";\n")
 }
 
-func (e *Emitter) emitBody(b checker.Body) {
+func (e *Emitter) emitBody(b checker.Block) {
 	e.write("{")
 	if len(b.Statements) == 0 {
 		e.write("}")
@@ -73,7 +73,7 @@ func (e *Emitter) emitIf(i checker.If) {
 	}
 	e.write(" else ")
 	switch alternate := i.Alternate.(type) {
-	case checker.Body:
+	case checker.Block:
 		e.emitBody(alternate)
 	case checker.If:
 		e.emitIf(alternate)

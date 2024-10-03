@@ -5,19 +5,30 @@ import (
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
-type Body struct {
+type Block struct {
 	Statements []Node
 	loc        tokenizer.Loc
 }
 
-func (b Body) Loc() tokenizer.Loc { return b.loc }
+func (b Block) Loc() tokenizer.Loc { return b.loc }
+func (b Block) Type() ExpressionType {
+	if len(b.Statements) == 0 {
+		return Primitive{NIL}
+	}
+	last := b.Statements[len(b.Statements)-1]
+	expr, ok := last.(Expression)
+	if !ok {
+		return Primitive{NIL}
+	}
+	return expr.Type()
+}
 
-func (c *Checker) checkBody(body parser.Block) Body {
+func (c *Checker) checkBlock(block parser.Block) Block {
 	var ended bool
 	var unreachable tokenizer.Loc
 
-	statements := make([]Node, len(body.Statements))
-	for i, node := range body.Statements {
+	statements := make([]Node, len(block.Statements))
+	for i, node := range block.Statements {
 		statement := c.Check(node)
 		statements[i] = statement
 
@@ -34,9 +45,9 @@ func (c *Checker) checkBody(body parser.Block) Body {
 		c.report("Detected unreachable code", unreachable)
 	}
 
-	return Body{
+	return Block{
 		Statements: statements,
-		loc:        body.Loc(),
+		loc:        block.Loc(),
 	}
 }
 

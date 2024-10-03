@@ -29,7 +29,7 @@ type FatArrowFunction struct {
 	TypeParams Params
 	Params     Params
 	ReturnType Expression
-	Body       Body
+	Body       Block
 }
 
 func (f FatArrowFunction) Loc() tokenizer.Loc {
@@ -130,7 +130,7 @@ func checkFatArrowFunction(c *Checker, f parser.FunctionExpression) FatArrowFunc
 		}
 		c.scope.returnType = typing.Value
 	}
-	body := c.checkBody(*f.Body)
+	body := c.checkBlock(*f.Body)
 	return FatArrowFunction{typeParams, params, expr, body}
 }
 

@@ -8,7 +8,7 @@ import (
 type If struct {
 	Keyword   tokenizer.Token
 	Condition Expression
-	Body      Body
+	Body      Block
 	Alternate Node // If | Body
 }
 
@@ -28,7 +28,7 @@ func (c *Checker) checkIf(node parser.IfElse) If {
 	scope := NewScope()
 	scope.returnType = c.scope.returnType
 	c.pushScope(scope)
-	body := c.checkBody(*node.Body)
+	body := c.checkBlock(*node.Body)
 	c.dropScope()
 
 	alternate := checkAlternate(c, node.Alternate)
@@ -47,7 +47,7 @@ func checkAlternate(c *Checker, alternate parser.Node) Node {
 	}
 	switch alternate := alternate.(type) {
 	case parser.Block:
-		return c.checkBody(alternate)
+		return c.checkBlock(alternate)
 	case parser.IfElse:
 		return c.checkIf(alternate)
 	default:
