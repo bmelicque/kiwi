@@ -4,34 +4,34 @@ import (
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
-type Body struct {
+type Block struct {
 	Statements []Node
 	loc        tokenizer.Loc
 }
 
-func (b Body) Loc() tokenizer.Loc { return b.loc }
+func (b Block) Loc() tokenizer.Loc { return b.loc }
 
-func (p *Parser) parseBody() *Body {
-	body := Body{}
+func (p *Parser) parseBlock() *Block {
+	block := Block{}
 
 	token := p.tokenizer.Consume()
-	body.loc.Start = token.Loc().Start
+	block.loc.Start = token.Loc().Start
 	if token.Kind() != tokenizer.LBRACE {
 		p.report("'{' expected", token.Loc())
 	}
 	p.tokenizer.DiscardLineBreaks()
 
-	body.Statements = []Node{}
+	block.Statements = []Node{}
 	for p.tokenizer.Peek().Kind() != tokenizer.RBRACE && p.tokenizer.Peek().Kind() != tokenizer.EOF {
-		body.Statements = append(body.Statements, p.parseStatement())
+		block.Statements = append(block.Statements, p.parseStatement())
 		p.tokenizer.DiscardLineBreaks()
 	}
 
 	token = p.tokenizer.Consume()
-	body.loc.End = token.Loc().End
+	block.loc.End = token.Loc().End
 	if token.Kind() != tokenizer.RBRACE {
 		p.report("'}' expected", token.Loc())
 	}
 
-	return &body
+	return &block
 }

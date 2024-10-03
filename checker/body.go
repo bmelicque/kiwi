@@ -12,7 +12,7 @@ type Body struct {
 
 func (b Body) Loc() tokenizer.Loc { return b.loc }
 
-func (c *Checker) checkBody(body parser.Body) Body {
+func (c *Checker) checkBody(body parser.Block) Body {
 	var ended bool
 	var unreachable tokenizer.Loc
 

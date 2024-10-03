@@ -12,7 +12,7 @@ func TestIfStatement(t *testing.T) {
 	expr := checker.checkIf(parser.IfElse{
 		Keyword:   testToken{kind: tokenizer.IF_KW},
 		Condition: parser.TokenExpression{Token: testToken{kind: tokenizer.BOOLEAN, value: "true"}},
-		Body:      &parser.Body{Statements: []parser.Node{}},
+		Body:      &parser.Block{Statements: []parser.Node{}},
 	})
 
 	if len(checker.errors) != 0 {
@@ -26,7 +26,7 @@ func TestIfStatementWithNonBoolean(t *testing.T) {
 	expr := checker.checkIf(parser.IfElse{
 		Keyword:   testToken{kind: tokenizer.IF_KW},
 		Condition: parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "42"}},
-		Body:      &parser.Body{Statements: []parser.Node{}},
+		Body:      &parser.Block{Statements: []parser.Node{}},
 	})
 
 	if len(checker.errors) != 1 {
@@ -40,8 +40,8 @@ func TestIfElseStatements(t *testing.T) {
 	expr := checker.checkIf(parser.IfElse{
 		Keyword:   testToken{kind: tokenizer.IF_KW},
 		Condition: parser.TokenExpression{Token: testToken{kind: tokenizer.BOOLEAN, value: "true"}},
-		Body:      &parser.Body{Statements: []parser.Node{}},
-		Alternate: parser.Body{Statements: []parser.Node{}},
+		Body:      &parser.Block{Statements: []parser.Node{}},
+		Alternate: parser.Block{Statements: []parser.Node{}},
 	})
 
 	if len(checker.errors) != 0 {
@@ -61,10 +61,10 @@ func TestIfElseIfStatements(t *testing.T) {
 	expr := checker.checkIf(parser.IfElse{
 		Keyword:   testToken{kind: tokenizer.IF_KW},
 		Condition: parser.TokenExpression{Token: testToken{kind: tokenizer.BOOLEAN, value: "false"}},
-		Body:      &parser.Body{Statements: []parser.Node{}},
+		Body:      &parser.Block{Statements: []parser.Node{}},
 		Alternate: parser.IfElse{
 			Condition: parser.TokenExpression{Token: testToken{kind: tokenizer.BOOLEAN, value: "true"}},
-			Body:      &parser.Body{Statements: []parser.Node{}},
+			Body:      &parser.Block{Statements: []parser.Node{}},
 		},
 	})
 

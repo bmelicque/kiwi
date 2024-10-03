@@ -89,7 +89,7 @@ func (c *Checker) Check(node parser.Node) Node {
 			return c.checkAssignment(node)
 		}
 		return c.checkVariableDeclaration(node)
-	case parser.Body:
+	case parser.Block:
 		return c.checkBody(node)
 	case parser.ExpressionStatement:
 		return c.checkExpressionStatement(node)

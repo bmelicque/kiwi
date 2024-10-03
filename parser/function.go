@@ -9,7 +9,7 @@ type FunctionExpression struct {
 	Params     *ParenthesizedExpression
 	Operator   tokenizer.Token // -> or =>
 	Expr       Node            // return value for '->', return type for '=>'
-	Body       *Body
+	Body       *Block
 }
 
 func (f FunctionExpression) Loc() tokenizer.Loc {
@@ -47,7 +47,7 @@ func (p *Parser) parseFunctionExpression() Node {
 	}
 	res := FunctionExpression{nil, &paren, operator, expr, nil}
 	if operator.Kind() == tokenizer.FAT_ARR {
-		res.Body = p.parseBody()
+		res.Body = p.parseBlock()
 	}
 	return res
 }

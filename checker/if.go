@@ -46,7 +46,7 @@ func checkAlternate(c *Checker, alternate parser.Node) Node {
 		return nil
 	}
 	switch alternate := alternate.(type) {
-	case parser.Body:
+	case parser.Block:
 		return c.checkBody(alternate)
 	case parser.IfElse:
 		return c.checkIf(alternate)

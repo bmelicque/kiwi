@@ -8,7 +8,7 @@ type IfElse struct {
 	Keyword   tokenizer.Token
 	Condition Node
 	Alternate Node // IfElse | Body
-	Body      *Body
+	Body      *Block
 }
 
 func (i IfElse) Loc() tokenizer.Loc {
@@ -24,7 +24,7 @@ func (p *Parser) parseIf() Node {
 	p.allowBraceParsing = false
 	condition := ParseExpression(p)
 	p.allowBraceParsing = outer
-	body := p.parseBody()
+	body := p.parseBlock()
 	alternate := parseAlternate(p)
 	return IfElse{keyword, condition, alternate, body}
 }
@@ -38,7 +38,7 @@ func parseAlternate(p *Parser) Node {
 	case tokenizer.IF_KW:
 		return p.parseIf()
 	case tokenizer.LBRACE:
-		return *p.parseBody()
+		return *p.parseBlock()
 	default:
 		p.report("Block expected", p.tokenizer.Peek().Loc())
 		return nil

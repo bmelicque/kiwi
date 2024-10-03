@@ -7,7 +7,7 @@ import (
 type For struct {
 	Keyword   tokenizer.Token
 	Statement Node // ExpressionStatement holding a condition OR Assignment
-	Body      *Body
+	Body      *Block
 }
 
 func (f For) Loc() tokenizer.Loc {
@@ -28,7 +28,7 @@ func ParseForLoop(p *Parser) Node {
 	p.allowBraceParsing = false
 	statement.Statement = p.parseAssignment()
 	p.allowBraceParsing = outer
-	statement.Body = p.parseBody()
+	statement.Body = p.parseBlock()
 
 	return statement
 }

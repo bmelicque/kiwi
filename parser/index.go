@@ -15,7 +15,9 @@ func fallback(p *Parser) Node {
 	case tokenizer.LPAREN:
 		return p.parseFunctionExpression()
 	case tokenizer.LBRACE:
-		// TODO: block expression
+		if p.allowBraceParsing {
+			return p.parseBlock()
+		}
 	}
 	return p.parseTokenExpression()
 }
