@@ -26,6 +26,20 @@ func TestParam(t *testing.T) {
 	}
 }
 
+func TestParamBadType(t *testing.T) {
+	checker := MakeChecker()
+	// name 42
+	checker.checkParam(parser.TypedExpression{
+		Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "name"}},
+		Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "42"}},
+		Colon:  false,
+	})
+
+	if len(checker.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", checker.errors)
+	}
+}
+
 func TestTypeParam(t *testing.T) {
 	checker := MakeChecker()
 	expr := checker.checkParam(parser.TypedExpression{
@@ -38,6 +52,19 @@ func TestTypeParam(t *testing.T) {
 	}
 	if expr.Identifier.Text() != "Name" {
 		t.Fatalf("Expected name 'Name', got '%v'", expr.Identifier.Text())
+	}
+}
+
+// accept only type identifiers for type params
+func TestTypeParamBadName(t *testing.T) {
+	checker := MakeChecker()
+	checker.checkTypeParam(parser.TypedExpression{
+		Expr:  parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "name"}},
+		Colon: false,
+	})
+
+	if len(checker.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", checker.errors)
 	}
 }
 

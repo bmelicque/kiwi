@@ -15,14 +15,6 @@ type TupleExpression struct {
 
 func (t TupleExpression) Loc() tokenizer.Loc   { return t.loc }
 func (t TupleExpression) Type() ExpressionType { return t.typing }
-func (t TupleExpression) IsObjectDef() bool {
-	ty, ok := t.typing.(Type)
-	if !ok {
-		return false
-	}
-	_, ok = ty.Value.(Object)
-	return ok
-}
 
 func (c *Checker) checkTuple(tuple parser.TupleExpression) TupleExpression {
 	elements := checkTupleElements(c, tuple)

@@ -166,11 +166,16 @@ func checkParamTyping(c *Checker, node parser.Node) Expression {
 }
 
 func (c *Checker) checkTypeParam(node parser.Node) Param {
+	var param Param
 	if _, ok := node.(parser.TypedExpression); ok {
-		return c.checkParam(node)
+		param = c.checkParam(node)
+	} else {
+		param = Param{checkParamIdentifier(c, node), nil, node.Loc()}
 	}
-	identifier := checkParamIdentifier(c, node)
-	return Param{identifier, nil, node.Loc()}
+	if !param.Identifier.isType {
+		c.report("Type name expected", param.Identifier.Loc())
+	}
+	return param
 }
 func (c *Checker) checkNamedArgument(node parser.Node) Param {
 	expr, ok := node.(parser.TypedExpression)

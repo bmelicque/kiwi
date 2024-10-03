@@ -9,6 +9,7 @@ import (
 
 func TestObjectType(t *testing.T) {
 	checker := MakeChecker()
+	//	n number, s string
 	tuple := checker.checkTuple(parser.TupleExpression{
 		Elements: []parser.Node{
 			parser.TypedExpression{
@@ -47,30 +48,9 @@ func TestObjectType(t *testing.T) {
 	}
 }
 
-func TestObjectTypeWithIdentifiers(t *testing.T) {
+func TestObjectTypeDuplicates(t *testing.T) {
 	checker := MakeChecker()
-	checker.scope.Add("Type", tokenizer.Loc{}, Type{TypeAlias{Name: "Type", Ref: Object{map[string]ExpressionType{}}}})
-	tuple := checker.checkTuple(parser.TupleExpression{
-		Elements: []parser.Node{
-			parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "value"}},
-				Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Type"}},
-			},
-		},
-	})
-
-	if len(checker.errors) != 0 {
-		t.Fatalf("Expected no errors, got %#v", checker.errors)
-	}
-
-	param := tuple.Elements[0].(Param)
-	if _, ok := param.Complement.(Identifier); !ok {
-		t.Fatalf("Expected type 'Type', got %#v", param.Complement)
-	}
-}
-
-func TestObjectTypeWithDuplicates(t *testing.T) {
-	checker := MakeChecker()
+	// n number, n number
 	checker.checkTuple(parser.TupleExpression{
 		Elements: []parser.Node{
 			parser.TypedExpression{
@@ -87,5 +67,23 @@ func TestObjectTypeWithDuplicates(t *testing.T) {
 	if len(checker.errors) != 2 {
 		// One error on each duplicated member
 		t.Fatalf("Expected 2 errors, got %#v", checker.errors)
+	}
+}
+
+func TestTupleConsistency(t *testing.T) {
+	checker := MakeChecker()
+	// n number, 42
+	checker.checkTuple(parser.TupleExpression{
+		Elements: []parser.Node{
+			parser.TypedExpression{
+				Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "n"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.NUM_KW}},
+			},
+			parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "42"}},
+		},
+	})
+
+	if len(checker.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", checker.errors)
 	}
 }

@@ -1,7 +1,6 @@
 package checker
 
 import (
-	"github.com/bmelicque/test-parser/parser"
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
@@ -482,19 +481,4 @@ func (c Constructor) build(scope *Scope, compared ExpressionType) (ExpressionTyp
 		done = done && ok
 	}
 	return c, done
-}
-
-func ReadTypeExpression(expr parser.Node) ExpressionType {
-	switch expr := expr.(type) {
-	case Literal:
-		switch expr.Token.Kind() {
-		case tokenizer.BOOL_KW:
-			return Primitive{BOOLEAN}
-		case tokenizer.NUM_KW:
-			return Primitive{NUMBER}
-		case tokenizer.STR_KW:
-			return Primitive{STRING}
-		}
-	}
-	return Primitive{UNKNOWN}
 }

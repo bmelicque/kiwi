@@ -42,3 +42,15 @@ func TestNestedUnaryExpression(t *testing.T) {
 		t.Fatal("Expected unary expression")
 	}
 }
+
+func TestNoOptionValue(t *testing.T) {
+	checker := MakeChecker()
+	checker.checkUnaryExpression(parser.UnaryExpression{
+		Operator: testToken{kind: tokenizer.QUESTION_MARK},
+		Operand:  parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "42"}},
+	})
+
+	if len(checker.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", checker.errors)
+	}
+}

@@ -12,7 +12,7 @@ type SumTypeMember struct {
 
 type SumType struct {
 	Members []SumTypeMember
-	typing  Sum
+	typing  Type // Type{Sum}
 	loc     tokenizer.Loc
 }
 
@@ -20,20 +20,13 @@ func (s SumType) Loc() tokenizer.Loc   { return s.loc }
 func (s SumType) Type() ExpressionType { return s.typing }
 
 func (c *Checker) checkSumType(node parser.SumType) SumType {
-	loc := node.Loc()
 	members := make([]SumTypeMember, len(node.Members))
 	typing := map[string]ExpressionType{}
 	for i, member := range node.Members {
 		m, ok := checkSumTypeMember(c, member)
 		members[i] = m
-		if !ok {
-			continue
-		}
-		loc.End = member.Loc().End
-		if m.Typing != nil {
-			typing[m.Name.Text()] = m.Typing.Type()
-		} else {
-			typing[m.Name.Text()] = nil
+		if ok {
+			typing[m.Name.Text()] = getSumTypeMemberType(m)
 		}
 	}
 	if len(typing) < 2 {
@@ -41,8 +34,8 @@ func (c *Checker) checkSumType(node parser.SumType) SumType {
 	}
 	return SumType{
 		Members: members,
-		typing:  Sum{typing},
-		loc:     loc,
+		typing:  Type{Sum{typing}},
+		loc:     node.Loc(),
 	}
 }
 
@@ -66,4 +59,16 @@ func checkSumTypeMember(c *Checker, node parser.Node) (SumTypeMember, bool) {
 		c.report("Type identifier expected", node.Loc())
 	}
 	return SumTypeMember{Name: identifier}, ok
+}
+
+func getSumTypeMemberType(member SumTypeMember) ExpressionType {
+	if member.Typing == nil {
+		return nil
+	}
+
+	t, ok := member.Typing.Type().(Type)
+	if !ok {
+		return Primitive{UNKNOWN}
+	}
+	return t.Value
 }
