@@ -75,7 +75,7 @@ func (e *Emitter) emit(node interface{}) {
 	case checker.MethodDeclaration:
 		e.emitMethodDeclaration(node)
 	case checker.Exit:
-		e.emitReturn(node)
+		e.emitExit(node)
 	case checker.VariableDeclaration:
 		e.emitVariableDeclaration(node)
 

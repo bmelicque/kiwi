@@ -28,6 +28,9 @@ func (c *Checker) checkExitStatement(statement parser.Exit) Exit {
 	if operator == tokenizer.RETURN_KW {
 		checkReturnValue(c, statement, value)
 	}
+	if operator == tokenizer.CONTINUE_KW && statement.Value != nil {
+		c.report("No value expected after 'continue'", statement.Value.Loc())
+	}
 
 	if operator == tokenizer.RETURN_KW && !c.scope.in(FunctionScope) {
 		c.report("Cannot return outside of a function", statement.Loc())
