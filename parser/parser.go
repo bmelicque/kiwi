@@ -53,8 +53,8 @@ func (p *Parser) parseStatement() Node {
 	switch p.tokenizer.Peek().Kind() {
 	case tokenizer.FOR_KW:
 		return ParseForLoop(p)
-	case tokenizer.RETURN_KW:
-		return ParseReturn(p)
+	case tokenizer.BREAK_KW, tokenizer.CONTINUE_KW, tokenizer.RETURN_KW:
+		return p.parseExit()
 	default:
 		return p.parseAssignment()
 	}

@@ -4,12 +4,12 @@ import (
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
-type Return struct {
+type Exit struct {
 	Operator tokenizer.Token
 	Value    Node
 }
 
-func (r Return) Loc() tokenizer.Loc {
+func (r Exit) Loc() tokenizer.Loc {
 	loc := r.Operator.Loc()
 	if r.Value != nil {
 		loc.End = r.Value.Loc().End
@@ -17,13 +17,13 @@ func (r Return) Loc() tokenizer.Loc {
 	return loc
 }
 
-func ParseReturn(p *Parser) Node {
+func (p *Parser) parseExit() Exit {
 	keyword := p.tokenizer.Consume()
 
 	if p.tokenizer.Peek().Kind() == tokenizer.EOL {
-		return Return{keyword, nil}
+		return Exit{keyword, nil}
 	}
 
 	value := ParseExpression(p)
-	return Return{keyword, value}
+	return Exit{keyword, value}
 }

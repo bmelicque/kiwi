@@ -30,15 +30,17 @@ const (
 	BOOLEAN
 	STRING
 
-	STR_KW    // string
-	NUM_KW    // number
-	BOOL_KW   // boolean
-	IF_KW     // if
-	ELSE_KW   //else
-	MATCH_KW  // match
-	CASE_KW   // case
-	FOR_KW    // for
-	RETURN_KW // return
+	STR_KW      // string
+	NUM_KW      // number
+	BOOL_KW     // boolean
+	IF_KW       // if
+	ELSE_KW     //else
+	MATCH_KW    // match
+	CASE_KW     // case
+	FOR_KW      // for
+	BREAK_KW    // break
+	CONTINUE_KW // continue
+	RETURN_KW   // return
 
 	ADD    // +
 	CONCAT // ++
@@ -263,6 +265,10 @@ func makeToken(text string, loc Loc) Token {
 		return token{CASE_KW, loc}
 	case "for":
 		return token{FOR_KW, loc}
+	case "break":
+		return token{BREAK_KW, loc}
+	case "continue":
+		return token{CONTINUE_KW, loc}
 	case "return":
 		return token{RETURN_KW, loc}
 	case "+":

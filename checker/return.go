@@ -18,7 +18,7 @@ func (r Return) Loc() tokenizer.Loc {
 	return loc
 }
 
-func (c *Checker) checkReturnStatement(statement parser.Return) Return {
+func (c *Checker) checkReturnStatement(statement parser.Exit) Return {
 	expected := c.scope.returnType
 
 	if expected == nil && statement.Value != nil {
