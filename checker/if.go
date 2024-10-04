@@ -26,8 +26,9 @@ func (c *Checker) checkIf(node parser.IfElse) If {
 		c.report("Expected boolean condition", node.Condition.Loc())
 	}
 
-	scope := NewScope()
+	scope := NewScope(BlockScope)
 	scope.returnType = c.scope.returnType
+	scope.kind = BlockScope
 	c.pushScope(scope)
 	block := c.checkBlock(*node.Body)
 	c.dropScope()

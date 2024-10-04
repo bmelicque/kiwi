@@ -104,7 +104,7 @@ func checkFirstCaseHasKeyword(c *Checker, cases []parser.MatchCase) []parser.Mat
 	return cases
 }
 func checkMatchCase(c *Checker, node parser.MatchCase, matchedType ExpressionType) MatchCase {
-	c.pushScope(NewScope())
+	c.pushScope(NewScope(BlockScope))
 	defer c.dropScope()
 
 	pattern, identifier := checkPattern(c, node.Pattern, matchedType)

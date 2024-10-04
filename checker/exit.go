@@ -24,8 +24,19 @@ func (c *Checker) checkExitStatement(statement parser.Exit) Exit {
 		value = c.checkExpression(statement.Value)
 	}
 
-	if statement.Operator.Kind() == tokenizer.RETURN_KW {
+	operator := statement.Operator.Kind()
+	if operator == tokenizer.RETURN_KW {
 		checkReturnValue(c, statement, value)
+	}
+
+	if operator == tokenizer.RETURN_KW && !c.scope.in(FunctionScope) {
+		c.report("Cannot return outside of a function", statement.Loc())
+	}
+	if operator == tokenizer.BREAK_KW && !c.scope.in(LoopScope) {
+		c.report("Cannot break outside of a loop", statement.Loc())
+	}
+	if operator == tokenizer.CONTINUE_KW && !c.scope.in(LoopScope) {
+		c.report("Cannot continue outside of a loop", statement.Loc())
 	}
 
 	return Exit{

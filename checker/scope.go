@@ -21,16 +21,27 @@ type Method struct {
 	reads      []tokenizer.Loc
 }
 
+type ScopeKind int8
+
+const (
+	ProgramScope ScopeKind = iota
+	BlockScope
+	FunctionScope
+	LoopScope
+)
+
 type Scope struct {
 	variables  map[string]*Variable
 	methods    map[string][]Method
 	returnType ExpressionType // The expected type for a return statement (if any)
+	kind       ScopeKind
 	outer      *Scope
 	shadow     bool
 }
 
-func NewScope() *Scope {
+func NewScope(kind ScopeKind) *Scope {
 	return &Scope{
+		kind:      kind,
 		variables: map[string]*Variable{},
 		methods:   map[string][]Method{},
 	}
@@ -114,4 +125,14 @@ func (s *Scope) ReadAt(name string, loc tokenizer.Loc) {
 
 func (s Scope) GetReturnType() ExpressionType {
 	return s.returnType
+}
+
+func (s Scope) in(kind ScopeKind) bool {
+	if s.kind == kind {
+		return true
+	}
+	if s.outer == nil {
+		return false
+	}
+	return s.outer.in(kind)
 }

@@ -8,7 +8,7 @@ import (
 )
 
 func TestBuildGeneric(t *testing.T) {
-	scope := NewScope()
+	scope := NewScope(ProgramScope)
 	scope.Add("Type", tokenizer.Loc{}, Type{Generic{}})
 	typing := List{Generic{Name: "Type"}}
 
@@ -30,7 +30,7 @@ func TestBuildGeneric(t *testing.T) {
 }
 
 func TestBuildTypeAlias(t *testing.T) {
-	scope := NewScope()
+	scope := NewScope(ProgramScope)
 	typing := TypeAlias{
 		Name:   "Type",
 		Params: []Generic{{Name: "Param", Value: Primitive{NUMBER}}},

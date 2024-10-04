@@ -41,7 +41,7 @@ func checkFunctionCall(c *Checker, callee Expression, node parser.ParenthesizedE
 		return CallExpression{callee, args, nil}
 	}
 
-	c.pushScope(NewScope())
+	c.pushScope(NewScope(ProgramScope))
 	defer c.dropScope()
 	for _, param := range function.TypeParams {
 		// TODO: get declared location
@@ -120,7 +120,7 @@ func checkInstanciation(c *Checker, node parser.CallExpression) Expression {
 			c.report("Object type expected", expr.Loc())
 			return CallExpression{Callee: expr, typing: t}
 		}
-		c.pushScope(NewScope())
+		c.pushScope(NewScope(ProgramScope))
 		defer c.dropScope()
 		c.addTypeArgsToScope(nil, t.Params)
 		members := c.checkNamedArguments(node.Args)
@@ -140,7 +140,7 @@ func checkInstanciation(c *Checker, node parser.CallExpression) Expression {
 		first := args.Params[0].Complement
 		el := t.Element
 		if alias, ok := t.Element.(TypeAlias); ok {
-			c.pushScope(NewScope())
+			c.pushScope(NewScope(ProgramScope))
 			defer c.dropScope()
 			c.addTypeArgsToScope(nil, alias.Params)
 			el, _ = t.Element.build(c.scope, first.Type())

@@ -31,7 +31,7 @@ func (c Checker) GetReport() []CheckerError {
 }
 
 func MakeChecker() *Checker {
-	scope := NewScope()
+	scope := NewScope(ProgramScope)
 	scope.outer = &std
 	return &Checker{errors: []CheckerError{}, scope: scope}
 }

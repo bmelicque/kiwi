@@ -86,7 +86,7 @@ func (c *Checker) checkGenericTypeDefinition(a parser.Assignment) VariableDeclar
 		params = c.checkTypeParams(declared.Property)
 	}
 
-	c.pushScope(NewScope())
+	c.pushScope(NewScope(ProgramScope))
 	addTypeParamsToScope(c.scope, params)
 	init := c.checkExpression(a.Initializer)
 	c.dropScope()

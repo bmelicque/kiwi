@@ -37,7 +37,8 @@ func TestUnreachableCode(t *testing.T) {
 		},
 	})
 
-	if len(checker.errors) != 1 {
-		t.Fatalf("Expected 1 error, got %#v", checker.errors)
+	if len(checker.errors) != 2 {
+		// also get one error for returning while not being in a function
+		t.Fatalf("Expected 2 errors, got %#v", checker.errors)
 	}
 }

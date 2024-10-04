@@ -110,7 +110,7 @@ func (ta TypeAlias) Extends(t ExpressionType) bool {
 }
 
 func (ta TypeAlias) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
-	s := NewScope()
+	s := NewScope(ProgramScope)
 	s.outer = scope
 	for _, param := range ta.Params {
 		s.Add(param.Name, tokenizer.Loc{}, param)
@@ -281,7 +281,7 @@ func (f Function) Extends(t ExpressionType) bool {
 
 func (f Function) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	ok := true
-	s := NewScope()
+	s := NewScope(ProgramScope)
 	s.outer = scope
 	for _, param := range f.TypeParams {
 		s.Add(param.Name, tokenizer.Loc{}, param)

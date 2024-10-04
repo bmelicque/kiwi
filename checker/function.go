@@ -85,7 +85,7 @@ func (f FunctionTypeExpression) Type() ExpressionType {
 }
 
 func (c *Checker) checkFunctionExpression(f parser.FunctionExpression) Expression {
-	c.pushScope(NewScope())
+	c.pushScope(NewScope(FunctionScope))
 	defer c.dropScope()
 
 	if f.TypeParams != nil && f.Params == nil {

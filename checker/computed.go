@@ -35,7 +35,7 @@ func (c *Checker) checkComputedAccessExpression(node parser.ComputedAccessExpres
 			typing = Primitive{UNKNOWN}
 			break
 		}
-		c.pushScope(NewScope())
+		c.pushScope(NewScope(ProgramScope))
 		defer c.dropScope()
 		params := append(alias.Params[:0:0], alias.Params...)
 		c.addTypeArgsToScope(prop, params)
@@ -47,7 +47,7 @@ func (c *Checker) checkComputedAccessExpression(node parser.ComputedAccessExpres
 		}}
 	case Function:
 		// Generic function
-		c.pushScope(NewScope())
+		c.pushScope(NewScope(ProgramScope))
 		defer c.dropScope()
 		typeParams := append(t.TypeParams[:0:0], t.TypeParams...)
 		c.addTypeArgsToScope(prop, typeParams)

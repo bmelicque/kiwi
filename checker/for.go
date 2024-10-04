@@ -67,7 +67,7 @@ func (c *Checker) checkForRangeLoop(node parser.For) ForRange {
 		c.report("Expected range type", declaration.Initializer.Loc())
 	}
 
-	c.pushScope(NewShadowScope())
+	c.pushScope(NewScope(LoopScope))
 	defer c.dropScope()
 	switch pattern := declaration.Pattern.(type) {
 	case Identifier:

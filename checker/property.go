@@ -184,7 +184,7 @@ func checkTraitExpression(c *Checker, left Expression, right parser.Node) Expres
 		c.report("Type expected", identifier.Loc())
 	}
 
-	c.pushScope(NewScope())
+	c.pushScope(NewScope(ProgramScope))
 	defer c.dropScope()
 	name := identifier.Text()
 	c.scope.Add(name, identifier.Loc(), Type{TypeAlias{Name: name, Ref: Generic{Name: identifier.Text()}}})
