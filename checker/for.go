@@ -43,7 +43,7 @@ func (f ForRange) Loc() tokenizer.Loc {
 	return loc
 }
 
-func (c *Checker) checkForLoop(node parser.For) For {
+func (c *Checker) checkForLoop(node parser.ForExpression) For {
 	expr, _ := c.Check(node.Statement).(Expression)
 	if expr == nil || expr.Type().Kind() != BOOLEAN {
 		c.report("Expected boolean condition or range declaration", node.Statement.Loc())
@@ -56,7 +56,7 @@ func (c *Checker) checkForLoop(node parser.For) For {
 		Body:      body,
 	}
 }
-func (c *Checker) checkForRangeLoop(node parser.For) ForRange {
+func (c *Checker) checkForRangeLoop(node parser.ForExpression) ForRange {
 	declaration, ok := c.Check(node.Statement).(VariableDeclaration)
 	if !ok {
 		c.report("Expected boolean condition or range declaration", node.Statement.Loc())
@@ -91,7 +91,7 @@ func (c *Checker) checkForRangeLoop(node parser.For) ForRange {
 	}
 }
 
-func (c *Checker) checkLoop(node parser.For) Node {
+func (c *Checker) checkLoop(node parser.ForExpression) Node {
 	switch node.Statement.(type) {
 	case parser.Assignment:
 		return c.checkForRangeLoop(node)

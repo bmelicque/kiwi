@@ -4,13 +4,13 @@ import (
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
-type For struct {
+type ForExpression struct {
 	Keyword   tokenizer.Token
 	Statement Node // ExpressionStatement holding a condition OR Assignment
 	Body      *Block
 }
 
-func (f For) Loc() tokenizer.Loc {
+func (f ForExpression) Loc() tokenizer.Loc {
 	loc := f.Keyword.Loc()
 	if f.Body != nil {
 		loc.End = f.Body.Loc().End
@@ -20,15 +20,12 @@ func (f For) Loc() tokenizer.Loc {
 	return loc
 }
 
-func ParseForLoop(p *Parser) Node {
-	statement := For{}
-	statement.Keyword = p.tokenizer.Consume()
-
+func (p *Parser) parseForExpression() ForExpression {
+	keyword := p.tokenizer.Consume()
 	outer := p.allowBraceParsing
 	p.allowBraceParsing = false
-	statement.Statement = p.parseAssignment()
+	statement := p.parseAssignment()
 	p.allowBraceParsing = outer
-	statement.Body = p.parseBlock()
-
-	return statement
+	block := p.parseBlock()
+	return ForExpression{keyword, statement, block}
 }
