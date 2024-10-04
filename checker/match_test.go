@@ -9,13 +9,7 @@ import (
 
 func TestMatchExpression(t *testing.T) {
 	checker := MakeChecker()
-	typing := TypeAlias{
-		Name: "Option",
-		Ref: Sum{map[string]ExpressionType{
-			"Some": Primitive{NUMBER},
-			"None": nil,
-		}},
-	}
+	typing := makeOptionType(Primitive{NUMBER})
 	checker.scope.Add("Option", tokenizer.Loc{}, Type{typing})
 	checker.scope.Add("option", tokenizer.Loc{}, typing)
 	// match option {

@@ -5,7 +5,7 @@ func makeOptionType(t ExpressionType) TypeAlias {
 		Name:   "Option",
 		Params: []Generic{{Name: "Type", Value: t}},
 		Ref: Sum{map[string]ExpressionType{
-			"Some": Type{Generic{Name: "Type", Value: t}},
+			"Some": Generic{Name: "Type", Value: t},
 			"None": nil,
 		}},
 	}

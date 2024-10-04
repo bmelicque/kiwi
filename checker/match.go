@@ -22,7 +22,8 @@ func (m MatchCase) Type() ExpressionType {
 	if !ok {
 		return Primitive{NIL}
 	}
-	return expr.Expr.Type()
+	t, _ := expr.Expr.Type().build(nil, nil)
+	return t
 }
 
 func (m MatchCase) IsCatchall() bool {

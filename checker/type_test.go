@@ -29,6 +29,24 @@ func TestBuildGeneric(t *testing.T) {
 	}
 }
 
+func TestBuildTypeAlias(t *testing.T) {
+	scope := NewScope()
+	typing := TypeAlias{
+		Name:   "Type",
+		Params: []Generic{{Name: "Param", Value: Primitive{NUMBER}}},
+		Ref:    Generic{Name: "Param", Value: Primitive{NUMBER}},
+	}
+
+	built, ok := typing.build(scope, nil)
+	if !ok {
+		t.Fatalf("Expected 'ok' to be true (no remaining generics)")
+	}
+
+	if built.(TypeAlias).Ref.Kind() != NUMBER {
+		t.Fatalf("Expected number type, got %#v", built.(TypeAlias).Ref)
+	}
+}
+
 func TestFunctionExtends(t *testing.T) {
 	a := Function{Returned: Primitive{NUMBER}}
 	b := Function{Returned: Primitive{NUMBER}}

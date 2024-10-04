@@ -431,6 +431,9 @@ func (g Generic) Extends(t ExpressionType) bool {
 	return g.Constraints.Extends(t)
 }
 func (g Generic) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
+	if g.Value != nil {
+		return g.Value, true
+	}
 	variable, ok := scope.Find(g.Name)
 	if !ok {
 		return Primitive{UNKNOWN}, false
