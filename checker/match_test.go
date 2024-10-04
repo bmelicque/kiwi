@@ -7,12 +7,12 @@ import (
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
-func TestMatchStatement(t *testing.T) {
+func TestMatchExpression(t *testing.T) {
 	checker := MakeChecker()
 	typing := TypeAlias{
 		Name: "Option",
 		Ref: Sum{map[string]ExpressionType{
-			"Some": Type{Primitive{NUMBER}},
+			"Some": Primitive{NUMBER},
 			"None": nil,
 		}},
 	}
@@ -22,8 +22,9 @@ func TestMatchStatement(t *testing.T) {
 	// case s Some:
 	//		s
 	// case None:
+	//		0
 	// }
-	expr := checker.checkMatchStatement(parser.MatchStatement{
+	expr := checker.checkMatchExpression(parser.MatchExpression{
 		Keyword: testToken{kind: tokenizer.MATCH_KW},
 		Value:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "option"}},
 		Cases: []parser.MatchCase{
@@ -37,8 +38,10 @@ func TestMatchStatement(t *testing.T) {
 				},
 			},
 			{
-				Pattern:    parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "None"}},
-				Statements: []parser.Node{},
+				Pattern: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "None"}},
+				Statements: []parser.Node{
+					parser.ExpressionStatement{Expr: parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "0"}}},
+				},
 			},
 		},
 	})
@@ -46,5 +49,7 @@ func TestMatchStatement(t *testing.T) {
 	if len(checker.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", checker.errors)
 	}
-	_ = expr
+	if expr.Type().Kind() != NUMBER {
+		t.Fatalf("Expected number type, got %#v", expr.Type())
+	}
 }

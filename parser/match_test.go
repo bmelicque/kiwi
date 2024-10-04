@@ -28,8 +28,8 @@ func TestMatch(t *testing.T) {
 		testToken{tokenizer.RBRACE, "}", tokenizer.Loc{}},
 	}}
 	parser := MakeParser(&tokenizer)
-	node := parser.parseMatchStatement()
-	statement, ok := node.(MatchStatement)
+	node := parser.parseMatchExpression()
+	statement, ok := node.(MatchExpression)
 	if !ok {
 		t.Fatalf("Expected match statement, got %#v", node)
 	}

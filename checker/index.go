@@ -54,6 +54,8 @@ func (c *Checker) checkExpression(node parser.Node) Expression {
 	switch node := node.(type) {
 	case parser.BinaryExpression:
 		return c.checkBinaryExpression(node)
+	case parser.Block:
+		return c.checkBlock(node)
 	case parser.CallExpression:
 		return c.checkCallExpression(node)
 	case parser.FunctionExpression:
@@ -89,16 +91,14 @@ func (c *Checker) Check(node parser.Node) Node {
 			return c.checkAssignment(node)
 		}
 		return c.checkVariableDeclaration(node)
-	case parser.Block:
-		return c.checkBlock(node)
 	case parser.ExpressionStatement:
 		return c.checkExpressionStatement(node)
 	case parser.For:
 		return c.checkLoop(node)
 	case parser.IfElse:
 		return c.checkIf(node)
-	case parser.MatchStatement:
-		return c.checkMatchStatement(node)
+	case parser.MatchExpression:
+		return c.checkMatchExpression(node)
 	case parser.Return:
 		return c.checkReturnStatement(node)
 	default:

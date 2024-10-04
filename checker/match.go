@@ -14,21 +14,38 @@ type MatchCase struct {
 	Statements []Node
 }
 
+func (m MatchCase) Type() ExpressionType {
+	if len(m.Statements) == 0 {
+		return Primitive{NIL}
+	}
+	expr, ok := m.Statements[len(m.Statements)-1].(ExpressionStatement)
+	if !ok {
+		return Primitive{NIL}
+	}
+	return expr.Expr.Type()
+}
+
 func (m MatchCase) IsCatchall() bool {
 	return m.Typing.Text() == "_"
 }
 
-type MatchStatement struct {
+type MatchExpression struct {
 	Value Expression
 	Cases []MatchCase
 	loc   tokenizer.Loc
 }
 
-func (m MatchStatement) Loc() tokenizer.Loc { return m.loc }
+func (m MatchExpression) Loc() tokenizer.Loc { return m.loc }
+func (m MatchExpression) Type() ExpressionType {
+	if len(m.Cases) == 0 {
+		return Primitive{NIL}
+	}
+	return m.Cases[0].Type()
+}
 
 var matchableType = []ExpressionTypeKind{SUM, TRAIT}
 
-func (c *Checker) checkMatchStatement(node parser.MatchStatement) Node {
+func (c *Checker) checkMatchExpression(node parser.MatchExpression) MatchExpression {
 	value := checkMatchValue(c, node.Value)
 	typing := checkMatchValueType(c, value)
 
@@ -41,14 +58,18 @@ func (c *Checker) checkMatchStatement(node parser.MatchStatement) Node {
 	for _, node := range nodes {
 		cases = append(cases, checkMatchCase(c, node, typing))
 	}
+	for _, ca := range cases[:len(cases)-1] {
+		if !cases[0].Type().Extends(ca.Type()) {
+			c.report("Type doesn't match", ca.Statements[len(ca.Statements)-1].Loc())
+		}
+	}
 
-	// TODO: checkExhaustiveness
 	ok := checkMatchExhaustiveness(c, cases, typing)
 	if !ok {
 		c.report("Non-exhaustive match (consider adding a catch-all)", node.Loc())
 	}
 
-	return MatchStatement{value, cases, node.Loc()}
+	return MatchExpression{value, cases, node.Loc()}
 }
 
 func checkMatchValue(c *Checker, value parser.Node) Expression {

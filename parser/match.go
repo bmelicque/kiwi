@@ -11,14 +11,14 @@ type MatchCase struct {
 	Statements []Node
 }
 
-type MatchStatement struct {
+type MatchExpression struct {
 	Keyword tokenizer.Token
 	Value   Node
 	Cases   []MatchCase
 	end     tokenizer.Position
 }
 
-func (m MatchStatement) Loc() tokenizer.Loc {
+func (m MatchExpression) Loc() tokenizer.Loc {
 	loc := m.Keyword.Loc()
 	if m.end != (tokenizer.Position{}) {
 		loc.End = m.end
@@ -26,14 +26,14 @@ func (m MatchStatement) Loc() tokenizer.Loc {
 	return loc
 }
 
-func (p *Parser) parseMatchStatement() Node {
+func (p *Parser) parseMatchExpression() Node {
 	keyword := p.tokenizer.Consume()
 	outer := p.allowBraceParsing
 	p.allowBraceParsing = false
 	condition := ParseExpression(p)
 	p.allowBraceParsing = outer
 	if p.tokenizer.Peek().Kind() != tokenizer.LBRACE && !recover(p, tokenizer.LBRACE) {
-		return MatchStatement{Keyword: keyword, Value: condition}
+		return MatchExpression{Keyword: keyword, Value: condition}
 	}
 	p.tokenizer.Consume()
 	p.tokenizer.DiscardLineBreaks()
@@ -51,7 +51,7 @@ func (p *Parser) parseMatchStatement() Node {
 	} else {
 		p.report("'}' expected", next.Loc())
 	}
-	return MatchStatement{keyword, condition, cases, end}
+	return MatchExpression{keyword, condition, cases, end}
 }
 
 func parseMatchCase(p *Parser) MatchCase {

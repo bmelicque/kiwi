@@ -51,8 +51,6 @@ func (p *Parser) ParseProgram() []Node {
 
 func (p *Parser) parseStatement() Node {
 	switch p.tokenizer.Peek().Kind() {
-	case tokenizer.MATCH_KW:
-		return p.parseMatchStatement()
 	case tokenizer.FOR_KW:
 		return ParseForLoop(p)
 	case tokenizer.RETURN_KW:
@@ -66,6 +64,8 @@ func ParseExpression(p *Parser) Node {
 	switch p.tokenizer.Peek().Kind() {
 	case tokenizer.IF_KW:
 		return p.parseIf()
+	case tokenizer.MATCH_KW:
+		return p.parseMatchExpression()
 	default:
 		return p.parseTupleExpression()
 	}

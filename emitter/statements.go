@@ -80,7 +80,7 @@ func (e *Emitter) emitIf(i checker.If) {
 	}
 }
 
-func (e *Emitter) emitMatchStatement(m checker.MatchStatement) {
+func (e *Emitter) emitMatchStatement(m checker.MatchExpression) {
 	// TODO: break outer loop
 	// TODO: declare _m only if calling something
 	e.write("const _m = ")
