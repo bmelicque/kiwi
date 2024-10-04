@@ -9,6 +9,7 @@ type For struct {
 	Keyword   tokenizer.Token
 	Condition Expression
 	Body      Block
+	typing    ExpressionType
 }
 
 func (f For) Loc() tokenizer.Loc {
@@ -21,6 +22,8 @@ func (f For) Loc() tokenizer.Loc {
 	return loc
 }
 
+func (f For) Type() ExpressionType { return f.typing }
+
 type RangeDeclaration struct {
 	Pattern  Expression
 	Range    RangeExpression
@@ -31,6 +34,7 @@ type ForRange struct {
 	Keyword     tokenizer.Token
 	Declaration RangeDeclaration
 	Body        Block
+	typing      ExpressionType
 }
 
 func (f ForRange) Loc() tokenizer.Loc {
@@ -42,13 +46,29 @@ func (f ForRange) Loc() tokenizer.Loc {
 	}
 	return loc
 }
+func (f ForRange) Type() ExpressionType { return f.typing }
 
-func (c *Checker) checkForLoop(node parser.ForExpression) For {
+func (c *Checker) checkLoop(node parser.ForExpression) Expression {
+	switch node.Statement.(type) {
+	case parser.Assignment:
+		l := checkForRangeLoop(c, node)
+		l.typing = checkLoopType(c, l)
+		return l
+	default:
+		l := checkForLoop(c, node)
+		l.typing = checkLoopType(c, l)
+		return l
+	}
+}
+
+func checkForLoop(c *Checker, node parser.ForExpression) For {
 	expr, _ := c.Check(node.Statement).(Expression)
 	if expr == nil || expr.Type().Kind() != BOOLEAN {
 		c.report("Expected boolean condition or range declaration", node.Statement.Loc())
 	}
 
+	c.pushScope(NewScope(LoopScope))
+	defer c.dropScope()
 	body := c.checkBlock(*node.Body)
 	return For{
 		Keyword:   node.Keyword,
@@ -56,7 +76,7 @@ func (c *Checker) checkForLoop(node parser.ForExpression) For {
 		Body:      body,
 	}
 }
-func (c *Checker) checkForRangeLoop(node parser.ForExpression) ForRange {
+func checkForRangeLoop(c *Checker, node parser.ForExpression) ForRange {
 	declaration, ok := c.Check(node.Statement).(VariableDeclaration)
 	if !ok {
 		c.report("Expected boolean condition or range declaration", node.Statement.Loc())
@@ -91,11 +111,53 @@ func (c *Checker) checkForRangeLoop(node parser.ForExpression) ForRange {
 	}
 }
 
-func (c *Checker) checkLoop(node parser.ForExpression) Node {
-	switch node.Statement.(type) {
-	case parser.Assignment:
-		return c.checkForRangeLoop(node)
-	default:
-		return c.checkForLoop(node)
+func checkLoopType(c *Checker, expr Expression) ExpressionType {
+	var body Block
+	switch expr := expr.(type) {
+	case For:
+		body = expr.Body
+	case ForRange:
+		body = expr.Body
+	}
+	breaks := []Exit{}
+	findBreakStatements(body, &breaks)
+	if len(breaks) == 0 {
+		return Primitive{NIL}
+	}
+	var t ExpressionType
+	if breaks[0].Value != nil {
+		t = breaks[0].Value.Type()
+	} else {
+		t = Primitive{NIL}
+	}
+	for _, b := range breaks[1:] {
+		if t == (Primitive{NIL}) && b.Value != nil {
+			c.report("No value expected", b.Value.Loc())
+		}
+		if t != (Primitive{NIL}) && !t.Extends(b.Value.Type()) {
+			c.report("Type doesn't match the type inferred from first break", b.Value.Loc())
+		}
+	}
+	return t
+}
+
+func findBreakStatements(node Node, results *[]Exit) {
+	if node == nil {
+		return
+	}
+	if n, ok := node.(Exit); ok {
+		if n.Operator.Kind() == tokenizer.BREAK_KW {
+			*results = append(*results, n)
+		}
+		return
+	}
+	switch node := node.(type) {
+	case Block:
+		for _, statement := range node.Statements {
+			findBreakStatements(statement, results)
+		}
+	case If:
+		findBreakStatements(node.Block, results)
+		findBreakStatements(node.Alternate, results)
 	}
 }
