@@ -145,7 +145,7 @@ func (e *Emitter) emitMethodDeclaration(method checker.MethodDeclaration) {
 	e.write("\n")
 }
 
-func (e *Emitter) emitReturn(r checker.Return) {
+func (e *Emitter) emitReturn(r checker.Exit) {
 	e.write("return")
 	if r.Value != nil {
 		e.write(" ")

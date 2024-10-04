@@ -100,7 +100,7 @@ func (c *Checker) Check(node parser.Node) Node {
 	case parser.MatchExpression:
 		return c.checkMatchExpression(node)
 	case parser.Exit:
-		return c.checkReturnStatement(node)
+		return c.checkExitStatement(node)
 	default:
 		return c.checkExpression(node)
 	}

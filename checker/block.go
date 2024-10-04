@@ -24,26 +24,11 @@ func (b Block) Type() ExpressionType {
 }
 
 func (c *Checker) checkBlock(block parser.Block) Block {
-	var ended bool
-	var unreachable tokenizer.Loc
-
 	statements := make([]Node, len(block.Statements))
 	for i, node := range block.Statements {
-		statement := c.Check(node)
-		statements[i] = statement
-
-		if ended {
-			if unreachable.Start == (tokenizer.Position{}) {
-				unreachable.Start = node.Loc().Start
-			}
-			unreachable.End = node.Loc().End
-		} else if isEndStatement(statement) {
-			ended = true
-		}
+		statements[i] = c.Check(node)
 	}
-	if unreachable != (tokenizer.Loc{}) {
-		c.report("Detected unreachable code", unreachable)
-	}
+	reportUnreachableCode(c, statements)
 
 	return Block{
 		Statements: statements,
@@ -51,7 +36,21 @@ func (c *Checker) checkBlock(block parser.Block) Block {
 	}
 }
 
-func isEndStatement(statement Node) bool {
-	_, ok := statement.(Return)
-	return ok
+func reportUnreachableCode(c *Checker, statements []Node) {
+	var foundExit bool
+	var unreachable tokenizer.Loc
+	for _, statement := range statements {
+		if foundExit {
+			if unreachable.Start == (tokenizer.Position{}) {
+				unreachable.Start = statement.Loc().Start
+			}
+			unreachable.End = statement.Loc().End
+		}
+		if _, ok := statement.(Exit); ok {
+			foundExit = true
+		}
+	}
+	if unreachable != (tokenizer.Loc{}) {
+		c.report("Detected unreachable code", unreachable)
+	}
 }
