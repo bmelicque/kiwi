@@ -31,12 +31,11 @@ const (
 )
 
 type Scope struct {
-	variables  map[string]*Variable
-	methods    map[string][]Method
-	returnType ExpressionType // The expected type for a return statement (if any)
-	kind       ScopeKind
-	outer      *Scope
-	shadow     bool
+	variables map[string]*Variable
+	methods   map[string][]Method
+	kind      ScopeKind
+	outer     *Scope
+	shadow    bool
 }
 
 func NewScope(kind ScopeKind) *Scope {
@@ -121,10 +120,6 @@ func (s *Scope) ReadAt(name string, loc tokenizer.Loc) {
 	if ok {
 		variable.readAt(loc)
 	}
-}
-
-func (s Scope) GetReturnType() ExpressionType {
-	return s.returnType
 }
 
 func (s Scope) in(kind ScopeKind) bool {

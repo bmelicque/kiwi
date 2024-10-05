@@ -25,13 +25,9 @@ func (c *Checker) checkExitStatement(statement parser.Exit) Exit {
 	}
 
 	operator := statement.Operator.Kind()
-	if operator == tokenizer.RETURN_KW {
-		checkReturnValue(c, statement, value)
-	}
 	if operator == tokenizer.CONTINUE_KW && statement.Value != nil {
 		c.report("No value expected after 'continue'", statement.Value.Loc())
 	}
-
 	if operator == tokenizer.RETURN_KW && !c.scope.in(FunctionScope) {
 		c.report("Cannot return outside of a function", statement.Loc())
 	}
@@ -45,25 +41,5 @@ func (c *Checker) checkExitStatement(statement parser.Exit) Exit {
 	return Exit{
 		Operator: statement.Operator,
 		Value:    value,
-	}
-}
-
-func checkReturnValue(c *Checker, statement parser.Exit, value Expression) {
-	expected := c.scope.returnType
-
-	if expected == nil {
-		if value != nil {
-			c.report("No return value expected", value.Loc())
-		}
-		return
-	}
-
-	if value == nil {
-		c.report("Return value expected", statement.Loc())
-		return
-	}
-
-	if !expected.Extends(value.Type()) {
-		c.report("Returned type doesn't match expected type", statement.Loc())
 	}
 }

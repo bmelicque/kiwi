@@ -120,7 +120,13 @@ func checkFunctionReturns(c *Checker, body Block) {
 	bType := body.Type()
 	ok := true
 	for _, r := range returns {
-		if !bType.Extends(r.Value.Type()) {
+		var t ExpressionType
+		if r.Value != nil {
+			t = r.Value.Type()
+		} else {
+			t = Primitive{NIL}
+		}
+		if !bType.Extends(t) {
 			ok = false
 			c.report("Mismatched types", r.Value.Loc())
 		}

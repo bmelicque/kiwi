@@ -27,7 +27,6 @@ func (c *Checker) checkIf(node parser.IfElse) If {
 	}
 
 	scope := NewScope(BlockScope)
-	scope.returnType = c.scope.returnType
 	scope.kind = BlockScope
 	c.pushScope(scope)
 	block := c.checkBlock(*node.Body)
