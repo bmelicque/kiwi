@@ -7,6 +7,32 @@ import (
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
+func TestCheckFunctionReturns(t *testing.T) {
+	checker := MakeChecker()
+	body := Block{Statements: []Node{
+		If{
+			Condition: Literal{TokenExpression: parser.TokenExpression{
+				Token: testToken{kind: tokenizer.BOOLEAN, value: "true"},
+			}},
+			Block: Block{Statements: []Node{
+				Exit{
+					Operator: testToken{kind: tokenizer.RETURN_KW},
+					Value: Literal{TokenExpression: parser.TokenExpression{
+						Token: testToken{kind: tokenizer.NUMBER, value: "42"},
+					}},
+				},
+			}},
+		},
+		Literal{TokenExpression: parser.TokenExpression{
+			Token: testToken{kind: tokenizer.NUMBER, value: "42"},
+		}},
+	}}
+	checkFunctionReturns(checker, body)
+	if len(checker.errors) > 0 {
+		t.Fatalf("Expected no errors, got %#v", checker.errors)
+	}
+}
+
 func TestGenericFunctionExpression(t *testing.T) {
 	checker := MakeChecker()
 	expr := checker.checkFunctionExpression(parser.FunctionExpression{

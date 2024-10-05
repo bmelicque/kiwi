@@ -11,6 +11,13 @@ type Block struct {
 }
 
 func (b Block) Loc() tokenizer.Loc { return b.loc }
+func (b Block) reportLoc() tokenizer.Loc {
+	if len(b.Statements) > 0 {
+		return b.Statements[len(b.Statements)-1].Loc()
+	} else {
+		return b.loc
+	}
+}
 func (b Block) Type() ExpressionType {
 	if len(b.Statements) == 0 {
 		return Primitive{NIL}

@@ -10,6 +10,7 @@ type FunctionExpression struct {
 	Params     Params
 	ReturnType Expression
 	Body       Block
+	typing     ExpressionType
 }
 
 func (f FunctionExpression) Loc() tokenizer.Loc {
@@ -23,17 +24,7 @@ func (f FunctionExpression) Type() ExpressionType {
 	for i, param := range f.TypeParams.Params {
 		tp[i] = Generic{Name: param.Identifier.Token.Text()}
 	}
-	var r ExpressionType
-	if f.ReturnType != nil {
-		if rt, ok := f.ReturnType.Type().(Type); ok {
-			r = rt.Value
-		} else {
-			r = Primitive{UNKNOWN}
-		}
-	} else {
-		r = f.Body.Type()
-	}
-	return Function{tp, f.Params.Type().(Tuple), r}
+	return Function{tp, f.Params.Type().(Tuple), f.typing}
 }
 
 type FunctionTypeExpression struct {
@@ -103,18 +94,60 @@ func checkFunctionExpression(c *Checker, f parser.FunctionExpression) FunctionEx
 	var expr Expression
 	if f.Expr != nil {
 		expr = c.checkExpression(f.Expr)
-		typing, ok := expr.Type().(Type)
-		if !ok {
-			c.report("Type expected", expr.Loc())
-		}
-		c.scope.returnType = typing.Value
 	}
 	body := c.checkBlock(*f.Body)
-	// FIXME:
-	if c.scope.returnType != nil && !c.scope.returnType.Extends(body.Type()) {
-		c.report("Returned type doesn't match expected return type", expr.Loc())
+	r := checkFunctionReturnType(c, expr, body)
+	return FunctionExpression{typeParams, params, expr, body, r}
+}
+func checkFunctionReturnType(c *Checker, explicit Expression, body Block) ExpressionType {
+	checkFunctionReturns(c, body)
+	if explicit == nil {
+		return body.Type()
 	}
-	return FunctionExpression{typeParams, params, expr, body}
+	t, ok := explicit.Type().(Type)
+	if !ok {
+		c.report("Type expected", explicit.Loc())
+		return Primitive{UNKNOWN}
+	}
+	if !t.Value.Extends(body.Type()) {
+		c.report("Returned type doesn't match expected return type", body.reportLoc())
+	}
+	return t.Value
+}
+func checkFunctionReturns(c *Checker, body Block) {
+	returns := []Exit{}
+	findReturnStatements(body, &returns)
+	bType := body.Type()
+	ok := true
+	for _, r := range returns {
+		if !bType.Extends(r.Value.Type()) {
+			ok = false
+			c.report("Mismatched types", r.Value.Loc())
+		}
+	}
+	if !ok {
+		c.report("Mismatched types", body.reportLoc())
+	}
+}
+func findReturnStatements(node Node, results *[]Exit) {
+	if node == nil {
+		return
+	}
+	if n, ok := node.(Exit); ok {
+		if n.Operator.Kind() == tokenizer.RETURN_KW {
+			*results = append(*results, n)
+		}
+		return
+	}
+	switch node := node.(type) {
+	case Block:
+		for _, statement := range node.Statements {
+			findReturnStatements(statement, results)
+		}
+	case If:
+		findReturnStatements(node.Block, results)
+		findReturnStatements(node.Alternate, results)
+	}
 }
 
 // [TypeParam](Param) -> ReturnType
