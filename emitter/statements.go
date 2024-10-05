@@ -132,17 +132,10 @@ func (e *Emitter) emitMethodDeclaration(method checker.MethodDeclaration) {
 	e.thisName = method.Receiver.Name.Text()
 	defer func() { e.thisName = "" }()
 
-	switch init := method.Initializer.(type) {
-	case checker.FatArrowFunction:
-		e.emitParams(init.Params)
-		e.write(" ")
-		e.emitBody(init.Body)
-	case checker.SlimArrowFunction:
-		e.emitParams(init.Params)
-		e.write(" { return ")
-		e.emit(init.Expr)
-		e.write(" }")
-	}
+	init := method.Initializer.(checker.FunctionExpression)
+	e.emitParams(init.Params)
+	e.write(" ")
+	e.emitBody(init.Body)
 	e.write("\n")
 }
 
@@ -237,7 +230,7 @@ func (e *Emitter) emitVariableDeclaration(declaration checker.VariableDeclaratio
 	e.write(" = ")
 	e.emit(declaration.Initializer)
 	switch declaration.Initializer.(type) {
-	case checker.SlimArrowFunction, checker.FatArrowFunction:
+	case checker.FunctionExpression:
 	default:
 		e.write(";\n")
 	}

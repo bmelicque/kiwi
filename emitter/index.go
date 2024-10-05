@@ -86,7 +86,7 @@ func (e *Emitter) emit(node interface{}) {
 		e.emitCallExpression(node)
 	case checker.ComputedAccessExpression:
 		e.emitComputedAccessExpression(node)
-	case checker.FatArrowFunction:
+	case checker.FunctionExpression:
 		e.emitFatArrowFunction(node)
 	case checker.Identifier:
 		e.emitIdentifier(node)
@@ -100,8 +100,6 @@ func (e *Emitter) emit(node interface{}) {
 		e.emitPropertyAccessExpression(node)
 	case checker.RangeExpression:
 		e.emitRangeExpression(node)
-	case checker.SlimArrowFunction:
-		e.emitSlimArrowFunction(node)
 	case checker.TupleExpression:
 		e.emitTupleExpression(node)
 

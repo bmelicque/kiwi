@@ -122,7 +122,7 @@ func (e *Emitter) emitComputedAccessExpression(expr checker.ComputedAccessExpres
 	}
 }
 
-func (e *Emitter) emitFatArrowFunction(f checker.FatArrowFunction) {
+func (e *Emitter) emitFatArrowFunction(f checker.FunctionExpression) {
 	e.emitParams(f.Params)
 	e.write(" => ")
 	e.emit(f.Body)
@@ -184,12 +184,6 @@ func (e *Emitter) emitRangeExpression(r checker.RangeExpression) {
 	}
 
 	e.write(")")
-}
-
-func (e *Emitter) emitSlimArrowFunction(f checker.SlimArrowFunction) {
-	e.emitParams(f.Params)
-	e.write(" => ")
-	e.emit(f.Expr)
 }
 
 func (e *Emitter) emitTupleExpression(t checker.TupleExpression) {

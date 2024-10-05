@@ -13,6 +13,7 @@ func TestMethodDeclaration(t *testing.T) {
 		Name: "Type",
 		Ref:  Object{map[string]ExpressionType{"n": Type{Primitive{NUMBER}}}},
 	}})
+	// (t Type).method :: () ->
 	checker.checkMethodDeclaration(parser.Assignment{
 		Declared: parser.PropertyAccessExpression{
 			Expr: parser.ParenthesizedExpression{Expr: parser.TypedExpression{
@@ -24,8 +25,8 @@ func TestMethodDeclaration(t *testing.T) {
 		Operator: testToken{tokenizer.DEFINE, "::", tokenizer.Loc{}},
 		Initializer: parser.FunctionExpression{
 			Params:   &parser.ParenthesizedExpression{},
-			Operator: testToken{tokenizer.SLIM_ARR, "->", tokenizer.Loc{}},
-			Expr:     parser.ParenthesizedExpression{},
+			Operator: testToken{kind: tokenizer.FAT_ARR},
+			Body:     &parser.Block{},
 		},
 	})
 
