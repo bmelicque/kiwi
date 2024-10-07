@@ -8,9 +8,9 @@ import (
 	"github.com/bmelicque/test-parser/tokenizer"
 )
 
-func TestIfStatement(t *testing.T) {
+func TestIfExpression(t *testing.T) {
 	emitter := makeEmitter()
-	emitter.emit(checker.ExpressionStatement{Expr: checker.If{
+	emitter.emit(checker.If{
 		Condition: checker.Literal{TokenExpression: parser.TokenExpression{
 			Token: testToken{kind: tokenizer.BOOLEAN, value: "false"},
 		}},
@@ -22,10 +22,10 @@ func TestIfStatement(t *testing.T) {
 			Block:     checker.Block{Statements: []checker.Node{}},
 			Alternate: checker.Block{},
 		},
-	}})
+	})
 
 	text := emitter.string()
-	expected := "if (false) {} else if (false) {} else {}"
+	expected := "false ? undefined : false ? undefined : undefined"
 	if text != expected {
 		t.Fatalf("Expected string:\n%v\ngot:\n%v", expected, text)
 	}

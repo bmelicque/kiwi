@@ -17,7 +17,7 @@ func (e *Emitter) emitAssignment(a checker.Assignment) {
 	e.write(";\n")
 }
 
-func (e *Emitter) emitBody(b checker.Block) {
+func (e *Emitter) emitBlock(b checker.Block) {
 	e.write("{")
 	if len(b.Statements) == 0 {
 		e.write("}")
@@ -37,15 +37,20 @@ func (e *Emitter) emitBody(b checker.Block) {
 }
 
 func (e *Emitter) emitExpressionStatement(s checker.ExpressionStatement) {
-	e.emit(s.Expr)
-	e.write(";\n")
+	switch expr := s.Expr.(type) {
+	case checker.If:
+		e.emitIfStatement(expr)
+	default:
+		e.emit(s.Expr)
+		e.write(";\n")
+	}
 }
 
 func (e *Emitter) emitFor(f checker.For) {
 	e.write("while (")
 	e.emit(f.Condition)
 	e.write(") ")
-	e.emit(f.Body)
+	e.emitBlock(f.Body)
 }
 
 func (e *Emitter) emitForRange(f checker.ForRange) {
@@ -61,23 +66,23 @@ func (e *Emitter) emitForRange(f checker.ForRange) {
 	e.write(" of ")
 	e.emit(f.Declaration.Range)
 	e.write(") ")
-	e.emit(f.Body)
+	e.emitBlock(f.Body)
 }
 
-func (e *Emitter) emitIf(i checker.If) {
+func (e *Emitter) emitIfStatement(i checker.If) {
 	e.write("if (")
 	e.emit(i.Condition)
 	e.write(") ")
-	e.emit(i.Block)
+	e.emitBlock(i.Block)
 	if i.Alternate == nil {
 		return
 	}
 	e.write(" else ")
 	switch alternate := i.Alternate.(type) {
 	case checker.Block:
-		e.emitBody(alternate)
+		e.emitBlock(alternate)
 	case checker.If:
-		e.emitIf(alternate)
+		e.emitIfStatement(alternate)
 	}
 }
 
@@ -135,7 +140,7 @@ func (e *Emitter) emitMethodDeclaration(method checker.MethodDeclaration) {
 	init := method.Initializer.(checker.FunctionExpression)
 	e.emitParams(init.Params)
 	e.write(" ")
-	e.emitBody(init.Body)
+	e.emitBlock(init.Body)
 	e.write("\n")
 }
 

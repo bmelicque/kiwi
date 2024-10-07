@@ -61,7 +61,9 @@ func (e *Emitter) emit(node checker.Node) {
 	if blocks := e.blockHoister.findStatementBlocks(&node); len(blocks) > 0 {
 		for _, block := range blocks {
 			e.write(fmt.Sprintf("let %v;\n", block.label))
-			e.emitBody(*block.block)
+			e.indent()
+			e.emitBlock(*block.block)
+			e.indent()
 		}
 	}
 	switch node := node.(type) {
@@ -71,7 +73,7 @@ func (e *Emitter) emit(node checker.Node) {
 	case checker.Block:
 		label, ok := e.findBlockLabel(&node)
 		if !ok {
-			e.emitBody(node)
+			e.emitBlockExpression(node)
 		} else {
 			e.write(label)
 		}
@@ -82,7 +84,7 @@ func (e *Emitter) emit(node checker.Node) {
 	case checker.ForRange:
 		e.emitForRange(node)
 	case checker.If:
-		e.emitIf(node)
+		e.emitIfExpression(node)
 	case checker.MatchExpression:
 		e.emitMatchStatement(node)
 	case checker.MethodDeclaration:

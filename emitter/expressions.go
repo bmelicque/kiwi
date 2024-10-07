@@ -34,6 +34,46 @@ func (e *Emitter) emitBinaryExpression(expr checker.BinaryExpression) {
 	}
 }
 
+func (e *Emitter) emitBlockExpression(b checker.Block) {
+	label, ok := e.findBlockLabel(&b)
+	if ok {
+		e.write(label)
+		return
+	}
+
+	if len(b.Statements) == 0 {
+		e.write("undefined")
+		return
+	}
+	e.write("(\n")
+	e.depth += 1
+	for _, statement := range b.Statements {
+		e.indent()
+		e.emit(statement)
+		e.write(",\n")
+	}
+	e.depth -= 1
+	e.indent()
+	e.write(")\n")
+}
+
+func (e *Emitter) emitIfExpression(i checker.If) {
+	e.emit(i.Condition)
+	e.write(" ? ")
+	e.emitBlockExpression(i.Block)
+	e.write(" : ")
+	if i.Alternate == nil {
+		e.write("undefined")
+		return
+	}
+	switch alternate := i.Alternate.(type) {
+	case checker.Block:
+		e.emitBlockExpression(alternate)
+	case checker.If:
+		e.emitIfExpression(alternate)
+	}
+}
+
 func findMemberByName(members checker.Params, name string) checker.Node {
 	for _, member := range members.Params {
 		text := member.Identifier.Text()
