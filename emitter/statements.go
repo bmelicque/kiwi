@@ -198,12 +198,12 @@ func (e *Emitter) emitTypeDeclaration(declaration checker.VariableDeclaration) {
 	case checker.SUM:
 		e.addFlag(SumFlag)
 		e.write("class ")
-		e.emit(getTypeIdentifier(declaration.Pattern))
+		e.write(getTypeIdentifier(declaration.Pattern))
 		e.write(" extends _Sum {}\n")
 		return
 	default:
 		e.write("class ")
-		e.emit(getTypeIdentifier(declaration.Pattern))
+		e.write(getTypeIdentifier(declaration.Pattern))
 		e.write(" {\n    constructor(")
 		defer e.write("    }\n}\n")
 		object := declaration.Initializer.(checker.ParenthesizedExpression)
@@ -247,7 +247,7 @@ func isTypePattern(expr checker.Expression) bool {
 	}
 	return unicode.IsUpper(rune(identifier.Token.Text()[0]))
 }
-func getTypeIdentifier(expr checker.Expression) string {
+func getTypeIdentifier(expr checker.Node) string {
 	c, ok := expr.(checker.ComputedAccessExpression)
 	if ok {
 		expr = c

@@ -22,6 +22,7 @@ type Emitter struct {
 	builder      strings.Builder
 	thisName     string
 	constructors map[string]map[string]checker.Expression
+	blockHoister
 }
 
 func makeEmitter() *Emitter {
@@ -30,6 +31,7 @@ func makeEmitter() *Emitter {
 		flags:        NoFlags,
 		builder:      strings.Builder{},
 		constructors: map[string]map[string]checker.Expression{},
+		blockHoister: blockHoister{[]hoistedBlock{}},
 	}
 }
 
@@ -55,13 +57,24 @@ func (e Emitter) string() string {
 	return e.builder.String()
 }
 
-func (e *Emitter) emit(node interface{}) {
+func (e *Emitter) emit(node checker.Node) {
+	if blocks := e.blockHoister.findStatementBlocks(&node); len(blocks) > 0 {
+		for _, block := range blocks {
+			e.write(fmt.Sprintf("let %v;\n", block.label))
+			e.emitBody(*block.block)
+		}
+	}
 	switch node := node.(type) {
 	// Statements
 	case checker.Assignment:
 		e.emitAssignment(node)
 	case checker.Block:
-		e.emitBody(node)
+		label, ok := e.findBlockLabel(&node)
+		if !ok {
+			e.emitBody(node)
+		} else {
+			e.write(label)
+		}
 	case checker.ExpressionStatement:
 		e.emitExpressionStatement(node)
 	case checker.For:
@@ -110,6 +123,10 @@ func (e *Emitter) emit(node interface{}) {
 
 func EmitProgram(nodes []checker.Node) string {
 	e := makeEmitter()
+	for _, node := range nodes {
+		findHoisted(node, &e.blockHoister.blocks)
+	}
+
 	for _, node := range nodes {
 		e.emit(node)
 	}
