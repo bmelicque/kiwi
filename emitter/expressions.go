@@ -45,6 +45,10 @@ func (e *Emitter) emitBlockExpression(b checker.Block) {
 		e.write("undefined")
 		return
 	}
+	if len(b.Statements) == 1 {
+		e.emit(b.Statements[0])
+		return
+	}
 	e.write("(\n")
 	e.depth += 1
 	for _, statement := range b.Statements {
@@ -54,7 +58,7 @@ func (e *Emitter) emitBlockExpression(b checker.Block) {
 	}
 	e.depth -= 1
 	e.indent()
-	e.write(")\n")
+	e.write(")")
 }
 
 func (e *Emitter) emitIfExpression(i checker.If) {
