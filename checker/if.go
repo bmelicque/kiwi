@@ -1,19 +1,16 @@
 package checker
 
-import (
-	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "github.com/bmelicque/test-parser/parser"
 
 type If struct {
-	Keyword   tokenizer.Token
+	Keyword   parser.Token
 	Condition Expression
 	Block     Block
 	Alternate Expression // If | Body
 }
 
-func (i If) Loc() tokenizer.Loc {
-	return tokenizer.Loc{
+func (i If) Loc() parser.Loc {
+	return parser.Loc{
 		Start: i.Keyword.Loc().Start,
 		End:   i.Block.Loc().End,
 	}

@@ -5,7 +5,6 @@ import (
 	"unicode"
 
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 type Literal struct {
@@ -14,17 +13,17 @@ type Literal struct {
 
 func (l Literal) Type() ExpressionType {
 	switch l.Token.Kind() {
-	case tokenizer.NUMBER:
+	case parser.NUMBER:
 		return Primitive{NUMBER}
-	case tokenizer.BOOLEAN:
+	case parser.BOOLEAN:
 		return Primitive{BOOLEAN}
-	case tokenizer.STRING:
+	case parser.STRING:
 		return Primitive{STRING}
-	case tokenizer.STR_KW:
+	case parser.STR_KW:
 		return Type{Primitive{STRING}}
-	case tokenizer.NUM_KW:
+	case parser.NUM_KW:
 		return Type{Primitive{NUMBER}}
-	case tokenizer.BOOL_KW:
+	case parser.BOOL_KW:
 		return Type{Primitive{BOOLEAN}}
 	default:
 		panic(fmt.Sprintf("Unknown typing kind: %v (not implemented yet)", l.Token.Kind()))
@@ -37,11 +36,11 @@ type Identifier struct {
 	isType bool
 }
 
-func (i Identifier) Loc() tokenizer.Loc   { return i.TokenExpression.Loc() }
+func (i Identifier) Loc() parser.Loc      { return i.TokenExpression.Loc() }
 func (i Identifier) Type() ExpressionType { return i.typing }
 
 func (c *Checker) checkToken(t parser.TokenExpression, report bool) Expression {
-	if t.Token.Kind() != tokenizer.IDENTIFIER {
+	if t.Token.Kind() != parser.IDENTIFIER {
 		return Literal{t}
 	}
 

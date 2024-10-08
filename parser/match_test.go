@@ -1,31 +1,27 @@
 package parser
 
-import (
-	"testing"
-
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "testing"
 
 func TestMatch(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.MATCH_KW},
-		testToken{kind: tokenizer.IDENTIFIER, value: "option"},
-		testToken{kind: tokenizer.LBRACE},
-		testToken{kind: tokenizer.EOL},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: MATCH_KW},
+		literal{kind: IDENTIFIER, value: "option"},
+		token{kind: LBRACE},
+		token{kind: EOL},
 
-		testToken{kind: tokenizer.CASE_KW},
-		testToken{kind: tokenizer.IDENTIFIER, value: "Some"},
-		testToken{kind: tokenizer.LPAREN},
-		testToken{kind: tokenizer.IDENTIFIER, value: "s"},
-		testToken{kind: tokenizer.RPAREN},
-		testToken{kind: tokenizer.COLON},
-		testToken{kind: tokenizer.EOL},
+		token{kind: CASE_KW},
+		literal{kind: IDENTIFIER, value: "Some"},
+		token{kind: LPAREN},
+		literal{kind: IDENTIFIER, value: "s"},
+		token{kind: RPAREN},
+		token{kind: COLON},
+		token{kind: EOL},
 
-		testToken{kind: tokenizer.RETURN_KW},
-		testToken{kind: tokenizer.IDENTIFIER, value: "s"},
-		testToken{kind: tokenizer.EOL},
+		token{kind: RETURN_KW},
+		literal{kind: IDENTIFIER, value: "s"},
+		token{kind: EOL},
 
-		testToken{tokenizer.RBRACE, "}", tokenizer.Loc{}},
+		token{kind: RBRACE},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseMatchExpression()

@@ -1,16 +1,13 @@
 package checker
 
-import (
-	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "github.com/bmelicque/test-parser/parser"
 
 type Exit struct {
-	Operator tokenizer.Token
+	Operator parser.Token
 	Value    Expression // This may be nil
 }
 
-func (r Exit) Loc() tokenizer.Loc {
+func (r Exit) Loc() parser.Loc {
 	loc := r.Operator.Loc()
 	if r.Value != nil {
 		loc.End = r.Value.Loc().End
@@ -25,16 +22,16 @@ func (c *Checker) checkExitStatement(statement parser.Exit) Exit {
 	}
 
 	operator := statement.Operator.Kind()
-	if operator == tokenizer.CONTINUE_KW && statement.Value != nil {
+	if operator == parser.CONTINUE_KW && statement.Value != nil {
 		c.report("No value expected after 'continue'", statement.Value.Loc())
 	}
-	if operator == tokenizer.RETURN_KW && !c.scope.in(FunctionScope) {
+	if operator == parser.RETURN_KW && !c.scope.in(FunctionScope) {
 		c.report("Cannot return outside of a function", statement.Loc())
 	}
-	if operator == tokenizer.BREAK_KW && !c.scope.in(LoopScope) {
+	if operator == parser.BREAK_KW && !c.scope.in(LoopScope) {
 		c.report("Cannot break outside of a loop", statement.Loc())
 	}
-	if operator == tokenizer.CONTINUE_KW && !c.scope.in(LoopScope) {
+	if operator == parser.CONTINUE_KW && !c.scope.in(LoopScope) {
 		c.report("Cannot continue outside of a loop", statement.Loc())
 	}
 

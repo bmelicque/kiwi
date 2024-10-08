@@ -1,24 +1,22 @@
 package checker
 
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "github.com/bmelicque/test-parser/parser"
 
 type Variable struct {
-	declaredAt tokenizer.Loc
+	declaredAt parser.Loc
 	typing     ExpressionType
-	writes     []tokenizer.Loc
-	reads      []tokenizer.Loc
+	writes     []parser.Loc
+	reads      []parser.Loc
 }
 
-func (v *Variable) readAt(loc tokenizer.Loc)  { v.reads = append(v.reads, loc) }
-func (v *Variable) writeAt(loc tokenizer.Loc) { v.writes = append(v.writes, loc) }
+func (v *Variable) readAt(loc parser.Loc)  { v.reads = append(v.reads, loc) }
+func (v *Variable) writeAt(loc parser.Loc) { v.writes = append(v.writes, loc) }
 
 type Method struct {
 	self       ExpressionType
 	signature  Function
-	declaredAt tokenizer.Loc
-	reads      []tokenizer.Loc
+	declaredAt parser.Loc
+	reads      []parser.Loc
 }
 
 type ScopeKind int8
@@ -92,7 +90,7 @@ func (s Scope) Has(name string) bool {
 	return false
 }
 
-func (s *Scope) Add(name string, declaredAt tokenizer.Loc, typing ExpressionType) {
+func (s *Scope) Add(name string, declaredAt parser.Loc, typing ExpressionType) {
 	if name == "" || name == "_" {
 		return
 	}
@@ -102,11 +100,11 @@ func (s *Scope) Add(name string, declaredAt tokenizer.Loc, typing ExpressionType
 	}
 }
 
-func (s *Scope) AddMethod(name string, declaredAt tokenizer.Loc, self ExpressionType, signature Function) {
-	s.methods[name] = append(s.methods[name], Method{self, signature, declaredAt, []tokenizer.Loc{}})
+func (s *Scope) AddMethod(name string, declaredAt parser.Loc, self ExpressionType, signature Function) {
+	s.methods[name] = append(s.methods[name], Method{self, signature, declaredAt, []parser.Loc{}})
 }
 
-func (s *Scope) WriteAt(name string, loc tokenizer.Loc) {
+func (s *Scope) WriteAt(name string, loc parser.Loc) {
 	variable, ok := s.Find(name)
 	// TODO: panic on error
 	if ok {
@@ -114,7 +112,7 @@ func (s *Scope) WriteAt(name string, loc tokenizer.Loc) {
 	}
 }
 
-func (s *Scope) ReadAt(name string, loc tokenizer.Loc) {
+func (s *Scope) ReadAt(name string, loc parser.Loc) {
 	variable, ok := s.Find(name)
 	// TODO: panic on error
 	if ok {

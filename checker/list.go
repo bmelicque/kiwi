@@ -1,17 +1,14 @@
 package checker
 
-import (
-	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "github.com/bmelicque/test-parser/parser"
 
 type ListTypeExpression struct {
 	Expr  Expression
-	start tokenizer.Position
+	start parser.Position
 }
 
-func (a ListTypeExpression) Loc() tokenizer.Loc {
-	return tokenizer.Loc{Start: a.start, End: a.Expr.Loc().End}
+func (a ListTypeExpression) Loc() parser.Loc {
+	return parser.Loc{Start: a.start, End: a.Expr.Loc().End}
 }
 
 func (a ListTypeExpression) Type() ExpressionType {

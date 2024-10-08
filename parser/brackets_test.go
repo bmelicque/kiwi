@@ -1,15 +1,11 @@
 package parser
 
-import (
-	"testing"
-
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "testing"
 
 func TestEmptyBrackets(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.LBRACKET, "[", tokenizer.Loc{}},
-		testToken{tokenizer.RBRACKET, "]", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LBRACKET},
+		token{kind: RBRACKET},
 	}}
 	parser := MakeParser(&tokenizer)
 	parser.parseBracketedExpression()
@@ -20,10 +16,10 @@ func TestEmptyBrackets(t *testing.T) {
 }
 
 func TestSimpleBracket(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.LBRACKET, "[", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
-		testToken{tokenizer.RBRACKET, "]", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LBRACKET},
+		literal{kind: IDENTIFIER, value: "Type"},
+		token{kind: RBRACKET},
 	}}
 	parser := MakeParser(&tokenizer)
 	parser.parseBracketedExpression()
@@ -34,12 +30,12 @@ func TestSimpleBracket(t *testing.T) {
 }
 
 func TestBracketedTuple(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.LBRACKET, "[", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
-		testToken{tokenizer.COMMA, ",", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
-		testToken{tokenizer.RBRACKET, "]", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LBRACKET},
+		literal{kind: IDENTIFIER, value: "Type"},
+		token{kind: COMMA},
+		literal{kind: IDENTIFIER, value: "Type"},
+		token{kind: RBRACKET},
 	}}
 	parser := MakeParser(&tokenizer)
 	parser.parseBracketedExpression()

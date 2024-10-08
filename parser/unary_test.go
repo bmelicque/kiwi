@@ -1,16 +1,12 @@
 package parser
 
-import (
-	"testing"
-
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "testing"
 
 func TestListTypeExpression(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.LBRACKET},
-		testToken{kind: tokenizer.RBRACKET},
-		testToken{kind: tokenizer.NUM_KW},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LBRACKET},
+		token{kind: RBRACKET},
+		token{kind: NUM_KW},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := ParseExpression(parser)
@@ -29,12 +25,12 @@ func TestListTypeExpression(t *testing.T) {
 }
 
 func TestNestedListTypeExpression(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.LBRACKET},
-		testToken{kind: tokenizer.RBRACKET},
-		testToken{kind: tokenizer.LBRACKET},
-		testToken{kind: tokenizer.RBRACKET},
-		testToken{kind: tokenizer.NUM_KW},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LBRACKET},
+		token{kind: RBRACKET},
+		token{kind: LBRACKET},
+		token{kind: RBRACKET},
+		token{kind: NUM_KW},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := ParseExpression(parser)

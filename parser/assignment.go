@@ -1,23 +1,19 @@
 package parser
 
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
-
 type ExpressionStatement struct {
 	Expr Node
 }
 
-func (s ExpressionStatement) Loc() tokenizer.Loc { return s.Expr.Loc() }
+func (s ExpressionStatement) Loc() Loc { return s.Expr.Loc() }
 
 type Assignment struct {
 	Declared    Node // "value", "Type", "(value: Type).method"
 	Initializer Node
 	Typing      Node
-	Operator    tokenizer.Token // '=', ':=', '::', '+='...
+	Operator    Token // '=', ':=', '::', '+='...
 }
 
-func (a Assignment) Loc() tokenizer.Loc {
+func (a Assignment) Loc() Loc {
 	loc := a.Operator.Loc()
 	if a.Declared != nil {
 		loc.Start = a.Declared.Loc().Start
@@ -34,20 +30,20 @@ func (p *Parser) parseAssignment() Node {
 	expr := ParseExpression(p)
 
 	var typing Node
-	var operator tokenizer.Token
-	next := p.tokenizer.Peek()
+	var operator Token
+	next := p.Peek()
 	switch next.Kind() {
-	case tokenizer.COLON:
-		p.tokenizer.Consume()
+	case COLON:
+		p.Consume()
 		typing = ParseExpression(p)
-		operator = p.tokenizer.Consume()
-		if operator.Kind() != tokenizer.ASSIGN {
+		operator = p.Consume()
+		if operator.Kind() != ASSIGN {
 			p.report("'=' expected", operator.Loc())
 		}
-	case tokenizer.DECLARE,
-		tokenizer.DEFINE,
-		tokenizer.ASSIGN:
-		operator = p.tokenizer.Consume()
+	case DECLARE,
+		DEFINE,
+		ASSIGN:
+		operator = p.Consume()
 	default:
 		return ExpressionStatement{expr}
 	}

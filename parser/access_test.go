@@ -1,17 +1,13 @@
 package parser
 
-import (
-	"testing"
-
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "testing"
 
 func TestComputedPropertyAccess(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.IDENTIFIER, "n", tokenizer.Loc{}},
-		testToken{tokenizer.LBRACKET, "[", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "p", tokenizer.Loc{}},
-		testToken{tokenizer.RBRACKET, "]", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		literal{kind: IDENTIFIER, value: "n"},
+		token{kind: LBRACKET},
+		literal{kind: IDENTIFIER, value: "p"},
+		token{kind: RBRACKET},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAccessExpression()
@@ -29,10 +25,10 @@ func TestComputedPropertyAccess(t *testing.T) {
 }
 
 func TestPropertyAccess(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.IDENTIFIER, "n", tokenizer.Loc{}},
-		testToken{tokenizer.DOT, ".", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "p", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		literal{kind: IDENTIFIER, value: "n"},
+		token{kind: DOT},
+		literal{kind: IDENTIFIER, value: "p"},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAccessExpression()
@@ -50,10 +46,10 @@ func TestPropertyAccess(t *testing.T) {
 }
 
 func TestTupleAccess(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.IDENTIFIER, value: "tuple"},
-		testToken{kind: tokenizer.DOT},
-		testToken{kind: tokenizer.NUMBER, value: "0"},
+	tokenizer := testTokenizer{tokens: []Token{
+		literal{kind: IDENTIFIER, value: "tuple"},
+		token{kind: DOT},
+		literal{kind: NUMBER, value: "0"},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAccessExpression()
@@ -71,13 +67,13 @@ func TestTupleAccess(t *testing.T) {
 }
 
 func TestMethodAccess(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.LPAREN, "(", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "t", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
-		testToken{tokenizer.RPAREN, ")", tokenizer.Loc{}},
-		testToken{tokenizer.DOT, ".", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "method", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LPAREN},
+		literal{kind: IDENTIFIER, value: "t"},
+		literal{kind: IDENTIFIER, value: "Type"},
+		token{kind: RPAREN},
+		token{kind: DOT},
+		literal{kind: IDENTIFIER, value: "method"},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAccessExpression()
@@ -97,18 +93,18 @@ func TestMethodAccess(t *testing.T) {
 }
 
 func TestTraitDefinition(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.LPAREN},
-		testToken{kind: tokenizer.IDENTIFIER, value: "Self"},
-		testToken{kind: tokenizer.RPAREN},
-		testToken{kind: tokenizer.DOT},
-		testToken{kind: tokenizer.LPAREN},
-		testToken{kind: tokenizer.IDENTIFIER, value: "method"},
-		testToken{kind: tokenizer.LPAREN},
-		testToken{kind: tokenizer.RPAREN},
-		testToken{kind: tokenizer.SLIM_ARR},
-		testToken{kind: tokenizer.IDENTIFIER, value: "Self"},
-		testToken{kind: tokenizer.RPAREN},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LPAREN},
+		literal{kind: IDENTIFIER, value: "Self"},
+		token{kind: RPAREN},
+		token{kind: DOT},
+		token{kind: LPAREN},
+		literal{kind: IDENTIFIER, value: "method"},
+		token{kind: LPAREN},
+		token{kind: RPAREN},
+		token{kind: SLIM_ARR},
+		literal{kind: IDENTIFIER, value: "Self"},
+		token{kind: RPAREN},
 	}}
 
 	parser := MakeParser(&tokenizer)
@@ -133,11 +129,11 @@ func TestTraitDefinition(t *testing.T) {
 }
 
 func TestFunctionCall(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.IDENTIFIER, "f", tokenizer.Loc{}},
-		testToken{tokenizer.LPAREN, "(", tokenizer.Loc{}},
-		testToken{tokenizer.NUMBER, "42", tokenizer.Loc{}},
-		testToken{tokenizer.RPAREN, ")", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		literal{kind: IDENTIFIER, value: "f"},
+		token{kind: LPAREN},
+		literal{kind: NUMBER, value: "42"},
+		token{kind: RPAREN},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAccessExpression()
@@ -152,14 +148,14 @@ func TestFunctionCall(t *testing.T) {
 }
 
 func TestFunctionCallWithTypeArgs(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.IDENTIFIER, "f", tokenizer.Loc{}},
-		testToken{tokenizer.LBRACKET, "[", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "number", tokenizer.Loc{}},
-		testToken{tokenizer.RBRACKET, "]", tokenizer.Loc{}},
-		testToken{tokenizer.LPAREN, "(", tokenizer.Loc{}},
-		testToken{tokenizer.NUMBER, "42", tokenizer.Loc{}},
-		testToken{tokenizer.RPAREN, ")", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		literal{kind: IDENTIFIER, value: "f"},
+		token{kind: LBRACKET},
+		token{kind: NUM_KW},
+		token{kind: RBRACKET},
+		token{kind: LPAREN},
+		literal{kind: NUMBER, value: "42"},
+		token{kind: RPAREN},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAccessExpression()
@@ -176,13 +172,13 @@ func TestFunctionCallWithTypeArgs(t *testing.T) {
 }
 
 func TestObjectExpression(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.IDENTIFIER, value: "Type"},
-		testToken{kind: tokenizer.LPAREN},
-		testToken{kind: tokenizer.IDENTIFIER, value: "value"},
-		testToken{kind: tokenizer.COLON},
-		testToken{kind: tokenizer.NUMBER, value: "42"},
-		testToken{kind: tokenizer.RPAREN},
+	tokenizer := testTokenizer{tokens: []Token{
+		literal{kind: IDENTIFIER, value: "Type"},
+		token{kind: LPAREN},
+		literal{kind: IDENTIFIER, value: "value"},
+		token{kind: COLON},
+		literal{kind: NUMBER, value: "42"},
+		token{kind: RPAREN},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := ParseExpression(parser)
@@ -197,15 +193,15 @@ func TestObjectExpression(t *testing.T) {
 }
 
 func TestListInstanciation(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.LBRACKET},
-		testToken{kind: tokenizer.RBRACKET},
-		testToken{kind: tokenizer.NUM_KW},
-		testToken{kind: tokenizer.LPAREN},
-		testToken{kind: tokenizer.NUMBER, value: "1"},
-		testToken{kind: tokenizer.COMMA},
-		testToken{kind: tokenizer.NUMBER, value: "2"},
-		testToken{kind: tokenizer.RPAREN},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LBRACKET},
+		token{kind: RBRACKET},
+		token{kind: NUM_KW},
+		token{kind: LPAREN},
+		literal{kind: NUMBER, value: "1"},
+		token{kind: COMMA},
+		literal{kind: NUMBER, value: "2"},
+		token{kind: RPAREN},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := ParseExpression(parser)

@@ -1,15 +1,11 @@
 package parser
 
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
-
 type Exit struct {
-	Operator tokenizer.Token
+	Operator Token
 	Value    Node
 }
 
-func (r Exit) Loc() tokenizer.Loc {
+func (r Exit) Loc() Loc {
 	loc := r.Operator.Loc()
 	if r.Value != nil {
 		loc.End = r.Value.Loc().End
@@ -18,9 +14,9 @@ func (r Exit) Loc() tokenizer.Loc {
 }
 
 func (p *Parser) parseExit() Exit {
-	keyword := p.tokenizer.Consume()
+	keyword := p.Consume()
 
-	if p.tokenizer.Peek().Kind() == tokenizer.EOL {
+	if p.Peek().Kind() == EOL {
 		return Exit{keyword, nil}
 	}
 

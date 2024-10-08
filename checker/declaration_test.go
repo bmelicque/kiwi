@@ -4,15 +4,14 @@ import (
 	"testing"
 
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 func TestSimpleDeclaration(t *testing.T) {
 	checker := MakeChecker()
 	assignment := checker.checkVariableDeclaration(parser.Assignment{
-		Declared:    parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "n", tokenizer.Loc{}}},
-		Initializer: parser.TokenExpression{Token: testToken{tokenizer.NUMBER, "42", tokenizer.Loc{}}},
-		Operator:    testToken{tokenizer.ASSIGN, ":=", tokenizer.Loc{}},
+		Declared:    parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "n", parser.Loc{}}},
+		Initializer: parser.TokenExpression{Token: testToken{parser.NUMBER, "42", parser.Loc{}}},
+		Operator:    testToken{parser.ASSIGN, ":=", parser.Loc{}},
 	})
 
 	if len(checker.errors) != 0 {
@@ -31,17 +30,17 @@ func TestTupleDeclaration(t *testing.T) {
 	assignment := checker.checkVariableDeclaration(parser.Assignment{
 		Declared: parser.TupleExpression{
 			Elements: []parser.Node{
-				parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "n", tokenizer.Loc{}}},
-				parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "s", tokenizer.Loc{}}},
+				parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "n", parser.Loc{}}},
+				parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "s", parser.Loc{}}},
 			},
 		},
 		Initializer: parser.TupleExpression{
 			Elements: []parser.Node{
-				parser.TokenExpression{Token: testToken{tokenizer.NUMBER, "1", tokenizer.Loc{}}},
-				parser.TokenExpression{Token: testToken{tokenizer.STRING, "\"string\"", tokenizer.Loc{}}},
+				parser.TokenExpression{Token: testToken{parser.NUMBER, "1", parser.Loc{}}},
+				parser.TokenExpression{Token: testToken{parser.STRING, "\"string\"", parser.Loc{}}},
 			},
 		},
-		Operator: testToken{tokenizer.ASSIGN, ":=", tokenizer.Loc{}},
+		Operator: testToken{parser.ASSIGN, ":=", parser.Loc{}},
 	})
 
 	if len(checker.errors) != 0 {

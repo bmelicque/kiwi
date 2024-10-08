@@ -1,24 +1,20 @@
 package parser
 
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
-
 type TokenExpression struct {
-	tokenizer.Token
+	Token
 }
 
-func (t TokenExpression) Loc() tokenizer.Loc { return t.Token.Loc() }
+func (t TokenExpression) Loc() Loc { return t.Token.Loc() }
 
 func (p *Parser) parseTokenExpression() Node {
-	token := p.tokenizer.Peek()
+	token := p.Peek()
 	switch token.Kind() {
-	case tokenizer.BOOLEAN, tokenizer.NUMBER, tokenizer.STRING, tokenizer.IDENTIFIER, tokenizer.BOOL_KW, tokenizer.NUM_KW, tokenizer.STR_KW:
-		p.tokenizer.Consume()
+	case BOOLEAN, NUMBER, STRING, IDENTIFIER, BOOL_KW, NUM_KW, STR_KW:
+		p.Consume()
 		return TokenExpression{token}
 	}
 	if !p.allowEmptyExpr {
-		p.tokenizer.Consume()
+		p.Consume()
 		p.report("Expression expected", token.Loc())
 	}
 	return nil

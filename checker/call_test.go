@@ -5,14 +5,13 @@ import (
 	"testing"
 
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 func TestFunctionCall(t *testing.T) {
 	checker := MakeChecker()
-	checker.scope.Add("function", tokenizer.Loc{}, Function{[]Generic{}, Tuple{}, Primitive{NUMBER}})
+	checker.scope.Add("function", parser.Loc{}, Function{[]Generic{}, Tuple{}, Primitive{NUMBER}})
 	expr := checker.checkCallExpression(parser.CallExpression{
-		Callee: parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "function", tokenizer.Loc{}}},
+		Callee: parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "function", parser.Loc{}}},
 		Args:   parser.ParenthesizedExpression{Expr: nil},
 	})
 
@@ -29,7 +28,7 @@ func TestGenericFunctionCall(t *testing.T) {
 	checker := MakeChecker()
 	checker.scope.Add(
 		"function",
-		tokenizer.Loc{},
+		parser.Loc{},
 		Function{
 			[]Generic{{Name: "Type"}},
 			Tuple{[]ExpressionType{Generic{Name: "Type"}}},
@@ -37,9 +36,9 @@ func TestGenericFunctionCall(t *testing.T) {
 		},
 	)
 	expr := checker.checkCallExpression(parser.CallExpression{
-		Callee: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "function"}},
+		Callee: parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "function"}},
 		Args: parser.ParenthesizedExpression{
-			Expr: parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "42"}},
+			Expr: parser.TokenExpression{Token: testToken{kind: parser.NUMBER, value: "42"}},
 		},
 	})
 

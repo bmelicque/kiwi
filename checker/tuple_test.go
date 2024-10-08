@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 func TestObjectType(t *testing.T) {
@@ -13,12 +12,12 @@ func TestObjectType(t *testing.T) {
 	tuple := checker.checkTuple(parser.TupleExpression{
 		Elements: []parser.Node{
 			parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "n"}},
-				Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.NUM_KW}},
+				Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "n"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: parser.NUM_KW}},
 			},
 			parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "s"}},
-				Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.STR_KW}},
+				Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "s"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: parser.STR_KW}},
 			},
 		},
 	})
@@ -54,12 +53,12 @@ func TestObjectTypeDuplicates(t *testing.T) {
 	checker.checkTuple(parser.TupleExpression{
 		Elements: []parser.Node{
 			parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "n"}},
-				Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.NUM_KW}},
+				Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "n"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: parser.NUM_KW}},
 			},
 			parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "n"}},
-				Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.NUM_KW}},
+				Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "n"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: parser.NUM_KW}},
 			},
 		},
 	})
@@ -76,10 +75,10 @@ func TestTupleConsistency(t *testing.T) {
 	checker.checkTuple(parser.TupleExpression{
 		Elements: []parser.Node{
 			parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "n"}},
-				Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.NUM_KW}},
+				Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "n"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: parser.NUM_KW}},
 			},
-			parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "42"}},
+			parser.TokenExpression{Token: testToken{kind: parser.NUMBER, value: "42"}},
 		},
 	})
 

@@ -1,17 +1,14 @@
 package checker
 
-import (
-	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "github.com/bmelicque/test-parser/parser"
 
 type Block struct {
 	Statements []Node
-	loc        tokenizer.Loc
+	loc        parser.Loc
 }
 
-func (b Block) Loc() tokenizer.Loc { return b.loc }
-func (b Block) reportLoc() tokenizer.Loc {
+func (b Block) Loc() parser.Loc { return b.loc }
+func (b Block) reportLoc() parser.Loc {
 	if len(b.Statements) > 0 {
 		return b.Statements[len(b.Statements)-1].Loc()
 	} else {
@@ -45,10 +42,10 @@ func (c *Checker) checkBlock(block parser.Block) Block {
 
 func reportUnreachableCode(c *Checker, statements []Node) {
 	var foundExit bool
-	var unreachable tokenizer.Loc
+	var unreachable parser.Loc
 	for _, statement := range statements {
 		if foundExit {
-			if unreachable.Start == (tokenizer.Position{}) {
+			if unreachable.Start == (parser.Position{}) {
 				unreachable.Start = statement.Loc().Start
 			}
 			unreachable.End = statement.Loc().End
@@ -57,7 +54,7 @@ func reportUnreachableCode(c *Checker, statements []Node) {
 			foundExit = true
 		}
 	}
-	if unreachable != (tokenizer.Loc{}) {
+	if unreachable != (parser.Loc{}) {
 		c.report("Detected unreachable code", unreachable)
 	}
 }

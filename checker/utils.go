@@ -1,9 +1,6 @@
 package checker
 
-import (
-	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "github.com/bmelicque/test-parser/parser"
 
 func (c *Checker) addTypeArgsToScope(args *TupleExpression, params []Generic) {
 	var l int
@@ -18,7 +15,7 @@ func (c *Checker) addTypeArgsToScope(args *TupleExpression, params []Generic) {
 	}
 
 	for i, param := range params {
-		var loc tokenizer.Loc
+		var loc parser.Loc
 		var t ExpressionType
 		if i < l {
 			arg := args.Elements[i]

@@ -4,16 +4,15 @@ import (
 	"fmt"
 
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 type TupleExpression struct {
 	Elements []Expression
 	typing   ExpressionType
-	loc      tokenizer.Loc
+	loc      parser.Loc
 }
 
-func (t TupleExpression) Loc() tokenizer.Loc   { return t.loc }
+func (t TupleExpression) Loc() parser.Loc      { return t.loc }
 func (t TupleExpression) Type() ExpressionType { return t.typing }
 
 func (c *Checker) checkTuple(tuple parser.TupleExpression) TupleExpression {
@@ -55,7 +54,7 @@ func checkTupleElementDuplicates(c *Checker, elements []Expression) {
 	if len(elements) == 0 {
 		return
 	}
-	params := map[string][]tokenizer.Loc{}
+	params := map[string][]parser.Loc{}
 	for _, el := range elements {
 		param, ok := el.(Param)
 		if !ok {

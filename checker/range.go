@@ -2,17 +2,16 @@ package checker
 
 import (
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 type RangeExpression struct {
 	Left     Expression
 	Right    Expression
-	Operator tokenizer.Token
+	Operator parser.Token
 }
 
-func (r RangeExpression) Loc() tokenizer.Loc {
-	var loc tokenizer.Loc
+func (r RangeExpression) Loc() parser.Loc {
+	var loc parser.Loc
 	if r.Left != nil {
 		loc.Start = r.Left.Loc().Start
 	} else {
@@ -49,7 +48,7 @@ func (c *Checker) checkRangeExpression(expr parser.RangeExpression) RangeExpress
 		c.report("Types don't match", expr.Loc())
 	}
 
-	if expr.Operator.Kind() == tokenizer.RANGE_INCLUSIVE && expr.Right == nil {
+	if expr.Operator.Kind() == parser.RANGE_INCLUSIVE && expr.Right == nil {
 		c.report("Expected right operand", expr.Operator.Loc())
 	}
 

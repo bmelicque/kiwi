@@ -2,8 +2,6 @@ package parser
 
 import (
 	"slices"
-
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 // Expr[Property]
@@ -12,8 +10,8 @@ type ComputedAccessExpression struct {
 	Property BracketedExpression
 }
 
-func (c ComputedAccessExpression) Loc() tokenizer.Loc {
-	return tokenizer.Loc{
+func (c ComputedAccessExpression) Loc() Loc {
+	return Loc{
 		Start: c.Expr.Loc().Start,
 		End:   c.Property.loc.End,
 	}
@@ -25,8 +23,8 @@ type CallExpression struct {
 	Args   ParenthesizedExpression
 }
 
-func (c CallExpression) Loc() tokenizer.Loc {
-	return tokenizer.Loc{
+func (c CallExpression) Loc() Loc {
+	return Loc{
 		Start: c.Callee.Loc().Start,
 		End:   c.Args.loc.End,
 	}
@@ -38,21 +36,21 @@ type PropertyAccessExpression struct {
 	Property Node
 }
 
-func (p PropertyAccessExpression) Loc() tokenizer.Loc {
-	return tokenizer.Loc{
+func (p PropertyAccessExpression) Loc() Loc {
+	return Loc{
 		Start: p.Expr.Loc().Start,
 		End:   p.Property.Loc().End,
 	}
 }
 
-var operators = []tokenizer.TokenKind{tokenizer.LBRACKET, tokenizer.LPAREN, tokenizer.DOT, tokenizer.LBRACE}
+var operators = []TokenKind{LBRACKET, LPAREN, DOT, LBRACE}
 
 func (p *Parser) parseAccessExpression() Node {
 	expression := fallback(p)
-	for slices.Contains(operators, p.tokenizer.Peek().Kind()) {
-		next := p.tokenizer.Peek().Kind()
-		isForbidden := next == tokenizer.LBRACE && !p.allowBraceParsing ||
-			next == tokenizer.LPAREN && !p.allowCallExpr
+	for slices.Contains(operators, p.Peek().Kind()) {
+		next := p.Peek().Kind()
+		isForbidden := next == LBRACE && !p.allowBraceParsing ||
+			next == LPAREN && !p.allowCallExpr
 		if isForbidden {
 			return expression
 		}
@@ -62,14 +60,14 @@ func (p *Parser) parseAccessExpression() Node {
 }
 
 func parseOneAccess(p *Parser, expr Node) Node {
-	next := p.tokenizer.Peek()
+	next := p.Peek()
 	switch next.Kind() {
-	case tokenizer.LBRACKET:
+	case LBRACKET:
 		return ComputedAccessExpression{expr, p.parseBracketedExpression()}
-	case tokenizer.LPAREN:
+	case LPAREN:
 		return CallExpression{expr, p.parseParenthesizedExpression()}
-	case tokenizer.DOT:
-		p.tokenizer.Consume()
+	case DOT:
+		p.Consume()
 		tmp := p.allowCallExpr
 		p.allowCallExpr = false
 		property := fallback(p)

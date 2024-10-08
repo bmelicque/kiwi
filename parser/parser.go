@@ -1,12 +1,8 @@
 package parser
 
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
-
 type ParserError struct {
 	Message string
-	Loc     tokenizer.Loc
+	Loc     Loc
 }
 
 func (e ParserError) Error() string {
@@ -14,7 +10,7 @@ func (e ParserError) Error() string {
 }
 
 type Parser struct {
-	tokenizer         tokenizer.Tokenizer
+	Tokenizer
 	errors            []ParserError
 	multiline         bool
 	allowEmptyExpr    bool
@@ -22,27 +18,27 @@ type Parser struct {
 	allowCallExpr     bool
 }
 
-func (p *Parser) report(message string, loc tokenizer.Loc) {
+func (p *Parser) report(message string, loc Loc) {
 	p.errors = append(p.errors, ParserError{message, loc})
 }
 func (p Parser) GetReport() []ParserError {
 	return p.errors
 }
 
-func MakeParser(tokenizer tokenizer.Tokenizer) *Parser {
-	return &Parser{tokenizer: tokenizer, allowBraceParsing: true, allowCallExpr: true}
+func MakeParser(tokenizer Tokenizer) *Parser {
+	return &Parser{Tokenizer: tokenizer, allowBraceParsing: true, allowCallExpr: true}
 }
 
 func (p *Parser) ParseProgram() []Node {
 	statements := []Node{}
 
-	for p.tokenizer.Peek().Kind() != tokenizer.EOF {
+	for p.Peek().Kind() != EOF {
 		statements = append(statements, p.parseStatement())
-		next := p.tokenizer.Peek().Kind()
-		if next == tokenizer.EOL {
-			p.tokenizer.DiscardLineBreaks()
-		} else if next != tokenizer.EOF {
-			p.report("End of line expected", p.tokenizer.Peek().Loc())
+		next := p.Peek().Kind()
+		if next == EOL {
+			p.DiscardLineBreaks()
+		} else if next != EOF {
+			p.report("End of line expected", p.Peek().Loc())
 		}
 	}
 
@@ -50,9 +46,9 @@ func (p *Parser) ParseProgram() []Node {
 }
 
 func (p *Parser) parseStatement() Node {
-	switch p.tokenizer.Peek().Kind() {
+	switch p.Peek().Kind() {
 
-	case tokenizer.BREAK_KW, tokenizer.CONTINUE_KW, tokenizer.RETURN_KW:
+	case BREAK_KW, CONTINUE_KW, RETURN_KW:
 		return p.parseExit()
 	default:
 		return p.parseAssignment()
@@ -60,12 +56,12 @@ func (p *Parser) parseStatement() Node {
 }
 
 func ParseExpression(p *Parser) Node {
-	switch p.tokenizer.Peek().Kind() {
-	case tokenizer.FOR_KW:
+	switch p.Peek().Kind() {
+	case FOR_KW:
 		return p.parseForExpression()
-	case tokenizer.IF_KW:
+	case IF_KW:
 		return p.parseIf()
-	case tokenizer.MATCH_KW:
+	case MATCH_KW:
 		return p.parseMatchExpression()
 	default:
 		return p.parseTupleExpression()

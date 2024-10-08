@@ -5,7 +5,7 @@ import (
 	"unicode"
 
 	"github.com/bmelicque/test-parser/checker"
-	"github.com/bmelicque/test-parser/tokenizer"
+	"github.com/bmelicque/test-parser/parser"
 )
 
 const maxClassParamsLength = 66
@@ -146,11 +146,11 @@ func (e *Emitter) emitMethodDeclaration(method checker.MethodDeclaration) {
 
 func (e *Emitter) emitExit(r checker.Exit) {
 	switch r.Operator.Kind() {
-	case tokenizer.RETURN_KW:
+	case parser.RETURN_KW:
 		e.write("return")
-	case tokenizer.BREAK_KW:
+	case parser.BREAK_KW:
 		e.write("break")
-	case tokenizer.CONTINUE_KW:
+	case parser.CONTINUE_KW:
 		e.write("continue")
 	}
 	if r.Value != nil {

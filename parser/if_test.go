@@ -1,22 +1,18 @@
 package parser
 
-import (
-	"testing"
-
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "testing"
 
 func TestIf(t *testing.T) {
 	// if n == 2 { return 1 }
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.IF_KW},
-		testToken{kind: tokenizer.IDENTIFIER, value: "n"},
-		testToken{kind: tokenizer.EQ},
-		testToken{kind: tokenizer.NUMBER, value: "2"},
-		testToken{kind: tokenizer.LBRACE},
-		testToken{kind: tokenizer.RETURN_KW},
-		testToken{kind: tokenizer.NUMBER, value: "1"},
-		testToken{kind: tokenizer.RBRACE},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: IF_KW},
+		literal{kind: IDENTIFIER, value: "n"},
+		token{kind: EQ},
+		literal{kind: NUMBER, value: "2"},
+		token{kind: LBRACE},
+		token{kind: RETURN_KW},
+		literal{kind: NUMBER, value: "1"},
+		token{kind: RBRACE},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseIf()
@@ -32,15 +28,15 @@ func TestIf(t *testing.T) {
 
 func TestIfElse(t *testing.T) {
 	// if false {} else { true }
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.IF_KW},
-		testToken{kind: tokenizer.BOOLEAN, value: "false"},
-		testToken{kind: tokenizer.LBRACE},
-		testToken{kind: tokenizer.RBRACE},
-		testToken{kind: tokenizer.ELSE_KW},
-		testToken{kind: tokenizer.LBRACE},
-		testToken{kind: tokenizer.BOOLEAN, value: "true"},
-		testToken{kind: tokenizer.RBRACE},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: IF_KW},
+		literal{kind: BOOLEAN, value: "false"},
+		token{kind: LBRACE},
+		token{kind: RBRACE},
+		token{kind: ELSE_KW},
+		token{kind: LBRACE},
+		literal{kind: BOOLEAN, value: "true"},
+		token{kind: RBRACE},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseIf()
@@ -66,16 +62,16 @@ func TestIfElse(t *testing.T) {
 
 func TestIfElseIf(t *testing.T) {
 	// if false {} else if true {}
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.IF_KW},
-		testToken{kind: tokenizer.BOOLEAN, value: "false"},
-		testToken{kind: tokenizer.LBRACE},
-		testToken{kind: tokenizer.RBRACE},
-		testToken{kind: tokenizer.ELSE_KW},
-		testToken{kind: tokenizer.IF_KW},
-		testToken{kind: tokenizer.BOOLEAN, value: "true"},
-		testToken{kind: tokenizer.LBRACE},
-		testToken{kind: tokenizer.RBRACE},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: IF_KW},
+		literal{kind: BOOLEAN, value: "false"},
+		token{kind: LBRACE},
+		token{kind: RBRACE},
+		token{kind: ELSE_KW},
+		token{kind: IF_KW},
+		literal{kind: BOOLEAN, value: "true"},
+		token{kind: LBRACE},
+		token{kind: RBRACE},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseIf()

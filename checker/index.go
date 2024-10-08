@@ -5,7 +5,6 @@ import (
 	"reflect"
 
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 type CheckerError parser.ParserError
@@ -23,7 +22,7 @@ type Checker struct {
 	scope  *Scope
 }
 
-func (c *Checker) report(message string, loc tokenizer.Loc) {
+func (c *Checker) report(message string, loc parser.Loc) {
 	c.errors = append(c.errors, CheckerError{message, loc})
 }
 func (c Checker) GetReport() []CheckerError {
@@ -84,10 +83,10 @@ func (c *Checker) Check(node parser.Node) Node {
 	switch node := node.(type) {
 	case parser.Assignment:
 		operator := node.Operator.Kind()
-		if operator == tokenizer.DEFINE {
+		if operator == parser.DEFINE {
 			return c.checkDefinition(node)
 		}
-		if operator != tokenizer.DECLARE {
+		if operator != parser.DECLARE {
 			return c.checkAssignment(node)
 		}
 		return c.checkVariableDeclaration(node)

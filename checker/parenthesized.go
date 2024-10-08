@@ -4,16 +4,15 @@ import (
 	"fmt"
 
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 // (Expression)
 type ParenthesizedExpression struct {
 	Expr Expression
-	loc  tokenizer.Loc
+	loc  parser.Loc
 }
 
-func (p ParenthesizedExpression) Loc() tokenizer.Loc { return p.loc }
+func (p ParenthesizedExpression) Loc() parser.Loc { return p.loc }
 func (p ParenthesizedExpression) Type() ExpressionType {
 	if p.Expr == nil {
 		return Primitive{NIL}
@@ -39,10 +38,10 @@ func (c *Checker) checkParenthesizedExpression(node parser.ParenthesizedExpressi
 // (param ParamType, otherParam OtherParamType)
 type Params struct {
 	Params []Param
-	loc    tokenizer.Loc
+	loc    parser.Loc
 }
 
-func (p Params) Loc() tokenizer.Loc { return p.loc }
+func (p Params) Loc() parser.Loc { return p.loc }
 
 // FIXME: object
 func (p Params) Type() ExpressionType {
@@ -91,7 +90,7 @@ func checkParamList(c *Checker, node parser.Node, checkSingle func(parser.Node) 
 	return params
 }
 func checkParamDuplicates(c *Checker, params []Param) {
-	declarations := map[string][]tokenizer.Loc{}
+	declarations := map[string][]parser.Loc{}
 	for _, param := range params {
 		name := param.Identifier.Text()
 		if name != "" {
@@ -112,10 +111,10 @@ func checkParamDuplicates(c *Checker, params []Param) {
 type Param struct {
 	Identifier Identifier
 	Complement Expression // Type for params, value for arguments
-	loc        tokenizer.Loc
+	loc        parser.Loc
 }
 
-func (p Param) Loc() tokenizer.Loc { return p.loc }
+func (p Param) Loc() parser.Loc { return p.loc }
 func (p Param) Type() ExpressionType {
 	if p.Complement == nil {
 		return Primitive{UNKNOWN}

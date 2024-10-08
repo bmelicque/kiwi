@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 type PropertyAccessExpression struct {
@@ -14,8 +13,8 @@ type PropertyAccessExpression struct {
 	typing   ExpressionType
 }
 
-func (p PropertyAccessExpression) Loc() tokenizer.Loc {
-	return tokenizer.Loc{
+func (p PropertyAccessExpression) Loc() parser.Loc {
+	return parser.Loc{
 		Start: p.Expr.Loc().Start,
 		End:   p.Property.Loc().End,
 	}
@@ -27,8 +26,8 @@ type TraitExpression struct {
 	Def      ParenthesizedExpression
 }
 
-func (t TraitExpression) Loc() tokenizer.Loc {
-	return tokenizer.Loc{
+func (t TraitExpression) Loc() parser.Loc {
+	return parser.Loc{
 		Start: t.Receiver.loc.Start,
 		End:   t.Def.loc.End,
 	}

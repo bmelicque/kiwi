@@ -1,18 +1,14 @@
 package parser
 
-import (
-	"testing"
-
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "testing"
 
 func TestSumType(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.BOR, "|", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "Some", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
-		testToken{tokenizer.BOR, "|", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "None", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: BOR},
+		literal{kind: IDENTIFIER, value: "Some"},
+		literal{kind: IDENTIFIER, value: "Type"},
+		token{kind: BOR},
+		literal{kind: IDENTIFIER, value: "None"},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseSumType()

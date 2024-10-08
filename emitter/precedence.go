@@ -2,7 +2,7 @@ package emitter
 
 import (
 	"github.com/bmelicque/test-parser/checker"
-	"github.com/bmelicque/test-parser/tokenizer"
+	"github.com/bmelicque/test-parser/parser"
 )
 
 func Precedence(expr checker.Expression) uint8 {
@@ -11,19 +11,19 @@ func Precedence(expr checker.Expression) uint8 {
 		return 1
 	case checker.BinaryExpression:
 		switch expr.Operator.Kind() {
-		case tokenizer.LOR:
+		case parser.LOR:
 			return 4
-		case tokenizer.LAND:
+		case parser.LAND:
 			return 5
-		case tokenizer.EQ, tokenizer.NEQ:
+		case parser.EQ, parser.NEQ:
 			return 9
-		case tokenizer.GREATER, tokenizer.GEQ, tokenizer.LESS, tokenizer.LEQ:
+		case parser.GREATER, parser.GEQ, parser.LESS, parser.LEQ:
 			return 10
-		case tokenizer.ADD, tokenizer.SUB:
+		case parser.ADD, parser.SUB:
 			return 12
-		case tokenizer.MUL, tokenizer.DIV, tokenizer.MOD:
+		case parser.MUL, parser.DIV, parser.MOD:
 			return 13
-		case tokenizer.POW:
+		case parser.POW:
 			return 14
 		}
 	case checker.CallExpression, checker.PropertyAccessExpression:

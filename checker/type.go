@@ -1,8 +1,6 @@
 package checker
 
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "github.com/bmelicque/test-parser/parser"
 
 type ExpressionTypeKind int
 
@@ -113,7 +111,7 @@ func (ta TypeAlias) build(scope *Scope, compared ExpressionType) (ExpressionType
 	s := NewScope(ProgramScope)
 	s.outer = scope
 	for _, param := range ta.Params {
-		s.Add(param.Name, tokenizer.Loc{}, param)
+		s.Add(param.Name, parser.Loc{}, param)
 	}
 	var ref ExpressionType
 	if c, ok := compared.(TypeAlias); ok {
@@ -284,7 +282,7 @@ func (f Function) build(scope *Scope, compared ExpressionType) (ExpressionType, 
 	s := NewScope(ProgramScope)
 	s.outer = scope
 	for _, param := range f.TypeParams {
-		s.Add(param.Name, tokenizer.Loc{}, param)
+		s.Add(param.Name, parser.Loc{}, param)
 	}
 	c, k := compared.(Function)
 	f.Params = Tuple{make([]ExpressionType, len(f.Params.elements))}
@@ -438,7 +436,7 @@ func (g Generic) build(scope *Scope, compared ExpressionType) (ExpressionType, b
 	if !ok {
 		return Primitive{UNKNOWN}, false
 	}
-	variable.readAt(tokenizer.Loc{})
+	variable.readAt(parser.Loc{})
 	ok = isGenericType(variable.typing)
 	if !ok {
 		return variable.typing, true

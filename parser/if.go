@@ -1,25 +1,21 @@
 package parser
 
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
-
 type IfElse struct {
-	Keyword   tokenizer.Token
+	Keyword   Token
 	Condition Node
 	Alternate Node // IfElse | Body
 	Body      *Block
 }
 
-func (i IfElse) Loc() tokenizer.Loc {
-	return tokenizer.Loc{
+func (i IfElse) Loc() Loc {
+	return Loc{
 		Start: i.Keyword.Loc().Start,
 		End:   i.Body.Loc().End,
 	}
 }
 
 func (p *Parser) parseIf() Node {
-	keyword := p.tokenizer.Consume()
+	keyword := p.Consume()
 	outer := p.allowBraceParsing
 	p.allowBraceParsing = false
 	condition := ParseExpression(p)
@@ -30,17 +26,17 @@ func (p *Parser) parseIf() Node {
 }
 
 func parseAlternate(p *Parser) Node {
-	if p.tokenizer.Peek().Kind() != tokenizer.ELSE_KW {
+	if p.Peek().Kind() != ELSE_KW {
 		return nil
 	}
-	p.tokenizer.Consume() // "else"
-	switch p.tokenizer.Peek().Kind() {
-	case tokenizer.IF_KW:
+	p.Consume() // "else"
+	switch p.Peek().Kind() {
+	case IF_KW:
 		return p.parseIf()
-	case tokenizer.LBRACE:
+	case LBRACE:
 		return *p.parseBlock()
 	default:
-		p.report("Block expected", p.tokenizer.Peek().Loc())
+		p.report("Block expected", p.Peek().Loc())
 		return nil
 	}
 }

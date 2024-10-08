@@ -4,19 +4,18 @@ import (
 	"testing"
 
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 func TestGenericWithTypeArgs(t *testing.T) {
 	checker := MakeChecker()
-	checker.scope.Add("Generic", tokenizer.Loc{}, Type{TypeAlias{
+	checker.scope.Add("Generic", parser.Loc{}, Type{TypeAlias{
 		Name:   "Generic",
 		Params: []Generic{{Name: "Type"}},
 		Ref:    Object{map[string]ExpressionType{"value": Type{Generic{Name: "Type"}}}},
 	}})
 	expr := checker.checkComputedAccessExpression(parser.ComputedAccessExpression{
-		Expr:     parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "Generic", tokenizer.Loc{}}},
-		Property: parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{tokenizer.NUM_KW, "number", tokenizer.Loc{}}}},
+		Expr:     parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "Generic", parser.Loc{}}},
+		Property: parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{parser.NUM_KW, "number", parser.Loc{}}}},
 	})
 
 	if len(checker.errors) != 0 {
@@ -59,15 +58,15 @@ func TestGenericWithTypeArgs(t *testing.T) {
 
 func TestGenericFunctionWithTypeArgs(t *testing.T) {
 	checker := MakeChecker()
-	checker.scope.Add("function", tokenizer.Loc{}, Function{
+	checker.scope.Add("function", parser.Loc{}, Function{
 		TypeParams: []Generic{{Name: "Type"}},
 		Params:     Tuple{[]ExpressionType{Generic{Name: "Type"}}},
 		Returned:   Generic{Name: "Type"},
 	})
 
 	expr := checker.checkComputedAccessExpression(parser.ComputedAccessExpression{
-		Expr:     parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "function", tokenizer.Loc{}}},
-		Property: parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{tokenizer.NUM_KW, "number", tokenizer.Loc{}}}},
+		Expr:     parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "function", parser.Loc{}}},
+		Property: parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{parser.NUM_KW, "number", parser.Loc{}}}},
 	})
 
 	if len(checker.errors) != 0 {

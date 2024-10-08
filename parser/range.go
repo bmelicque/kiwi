@@ -1,17 +1,13 @@
 package parser
 
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
-
 type RangeExpression struct {
 	Left     Node
 	Right    Node
-	Operator tokenizer.Token
+	Operator Token
 }
 
-func (r RangeExpression) Loc() tokenizer.Loc {
-	var loc tokenizer.Loc
+func (r RangeExpression) Loc() Loc {
+	var loc Loc
 	if r.Left != nil {
 		loc.Start = r.Left.Loc().Start
 	} else {
@@ -26,18 +22,18 @@ func (r RangeExpression) Loc() tokenizer.Loc {
 }
 
 func ParseRange(p *Parser) Node {
-	token := p.tokenizer.Peek()
+	token := p.Peek()
 
 	var left Node
-	if token.Kind() != tokenizer.RANGE_INCLUSIVE && token.Kind() != tokenizer.RANGE_EXCLUSIVE {
+	if token.Kind() != RANGE_INCLUSIVE && token.Kind() != RANGE_EXCLUSIVE {
 		left = BinaryExpression{}.Parse(p)
 	}
 
-	token = p.tokenizer.Peek()
-	if token.Kind() != tokenizer.RANGE_INCLUSIVE && token.Kind() != tokenizer.RANGE_EXCLUSIVE {
+	token = p.Peek()
+	if token.Kind() != RANGE_INCLUSIVE && token.Kind() != RANGE_EXCLUSIVE {
 		return left
 	}
-	operator := p.tokenizer.Consume()
+	operator := p.Consume()
 
 	right := BinaryExpression{}.Parse(p)
 

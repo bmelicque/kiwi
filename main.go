@@ -8,7 +8,6 @@ import (
 	"github.com/bmelicque/test-parser/checker"
 	"github.com/bmelicque/test-parser/emitter"
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 type TokenKind int
@@ -23,7 +22,7 @@ const (
 )
 
 func main() {
-	t, err := tokenizer.New("test.txt")
+	t, err := parser.NewTokenizer("test.txt")
 	if err != nil {
 		log.Fatal(err)
 		return

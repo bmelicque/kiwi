@@ -4,15 +4,14 @@ import (
 	"testing"
 
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 func TestBlockType(t *testing.T) {
 	checker := MakeChecker()
 	block := checker.checkBlock(parser.Block{
 		Statements: []parser.Node{
-			parser.TokenExpression{Token: testToken{kind: tokenizer.STRING, value: "\"Hello, world!\""}},
-			parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "42"}},
+			parser.TokenExpression{Token: testToken{kind: parser.STRING, value: "\"Hello, world!\""}},
+			parser.TokenExpression{Token: testToken{kind: parser.NUMBER, value: "42"}},
 		},
 	})
 
@@ -28,11 +27,11 @@ func TestUnreachableCode(t *testing.T) {
 	checker := MakeChecker()
 	checker.checkBlock(parser.Block{
 		Statements: []parser.Node{
-			parser.Exit{Operator: testToken{kind: tokenizer.RETURN_KW}},
+			parser.Exit{Operator: testToken{kind: parser.RETURN_KW}},
 			parser.TokenExpression{Token: testToken{
-				kind:  tokenizer.STRING,
+				kind:  parser.STRING,
 				value: "\"Hello, world!\"",
-				loc:   tokenizer.Loc{Start: tokenizer.Position{Col: 1}},
+				loc:   parser.Loc{Start: parser.Position{Col: 1}},
 			}},
 		},
 	})

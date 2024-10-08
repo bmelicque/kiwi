@@ -1,44 +1,41 @@
 package checker
 
-import (
-	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "github.com/bmelicque/test-parser/parser"
 
 type BinaryExpression struct {
 	Left     Expression
 	Right    Expression
-	Operator tokenizer.Token
+	Operator parser.Token
 }
 
 func (expr BinaryExpression) Type() ExpressionType {
 	switch expr.Operator.Kind() {
 	case
-		tokenizer.ADD,
-		tokenizer.SUB,
-		tokenizer.MUL,
-		tokenizer.POW,
-		tokenizer.DIV,
-		tokenizer.MOD:
+		parser.ADD,
+		parser.SUB,
+		parser.MUL,
+		parser.POW,
+		parser.DIV,
+		parser.MOD:
 		return Primitive{NUMBER}
-	case tokenizer.CONCAT:
+	case parser.CONCAT:
 		return expr.Left.Type()
 	case
-		tokenizer.LAND,
-		tokenizer.LOR,
-		tokenizer.LESS,
-		tokenizer.GREATER,
-		tokenizer.LEQ,
-		tokenizer.GEQ,
-		tokenizer.EQ,
-		tokenizer.NEQ:
+		parser.LAND,
+		parser.LOR,
+		parser.LESS,
+		parser.GREATER,
+		parser.LEQ,
+		parser.GEQ,
+		parser.EQ,
+		parser.NEQ:
 		return Primitive{BOOLEAN}
 	}
 	return Primitive{UNKNOWN}
 }
 
-func (expr BinaryExpression) Loc() tokenizer.Loc {
-	loc := tokenizer.Loc{}
+func (expr BinaryExpression) Loc() parser.Loc {
+	loc := parser.Loc{}
 	if expr.Left != nil {
 		loc.Start = expr.Left.Loc().Start
 	} else {
@@ -65,26 +62,26 @@ func (c *Checker) checkBinaryExpression(expr parser.BinaryExpression) BinaryExpr
 
 	switch expr.Operator.Kind() {
 	case
-		tokenizer.ADD,
-		tokenizer.SUB,
-		tokenizer.MUL,
-		tokenizer.POW,
-		tokenizer.DIV,
-		tokenizer.MOD,
-		tokenizer.LESS,
-		tokenizer.GREATER,
-		tokenizer.LEQ,
-		tokenizer.GEQ:
+		parser.ADD,
+		parser.SUB,
+		parser.MUL,
+		parser.POW,
+		parser.DIV,
+		parser.MOD,
+		parser.LESS,
+		parser.GREATER,
+		parser.LEQ,
+		parser.GEQ:
 		c.checkArithmetic(left, right)
-	case tokenizer.CONCAT:
+	case parser.CONCAT:
 		c.checkConcat(left, right)
 	case
-		tokenizer.LAND,
-		tokenizer.LOR:
+		parser.LAND,
+		parser.LOR:
 		c.checkLogical(left, right)
 	case
-		tokenizer.EQ,
-		tokenizer.NEQ:
+		parser.EQ,
+		parser.NEQ:
 		c.checkEq(left, right)
 	}
 	return BinaryExpression{left, right, expr.Operator}
@@ -105,7 +102,7 @@ func (c *Checker) checkEq(left Expression, right Expression) {
 	leftType := left.Type()
 	rightType := right.Type()
 	if !leftType.Extends(rightType) && !rightType.Extends(leftType) {
-		c.report("Types don't match", tokenizer.Loc{Start: left.Loc().Start, End: right.Loc().End})
+		c.report("Types don't match", parser.Loc{Start: left.Loc().Start, End: right.Loc().End})
 	}
 }
 func (c *Checker) checkConcat(left Expression, right Expression) {

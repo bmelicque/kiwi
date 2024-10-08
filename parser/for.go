@@ -1,16 +1,12 @@
 package parser
 
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
-
 type ForExpression struct {
-	Keyword   tokenizer.Token
+	Keyword   Token
 	Statement Node // ExpressionStatement holding a condition OR Assignment
 	Body      *Block
 }
 
-func (f ForExpression) Loc() tokenizer.Loc {
+func (f ForExpression) Loc() Loc {
 	loc := f.Keyword.Loc()
 	if f.Body != nil {
 		loc.End = f.Body.Loc().End
@@ -21,7 +17,7 @@ func (f ForExpression) Loc() tokenizer.Loc {
 }
 
 func (p *Parser) parseForExpression() ForExpression {
-	keyword := p.tokenizer.Consume()
+	keyword := p.Consume()
 	outer := p.allowBraceParsing
 	p.allowBraceParsing = false
 	statement := p.parseAssignment()

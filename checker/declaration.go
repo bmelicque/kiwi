@@ -5,17 +5,16 @@ import (
 	"unicode"
 
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 type VariableDeclaration struct {
 	Pattern     Expression
 	Initializer Expression
-	loc         tokenizer.Loc
+	loc         parser.Loc
 	Constant    bool
 }
 
-func (vd VariableDeclaration) Loc() tokenizer.Loc { return vd.loc }
+func (vd VariableDeclaration) Loc() parser.Loc { return vd.loc }
 
 func (c *Checker) declareIdentifier(declared parser.Node, typing ExpressionType) (Identifier, error) {
 	token, ok := declared.(parser.TokenExpression)
@@ -41,7 +40,7 @@ func (c *Checker) checkVariableDeclaration(a parser.Assignment) VariableDeclarat
 	var pattern Expression
 	var err error
 	init := c.checkExpression(a.Initializer)
-	constant := a.Operator.Kind() == tokenizer.DEFINE
+	constant := a.Operator.Kind() == parser.DEFINE
 
 	declared := a.Declared
 	if d, ok := declared.(parser.ParenthesizedExpression); ok {

@@ -4,25 +4,24 @@ import (
 	"testing"
 
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 func TestForLoop(t *testing.T) {
 	checker := MakeChecker()
 	loop := checker.checkLoop(parser.ForExpression{
 		Statement: parser.TokenExpression{
-			Token: testToken{kind: tokenizer.BOOLEAN, value: "true"},
+			Token: testToken{kind: parser.BOOLEAN, value: "true"},
 		},
 		Body: &parser.Block{Statements: []parser.Node{
 			parser.IfElse{
 				Condition: parser.TokenExpression{
-					Token: testToken{kind: tokenizer.BOOLEAN, value: "true"},
+					Token: testToken{kind: parser.BOOLEAN, value: "true"},
 				},
 				Body: &parser.Block{Statements: []parser.Node{
 					parser.Exit{
-						Operator: testToken{kind: tokenizer.BREAK_KW},
+						Operator: testToken{kind: parser.BREAK_KW},
 						Value: parser.TokenExpression{
-							Token: testToken{kind: tokenizer.NUMBER, value: "42"},
+							Token: testToken{kind: parser.NUMBER, value: "42"},
 						},
 					},
 				}},

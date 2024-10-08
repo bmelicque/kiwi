@@ -1,20 +1,17 @@
 package checker
 
-import (
-	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "github.com/bmelicque/test-parser/parser"
 
 type For struct {
-	Keyword   tokenizer.Token
+	Keyword   parser.Token
 	Condition Expression
 	Body      Block
 	typing    ExpressionType
 }
 
-func (f For) Loc() tokenizer.Loc {
+func (f For) Loc() parser.Loc {
 	loc := f.Keyword.Loc()
-	if f.Body.loc != (tokenizer.Loc{}) {
+	if f.Body.loc != (parser.Loc{}) {
 		loc.End = f.Body.Loc().End
 	} else if f.Condition != nil {
 		loc.End = f.Condition.Loc().End
@@ -31,15 +28,15 @@ type RangeDeclaration struct {
 }
 
 type ForRange struct {
-	Keyword     tokenizer.Token
+	Keyword     parser.Token
 	Declaration RangeDeclaration
 	Body        Block
 	typing      ExpressionType
 }
 
-func (f ForRange) Loc() tokenizer.Loc {
+func (f ForRange) Loc() parser.Loc {
 	loc := f.Keyword.Loc()
-	if f.Body.loc != (tokenizer.Loc{}) {
+	if f.Body.loc != (parser.Loc{}) {
 		loc.End = f.Body.Loc().End
 	} else if f.Declaration != (RangeDeclaration{}) {
 		loc.End = f.Declaration.Range.Loc().End
@@ -146,7 +143,7 @@ func findBreakStatements(node Node, results *[]Exit) {
 		return
 	}
 	if n, ok := node.(Exit); ok {
-		if n.Operator.Kind() == tokenizer.BREAK_KW {
+		if n.Operator.Kind() == parser.BREAK_KW {
 			*results = append(*results, n)
 		}
 		return

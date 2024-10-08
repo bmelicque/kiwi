@@ -5,7 +5,6 @@ import (
 	"slices"
 
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 type MatchCase struct {
@@ -33,10 +32,10 @@ func (m MatchCase) IsCatchall() bool {
 type MatchExpression struct {
 	Value Expression
 	Cases []MatchCase
-	loc   tokenizer.Loc
+	loc   parser.Loc
 }
 
-func (m MatchExpression) Loc() tokenizer.Loc { return m.loc }
+func (m MatchExpression) Loc() parser.Loc { return m.loc }
 func (m MatchExpression) Type() ExpressionType {
 	if len(m.Cases) == 0 {
 		return Primitive{NIL}
@@ -203,7 +202,7 @@ func declareCasePattern(c *Checker, node parser.Node, t ExpressionType) Expressi
 }
 
 func checkMatchExhaustiveness(c *Checker, cases []MatchCase, typing ExpressionType) bool {
-	found := map[string][]tokenizer.Loc{}
+	found := map[string][]parser.Loc{}
 	for _, ca := range cases {
 		name := ca.Typing.Text()
 		found[name] = append(found[name], ca.Typing.Loc())
@@ -234,7 +233,7 @@ func checkMatchExhaustiveness(c *Checker, cases []MatchCase, typing ExpressionTy
 // return true if found a catch-all case
 func detectUnreachableCases(c *Checker, cases []MatchCase) bool {
 	var foundCatchall, foundUnreachable bool
-	var catchall tokenizer.Loc
+	var catchall parser.Loc
 	for _, ca := range cases {
 		if foundCatchall {
 			foundUnreachable = true

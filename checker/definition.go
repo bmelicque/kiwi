@@ -1,13 +1,10 @@
 package checker
 
-import (
-	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "github.com/bmelicque/test-parser/parser"
 
 func (c *Checker) checkDefinition(a parser.Assignment) Node {
 	var pattern Expression
-	constant := a.Operator.Kind() == tokenizer.DEFINE
+	constant := a.Operator.Kind() == parser.DEFINE
 
 	declared := a.Declared
 	if d, ok := declared.(parser.ParenthesizedExpression); ok {

@@ -1,17 +1,14 @@
 package checker
 
-import (
-	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "github.com/bmelicque/test-parser/parser"
 
 type Assignment struct {
 	Pattern  Expression
 	Value    Expression
-	Operator tokenizer.Token
+	Operator parser.Token
 }
 
-func (a Assignment) Loc() tokenizer.Loc {
+func (a Assignment) Loc() parser.Loc {
 	loc := a.Operator.Loc()
 	if a.Pattern != nil {
 		loc.Start = a.Pattern.Loc().Start
@@ -37,22 +34,22 @@ func (c *Checker) checkAssignment(assignment parser.Assignment) Assignment {
 	case Identifier:
 		switch assignment.Operator.Kind() {
 		case
-			tokenizer.ADD_ASSIGN,
-			tokenizer.SUB_ASSIGN,
-			tokenizer.MUL_ASSIGN,
-			tokenizer.POW_ASSIGN,
-			tokenizer.DIV_ASSIGN,
-			tokenizer.MOD_ASSIGN:
+			parser.ADD_ASSIGN,
+			parser.SUB_ASSIGN,
+			parser.MUL_ASSIGN,
+			parser.POW_ASSIGN,
+			parser.DIV_ASSIGN,
+			parser.MOD_ASSIGN:
 			c.checkArithmetic(pattern, value)
-		case tokenizer.CONCAT_ASSIGN:
+		case parser.CONCAT_ASSIGN:
 			c.checkConcat(pattern, value)
 		case
-			tokenizer.LAND_ASSIGN,
-			tokenizer.LOR_ASSIGN:
+			parser.LAND_ASSIGN,
+			parser.LOR_ASSIGN:
 			c.checkLogical(pattern, value)
 		}
 	case TupleExpression:
-		if assignment.Operator.Kind() != tokenizer.ASSIGN {
+		if assignment.Operator.Kind() != parser.ASSIGN {
 			c.report("Expected '='", assignment.Declared.Loc())
 		}
 		for _, element := range pattern.Elements {

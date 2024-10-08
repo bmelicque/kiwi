@@ -4,14 +4,13 @@ import (
 	"testing"
 
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 func TestParam(t *testing.T) {
 	checker := MakeChecker()
 	expr := checker.checkParam(parser.TypedExpression{
-		Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "name"}},
-		Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.NUM_KW}},
+		Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "name"}},
+		Typing: parser.TokenExpression{Token: testToken{kind: parser.NUM_KW}},
 		Colon:  false,
 	})
 
@@ -30,8 +29,8 @@ func TestParamBadType(t *testing.T) {
 	checker := MakeChecker()
 	// name 42
 	checker.checkParam(parser.TypedExpression{
-		Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "name"}},
-		Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "42"}},
+		Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "name"}},
+		Typing: parser.TokenExpression{Token: testToken{kind: parser.NUMBER, value: "42"}},
 		Colon:  false,
 	})
 
@@ -43,7 +42,7 @@ func TestParamBadType(t *testing.T) {
 func TestTypeParam(t *testing.T) {
 	checker := MakeChecker()
 	expr := checker.checkParam(parser.TypedExpression{
-		Expr:  parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Name"}},
+		Expr:  parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "Name"}},
 		Colon: false,
 	})
 
@@ -59,7 +58,7 @@ func TestTypeParam(t *testing.T) {
 func TestTypeParamBadName(t *testing.T) {
 	checker := MakeChecker()
 	checker.checkTypeParam(parser.TypedExpression{
-		Expr:  parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "name"}},
+		Expr:  parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "name"}},
 		Colon: false,
 	})
 
@@ -73,8 +72,8 @@ func TestParams(t *testing.T) {
 	expr := checker.checkParams(
 		parser.ParenthesizedExpression{
 			Expr: parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "name"}},
-				Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.NUM_KW}},
+				Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "name"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: parser.NUM_KW}},
 				Colon:  false,
 			},
 		},
@@ -100,8 +99,8 @@ func TestSimpleObject(t *testing.T) {
 	expr := checker.checkParenthesizedExpression(
 		parser.ParenthesizedExpression{
 			Expr: parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "name"}},
-				Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.NUM_KW}},
+				Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "name"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: parser.NUM_KW}},
 				Colon:  false,
 			},
 		},

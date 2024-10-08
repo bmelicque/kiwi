@@ -5,19 +5,18 @@ import (
 
 	"github.com/bmelicque/test-parser/checker"
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 func TestIfStatement(t *testing.T) {
 	emitter := makeEmitter()
 	emitter.emit(checker.ExpressionStatement{Expr: checker.If{
 		Condition: checker.Literal{TokenExpression: parser.TokenExpression{
-			Token: testToken{kind: tokenizer.BOOLEAN, value: "false"},
+			Token: testToken{kind: parser.BOOLEAN, value: "false"},
 		}},
 		Block: checker.Block{Statements: []checker.Node{}},
 		Alternate: checker.If{
 			Condition: checker.Literal{TokenExpression: parser.TokenExpression{
-				Token: testToken{kind: tokenizer.BOOLEAN, value: "false"},
+				Token: testToken{kind: parser.BOOLEAN, value: "false"},
 			}},
 			Block:     checker.Block{Statements: []checker.Node{}},
 			Alternate: checker.Block{},

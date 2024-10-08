@@ -2,18 +2,16 @@ package parser
 
 import (
 	"slices"
-
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 type BinaryExpression struct {
 	Left     Node
 	Right    Node
-	Operator tokenizer.Token
+	Operator Token
 }
 
-func (expr BinaryExpression) Loc() tokenizer.Loc {
-	loc := tokenizer.Loc{}
+func (expr BinaryExpression) Loc() Loc {
+	loc := Loc{}
 	if expr.Left != nil {
 		loc.Start = expr.Left.Loc().Start
 	} else {
@@ -34,43 +32,43 @@ func (expr BinaryExpression) Loc() tokenizer.Loc {
 func (BinaryExpression) Parse(p *Parser) Node {
 	return parseLogicalOr(p)
 }
-func parseBinary(p *Parser, operators []tokenizer.TokenKind, fallback func(p *Parser) Node) Node {
+func parseBinary(p *Parser, operators []TokenKind, fallback func(p *Parser) Node) Node {
 	expression := fallback(p)
-	next := p.tokenizer.Peek()
+	next := p.Peek()
 	for slices.Contains(operators, next.Kind()) {
-		operator := p.tokenizer.Consume()
+		operator := p.Consume()
 		right := fallback(p)
 		expression = BinaryExpression{expression, right, operator}
-		next = p.tokenizer.Peek()
+		next = p.Peek()
 	}
 	return expression
 }
 func parseLogicalOr(p *Parser) Node {
-	return parseBinary(p, []tokenizer.TokenKind{tokenizer.LOR}, parseLogicalAnd)
+	return parseBinary(p, []TokenKind{LOR}, parseLogicalAnd)
 }
 func parseLogicalAnd(p *Parser) Node {
-	return parseBinary(p, []tokenizer.TokenKind{tokenizer.LAND}, parseEquality)
+	return parseBinary(p, []TokenKind{LAND}, parseEquality)
 }
 func parseEquality(p *Parser) Node {
-	return parseBinary(p, []tokenizer.TokenKind{tokenizer.EQ, tokenizer.NEQ}, parseComparison)
+	return parseBinary(p, []TokenKind{EQ, NEQ}, parseComparison)
 }
 func parseComparison(p *Parser) Node {
-	return parseBinary(p, []tokenizer.TokenKind{tokenizer.LESS, tokenizer.LEQ, tokenizer.GEQ, tokenizer.GREATER}, parseAddition)
+	return parseBinary(p, []TokenKind{LESS, LEQ, GEQ, GREATER}, parseAddition)
 }
 func parseAddition(p *Parser) Node {
-	return parseBinary(p, []tokenizer.TokenKind{tokenizer.ADD, tokenizer.CONCAT, tokenizer.SUB}, parseMultiplication)
+	return parseBinary(p, []TokenKind{ADD, CONCAT, SUB}, parseMultiplication)
 }
 func parseMultiplication(p *Parser) Node {
-	return parseBinary(p, []tokenizer.TokenKind{tokenizer.MUL, tokenizer.DIV, tokenizer.MOD}, parseExponentiation)
+	return parseBinary(p, []TokenKind{MUL, DIV, MOD}, parseExponentiation)
 }
 func parseExponentiation(p *Parser) Node {
 	expression := p.parseAccessExpression()
-	next := p.tokenizer.Peek()
-	for next.Kind() == tokenizer.POW {
-		operator := p.tokenizer.Consume()
+	next := p.Peek()
+	for next.Kind() == POW {
+		operator := p.Consume()
 		right := parseExponentiation(p)
 		expression = BinaryExpression{expression, right, operator}
-		next = p.tokenizer.Peek()
+		next = p.Peek()
 	}
 	return expression
 }

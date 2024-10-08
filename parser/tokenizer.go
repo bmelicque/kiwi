@@ -1,4 +1,4 @@
-package tokenizer
+package parser
 
 import (
 	"bufio"
@@ -218,7 +218,7 @@ type Tokenizer interface {
 	DiscardLineBreaks()
 }
 
-func New(path string) (*tokenizer, error) {
+func NewTokenizer(path string) (*tokenizer, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		log.Fatal(err)

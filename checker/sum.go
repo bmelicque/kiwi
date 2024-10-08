@@ -1,9 +1,6 @@
 package checker
 
-import (
-	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "github.com/bmelicque/test-parser/parser"
 
 type SumTypeMember struct {
 	Name   Identifier
@@ -13,10 +10,10 @@ type SumTypeMember struct {
 type SumType struct {
 	Members []SumTypeMember
 	typing  Type // Type{Sum}
-	loc     tokenizer.Loc
+	loc     parser.Loc
 }
 
-func (s SumType) Loc() tokenizer.Loc   { return s.loc }
+func (s SumType) Loc() parser.Loc      { return s.loc }
 func (s SumType) Type() ExpressionType { return s.typing }
 
 func (c *Checker) checkSumType(node parser.SumType) SumType {

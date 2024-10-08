@@ -1,15 +1,11 @@
 package parser
 
-import (
-	"testing"
-
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "testing"
 
 func TestTypedExpression(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.IDENTIFIER, "n", tokenizer.Loc{}},
-		testToken{tokenizer.NUM_KW, "number", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		literal{kind: IDENTIFIER, value: "n"},
+		token{kind: NUM_KW},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseTypedExpression()
@@ -21,10 +17,10 @@ func TestTypedExpression(t *testing.T) {
 }
 
 func TestTypedExpressionWithColon(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.IDENTIFIER, "n", tokenizer.Loc{}},
-		testToken{tokenizer.COLON, ":", tokenizer.Loc{}},
-		testToken{tokenizer.NUM_KW, "number", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		literal{kind: IDENTIFIER, value: "n"},
+		token{kind: COLON},
+		token{kind: NUM_KW},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseTypedExpression()

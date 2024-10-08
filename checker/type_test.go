@@ -4,12 +4,12 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/bmelicque/test-parser/tokenizer"
+	"github.com/bmelicque/test-parser/parser"
 )
 
 func TestBuildGeneric(t *testing.T) {
 	scope := NewScope(ProgramScope)
-	scope.Add("Type", tokenizer.Loc{}, Type{Generic{}})
+	scope.Add("Type", parser.Loc{}, Type{Generic{}})
 	typing := List{Generic{Name: "Type"}}
 
 	compared := List{Primitive{NUMBER}}

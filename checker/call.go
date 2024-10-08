@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 type CallExpression struct {
@@ -13,7 +12,7 @@ type CallExpression struct {
 	typing ExpressionType
 }
 
-func (c CallExpression) Loc() tokenizer.Loc {
+func (c CallExpression) Loc() parser.Loc {
 	loc := c.Args.loc
 	if c.Callee != nil {
 		loc.Start = c.Callee.Loc().Start
@@ -45,7 +44,7 @@ func checkFunctionCall(c *Checker, callee Expression, node parser.ParenthesizedE
 	defer c.dropScope()
 	for _, param := range function.TypeParams {
 		// TODO: get declared location
-		c.scope.Add(param.Name, tokenizer.Loc{}, Type{param})
+		c.scope.Add(param.Name, parser.Loc{}, Type{param})
 	}
 
 	args := c.checkArguments(node)

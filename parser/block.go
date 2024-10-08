@@ -1,35 +1,31 @@
 package parser
 
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
-
 type Block struct {
 	Statements []Node
-	loc        tokenizer.Loc
+	loc        Loc
 }
 
-func (b Block) Loc() tokenizer.Loc { return b.loc }
+func (b Block) Loc() Loc { return b.loc }
 
 func (p *Parser) parseBlock() *Block {
 	block := Block{}
 
-	token := p.tokenizer.Consume()
+	token := p.Consume()
 	block.loc.Start = token.Loc().Start
-	if token.Kind() != tokenizer.LBRACE {
+	if token.Kind() != LBRACE {
 		p.report("'{' expected", token.Loc())
 	}
-	p.tokenizer.DiscardLineBreaks()
+	p.DiscardLineBreaks()
 
 	block.Statements = []Node{}
-	for p.tokenizer.Peek().Kind() != tokenizer.RBRACE && p.tokenizer.Peek().Kind() != tokenizer.EOF {
+	for p.Peek().Kind() != RBRACE && p.Peek().Kind() != EOF {
 		block.Statements = append(block.Statements, p.parseStatement())
-		p.tokenizer.DiscardLineBreaks()
+		p.DiscardLineBreaks()
 	}
 
-	token = p.tokenizer.Consume()
+	token = p.Consume()
 	block.loc.End = token.Loc().End
-	if token.Kind() != tokenizer.RBRACE {
+	if token.Kind() != RBRACE {
 		p.report("'}' expected", token.Loc())
 	}
 

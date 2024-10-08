@@ -4,16 +4,15 @@ import (
 	"testing"
 
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 func TestIfExpression(t *testing.T) {
 	checker := MakeChecker()
 	expr := checker.checkIf(parser.IfElse{
-		Keyword:   testToken{kind: tokenizer.IF_KW},
-		Condition: parser.TokenExpression{Token: testToken{kind: tokenizer.BOOLEAN, value: "true"}},
+		Keyword:   testToken{kind: parser.IF_KW},
+		Condition: parser.TokenExpression{Token: testToken{kind: parser.BOOLEAN, value: "true"}},
 		Body: &parser.Block{Statements: []parser.Node{
-			parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "42"}},
+			parser.TokenExpression{Token: testToken{kind: parser.NUMBER, value: "42"}},
 		}},
 	})
 
@@ -28,8 +27,8 @@ func TestIfExpression(t *testing.T) {
 func TestIfExpressionWithNonBoolean(t *testing.T) {
 	checker := MakeChecker()
 	expr := checker.checkIf(parser.IfElse{
-		Keyword:   testToken{kind: tokenizer.IF_KW},
-		Condition: parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "42"}},
+		Keyword:   testToken{kind: parser.IF_KW},
+		Condition: parser.TokenExpression{Token: testToken{kind: parser.NUMBER, value: "42"}},
 		Body:      &parser.Block{Statements: []parser.Node{}},
 	})
 
@@ -42,8 +41,8 @@ func TestIfExpressionWithNonBoolean(t *testing.T) {
 func TestIfElseExpression(t *testing.T) {
 	checker := MakeChecker()
 	expr := checker.checkIf(parser.IfElse{
-		Keyword:   testToken{kind: tokenizer.IF_KW},
-		Condition: parser.TokenExpression{Token: testToken{kind: tokenizer.BOOLEAN, value: "true"}},
+		Keyword:   testToken{kind: parser.IF_KW},
+		Condition: parser.TokenExpression{Token: testToken{kind: parser.BOOLEAN, value: "true"}},
 		Body:      &parser.Block{Statements: []parser.Node{}},
 		Alternate: parser.Block{Statements: []parser.Node{}},
 	})
@@ -63,13 +62,13 @@ func TestIfElseExpressionTypeMismatch(t *testing.T) {
 	checker := MakeChecker()
 	// if true { 42 } else { "Hello, world!" }
 	checker.checkIf(parser.IfElse{
-		Keyword:   testToken{kind: tokenizer.IF_KW},
-		Condition: parser.TokenExpression{Token: testToken{kind: tokenizer.BOOLEAN, value: "true"}},
+		Keyword:   testToken{kind: parser.IF_KW},
+		Condition: parser.TokenExpression{Token: testToken{kind: parser.BOOLEAN, value: "true"}},
 		Body: &parser.Block{Statements: []parser.Node{
-			parser.TokenExpression{Token: testToken{kind: tokenizer.NUMBER, value: "42"}},
+			parser.TokenExpression{Token: testToken{kind: parser.NUMBER, value: "42"}},
 		}},
 		Alternate: parser.Block{Statements: []parser.Node{
-			parser.TokenExpression{Token: testToken{kind: tokenizer.STRING, value: "\"Hello, world!\""}},
+			parser.TokenExpression{Token: testToken{kind: parser.STRING, value: "\"Hello, world!\""}},
 		}},
 	})
 
@@ -82,11 +81,11 @@ func TestIfElseIfExpression(t *testing.T) {
 	checker := MakeChecker()
 	// if false {} else if true {}
 	expr := checker.checkIf(parser.IfElse{
-		Keyword:   testToken{kind: tokenizer.IF_KW},
-		Condition: parser.TokenExpression{Token: testToken{kind: tokenizer.BOOLEAN, value: "false"}},
+		Keyword:   testToken{kind: parser.IF_KW},
+		Condition: parser.TokenExpression{Token: testToken{kind: parser.BOOLEAN, value: "false"}},
 		Body:      &parser.Block{Statements: []parser.Node{}},
 		Alternate: parser.IfElse{
-			Condition: parser.TokenExpression{Token: testToken{kind: tokenizer.BOOLEAN, value: "true"}},
+			Condition: parser.TokenExpression{Token: testToken{kind: parser.BOOLEAN, value: "true"}},
 			Body:      &parser.Block{Statements: []parser.Node{}},
 		},
 	})

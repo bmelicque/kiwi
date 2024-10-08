@@ -1,20 +1,16 @@
 package parser
 
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
-
 type Node interface {
-	Loc() tokenizer.Loc
+	Loc() Loc
 }
 
 func fallback(p *Parser) Node {
-	switch p.tokenizer.Peek().Kind() {
-	case tokenizer.LBRACKET:
+	switch p.Peek().Kind() {
+	case LBRACKET:
 		return p.parseUnaryExpression()
-	case tokenizer.LPAREN:
+	case LPAREN:
 		return p.parseFunctionExpression()
-	case tokenizer.LBRACE:
+	case LBRACE:
 		if p.allowBraceParsing {
 			return p.parseBlock()
 		}

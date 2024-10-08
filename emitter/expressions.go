@@ -2,7 +2,7 @@ package emitter
 
 import (
 	"github.com/bmelicque/test-parser/checker"
-	"github.com/bmelicque/test-parser/tokenizer"
+	"github.com/bmelicque/test-parser/parser"
 )
 
 func (e *Emitter) emitBinaryExpression(expr checker.BinaryExpression) {
@@ -220,7 +220,7 @@ func (e *Emitter) emitRangeExpression(r checker.RangeExpression) {
 
 	if r.Right != nil {
 		e.emit(r.Right)
-		if r.Operator.Kind() == tokenizer.RANGE_INCLUSIVE {
+		if r.Operator.Kind() == parser.RANGE_INCLUSIVE {
 			e.write(" + 1")
 		}
 	} else {

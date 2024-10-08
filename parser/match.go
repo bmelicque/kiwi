@@ -1,10 +1,6 @@
 package parser
 
-import (
-	"slices"
-
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "slices"
 
 type MatchCase struct {
 	Pattern    Node
@@ -12,42 +8,42 @@ type MatchCase struct {
 }
 
 type MatchExpression struct {
-	Keyword tokenizer.Token
+	Keyword Token
 	Value   Node
 	Cases   []MatchCase
-	end     tokenizer.Position
+	end     Position
 }
 
-func (m MatchExpression) Loc() tokenizer.Loc {
+func (m MatchExpression) Loc() Loc {
 	loc := m.Keyword.Loc()
-	if m.end != (tokenizer.Position{}) {
+	if m.end != (Position{}) {
 		loc.End = m.end
 	}
 	return loc
 }
 
 func (p *Parser) parseMatchExpression() Node {
-	keyword := p.tokenizer.Consume()
+	keyword := p.Consume()
 	outer := p.allowBraceParsing
 	p.allowBraceParsing = false
 	condition := ParseExpression(p)
 	p.allowBraceParsing = outer
-	if p.tokenizer.Peek().Kind() != tokenizer.LBRACE && !recover(p, tokenizer.LBRACE) {
+	if p.Peek().Kind() != LBRACE && !recover(p, LBRACE) {
 		return MatchExpression{Keyword: keyword, Value: condition}
 	}
-	p.tokenizer.Consume()
-	p.tokenizer.DiscardLineBreaks()
+	p.Consume()
+	p.DiscardLineBreaks()
 
 	cases := []MatchCase{}
-	stopAt := []tokenizer.TokenKind{tokenizer.RBRACE, tokenizer.EOF}
-	for !slices.Contains(stopAt, p.tokenizer.Peek().Kind()) {
+	stopAt := []TokenKind{RBRACE, EOF}
+	for !slices.Contains(stopAt, p.Peek().Kind()) {
 		cases = append(cases, parseMatchCase(p))
 	}
 
-	next := p.tokenizer.Peek()
+	next := p.Peek()
 	end := next.Loc().End
-	if next.Kind() == tokenizer.RBRACE {
-		p.tokenizer.Consume()
+	if next.Kind() == RBRACE {
+		p.Consume()
 	} else {
 		p.report("'}' expected", next.Loc())
 	}
@@ -56,21 +52,21 @@ func (p *Parser) parseMatchExpression() Node {
 
 func parseMatchCase(p *Parser) MatchCase {
 	var pattern Node
-	if p.tokenizer.Peek().Kind() == tokenizer.CASE_KW {
-		p.tokenizer.Consume()
+	if p.Peek().Kind() == CASE_KW {
+		p.Consume()
 		pattern = ParseExpression(p)
-		if p.tokenizer.Peek().Kind() == tokenizer.COLON {
-			p.tokenizer.Consume()
+		if p.Peek().Kind() == COLON {
+			p.Consume()
 		} else {
-			p.report("':' expected", p.tokenizer.Peek().Loc())
+			p.report("':' expected", p.Peek().Loc())
 		}
 	}
 
-	stopAt := []tokenizer.TokenKind{tokenizer.EOF, tokenizer.RBRACE, tokenizer.CASE_KW}
+	stopAt := []TokenKind{EOF, RBRACE, CASE_KW}
 	statements := []Node{}
-	for !slices.Contains(stopAt, p.tokenizer.Peek().Kind()) {
+	for !slices.Contains(stopAt, p.Peek().Kind()) {
 		statements = append(statements, p.parseStatement())
-		p.tokenizer.DiscardLineBreaks()
+		p.DiscardLineBreaks()
 	}
 
 	return MatchCase{

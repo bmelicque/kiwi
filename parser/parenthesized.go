@@ -1,15 +1,11 @@
 package parser
 
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
-
 type ParenthesizedExpression struct {
 	Expr Node
-	loc  tokenizer.Loc
+	loc  Loc
 }
 
-func (p ParenthesizedExpression) Loc() tokenizer.Loc {
+func (p ParenthesizedExpression) Loc() Loc {
 	return p.loc
 }
 func (p ParenthesizedExpression) Unwrap() Node {
@@ -20,11 +16,11 @@ func (p ParenthesizedExpression) Unwrap() Node {
 }
 
 func (p *Parser) parseParenthesizedExpression() ParenthesizedExpression {
-	loc := p.tokenizer.Consume().Loc() // LPAREN
-	p.tokenizer.DiscardLineBreaks()
-	next := p.tokenizer.Peek()
-	if next.Kind() == tokenizer.RPAREN {
-		loc.End = p.tokenizer.Consume().Loc().End
+	loc := p.Consume().Loc() // LPAREN
+	p.DiscardLineBreaks()
+	next := p.Peek()
+	if next.Kind() == RPAREN {
+		loc.End = p.Consume().Loc().End
 		return ParenthesizedExpression{nil, loc}
 	}
 
@@ -36,12 +32,12 @@ func (p *Parser) parseParenthesizedExpression() ParenthesizedExpression {
 	p.allowBraceParsing = outerBrace
 	p.multiline = outerMultiline
 
-	p.tokenizer.DiscardLineBreaks()
-	next = p.tokenizer.Peek()
-	if next.Kind() != tokenizer.RPAREN {
+	p.DiscardLineBreaks()
+	next = p.Peek()
+	if next.Kind() != RPAREN {
 		p.report("')' expected", next.Loc())
 	}
-	loc.End = p.tokenizer.Consume().Loc().End
+	loc.End = p.Consume().Loc().End
 	return ParenthesizedExpression{expr, loc}
 }
 

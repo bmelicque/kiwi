@@ -4,18 +4,17 @@ import (
 	"testing"
 
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 func TestObjectDeclaration(t *testing.T) {
 	checker := MakeChecker()
 	assignment := checker.checkDefinition(parser.Assignment{
-		Declared: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Type"}},
-		Operator: testToken{kind: tokenizer.ASSIGN},
+		Declared: parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "Type"}},
+		Operator: testToken{kind: parser.ASSIGN},
 		Initializer: parser.ParenthesizedExpression{
 			Expr: parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "n"}},
-				Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.NUM_KW}},
+				Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "n"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: parser.NUM_KW}},
 			},
 		},
 	})
@@ -51,14 +50,14 @@ func TestGenericObjectDefinition(t *testing.T) {
 	checker := MakeChecker()
 	checker.checkDefinition(parser.Assignment{
 		Declared: parser.ComputedAccessExpression{
-			Expr:     parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "Generic"}},
-			Property: parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "TypeParam"}}},
+			Expr:     parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "Generic"}},
+			Property: parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "TypeParam"}}},
 		},
-		Operator: testToken{tokenizer.ASSIGN, "::", tokenizer.Loc{}},
+		Operator: testToken{parser.ASSIGN, "::", parser.Loc{}},
 		Initializer: parser.ParenthesizedExpression{
 			Expr: parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "value"}},
-				Typing: parser.TokenExpression{Token: testToken{kind: tokenizer.IDENTIFIER, value: "TypeParam"}},
+				Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "value"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "TypeParam"}},
 			},
 		},
 	})

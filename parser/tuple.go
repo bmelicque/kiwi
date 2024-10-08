@@ -1,15 +1,11 @@
 package parser
 
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
-
 type TupleExpression struct {
 	Elements []Node
 }
 
-func (t TupleExpression) Loc() tokenizer.Loc {
-	return tokenizer.Loc{
+func (t TupleExpression) Loc() Loc {
+	return Loc{
 		Start: t.Elements[0].Loc().Start,
 		End:   t.Elements[len(t.Elements)-1].Loc().End,
 	}
@@ -17,28 +13,22 @@ func (t TupleExpression) Loc() tokenizer.Loc {
 
 func (p *Parser) parseTupleExpression() Node {
 	var elements []Node
-	// TODO: remove parseList...
-
-	// parseList(p, tokenizer.ILLEGAL, func() {
-	// 	elements = append(elements, p.parseSumType())
-	// })
-
 	outer := p.allowEmptyExpr
 	p.allowEmptyExpr = true
-	for p.tokenizer.Peek().Kind() != tokenizer.EOF {
+	for p.Peek().Kind() != EOF {
 		el := p.parseSumType()
 		if el == nil {
 			break
 		}
 		elements = append(elements, el)
 
-		if p.tokenizer.Peek().Kind() != tokenizer.COMMA {
+		if p.Peek().Kind() != COMMA {
 			break
 		}
-		p.tokenizer.Consume()
+		p.Consume()
 
 		if p.multiline {
-			p.tokenizer.DiscardLineBreaks()
+			p.DiscardLineBreaks()
 		}
 	}
 	p.allowEmptyExpr = outer

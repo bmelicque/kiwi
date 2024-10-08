@@ -1,9 +1,6 @@
 package checker
 
-import (
-	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "github.com/bmelicque/test-parser/parser"
 
 type FunctionExpression struct {
 	TypeParams Params
@@ -13,8 +10,8 @@ type FunctionExpression struct {
 	typing     ExpressionType
 }
 
-func (f FunctionExpression) Loc() tokenizer.Loc {
-	return tokenizer.Loc{
+func (f FunctionExpression) Loc() parser.Loc {
+	return parser.Loc{
 		Start: f.Params.loc.Start,
 		End:   f.Body.loc.End,
 	}
@@ -33,8 +30,8 @@ type FunctionTypeExpression struct {
 	Expr       Expression
 }
 
-func (f FunctionTypeExpression) Loc() tokenizer.Loc {
-	var start tokenizer.Position
+func (f FunctionTypeExpression) Loc() parser.Loc {
+	var start parser.Position
 	if len(f.TypeParams.Params) > 0 {
 		start = f.TypeParams.loc.Start
 	} else if len(f.Params) > 0 {
@@ -42,7 +39,7 @@ func (f FunctionTypeExpression) Loc() tokenizer.Loc {
 	} else {
 		start = f.Expr.Loc().Start
 	}
-	var end tokenizer.Position
+	var end parser.Position
 	if f.Expr != nil {
 		end = f.Loc().End
 	} else if len(f.Params) > 0 {
@@ -50,7 +47,7 @@ func (f FunctionTypeExpression) Loc() tokenizer.Loc {
 	} else {
 		end = f.TypeParams.loc.End
 	}
-	return tokenizer.Loc{Start: start, End: end}
+	return parser.Loc{Start: start, End: end}
 }
 func (f FunctionTypeExpression) Type() ExpressionType {
 	tp := []Generic{}
@@ -72,7 +69,7 @@ func (c *Checker) checkFunctionExpression(f parser.FunctionExpression) Expressio
 	if f.Params == nil {
 		c.report("Parameters expected", f.Loc())
 	}
-	if f.Operator.Kind() == tokenizer.FAT_ARR {
+	if f.Operator.Kind() == parser.FAT_ARR {
 		return checkFunctionExpression(c, f)
 	} else {
 		return checkFunctionTypeExpression(c, f)
@@ -140,7 +137,7 @@ func findReturnStatements(node Node, results *[]Exit) {
 		return
 	}
 	if n, ok := node.(Exit); ok {
-		if n.Operator.Kind() == tokenizer.RETURN_KW {
+		if n.Operator.Kind() == parser.RETURN_KW {
 			*results = append(*results, n)
 		}
 		return
@@ -195,7 +192,7 @@ func checkFunctionTypeReturnedType(c *Checker, f parser.FunctionExpression) Expr
 	}
 	if expr == nil {
 		pos := f.Operator.Loc().End
-		c.report("Type expected", tokenizer.Loc{Start: pos, End: pos})
+		c.report("Type expected", parser.Loc{Start: pos, End: pos})
 	} else if expr.Type().Kind() != TYPE {
 		c.report("Type expected", expr.Loc())
 	}

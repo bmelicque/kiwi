@@ -1,13 +1,13 @@
 package emitter
 
-import "github.com/bmelicque/test-parser/tokenizer"
+import "github.com/bmelicque/test-parser/parser"
 
 type testToken struct {
-	kind  tokenizer.TokenKind
+	kind  parser.TokenKind
 	value string
-	loc   tokenizer.Loc
+	loc   parser.Loc
 }
 
-func (t testToken) Kind() tokenizer.TokenKind { return t.kind }
-func (t testToken) Text() string              { return t.value }
-func (t testToken) Loc() tokenizer.Loc        { return t.loc }
+func (t testToken) Kind() parser.TokenKind { return t.kind }
+func (t testToken) Text() string           { return t.value }
+func (t testToken) Loc() parser.Loc        { return t.loc }

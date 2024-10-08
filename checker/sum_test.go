@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 func TestSumTypeDefinition(t *testing.T) {
@@ -12,10 +11,10 @@ func TestSumTypeDefinition(t *testing.T) {
 	sum := checker.checkSumType(parser.SumType{
 		Members: []parser.Node{
 			parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "Some", tokenizer.Loc{}}},
-				Typing: parser.TokenExpression{Token: testToken{tokenizer.NUM_KW, "number", tokenizer.Loc{}}},
+				Expr:   parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "Some", parser.Loc{}}},
+				Typing: parser.TokenExpression{Token: testToken{parser.NUM_KW, "number", parser.Loc{}}},
 			},
-			parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "None", tokenizer.Loc{}}},
+			parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "None", parser.Loc{}}},
 		},
 	})
 
@@ -50,7 +49,7 @@ func TestSumTypeLength(t *testing.T) {
 	checker := MakeChecker()
 	checker.checkSumType(parser.SumType{
 		Members: []parser.Node{
-			parser.TokenExpression{Token: testToken{tokenizer.IDENTIFIER, "Alone", tokenizer.Loc{}}},
+			parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "Alone", parser.Loc{}}},
 		},
 	})
 

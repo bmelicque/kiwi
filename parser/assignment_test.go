@@ -1,16 +1,12 @@
 package parser
 
-import (
-	"testing"
-
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "testing"
 
 func TestAssignment(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.IDENTIFIER, "n", tokenizer.Loc{}},
-		testToken{tokenizer.ASSIGN, "=", tokenizer.Loc{}},
-		testToken{tokenizer.NUMBER, "42", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		literal{kind: IDENTIFIER, value: "n"},
+		token{kind: ASSIGN},
+		literal{kind: NUMBER, value: "42"},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAssignment()
@@ -28,14 +24,14 @@ func TestAssignment(t *testing.T) {
 }
 
 func TestTupleAssignment(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.IDENTIFIER, "n", tokenizer.Loc{}},
-		testToken{tokenizer.COMMA, ",", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "m", tokenizer.Loc{}},
-		testToken{tokenizer.ASSIGN, "=", tokenizer.Loc{}},
-		testToken{tokenizer.NUMBER, "1", tokenizer.Loc{}},
-		testToken{tokenizer.COMMA, ",", tokenizer.Loc{}},
-		testToken{tokenizer.NUMBER, "2", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		literal{kind: IDENTIFIER, value: "n"},
+		token{kind: COMMA},
+		literal{kind: IDENTIFIER, value: "m"},
+		token{kind: ASSIGN},
+		literal{kind: NUMBER, value: "1"},
+		token{kind: COMMA},
+		literal{kind: NUMBER, value: "2"},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAssignment()
@@ -53,18 +49,18 @@ func TestTupleAssignment(t *testing.T) {
 }
 
 func TestObjectDeclaration(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.IDENTIFIER, value: "Type"},
-		testToken{kind: tokenizer.DEFINE},
-		testToken{kind: tokenizer.LPAREN},
-		testToken{kind: tokenizer.EOL},
+	tokenizer := testTokenizer{tokens: []Token{
+		literal{kind: IDENTIFIER, value: "Type"},
+		token{kind: DEFINE},
+		token{kind: LPAREN},
+		token{kind: EOL},
 
-		testToken{kind: tokenizer.IDENTIFIER, value: "n"},
-		testToken{kind: tokenizer.NUM_KW},
-		testToken{kind: tokenizer.COMMA},
-		testToken{kind: tokenizer.EOL},
+		literal{kind: IDENTIFIER, value: "n"},
+		token{kind: NUM_KW},
+		token{kind: COMMA},
+		token{kind: EOL},
 
-		testToken{kind: tokenizer.RPAREN},
+		token{kind: RPAREN},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAssignment()
@@ -82,19 +78,19 @@ func TestObjectDeclaration(t *testing.T) {
 }
 
 func TestMethodDeclaration(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.LPAREN, "(", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "t", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
-		testToken{tokenizer.RPAREN, ")", tokenizer.Loc{}},
-		testToken{tokenizer.DOT, ".", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "method", tokenizer.Loc{}},
-		testToken{tokenizer.DEFINE, "::", tokenizer.Loc{}},
-		testToken{tokenizer.LPAREN, "(", tokenizer.Loc{}},
-		testToken{tokenizer.RPAREN, ")", tokenizer.Loc{}},
-		testToken{tokenizer.SLIM_ARR, "->", tokenizer.Loc{}},
-		testToken{tokenizer.LPAREN, "(", tokenizer.Loc{}},
-		testToken{tokenizer.RPAREN, ")", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LPAREN},
+		literal{kind: IDENTIFIER, value: "t"},
+		literal{kind: IDENTIFIER, value: "Type"},
+		token{kind: RPAREN},
+		token{kind: DOT},
+		literal{kind: IDENTIFIER, value: "method"},
+		token{kind: DEFINE},
+		token{kind: LPAREN},
+		token{kind: RPAREN},
+		token{kind: SLIM_ARR},
+		token{kind: LPAREN},
+		token{kind: RPAREN},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAssignment()

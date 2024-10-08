@@ -1,9 +1,6 @@
 package checker
 
-import (
-	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "github.com/bmelicque/test-parser/parser"
 
 type ComputedAccessExpression struct {
 	Expr     Expression
@@ -11,8 +8,8 @@ type ComputedAccessExpression struct {
 	typing   ExpressionType
 }
 
-func (c ComputedAccessExpression) Loc() tokenizer.Loc {
-	return tokenizer.Loc{
+func (c ComputedAccessExpression) Loc() parser.Loc {
+	return parser.Loc{
 		Start: c.Expr.Loc().Start,
 		End:   c.Property.Loc().End,
 	}

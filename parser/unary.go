@@ -1,15 +1,11 @@
 package parser
 
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
-
 type UnaryExpression struct {
-	Operator tokenizer.Token
+	Operator Token
 	Operand  Node
 }
 
-func (u UnaryExpression) Loc() tokenizer.Loc {
+func (u UnaryExpression) Loc() Loc {
 	loc := u.Operator.Loc()
 	if u.Operand != nil {
 		loc.End = u.Operand.Loc().End
@@ -22,21 +18,21 @@ type ListTypeExpression struct {
 	Type      Node // Cannot be nil
 }
 
-func (l ListTypeExpression) Loc() tokenizer.Loc {
+func (l ListTypeExpression) Loc() Loc {
 	end := l.Bracketed.Loc().End
 	if l.Type != nil {
 		end = l.Type.Loc().End
 	}
-	return tokenizer.Loc{Start: l.Bracketed.loc.Start, End: end}
+	return Loc{Start: l.Bracketed.loc.Start, End: end}
 }
 
 func (p *Parser) parseUnaryExpression() Node {
-	switch p.tokenizer.Peek().Kind() {
-	case tokenizer.QUESTION_MARK:
-		token := p.tokenizer.Consume()
+	switch p.Peek().Kind() {
+	case QUESTION_MARK:
+		token := p.Consume()
 		expr := parseInnerUnary(p)
 		return UnaryExpression{token, expr}
-	case tokenizer.LBRACKET:
+	case LBRACKET:
 		brackets := p.parseBracketedExpression()
 		expr := parseInnerUnary(p)
 		if function, ok := expr.(FunctionExpression); ok {

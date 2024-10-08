@@ -1,15 +1,11 @@
 package parser
 
-import (
-	"testing"
-
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "testing"
 
 func TestEmptyBlock(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.LBRACE},
-		testToken{kind: tokenizer.RBRACE},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LBRACE},
+		token{kind: RBRACE},
 	}}
 	parser := MakeParser(&tokenizer)
 	parser.parseBlock()
@@ -20,10 +16,10 @@ func TestEmptyBlock(t *testing.T) {
 }
 
 func TestSingleLineBlock(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.LBRACE},
-		testToken{kind: tokenizer.STRING, value: "Hello, world!"},
-		testToken{kind: tokenizer.RBRACE},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LBRACE},
+		literal{kind: STRING, value: "Hello, world!"},
+		token{kind: RBRACE},
 	}}
 	parser := MakeParser(&tokenizer)
 	parser.parseBlock()
@@ -34,18 +30,18 @@ func TestSingleLineBlock(t *testing.T) {
 }
 
 func TestMultilineBlock(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.LBRACE},
-		testToken{kind: tokenizer.EOL},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LBRACE},
+		token{kind: EOL},
 
-		testToken{kind: tokenizer.STRING, value: "Hello, world!"},
-		testToken{kind: tokenizer.EOL},
+		literal{kind: STRING, value: "Hello, world!"},
+		token{kind: EOL},
 
-		testToken{kind: tokenizer.STRING, value: "Hello, world!"},
-		testToken{kind: tokenizer.EOL},
+		literal{kind: STRING, value: "Hello, world!"},
+		token{kind: EOL},
 
-		testToken{kind: tokenizer.RBRACE},
-		testToken{kind: tokenizer.EOL},
+		token{kind: RBRACE},
+		token{kind: EOL},
 	}}
 	parser := MakeParser(&tokenizer)
 	block := parser.parseBlock()

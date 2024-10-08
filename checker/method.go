@@ -1,9 +1,6 @@
 package checker
 
-import (
-	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "github.com/bmelicque/test-parser/parser"
 
 type Receiver struct {
 	Name   Identifier
@@ -14,10 +11,10 @@ type MethodDeclaration struct {
 	Receiver    Receiver
 	Name        Identifier
 	Initializer Expression
-	loc         tokenizer.Loc
+	loc         parser.Loc
 }
 
-func (m MethodDeclaration) Loc() tokenizer.Loc { return m.loc }
+func (m MethodDeclaration) Loc() parser.Loc { return m.loc }
 
 func (c *Checker) checkMethodDeclarationReceiver(expr parser.Node) (Receiver, bool) {
 	paren, ok := expr.(parser.ParenthesizedExpression)
@@ -81,7 +78,7 @@ func (c *Checker) checkMethodDeclaration(a parser.Assignment) MethodDeclaration 
 		Receiver:    receiver,
 		Name:        identifier,
 		Initializer: init,
-		loc:         tokenizer.Loc{Start: start, End: init.Loc().End},
+		loc:         parser.Loc{Start: start, End: init.Loc().End},
 	}
 }
 
