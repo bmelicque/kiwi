@@ -5,8 +5,8 @@ import (
 )
 
 type BinaryExpression struct {
-	Left     Node
-	Right    Node
+	Left     Expression
+	Right    Expression
 	Operator Token
 }
 
@@ -29,10 +29,10 @@ func (expr BinaryExpression) Loc() Loc {
 /******************************
  *  PARSING HELPER FUNCTIONS  *
  ******************************/
-func (BinaryExpression) Parse(p *Parser) Node {
+func (BinaryExpression) Parse(p *Parser) Expression {
 	return parseLogicalOr(p)
 }
-func parseBinary(p *Parser, operators []TokenKind, fallback func(p *Parser) Node) Node {
+func parseBinary(p *Parser, operators []TokenKind, fallback func(p *Parser) Expression) Expression {
 	expression := fallback(p)
 	next := p.Peek()
 	for slices.Contains(operators, next.Kind()) {
@@ -43,25 +43,25 @@ func parseBinary(p *Parser, operators []TokenKind, fallback func(p *Parser) Node
 	}
 	return expression
 }
-func parseLogicalOr(p *Parser) Node {
+func parseLogicalOr(p *Parser) Expression {
 	return parseBinary(p, []TokenKind{LogicalOr}, parseLogicalAnd)
 }
-func parseLogicalAnd(p *Parser) Node {
+func parseLogicalAnd(p *Parser) Expression {
 	return parseBinary(p, []TokenKind{LogicalAnd}, parseEquality)
 }
-func parseEquality(p *Parser) Node {
+func parseEquality(p *Parser) Expression {
 	return parseBinary(p, []TokenKind{Equal, NotEqual}, parseComparison)
 }
-func parseComparison(p *Parser) Node {
+func parseComparison(p *Parser) Expression {
 	return parseBinary(p, []TokenKind{Less, LessEqual, GreaterEqual, Greater}, parseAddition)
 }
-func parseAddition(p *Parser) Node {
+func parseAddition(p *Parser) Expression {
 	return parseBinary(p, []TokenKind{Add, Concat, Sub}, parseMultiplication)
 }
-func parseMultiplication(p *Parser) Node {
+func parseMultiplication(p *Parser) Expression {
 	return parseBinary(p, []TokenKind{Mul, Div, Mod}, parseExponentiation)
 }
-func parseExponentiation(p *Parser) Node {
+func parseExponentiation(p *Parser) Expression {
 	expression := p.parseAccessExpression()
 	next := p.Peek()
 	for next.Kind() == Pow {

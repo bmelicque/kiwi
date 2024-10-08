@@ -77,7 +77,7 @@ func TestNestedListTypeExpression(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected ListExpression, got %#v", node)
 	}
-	if _, ok := list.Type.(ListTypeExpression); !ok {
+	if _, ok := list.Expr.(ListTypeExpression); !ok {
 		t.Fatalf("Expected a nested ListTypeExpression, got %#v", list.Type)
 	}
 	if list.Type == nil {

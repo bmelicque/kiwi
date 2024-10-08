@@ -1,14 +1,28 @@
 package parser
 
+// An expression grouped between parentheses
 type ParenthesizedExpression struct {
-	Expr Node
+	Expr Expression
 	loc  Loc
 }
 
 func (p ParenthesizedExpression) Loc() Loc {
 	return p.loc
 }
-func (p ParenthesizedExpression) Unwrap() Node {
+
+func (p ParenthesizedExpression) Type() ExpressionType {
+	if p.Expr == nil {
+		return Primitive{NIL}
+	}
+	if param, ok := p.Expr.(Param); ok {
+		return Type{Object{map[string]ExpressionType{
+			param.Identifier.Text(): param.Complement.Type(),
+		}}}
+	}
+	return p.Expr.Type()
+}
+
+func (p ParenthesizedExpression) Unwrap() Expression {
 	if expr, ok := p.Expr.(ParenthesizedExpression); ok {
 		return expr.Unwrap()
 	}
@@ -42,9 +56,9 @@ func (p *Parser) parseParenthesizedExpression() ParenthesizedExpression {
 }
 
 // unwrap parenthesized expressions
-func Unwrap(node Node) Node {
-	if paren, ok := node.(ParenthesizedExpression); ok {
+func Unwrap(expr Expression) Expression {
+	if paren, ok := expr.(ParenthesizedExpression); ok {
 		return paren.Unwrap()
 	}
-	return node
+	return expr
 }

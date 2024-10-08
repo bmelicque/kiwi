@@ -12,7 +12,7 @@ func (s SumType) Loc() Loc {
 	}
 }
 
-func (p *Parser) parseSumType() Node {
+func (p *Parser) parseSumType() Expression {
 	if p.Peek().Kind() != BinaryOr {
 		return p.parseTypedExpression()
 	}

@@ -21,10 +21,10 @@ func (r RangeExpression) Loc() Loc {
 	return loc
 }
 
-func ParseRange(p *Parser) Node {
+func ParseRange(p *Parser) Expression {
 	token := p.Peek()
 
-	var left Node
+	var left Expression
 	if token.Kind() != InclusiveRange && token.Kind() != ExclusiveRange {
 		left = BinaryExpression{}.Parse(p)
 	}

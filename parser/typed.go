@@ -1,8 +1,8 @@
 package parser
 
 type TypedExpression struct {
-	Expr   Node
-	Typing Node
+	Expr   Expression
+	Typing Expression
 	Colon  bool
 }
 
@@ -14,7 +14,10 @@ func (t TypedExpression) Loc() Loc {
 	return loc
 }
 
-func (p *Parser) parseTypedExpression() Node {
+// FIXME:
+func (t TypedExpression) Type() ExpressionType { return nil }
+
+func (p *Parser) parseTypedExpression() Expression {
 	expr := ParseRange(p)
 	colon := false
 	if p.Peek().Kind() == Colon {

@@ -1,7 +1,8 @@
 package parser
 
 type TupleExpression struct {
-	Elements []Node
+	Elements []Expression
+	typing   ExpressionType
 }
 
 func (t TupleExpression) Loc() Loc {
@@ -10,9 +11,10 @@ func (t TupleExpression) Loc() Loc {
 		End:   t.Elements[len(t.Elements)-1].Loc().End,
 	}
 }
+func (t TupleExpression) Type() ExpressionType { return t.typing }
 
-func (p *Parser) parseTupleExpression() Node {
-	var elements []Node
+func (p *Parser) parseTupleExpression() Expression {
+	var elements []Expression
 	outer := p.allowEmptyExpr
 	p.allowEmptyExpr = true
 	for p.Peek().Kind() != EOF {
@@ -39,5 +41,5 @@ func (p *Parser) parseTupleExpression() Node {
 	if len(elements) == 1 {
 		return elements[0]
 	}
-	return TupleExpression{elements}
+	return TupleExpression{elements, nil}
 }
