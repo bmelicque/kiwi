@@ -4,9 +4,9 @@ import "testing"
 
 func TestAssignment(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: IDENTIFIER, value: "n"},
-		token{kind: ASSIGN},
-		literal{kind: NUMBER, value: "42"},
+		literal{kind: Name, value: "n"},
+		token{kind: Assign},
+		literal{kind: NumberLiteral, value: "42"},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAssignment()
@@ -25,13 +25,13 @@ func TestAssignment(t *testing.T) {
 
 func TestTupleAssignment(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: IDENTIFIER, value: "n"},
-		token{kind: COMMA},
-		literal{kind: IDENTIFIER, value: "m"},
-		token{kind: ASSIGN},
-		literal{kind: NUMBER, value: "1"},
-		token{kind: COMMA},
-		literal{kind: NUMBER, value: "2"},
+		literal{kind: Name, value: "n"},
+		token{kind: Comma},
+		literal{kind: Name, value: "m"},
+		token{kind: Assign},
+		literal{kind: NumberLiteral, value: "1"},
+		token{kind: Comma},
+		literal{kind: NumberLiteral, value: "2"},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAssignment()
@@ -50,17 +50,17 @@ func TestTupleAssignment(t *testing.T) {
 
 func TestObjectDeclaration(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: IDENTIFIER, value: "Type"},
-		token{kind: DEFINE},
-		token{kind: LPAREN},
+		literal{kind: Name, value: "Type"},
+		token{kind: Define},
+		token{kind: LeftParenthesis},
 		token{kind: EOL},
 
-		literal{kind: IDENTIFIER, value: "n"},
-		token{kind: NUM_KW},
-		token{kind: COMMA},
+		literal{kind: Name, value: "n"},
+		token{kind: NumberKeyword},
+		token{kind: Comma},
 		token{kind: EOL},
 
-		token{kind: RPAREN},
+		token{kind: RightParenthesis},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAssignment()
@@ -79,18 +79,18 @@ func TestObjectDeclaration(t *testing.T) {
 
 func TestMethodDeclaration(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LPAREN},
-		literal{kind: IDENTIFIER, value: "t"},
-		literal{kind: IDENTIFIER, value: "Type"},
-		token{kind: RPAREN},
-		token{kind: DOT},
-		literal{kind: IDENTIFIER, value: "method"},
-		token{kind: DEFINE},
-		token{kind: LPAREN},
-		token{kind: RPAREN},
-		token{kind: SLIM_ARR},
-		token{kind: LPAREN},
-		token{kind: RPAREN},
+		token{kind: LeftParenthesis},
+		literal{kind: Name, value: "t"},
+		literal{kind: Name, value: "Type"},
+		token{kind: RightParenthesis},
+		token{kind: Dot},
+		literal{kind: Name, value: "method"},
+		token{kind: Define},
+		token{kind: LeftParenthesis},
+		token{kind: RightParenthesis},
+		token{kind: SlimArrow},
+		token{kind: LeftParenthesis},
+		token{kind: RightParenthesis},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAssignment()

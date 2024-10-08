@@ -28,21 +28,21 @@ func (p *Parser) parseMatchExpression() Node {
 	p.allowBraceParsing = false
 	condition := ParseExpression(p)
 	p.allowBraceParsing = outer
-	if p.Peek().Kind() != LBRACE && !recover(p, LBRACE) {
+	if p.Peek().Kind() != LeftBrace && !recover(p, LeftBrace) {
 		return MatchExpression{Keyword: keyword, Value: condition}
 	}
 	p.Consume()
 	p.DiscardLineBreaks()
 
 	cases := []MatchCase{}
-	stopAt := []TokenKind{RBRACE, EOF}
+	stopAt := []TokenKind{RightBrace, EOF}
 	for !slices.Contains(stopAt, p.Peek().Kind()) {
 		cases = append(cases, parseMatchCase(p))
 	}
 
 	next := p.Peek()
 	end := next.Loc().End
-	if next.Kind() == RBRACE {
+	if next.Kind() == RightBrace {
 		p.Consume()
 	} else {
 		p.report("'}' expected", next.Loc())
@@ -52,17 +52,17 @@ func (p *Parser) parseMatchExpression() Node {
 
 func parseMatchCase(p *Parser) MatchCase {
 	var pattern Node
-	if p.Peek().Kind() == CASE_KW {
+	if p.Peek().Kind() == CaseKeyword {
 		p.Consume()
 		pattern = ParseExpression(p)
-		if p.Peek().Kind() == COLON {
+		if p.Peek().Kind() == Colon {
 			p.Consume()
 		} else {
 			p.report("':' expected", p.Peek().Loc())
 		}
 	}
 
-	stopAt := []TokenKind{EOF, RBRACE, CASE_KW}
+	stopAt := []TokenKind{EOF, RightBrace, CaseKeyword}
 	statements := []Node{}
 	for !slices.Contains(stopAt, p.Peek().Kind()) {
 		statements = append(statements, p.parseStatement())

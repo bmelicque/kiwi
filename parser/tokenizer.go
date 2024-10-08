@@ -20,77 +20,77 @@ type Loc struct {
 type TokenKind int
 
 const (
-	ILLEGAL TokenKind = iota
+	Illegal TokenKind = iota
 	EOF
 	EOL
 
-	IDENTIFIER
-	PLACEHOLDER // _
-	NUMBER
-	BOOLEAN
-	STRING
+	Name
+	PlaceholderToken // _
+	NumberLiteral
+	BooleanLiteral
+	StringLiteral
 
-	STR_KW      // string
-	NUM_KW      // number
-	BOOL_KW     // boolean
-	IF_KW       // if
-	ELSE_KW     //else
-	MATCH_KW    // match
-	CASE_KW     // case
-	FOR_KW      // for
-	BREAK_KW    // break
-	CONTINUE_KW // continue
-	RETURN_KW   // return
+	StringKeyword   // string
+	NumberKeyword   // number
+	BooleanKeyword  // boolean
+	IfKeyword       // if
+	ElseKeyword     //else
+	MatchKeyword    // match
+	CaseKeyword     // case
+	ForKeyword      // for
+	BreakKeyword    // break
+	ContinueKeyword // continue
+	ReturnKeyword   // return
 
-	ADD    // +
-	CONCAT // ++
-	SUB    // -
-	MUL    // *
-	POW    // **
-	DIV    // /
-	MOD    // %
-	LAND   // &&
-	LOR    // ||
-	BAND   // &
-	BOR    // |
+	Add        // +
+	Concat     // ++
+	Sub        // -
+	Mul        // *
+	Pow        // **
+	Div        // /
+	Mod        // %
+	LogicalAnd // &&
+	LogicalOr  // ||
+	BinaryAnd  // &
+	BinaryOr   // |
 
-	QUESTION_MARK // ?
+	QuestionMark // ?
 
-	LESS    // <
-	GREATER // >
-	LEQ     // <=
-	GEQ     // >=
-	EQ      // ==
-	NEQ     // !=
+	Less         // <
+	Greater      // >
+	LessEqual    // <=
+	GreaterEqual // >=
+	Equal        // ==
+	NotEqual     // !=
 
-	DEFINE          // ::
-	DECLARE         // :=
-	ASSIGN          // =
-	RANGE_EXCLUSIVE // ..
-	RANGE_INCLUSIVE // ..=
-	SLIM_ARR        // ->
-	FAT_ARR         // =>
+	Define         // ::
+	Declare        // :=
+	Assign         // =
+	ExclusiveRange // ..
+	InclusiveRange // ..=
+	SlimArrow      // ->
+	FatArrow       // =>
 
-	ADD_ASSIGN    // +=
-	CONCAT_ASSIGN // ++=
-	SUB_ASSIGN    // -=
-	MUL_ASSIGN    // *=
-	POW_ASSIGN    // **=
-	DIV_ASSIGN    // /=
-	MOD_ASSIGN    // %=
-	LAND_ASSIGN   // &&=
-	LOR_ASSIGN    // ||=
+	AddAssign        // +=
+	ConcatAssign     // ++=
+	SubAssign        // -=
+	MulAssign        // *=
+	PowAssign        // **=
+	DivAssign        // /=
+	ModAssign        // %=
+	LogicalAndAssign // &&=
+	LogicalOrAssign  // ||=
 
-	LBRACKET // [
-	RBRACKET // ]
-	LPAREN   // (
-	RPAREN   // )
-	LBRACE   // {
-	RBRACE   // }
+	LeftBracket      // [
+	RightBracket     // ]
+	LeftParenthesis  // (
+	RightParenthesis // )
+	LeftBrace        // {
+	RightBrace       // }
 
-	COMMA // ,
-	COLON // :
-	DOT   // .
+	Comma // ,
+	Colon // :
+	Dot   // .
 )
 
 type Token interface {
@@ -112,34 +112,34 @@ func (t token) Text() string {
 	switch t.kind {
 	case EOL:
 		return "\n"
-	case ADD,
-		CONCAT:
+	case Add,
+		Concat:
 		return "+"
-	case SUB:
+	case Sub:
 		return "-"
-	case MUL:
+	case Mul:
 		return "*"
-	case POW:
+	case Pow:
 		return "**"
-	case DIV:
+	case Div:
 		return "/"
-	case MOD:
+	case Mod:
 		return "%"
-	case LAND:
+	case LogicalAnd:
 		return "&&"
-	case LOR:
+	case LogicalOr:
 		return "||"
-	case LESS:
+	case Less:
 		return "<"
-	case GREATER:
+	case Greater:
 		return ">"
-	case LEQ:
+	case LessEqual:
 		return "<="
-	case GEQ:
+	case GreaterEqual:
 		return ">="
-	case EQ:
+	case Equal:
 		return "==="
-	case NEQ:
+	case NotEqual:
 		return "!=="
 	default:
 		return ""
@@ -246,111 +246,111 @@ func (t *tokenizer) updateCursor(token string) {
 func makeToken(text string, loc Loc) Token {
 	switch text {
 	case "_":
-		return literal{IDENTIFIER, text, loc}
+		return literal{Name, text, loc}
 	case "true", "false":
-		return literal{BOOLEAN, text, loc}
+		return literal{BooleanLiteral, text, loc}
 	case "string":
-		return token{STR_KW, loc}
+		return token{StringKeyword, loc}
 	case "number":
-		return token{NUM_KW, loc}
+		return token{NumberKeyword, loc}
 	case "boolean":
-		return token{BOOL_KW, loc}
+		return token{BooleanKeyword, loc}
 	case "if":
-		return token{IF_KW, loc}
+		return token{IfKeyword, loc}
 	case "else":
-		return token{ELSE_KW, loc}
+		return token{ElseKeyword, loc}
 	case "match":
-		return token{MATCH_KW, loc}
+		return token{MatchKeyword, loc}
 	case "case":
-		return token{CASE_KW, loc}
+		return token{CaseKeyword, loc}
 	case "for":
-		return token{FOR_KW, loc}
+		return token{ForKeyword, loc}
 	case "break":
-		return token{BREAK_KW, loc}
+		return token{BreakKeyword, loc}
 	case "continue":
-		return token{CONTINUE_KW, loc}
+		return token{ContinueKeyword, loc}
 	case "return":
-		return token{RETURN_KW, loc}
+		return token{ReturnKeyword, loc}
 	case "+":
-		return token{ADD, loc}
+		return token{Add, loc}
 	case "++":
-		return token{CONCAT, loc}
+		return token{Concat, loc}
 	case "-":
-		return token{SUB, loc}
+		return token{Sub, loc}
 	case "*":
-		return token{MUL, loc}
+		return token{Mul, loc}
 	case "**":
-		return token{POW, loc}
+		return token{Pow, loc}
 	case "/":
-		return token{DIV, loc}
+		return token{Div, loc}
 	case "%":
-		return token{MOD, loc}
+		return token{Mod, loc}
 	case "&&":
-		return token{LAND, loc}
+		return token{LogicalAnd, loc}
 	case "||":
-		return token{LOR, loc}
+		return token{LogicalOr, loc}
 	case "&":
-		return token{BAND, loc}
+		return token{BinaryAnd, loc}
 	case "|":
-		return token{BOR, loc}
+		return token{BinaryOr, loc}
 	case "<":
-		return token{LESS, loc}
+		return token{Less, loc}
 	case ">":
-		return token{GREATER, loc}
+		return token{Greater, loc}
 	case "<=":
-		return token{LEQ, loc}
+		return token{LessEqual, loc}
 	case ">=":
-		return token{GEQ, loc}
+		return token{GreaterEqual, loc}
 	case "==":
-		return token{EQ, loc}
+		return token{Equal, loc}
 	case "!=":
-		return token{NEQ, loc}
+		return token{NotEqual, loc}
 	case "?":
-		return token{QUESTION_MARK, loc}
+		return token{QuestionMark, loc}
 	case "[":
-		return token{LBRACKET, loc}
+		return token{LeftBracket, loc}
 	case "]":
-		return token{RBRACKET, loc}
+		return token{RightBracket, loc}
 	case "(":
-		return token{LPAREN, loc}
+		return token{LeftParenthesis, loc}
 	case ")":
-		return token{RPAREN, loc}
+		return token{RightParenthesis, loc}
 	case "{":
-		return token{LBRACE, loc}
+		return token{LeftBrace, loc}
 	case "}":
-		return token{RBRACE, loc}
+		return token{RightBrace, loc}
 	case ",":
-		return token{COMMA, loc}
+		return token{Comma, loc}
 	case ":":
-		return token{COLON, loc}
+		return token{Colon, loc}
 	case ".":
-		return token{DOT, loc}
+		return token{Dot, loc}
 	case "::":
-		return token{DEFINE, loc}
+		return token{Define, loc}
 	case ":=":
-		return token{DECLARE, loc}
+		return token{Declare, loc}
 	case "=":
-		return token{ASSIGN, loc}
+		return token{Assign, loc}
 	case "..":
-		return token{RANGE_EXCLUSIVE, loc}
+		return token{ExclusiveRange, loc}
 	case "..=":
-		return token{RANGE_INCLUSIVE, loc}
+		return token{InclusiveRange, loc}
 	case "->":
-		return token{SLIM_ARR, loc}
+		return token{SlimArrow, loc}
 	case "=>":
-		return token{FAT_ARR, loc}
+		return token{FatArrow, loc}
 	}
 	switch {
 	case newLine.MatchString(text):
 		return token{EOL, loc}
 	case number.MatchString(text):
-		return literal{NUMBER, text, loc}
+		return literal{NumberLiteral, text, loc}
 	case str.MatchString(text):
-		return literal{STRING, text, loc}
+		return literal{StringLiteral, text, loc}
 	case word.MatchString(text):
-		return literal{IDENTIFIER, text, loc}
+		return literal{Name, text, loc}
 	}
-	return token{ILLEGAL, loc}
+	return token{Illegal, loc}
 }
 
 func (t *tokenizer) next() bool {

@@ -11,10 +11,10 @@ func TestSumTypeDefinition(t *testing.T) {
 	sum := checker.checkSumType(parser.SumType{
 		Members: []parser.Node{
 			parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "Some", parser.Loc{}}},
-				Typing: parser.TokenExpression{Token: testToken{parser.NUM_KW, "number", parser.Loc{}}},
+				Expr:   parser.TokenExpression{Token: testToken{parser.Name, "Some", parser.Loc{}}},
+				Typing: parser.TokenExpression{Token: testToken{parser.NumberKeyword, "number", parser.Loc{}}},
 			},
-			parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "None", parser.Loc{}}},
+			parser.TokenExpression{Token: testToken{parser.Name, "None", parser.Loc{}}},
 		},
 	})
 
@@ -49,7 +49,7 @@ func TestSumTypeLength(t *testing.T) {
 	checker := MakeChecker()
 	checker.checkSumType(parser.SumType{
 		Members: []parser.Node{
-			parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "Alone", parser.Loc{}}},
+			parser.TokenExpression{Token: testToken{parser.Name, "Alone", parser.Loc{}}},
 		},
 	})
 

@@ -4,7 +4,7 @@ import "github.com/bmelicque/test-parser/parser"
 
 func (c *Checker) checkDefinition(a parser.Assignment) Node {
 	var pattern Expression
-	constant := a.Operator.Kind() == parser.DEFINE
+	constant := a.Operator.Kind() == parser.Define
 
 	declared := a.Declared
 	if d, ok := declared.(parser.ParenthesizedExpression); ok {

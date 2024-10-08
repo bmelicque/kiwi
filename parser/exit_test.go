@@ -4,8 +4,8 @@ import "testing"
 
 func TestReturn(t *testing.T) {
 	tok := testTokenizer{tokens: []Token{
-		token{kind: RETURN_KW},
-		literal{kind: BOOLEAN, value: "true"},
+		token{kind: ReturnKeyword},
+		literal{kind: BooleanLiteral, value: "true"},
 	}}
 	parser := MakeParser(&tok)
 	exit := parser.parseExit()
@@ -13,15 +13,15 @@ func TestReturn(t *testing.T) {
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	if exit.Operator.Kind() != RETURN_KW {
+	if exit.Operator.Kind() != ReturnKeyword {
 		t.Fatal("Expected 'return' keyword")
 	}
 }
 
 func TestBreak(t *testing.T) {
 	tok := testTokenizer{tokens: []Token{
-		token{kind: BREAK_KW},
-		literal{kind: BOOLEAN, value: "true"},
+		token{kind: BreakKeyword},
+		literal{kind: BooleanLiteral, value: "true"},
 	}}
 	parser := MakeParser(&tok)
 	exit := parser.parseExit()
@@ -29,14 +29,14 @@ func TestBreak(t *testing.T) {
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	if exit.Operator.Kind() != BREAK_KW {
+	if exit.Operator.Kind() != BreakKeyword {
 		t.Fatal("Expected 'return' keyword")
 	}
 }
 
 func TestContinue(t *testing.T) {
 	tok := testTokenizer{tokens: []Token{
-		token{kind: CONTINUE_KW},
+		token{kind: ContinueKeyword},
 	}}
 	parser := MakeParser(&tok)
 	exit := parser.parseExit()
@@ -44,7 +44,7 @@ func TestContinue(t *testing.T) {
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	if exit.Operator.Kind() != CONTINUE_KW {
+	if exit.Operator.Kind() != ContinueKeyword {
 		t.Fatal("Expected 'return' keyword")
 	}
 }

@@ -10,8 +10,8 @@ func TestBlockType(t *testing.T) {
 	checker := MakeChecker()
 	block := checker.checkBlock(parser.Block{
 		Statements: []parser.Node{
-			parser.TokenExpression{Token: testToken{kind: parser.STRING, value: "\"Hello, world!\""}},
-			parser.TokenExpression{Token: testToken{kind: parser.NUMBER, value: "42"}},
+			parser.TokenExpression{Token: testToken{kind: parser.StringLiteral, value: "\"Hello, world!\""}},
+			parser.TokenExpression{Token: testToken{kind: parser.NumberLiteral, value: "42"}},
 		},
 	})
 
@@ -27,9 +27,9 @@ func TestUnreachableCode(t *testing.T) {
 	checker := MakeChecker()
 	checker.checkBlock(parser.Block{
 		Statements: []parser.Node{
-			parser.Exit{Operator: testToken{kind: parser.RETURN_KW}},
+			parser.Exit{Operator: testToken{kind: parser.ReturnKeyword}},
 			parser.TokenExpression{Token: testToken{
-				kind:  parser.STRING,
+				kind:  parser.StringLiteral,
 				value: "\"Hello, world!\"",
 				loc:   parser.Loc{Start: parser.Position{Col: 1}},
 			}},

@@ -9,12 +9,12 @@ import (
 func TestObjectDeclaration(t *testing.T) {
 	checker := MakeChecker()
 	assignment := checker.checkDefinition(parser.Assignment{
-		Declared: parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "Type"}},
-		Operator: testToken{kind: parser.ASSIGN},
+		Declared: parser.TokenExpression{Token: testToken{kind: parser.Name, value: "Type"}},
+		Operator: testToken{kind: parser.Assign},
 		Initializer: parser.ParenthesizedExpression{
 			Expr: parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "n"}},
-				Typing: parser.TokenExpression{Token: testToken{kind: parser.NUM_KW}},
+				Expr:   parser.TokenExpression{Token: testToken{kind: parser.Name, value: "n"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: parser.NumberKeyword}},
 			},
 		},
 	})
@@ -50,14 +50,14 @@ func TestGenericObjectDefinition(t *testing.T) {
 	checker := MakeChecker()
 	checker.checkDefinition(parser.Assignment{
 		Declared: parser.ComputedAccessExpression{
-			Expr:     parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "Generic"}},
-			Property: parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "TypeParam"}}},
+			Expr:     parser.TokenExpression{Token: testToken{kind: parser.Name, value: "Generic"}},
+			Property: parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{kind: parser.Name, value: "TypeParam"}}},
 		},
-		Operator: testToken{parser.ASSIGN, "::", parser.Loc{}},
+		Operator: testToken{parser.Assign, "::", parser.Loc{}},
 		Initializer: parser.ParenthesizedExpression{
 			Expr: parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "value"}},
-				Typing: parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "TypeParam"}},
+				Expr:   parser.TokenExpression{Token: testToken{kind: parser.Name, value: "value"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: parser.Name, value: "TypeParam"}},
 			},
 		},
 	})

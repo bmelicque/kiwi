@@ -220,7 +220,7 @@ func (e *Emitter) emitRangeExpression(r checker.RangeExpression) {
 
 	if r.Right != nil {
 		e.emit(r.Right)
-		if r.Operator.Kind() == parser.RANGE_INCLUSIVE {
+		if r.Operator.Kind() == parser.InclusiveRange {
 			e.write(" + 1")
 		}
 	} else {

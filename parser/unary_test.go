@@ -4,9 +4,9 @@ import "testing"
 
 func TestListTypeExpression(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LBRACKET},
-		token{kind: RBRACKET},
-		token{kind: NUM_KW},
+		token{kind: LeftBracket},
+		token{kind: RightBracket},
+		token{kind: NumberKeyword},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := ParseExpression(parser)
@@ -26,11 +26,11 @@ func TestListTypeExpression(t *testing.T) {
 
 func TestNestedListTypeExpression(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LBRACKET},
-		token{kind: RBRACKET},
-		token{kind: LBRACKET},
-		token{kind: RBRACKET},
-		token{kind: NUM_KW},
+		token{kind: LeftBracket},
+		token{kind: RightBracket},
+		token{kind: LeftBracket},
+		token{kind: RightBracket},
+		token{kind: NumberKeyword},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := ParseExpression(parser)

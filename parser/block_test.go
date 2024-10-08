@@ -4,8 +4,8 @@ import "testing"
 
 func TestEmptyBlock(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LBRACE},
-		token{kind: RBRACE},
+		token{kind: LeftBrace},
+		token{kind: RightBrace},
 	}}
 	parser := MakeParser(&tokenizer)
 	parser.parseBlock()
@@ -17,9 +17,9 @@ func TestEmptyBlock(t *testing.T) {
 
 func TestSingleLineBlock(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LBRACE},
-		literal{kind: STRING, value: "Hello, world!"},
-		token{kind: RBRACE},
+		token{kind: LeftBrace},
+		literal{kind: StringLiteral, value: "Hello, world!"},
+		token{kind: RightBrace},
 	}}
 	parser := MakeParser(&tokenizer)
 	parser.parseBlock()
@@ -31,16 +31,16 @@ func TestSingleLineBlock(t *testing.T) {
 
 func TestMultilineBlock(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LBRACE},
+		token{kind: LeftBrace},
 		token{kind: EOL},
 
-		literal{kind: STRING, value: "Hello, world!"},
+		literal{kind: StringLiteral, value: "Hello, world!"},
 		token{kind: EOL},
 
-		literal{kind: STRING, value: "Hello, world!"},
+		literal{kind: StringLiteral, value: "Hello, world!"},
 		token{kind: EOL},
 
-		token{kind: RBRACE},
+		token{kind: RightBrace},
 		token{kind: EOL},
 	}}
 	parser := MakeParser(&tokenizer)

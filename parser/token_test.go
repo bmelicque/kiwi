@@ -4,7 +4,7 @@ import "testing"
 
 func TestToken(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: BOOLEAN, value: "true"},
+		literal{kind: BooleanLiteral, value: "true"},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseTokenExpression()

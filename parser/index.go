@@ -6,11 +6,11 @@ type Node interface {
 
 func fallback(p *Parser) Node {
 	switch p.Peek().Kind() {
-	case LBRACKET:
+	case LeftBracket:
 		return p.parseUnaryExpression()
-	case LPAREN:
+	case LeftParenthesis:
 		return p.parseFunctionExpression()
-	case LBRACE:
+	case LeftBrace:
 		if p.allowBraceParsing {
 			return p.parseBlock()
 		}

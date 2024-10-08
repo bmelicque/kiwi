@@ -146,11 +146,11 @@ func (e *Emitter) emitMethodDeclaration(method checker.MethodDeclaration) {
 
 func (e *Emitter) emitExit(r checker.Exit) {
 	switch r.Operator.Kind() {
-	case parser.RETURN_KW:
+	case parser.ReturnKeyword:
 		e.write("return")
-	case parser.BREAK_KW:
+	case parser.BreakKeyword:
 		e.write("break")
-	case parser.CONTINUE_KW:
+	case parser.ContinueKeyword:
 		e.write("continue")
 	}
 	if r.Value != nil {

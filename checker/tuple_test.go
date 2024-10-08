@@ -12,12 +12,12 @@ func TestObjectType(t *testing.T) {
 	tuple := checker.checkTuple(parser.TupleExpression{
 		Elements: []parser.Node{
 			parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "n"}},
-				Typing: parser.TokenExpression{Token: testToken{kind: parser.NUM_KW}},
+				Expr:   parser.TokenExpression{Token: testToken{kind: parser.Name, value: "n"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: parser.NumberKeyword}},
 			},
 			parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "s"}},
-				Typing: parser.TokenExpression{Token: testToken{kind: parser.STR_KW}},
+				Expr:   parser.TokenExpression{Token: testToken{kind: parser.Name, value: "s"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: parser.StringKeyword}},
 			},
 		},
 	})
@@ -53,12 +53,12 @@ func TestObjectTypeDuplicates(t *testing.T) {
 	checker.checkTuple(parser.TupleExpression{
 		Elements: []parser.Node{
 			parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "n"}},
-				Typing: parser.TokenExpression{Token: testToken{kind: parser.NUM_KW}},
+				Expr:   parser.TokenExpression{Token: testToken{kind: parser.Name, value: "n"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: parser.NumberKeyword}},
 			},
 			parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "n"}},
-				Typing: parser.TokenExpression{Token: testToken{kind: parser.NUM_KW}},
+				Expr:   parser.TokenExpression{Token: testToken{kind: parser.Name, value: "n"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: parser.NumberKeyword}},
 			},
 		},
 	})
@@ -75,10 +75,10 @@ func TestTupleConsistency(t *testing.T) {
 	checker.checkTuple(parser.TupleExpression{
 		Elements: []parser.Node{
 			parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "n"}},
-				Typing: parser.TokenExpression{Token: testToken{kind: parser.NUM_KW}},
+				Expr:   parser.TokenExpression{Token: testToken{kind: parser.Name, value: "n"}},
+				Typing: parser.TokenExpression{Token: testToken{kind: parser.NumberKeyword}},
 			},
-			parser.TokenExpression{Token: testToken{kind: parser.NUMBER, value: "42"}},
+			parser.TokenExpression{Token: testToken{kind: parser.NumberLiteral, value: "42"}},
 		},
 	})
 

@@ -69,7 +69,7 @@ func (c *Checker) checkFunctionExpression(f parser.FunctionExpression) Expressio
 	if f.Params == nil {
 		c.report("Parameters expected", f.Loc())
 	}
-	if f.Operator.Kind() == parser.FAT_ARR {
+	if f.Operator.Kind() == parser.FatArrow {
 		return checkFunctionExpression(c, f)
 	} else {
 		return checkFunctionTypeExpression(c, f)
@@ -137,7 +137,7 @@ func findReturnStatements(node Node, results *[]Exit) {
 		return
 	}
 	if n, ok := node.(Exit); ok {
-		if n.Operator.Kind() == parser.RETURN_KW {
+		if n.Operator.Kind() == parser.ReturnKeyword {
 			*results = append(*results, n)
 		}
 		return

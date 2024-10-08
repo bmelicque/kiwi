@@ -25,12 +25,12 @@ func ParseRange(p *Parser) Node {
 	token := p.Peek()
 
 	var left Node
-	if token.Kind() != RANGE_INCLUSIVE && token.Kind() != RANGE_EXCLUSIVE {
+	if token.Kind() != InclusiveRange && token.Kind() != ExclusiveRange {
 		left = BinaryExpression{}.Parse(p)
 	}
 
 	token = p.Peek()
-	if token.Kind() != RANGE_INCLUSIVE && token.Kind() != RANGE_EXCLUSIVE {
+	if token.Kind() != InclusiveRange && token.Kind() != ExclusiveRange {
 		return left
 	}
 	operator := p.Consume()

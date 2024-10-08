@@ -4,10 +4,10 @@ import "testing"
 
 func TestSlimArrowFunctionWithoutArgs(t *testing.T) {
 	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: LPAREN},
-		token{kind: RPAREN},
-		token{kind: SLIM_ARR},
-		literal{kind: NUMBER, value: "42"},
+		token{kind: LeftParenthesis},
+		token{kind: RightParenthesis},
+		token{kind: SlimArrow},
+		literal{kind: NumberLiteral, value: "42"},
 	}})
 	node := parser.parseFunctionExpression()
 
@@ -19,7 +19,7 @@ func TestSlimArrowFunctionWithoutArgs(t *testing.T) {
 	if function.Params.Expr != nil {
 		t.Fatalf("Expected no params, got %#v", function.Params.Expr)
 	}
-	if function.Operator.Kind() != SLIM_ARR {
+	if function.Operator.Kind() != SlimArrow {
 		t.Fatalf("Expected '->', got %v", function.Operator.Text())
 	}
 	if _, ok := function.Expr.(TokenExpression); !ok {
@@ -32,14 +32,14 @@ func TestSlimArrowFunctionWithoutArgs(t *testing.T) {
 
 func TestSlimArrowFunctionWithArgs(t *testing.T) {
 	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: LPAREN},
-		literal{kind: IDENTIFIER, value: "n"},
-		token{kind: NUM_KW},
-		token{kind: RPAREN},
-		token{kind: SLIM_ARR},
-		literal{kind: NUMBER, value: "2"},
-		token{kind: MUL},
-		literal{kind: IDENTIFIER, value: "n"},
+		token{kind: LeftParenthesis},
+		literal{kind: Name, value: "n"},
+		token{kind: NumberKeyword},
+		token{kind: RightParenthesis},
+		token{kind: SlimArrow},
+		literal{kind: NumberLiteral, value: "2"},
+		token{kind: Mul},
+		literal{kind: Name, value: "n"},
 	}})
 	node := parser.parseFunctionExpression()
 
@@ -52,7 +52,7 @@ func TestSlimArrowFunctionWithArgs(t *testing.T) {
 	if _, ok := function.Params.Expr.(TypedExpression); !ok {
 		t.Fatalf("Expected TypedExpression, got %#v", function.Params.Expr)
 	}
-	if function.Operator.Kind() != SLIM_ARR {
+	if function.Operator.Kind() != SlimArrow {
 		t.Fatalf("Expected '->', got %v", function.Operator.Text())
 	}
 	if _, ok := function.Expr.(BinaryExpression); !ok {
@@ -66,11 +66,11 @@ func TestSlimArrowFunctionWithArgs(t *testing.T) {
 func TestFunctionType(t *testing.T) {
 	// (number) -> number
 	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: LPAREN},
-		token{kind: NUM_KW},
-		token{kind: RPAREN},
-		token{kind: SLIM_ARR},
-		token{kind: NUM_KW},
+		token{kind: LeftParenthesis},
+		token{kind: NumberKeyword},
+		token{kind: RightParenthesis},
+		token{kind: SlimArrow},
+		token{kind: NumberKeyword},
 	}})
 	node := parser.parseFunctionExpression()
 
@@ -79,7 +79,7 @@ func TestFunctionType(t *testing.T) {
 		t.Fatalf("Expected FunctionExpression, got %#v", node)
 	}
 
-	if function.Operator.Kind() != SLIM_ARR {
+	if function.Operator.Kind() != SlimArrow {
 		t.Fatalf("Expected '->', got %v", function.Operator.Text())
 	}
 	if _, ok := function.Expr.(TokenExpression); !ok {
@@ -92,14 +92,14 @@ func TestFunctionType(t *testing.T) {
 
 func TestFatArrowFunctionWithoutArgs(t *testing.T) {
 	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: LPAREN},
-		token{kind: RPAREN},
-		token{kind: FAT_ARR},
-		token{kind: NUM_KW},
-		token{kind: LBRACE},
-		token{kind: RETURN_KW},
-		literal{kind: NUMBER, value: "42"},
-		token{kind: RBRACE},
+		token{kind: LeftParenthesis},
+		token{kind: RightParenthesis},
+		token{kind: FatArrow},
+		token{kind: NumberKeyword},
+		token{kind: LeftBrace},
+		token{kind: ReturnKeyword},
+		literal{kind: NumberLiteral, value: "42"},
+		token{kind: RightBrace},
 	}})
 	node := parser.parseFunctionExpression()
 
@@ -112,7 +112,7 @@ func TestFatArrowFunctionWithoutArgs(t *testing.T) {
 	if function.Params.Expr != nil {
 		t.Fatalf("Expected no params, got %#v", function.Params.Expr)
 	}
-	if function.Operator.Kind() != FAT_ARR {
+	if function.Operator.Kind() != FatArrow {
 		t.Fatalf("Expected '=>', got %v", function.Operator.Text())
 	}
 	if _, ok := function.Expr.(TokenExpression); !ok {
@@ -125,16 +125,16 @@ func TestFatArrowFunctionWithoutArgs(t *testing.T) {
 
 func TestFatArrowFunctionWithArgs(t *testing.T) {
 	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: LPAREN},
-		literal{kind: IDENTIFIER, value: "n"},
-		token{kind: NUM_KW},
-		token{kind: RPAREN},
-		token{kind: FAT_ARR},
-		token{kind: NUM_KW},
-		token{kind: LBRACE},
-		token{kind: RETURN_KW},
-		literal{kind: IDENTIFIER, value: "n"},
-		token{kind: RBRACE},
+		token{kind: LeftParenthesis},
+		literal{kind: Name, value: "n"},
+		token{kind: NumberKeyword},
+		token{kind: RightParenthesis},
+		token{kind: FatArrow},
+		token{kind: NumberKeyword},
+		token{kind: LeftBrace},
+		token{kind: ReturnKeyword},
+		literal{kind: Name, value: "n"},
+		token{kind: RightBrace},
 	}})
 	node := parser.parseFunctionExpression()
 
@@ -147,7 +147,7 @@ func TestFatArrowFunctionWithArgs(t *testing.T) {
 	if _, ok := function.Params.Expr.(TypedExpression); !ok {
 		t.Fatalf("Expected TypedExpression, got %#v", function.Params.Expr)
 	}
-	if function.Operator.Kind() != FAT_ARR {
+	if function.Operator.Kind() != FatArrow {
 		t.Fatalf("Expected '=>', got %v", function.Operator.Text())
 	}
 	if _, ok := function.Expr.(TokenExpression); !ok {
@@ -160,14 +160,14 @@ func TestFatArrowFunctionWithArgs(t *testing.T) {
 
 func TestFunctionWithTypeArgs(t *testing.T) {
 	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: LBRACKET},
-		literal{kind: IDENTIFIER, value: "Type"},
-		token{kind: RBRACKET},
-		token{kind: LPAREN},
-		token{kind: RPAREN},
-		token{kind: FAT_ARR},
-		token{kind: LBRACE},
-		token{kind: RBRACE},
+		token{kind: LeftBracket},
+		literal{kind: Name, value: "Type"},
+		token{kind: RightBracket},
+		token{kind: LeftParenthesis},
+		token{kind: RightParenthesis},
+		token{kind: FatArrow},
+		token{kind: LeftBrace},
+		token{kind: RightBrace},
 	}})
 	node := ParseExpression(parser)
 

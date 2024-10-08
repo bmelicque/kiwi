@@ -28,11 +28,11 @@ func (l ListTypeExpression) Loc() Loc {
 
 func (p *Parser) parseUnaryExpression() Node {
 	switch p.Peek().Kind() {
-	case QUESTION_MARK:
+	case QuestionMark:
 		token := p.Consume()
 		expr := parseInnerUnary(p)
 		return UnaryExpression{token, expr}
-	case LBRACKET:
+	case LeftBracket:
 		brackets := p.parseBracketedExpression()
 		expr := parseInnerUnary(p)
 		if function, ok := expr.(FunctionExpression); ok {

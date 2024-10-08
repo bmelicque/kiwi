@@ -11,12 +11,12 @@ func TestIfStatement(t *testing.T) {
 	emitter := makeEmitter()
 	emitter.emit(checker.ExpressionStatement{Expr: checker.If{
 		Condition: checker.Literal{TokenExpression: parser.TokenExpression{
-			Token: testToken{kind: parser.BOOLEAN, value: "false"},
+			Token: testToken{kind: parser.BooleanLiteral, value: "false"},
 		}},
 		Block: checker.Block{Statements: []checker.Node{}},
 		Alternate: checker.If{
 			Condition: checker.Literal{TokenExpression: parser.TokenExpression{
-				Token: testToken{kind: parser.BOOLEAN, value: "false"},
+				Token: testToken{kind: parser.BooleanLiteral, value: "false"},
 			}},
 			Block:     checker.Block{Statements: []checker.Node{}},
 			Alternate: checker.Block{},

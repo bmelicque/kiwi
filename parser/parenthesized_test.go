@@ -4,9 +4,9 @@ import "testing"
 
 func TestParenthesized(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LPAREN},
-		literal{kind: NUMBER, value: "42"},
-		token{kind: RPAREN},
+		token{kind: LeftParenthesis},
+		literal{kind: NumberLiteral, value: "42"},
+		token{kind: RightParenthesis},
 	}}
 	parser := MakeParser(&tokenizer)
 	paren := parser.parseParenthesizedExpression()
@@ -17,11 +17,11 @@ func TestParenthesized(t *testing.T) {
 
 func TestParenthesizedTuple(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LPAREN},
-		literal{kind: NUMBER, value: "1"},
-		token{kind: COMMA},
-		literal{kind: NUMBER, value: "2"},
-		token{kind: RPAREN},
+		token{kind: LeftParenthesis},
+		literal{kind: NumberLiteral, value: "1"},
+		token{kind: Comma},
+		literal{kind: NumberLiteral, value: "2"},
+		token{kind: RightParenthesis},
 	}}
 	parser := MakeParser(&tokenizer)
 	paren := parser.parseParenthesizedExpression()
@@ -32,10 +32,10 @@ func TestParenthesizedTuple(t *testing.T) {
 
 func TestObjectDescriptionSingleLine(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LPAREN},
-		literal{kind: IDENTIFIER, value: "n"},
-		token{kind: NUM_KW},
-		token{kind: RPAREN},
+		token{kind: LeftParenthesis},
+		literal{kind: Name, value: "n"},
+		token{kind: NumberKeyword},
+		token{kind: RightParenthesis},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseParenthesizedExpression()
@@ -51,20 +51,20 @@ func TestObjectDescriptionSingleLine(t *testing.T) {
 
 func TestObjectDescription(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LPAREN},
+		token{kind: LeftParenthesis},
 		token{kind: EOL},
 
-		literal{kind: IDENTIFIER, value: "n"},
-		token{kind: NUM_KW},
-		token{kind: COMMA},
+		literal{kind: Name, value: "n"},
+		token{kind: NumberKeyword},
+		token{kind: Comma},
 		token{kind: EOL},
 
-		literal{kind: IDENTIFIER, value: "s"},
-		token{kind: STR_KW},
-		token{kind: COMMA},
+		literal{kind: Name, value: "s"},
+		token{kind: StringKeyword},
+		token{kind: Comma},
 		token{kind: EOL},
 
-		token{kind: RPAREN},
+		token{kind: RightParenthesis},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseParenthesizedExpression()
@@ -84,11 +84,11 @@ func TestObjectDescription(t *testing.T) {
 
 func TestObjectDescriptionNoColon(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LPAREN},
-		literal{kind: IDENTIFIER, value: "n"},
-		token{kind: COLON},
-		token{kind: NUM_KW},
-		token{kind: RPAREN},
+		token{kind: LeftParenthesis},
+		literal{kind: Name, value: "n"},
+		token{kind: Colon},
+		token{kind: NumberKeyword},
+		token{kind: RightParenthesis},
 	}}
 	parser := MakeParser(&tokenizer)
 	parser.parseParenthesizedExpression()

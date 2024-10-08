@@ -83,10 +83,10 @@ func (c *Checker) Check(node parser.Node) Node {
 	switch node := node.(type) {
 	case parser.Assignment:
 		operator := node.Operator.Kind()
-		if operator == parser.DEFINE {
+		if operator == parser.Define {
 			return c.checkDefinition(node)
 		}
-		if operator != parser.DECLARE {
+		if operator != parser.Declare {
 			return c.checkAssignment(node)
 		}
 		return c.checkVariableDeclaration(node)

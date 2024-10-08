@@ -14,8 +14,8 @@ func TestGenericWithTypeArgs(t *testing.T) {
 		Ref:    Object{map[string]ExpressionType{"value": Type{Generic{Name: "Type"}}}},
 	}})
 	expr := checker.checkComputedAccessExpression(parser.ComputedAccessExpression{
-		Expr:     parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "Generic", parser.Loc{}}},
-		Property: parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{parser.NUM_KW, "number", parser.Loc{}}}},
+		Expr:     parser.TokenExpression{Token: testToken{parser.Name, "Generic", parser.Loc{}}},
+		Property: parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{parser.NumberKeyword, "number", parser.Loc{}}}},
 	})
 
 	if len(checker.errors) != 0 {
@@ -65,8 +65,8 @@ func TestGenericFunctionWithTypeArgs(t *testing.T) {
 	})
 
 	expr := checker.checkComputedAccessExpression(parser.ComputedAccessExpression{
-		Expr:     parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "function", parser.Loc{}}},
-		Property: parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{parser.NUM_KW, "number", parser.Loc{}}}},
+		Expr:     parser.TokenExpression{Token: testToken{parser.Name, "function", parser.Loc{}}},
+		Property: parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{parser.NumberKeyword, "number", parser.Loc{}}}},
 	})
 
 	if len(checker.errors) != 0 {

@@ -48,7 +48,7 @@ func (c *Checker) checkRangeExpression(expr parser.RangeExpression) RangeExpress
 		c.report("Types don't match", expr.Loc())
 	}
 
-	if expr.Operator.Kind() == parser.RANGE_INCLUSIVE && expr.Right == nil {
+	if expr.Operator.Kind() == parser.InclusiveRange && expr.Right == nil {
 		c.report("Expected right operand", expr.Operator.Loc())
 	}
 

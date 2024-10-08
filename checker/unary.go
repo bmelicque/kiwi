@@ -17,7 +17,7 @@ func (u UnaryExpression) Loc() parser.Loc {
 
 func (u UnaryExpression) Type() ExpressionType {
 	switch u.Operator.Kind() {
-	case parser.QUESTION_MARK:
+	case parser.QuestionMark:
 		t := u.Operand.Type()
 		if ty, ok := t.(Type); ok {
 			t = ty.Value
@@ -30,7 +30,7 @@ func (u UnaryExpression) Type() ExpressionType {
 
 func (c *Checker) checkUnaryExpression(node parser.UnaryExpression) UnaryExpression {
 	switch node.Operator.Kind() {
-	case parser.QUESTION_MARK:
+	case parser.QuestionMark:
 		operand := c.checkExpression(node.Operand)
 		if operand.Type().Kind() != TYPE {
 			c.report("Type expected", operand.Loc())

@@ -33,16 +33,16 @@ func (p *Parser) parseAssignment() Node {
 	var operator Token
 	next := p.Peek()
 	switch next.Kind() {
-	case COLON:
+	case Colon:
 		p.Consume()
 		typing = ParseExpression(p)
 		operator = p.Consume()
-		if operator.Kind() != ASSIGN {
+		if operator.Kind() != Assign {
 			p.report("'=' expected", operator.Loc())
 		}
-	case DECLARE,
-		DEFINE,
-		ASSIGN:
+	case Declare,
+		Define,
+		Assign:
 		operator = p.Consume()
 	default:
 		return ExpressionStatement{expr}

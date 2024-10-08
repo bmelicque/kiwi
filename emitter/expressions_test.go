@@ -22,7 +22,7 @@ func TestSingleLineBlockExpression(t *testing.T) {
 	emitter := makeEmitter()
 	emitter.emit(checker.Block{Statements: []checker.Node{
 		checker.Literal{TokenExpression: parser.TokenExpression{
-			Token: testToken{kind: parser.NUMBER, value: "42"},
+			Token: testToken{kind: parser.NumberLiteral, value: "42"},
 		}},
 	}})
 
@@ -37,10 +37,10 @@ func TestBlockExpression(t *testing.T) {
 	emitter := makeEmitter()
 	emitter.emit(checker.Block{Statements: []checker.Node{
 		checker.Literal{TokenExpression: parser.TokenExpression{
-			Token: testToken{kind: parser.NUMBER, value: "42"},
+			Token: testToken{kind: parser.NumberLiteral, value: "42"},
 		}},
 		checker.Literal{TokenExpression: parser.TokenExpression{
-			Token: testToken{kind: parser.NUMBER, value: "42"},
+			Token: testToken{kind: parser.NumberLiteral, value: "42"},
 		}},
 	}})
 
@@ -55,12 +55,12 @@ func TestIfExpression(t *testing.T) {
 	emitter := makeEmitter()
 	emitter.emit(checker.If{
 		Condition: checker.Literal{TokenExpression: parser.TokenExpression{
-			Token: testToken{kind: parser.BOOLEAN, value: "false"},
+			Token: testToken{kind: parser.BooleanLiteral, value: "false"},
 		}},
 		Block: checker.Block{Statements: []checker.Node{}},
 		Alternate: checker.If{
 			Condition: checker.Literal{TokenExpression: parser.TokenExpression{
-				Token: testToken{kind: parser.BOOLEAN, value: "false"},
+				Token: testToken{kind: parser.BooleanLiteral, value: "false"},
 			}},
 			Block:     checker.Block{Statements: []checker.Node{}},
 			Alternate: checker.Block{},

@@ -18,22 +18,22 @@ func TestMatchExpression(t *testing.T) {
 	//		0
 	// }
 	expr := checker.checkMatchExpression(parser.MatchExpression{
-		Keyword: testToken{kind: parser.MATCH_KW},
-		Value:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "option"}},
+		Keyword: testToken{kind: parser.MatchKeyword},
+		Value:   parser.TokenExpression{Token: testToken{kind: parser.Name, value: "option"}},
 		Cases: []parser.MatchCase{
 			{
 				Pattern: parser.TypedExpression{
-					Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "s"}},
-					Typing: parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "Some"}},
+					Expr:   parser.TokenExpression{Token: testToken{kind: parser.Name, value: "s"}},
+					Typing: parser.TokenExpression{Token: testToken{kind: parser.Name, value: "Some"}},
 				},
 				Statements: []parser.Node{
-					parser.ExpressionStatement{Expr: parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "s"}}},
+					parser.ExpressionStatement{Expr: parser.TokenExpression{Token: testToken{kind: parser.Name, value: "s"}}},
 				},
 			},
 			{
-				Pattern: parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "None"}},
+				Pattern: parser.TokenExpression{Token: testToken{kind: parser.Name, value: "None"}},
 				Statements: []parser.Node{
-					parser.ExpressionStatement{Expr: parser.TokenExpression{Token: testToken{kind: parser.NUMBER, value: "0"}}},
+					parser.ExpressionStatement{Expr: parser.TokenExpression{Token: testToken{kind: parser.NumberLiteral, value: "0"}}},
 				},
 			},
 		},

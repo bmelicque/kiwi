@@ -4,8 +4,8 @@ import "testing"
 
 func TestTypedExpression(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: IDENTIFIER, value: "n"},
-		token{kind: NUM_KW},
+		literal{kind: Name, value: "n"},
+		token{kind: NumberKeyword},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseTypedExpression()
@@ -18,9 +18,9 @@ func TestTypedExpression(t *testing.T) {
 
 func TestTypedExpressionWithColon(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: IDENTIFIER, value: "n"},
-		token{kind: COLON},
-		token{kind: NUM_KW},
+		literal{kind: Name, value: "n"},
+		token{kind: Colon},
+		token{kind: NumberKeyword},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseTypedExpression()

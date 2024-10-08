@@ -4,24 +4,24 @@ import "testing"
 
 func TestMatch(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: MATCH_KW},
-		literal{kind: IDENTIFIER, value: "option"},
-		token{kind: LBRACE},
+		token{kind: MatchKeyword},
+		literal{kind: Name, value: "option"},
+		token{kind: LeftBrace},
 		token{kind: EOL},
 
-		token{kind: CASE_KW},
-		literal{kind: IDENTIFIER, value: "Some"},
-		token{kind: LPAREN},
-		literal{kind: IDENTIFIER, value: "s"},
-		token{kind: RPAREN},
-		token{kind: COLON},
+		token{kind: CaseKeyword},
+		literal{kind: Name, value: "Some"},
+		token{kind: LeftParenthesis},
+		literal{kind: Name, value: "s"},
+		token{kind: RightParenthesis},
+		token{kind: Colon},
 		token{kind: EOL},
 
-		token{kind: RETURN_KW},
-		literal{kind: IDENTIFIER, value: "s"},
+		token{kind: ReturnKeyword},
+		literal{kind: Name, value: "s"},
 		token{kind: EOL},
 
-		token{kind: RBRACE},
+		token{kind: RightBrace},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseMatchExpression()

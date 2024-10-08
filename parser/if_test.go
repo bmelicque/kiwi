@@ -5,14 +5,14 @@ import "testing"
 func TestIf(t *testing.T) {
 	// if n == 2 { return 1 }
 	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: IF_KW},
-		literal{kind: IDENTIFIER, value: "n"},
-		token{kind: EQ},
-		literal{kind: NUMBER, value: "2"},
-		token{kind: LBRACE},
-		token{kind: RETURN_KW},
-		literal{kind: NUMBER, value: "1"},
-		token{kind: RBRACE},
+		token{kind: IfKeyword},
+		literal{kind: Name, value: "n"},
+		token{kind: Equal},
+		literal{kind: NumberLiteral, value: "2"},
+		token{kind: LeftBrace},
+		token{kind: ReturnKeyword},
+		literal{kind: NumberLiteral, value: "1"},
+		token{kind: RightBrace},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseIf()
@@ -29,14 +29,14 @@ func TestIf(t *testing.T) {
 func TestIfElse(t *testing.T) {
 	// if false {} else { true }
 	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: IF_KW},
-		literal{kind: BOOLEAN, value: "false"},
-		token{kind: LBRACE},
-		token{kind: RBRACE},
-		token{kind: ELSE_KW},
-		token{kind: LBRACE},
-		literal{kind: BOOLEAN, value: "true"},
-		token{kind: RBRACE},
+		token{kind: IfKeyword},
+		literal{kind: BooleanLiteral, value: "false"},
+		token{kind: LeftBrace},
+		token{kind: RightBrace},
+		token{kind: ElseKeyword},
+		token{kind: LeftBrace},
+		literal{kind: BooleanLiteral, value: "true"},
+		token{kind: RightBrace},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseIf()
@@ -63,15 +63,15 @@ func TestIfElse(t *testing.T) {
 func TestIfElseIf(t *testing.T) {
 	// if false {} else if true {}
 	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: IF_KW},
-		literal{kind: BOOLEAN, value: "false"},
-		token{kind: LBRACE},
-		token{kind: RBRACE},
-		token{kind: ELSE_KW},
-		token{kind: IF_KW},
-		literal{kind: BOOLEAN, value: "true"},
-		token{kind: LBRACE},
-		token{kind: RBRACE},
+		token{kind: IfKeyword},
+		literal{kind: BooleanLiteral, value: "false"},
+		token{kind: LeftBrace},
+		token{kind: RightBrace},
+		token{kind: ElseKeyword},
+		token{kind: IfKeyword},
+		literal{kind: BooleanLiteral, value: "true"},
+		token{kind: LeftBrace},
+		token{kind: RightBrace},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseIf()

@@ -12,20 +12,20 @@ func (p *Parser) parseBlock() *Block {
 
 	token := p.Consume()
 	block.loc.Start = token.Loc().Start
-	if token.Kind() != LBRACE {
+	if token.Kind() != LeftBrace {
 		p.report("'{' expected", token.Loc())
 	}
 	p.DiscardLineBreaks()
 
 	block.Statements = []Node{}
-	for p.Peek().Kind() != RBRACE && p.Peek().Kind() != EOF {
+	for p.Peek().Kind() != RightBrace && p.Peek().Kind() != EOF {
 		block.Statements = append(block.Statements, p.parseStatement())
 		p.DiscardLineBreaks()
 	}
 
 	token = p.Consume()
 	block.loc.End = token.Loc().End
-	if token.Kind() != RBRACE {
+	if token.Kind() != RightBrace {
 		p.report("'}' expected", token.Loc())
 	}
 

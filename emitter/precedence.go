@@ -11,19 +11,19 @@ func Precedence(expr checker.Expression) uint8 {
 		return 1
 	case checker.BinaryExpression:
 		switch expr.Operator.Kind() {
-		case parser.LOR:
+		case parser.LogicalOr:
 			return 4
-		case parser.LAND:
+		case parser.LogicalAnd:
 			return 5
-		case parser.EQ, parser.NEQ:
+		case parser.Equal, parser.NotEqual:
 			return 9
-		case parser.GREATER, parser.GEQ, parser.LESS, parser.LEQ:
+		case parser.Greater, parser.GreaterEqual, parser.Less, parser.LessEqual:
 			return 10
-		case parser.ADD, parser.SUB:
+		case parser.Add, parser.Sub:
 			return 12
-		case parser.MUL, parser.DIV, parser.MOD:
+		case parser.Mul, parser.Div, parser.Mod:
 			return 13
-		case parser.POW:
+		case parser.Pow:
 			return 14
 		}
 	case checker.CallExpression, checker.PropertyAccessExpression:

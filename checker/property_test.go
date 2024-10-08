@@ -20,8 +20,8 @@ func TestSumTypeConstructor1(t *testing.T) {
 		}},
 	)
 	expr := checker.checkPropertyAccess(parser.PropertyAccessExpression{
-		Expr:     parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "Sum"}},
-		Property: parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "B"}},
+		Expr:     parser.TokenExpression{Token: testToken{kind: parser.Name, value: "Sum"}},
+		Property: parser.TokenExpression{Token: testToken{kind: parser.Name, value: "B"}},
 	}).(PropertyAccessExpression)
 
 	if len(checker.errors) != 0 {
@@ -52,8 +52,8 @@ func TestSumTypeConstructor2(t *testing.T) {
 		}},
 	)
 	expr := checker.checkPropertyAccess(parser.PropertyAccessExpression{
-		Expr:     parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "Sum"}},
-		Property: parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "A"}},
+		Expr:     parser.TokenExpression{Token: testToken{kind: parser.Name, value: "Sum"}},
+		Property: parser.TokenExpression{Token: testToken{kind: parser.Name, value: "A"}},
 	}).(PropertyAccessExpression)
 
 	if len(checker.errors) != 0 {
@@ -78,8 +78,8 @@ func TestTupleIndexAccess(t *testing.T) {
 		Tuple{[]ExpressionType{Primitive{NUMBER}, Primitive{STRING}}},
 	)
 	expr := checker.checkPropertyAccess(parser.PropertyAccessExpression{
-		Expr:     parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "tuple"}},
-		Property: parser.TokenExpression{Token: testToken{kind: parser.NUMBER, value: "1"}},
+		Expr:     parser.TokenExpression{Token: testToken{kind: parser.Name, value: "tuple"}},
+		Property: parser.TokenExpression{Token: testToken{kind: parser.NumberLiteral, value: "1"}},
 	}).(PropertyAccessExpression)
 
 	if len(checker.errors) != 0 {
@@ -94,13 +94,13 @@ func TestTupleIndexAccess(t *testing.T) {
 func TestTraitExpression(t *testing.T) {
 	checker := MakeChecker()
 	expr := checker.checkPropertyAccess(parser.PropertyAccessExpression{
-		Expr: parser.ParenthesizedExpression{Expr: parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "Self"}}},
+		Expr: parser.ParenthesizedExpression{Expr: parser.TokenExpression{Token: testToken{kind: parser.Name, value: "Self"}}},
 		Property: parser.ParenthesizedExpression{Expr: parser.TypedExpression{
-			Expr: parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "method"}},
+			Expr: parser.TokenExpression{Token: testToken{kind: parser.Name, value: "method"}},
 			Typing: parser.FunctionExpression{
 				Params:   &parser.ParenthesizedExpression{},
-				Operator: testToken{kind: parser.SLIM_ARR},
-				Expr:     parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "Self"}},
+				Operator: testToken{kind: parser.SlimArrow},
+				Expr:     parser.TokenExpression{Token: testToken{kind: parser.Name, value: "Self"}},
 			},
 		}},
 	})

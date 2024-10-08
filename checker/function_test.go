@@ -11,19 +11,19 @@ func TestCheckFunctionReturns(t *testing.T) {
 	body := Block{Statements: []Node{
 		If{
 			Condition: Literal{TokenExpression: parser.TokenExpression{
-				Token: testToken{kind: parser.BOOLEAN, value: "true"},
+				Token: testToken{kind: parser.BooleanLiteral, value: "true"},
 			}},
 			Block: Block{Statements: []Node{
 				Exit{
-					Operator: testToken{kind: parser.RETURN_KW},
+					Operator: testToken{kind: parser.ReturnKeyword},
 					Value: Literal{TokenExpression: parser.TokenExpression{
-						Token: testToken{kind: parser.NUMBER, value: "42"},
+						Token: testToken{kind: parser.NumberLiteral, value: "42"},
 					}},
 				},
 			}},
 		},
 		Literal{TokenExpression: parser.TokenExpression{
-			Token: testToken{kind: parser.NUMBER, value: "42"},
+			Token: testToken{kind: parser.NumberLiteral, value: "42"},
 		}},
 	}}
 	checkFunctionReturns(checker, body)
@@ -35,14 +35,14 @@ func TestCheckFunctionReturns(t *testing.T) {
 func TestGenericFunctionExpression(t *testing.T) {
 	checker := MakeChecker()
 	expr := checker.checkFunctionExpression(parser.FunctionExpression{
-		TypeParams: &parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "Type"}}},
+		TypeParams: &parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{kind: parser.Name, value: "Type"}}},
 		Params: &parser.ParenthesizedExpression{Expr: parser.TypedExpression{
-			Expr:   parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "value"}},
-			Typing: parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "Type"}},
+			Expr:   parser.TokenExpression{Token: testToken{kind: parser.Name, value: "value"}},
+			Typing: parser.TokenExpression{Token: testToken{kind: parser.Name, value: "Type"}},
 		}},
-		Operator: testToken{kind: parser.FAT_ARR},
+		Operator: testToken{kind: parser.FatArrow},
 		Body: &parser.Block{Statements: []parser.Node{
-			parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "value"}},
+			parser.TokenExpression{Token: testToken{kind: parser.Name, value: "value"}},
 		}},
 	})
 
@@ -58,9 +58,9 @@ func TestGenericFunctionExpression(t *testing.T) {
 func TestFunctionType(t *testing.T) {
 	checker := MakeChecker()
 	expr := checker.checkFunctionExpression(parser.FunctionExpression{
-		Params:   &parser.ParenthesizedExpression{Expr: parser.TokenExpression{Token: testToken{kind: parser.NUM_KW}}},
-		Operator: testToken{kind: parser.SLIM_ARR},
-		Expr:     parser.TokenExpression{Token: testToken{kind: parser.NUM_KW}},
+		Params:   &parser.ParenthesizedExpression{Expr: parser.TokenExpression{Token: testToken{kind: parser.NumberKeyword}}},
+		Operator: testToken{kind: parser.SlimArrow},
+		Expr:     parser.TokenExpression{Token: testToken{kind: parser.NumberKeyword}},
 	})
 
 	if len(checker.errors) != 0 {

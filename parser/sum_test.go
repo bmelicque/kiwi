@@ -4,11 +4,11 @@ import "testing"
 
 func TestSumType(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: BOR},
-		literal{kind: IDENTIFIER, value: "Some"},
-		literal{kind: IDENTIFIER, value: "Type"},
-		token{kind: BOR},
-		literal{kind: IDENTIFIER, value: "None"},
+		token{kind: BinaryOr},
+		literal{kind: Name, value: "Some"},
+		literal{kind: Name, value: "Type"},
+		token{kind: BinaryOr},
+		literal{kind: Name, value: "None"},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseSumType()

@@ -13,17 +13,17 @@ type Literal struct {
 
 func (l Literal) Type() ExpressionType {
 	switch l.Token.Kind() {
-	case parser.NUMBER:
+	case parser.NumberLiteral:
 		return Primitive{NUMBER}
-	case parser.BOOLEAN:
+	case parser.BooleanLiteral:
 		return Primitive{BOOLEAN}
-	case parser.STRING:
+	case parser.StringLiteral:
 		return Primitive{STRING}
-	case parser.STR_KW:
+	case parser.StringKeyword:
 		return Type{Primitive{STRING}}
-	case parser.NUM_KW:
+	case parser.NumberKeyword:
 		return Type{Primitive{NUMBER}}
-	case parser.BOOL_KW:
+	case parser.BooleanKeyword:
 		return Type{Primitive{BOOLEAN}}
 	default:
 		panic(fmt.Sprintf("Unknown typing kind: %v (not implemented yet)", l.Token.Kind()))
@@ -40,7 +40,7 @@ func (i Identifier) Loc() parser.Loc      { return i.TokenExpression.Loc() }
 func (i Identifier) Type() ExpressionType { return i.typing }
 
 func (c *Checker) checkToken(t parser.TokenExpression, report bool) Expression {
-	if t.Token.Kind() != parser.IDENTIFIER {
+	if t.Token.Kind() != parser.Name {
 		return Literal{t}
 	}
 

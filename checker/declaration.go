@@ -40,7 +40,7 @@ func (c *Checker) checkVariableDeclaration(a parser.Assignment) VariableDeclarat
 	var pattern Expression
 	var err error
 	init := c.checkExpression(a.Initializer)
-	constant := a.Operator.Kind() == parser.DEFINE
+	constant := a.Operator.Kind() == parser.Define
 
 	declared := a.Declared
 	if d, ok := declared.(parser.ParenthesizedExpression); ok {

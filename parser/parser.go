@@ -48,7 +48,7 @@ func (p *Parser) ParseProgram() []Node {
 func (p *Parser) parseStatement() Node {
 	switch p.Peek().Kind() {
 
-	case BREAK_KW, CONTINUE_KW, RETURN_KW:
+	case BreakKeyword, ContinueKeyword, ReturnKeyword:
 		return p.parseExit()
 	default:
 		return p.parseAssignment()
@@ -57,11 +57,11 @@ func (p *Parser) parseStatement() Node {
 
 func ParseExpression(p *Parser) Node {
 	switch p.Peek().Kind() {
-	case FOR_KW:
+	case ForKeyword:
 		return p.parseForExpression()
-	case IF_KW:
+	case IfKeyword:
 		return p.parseIf()
-	case MATCH_KW:
+	case MatchKeyword:
 		return p.parseMatchExpression()
 	default:
 		return p.parseTupleExpression()

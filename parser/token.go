@@ -9,7 +9,7 @@ func (t TokenExpression) Loc() Loc { return t.Token.Loc() }
 func (p *Parser) parseTokenExpression() Node {
 	token := p.Peek()
 	switch token.Kind() {
-	case BOOLEAN, NUMBER, STRING, IDENTIFIER, BOOL_KW, NUM_KW, STR_KW:
+	case BooleanLiteral, NumberLiteral, StringLiteral, Name, BooleanKeyword, NumberKeyword, StringKeyword:
 		p.Consume()
 		return TokenExpression{token}
 	}

@@ -8,7 +8,7 @@ type BracketedExpression struct {
 
 func (b BracketedExpression) Loc() Loc { return b.loc }
 func (p *Parser) parseBracketedExpression() BracketedExpression {
-	if p.Peek().Kind() != LBRACKET {
+	if p.Peek().Kind() != LeftBracket {
 		panic("'[' expected!")
 	}
 	loc := p.Consume().Loc()
@@ -19,7 +19,7 @@ func (p *Parser) parseBracketedExpression() BracketedExpression {
 	p.allowEmptyExpr = outer
 
 	next := p.Peek()
-	if next.Kind() != RBRACKET {
+	if next.Kind() != RightBracket {
 		p.report("']' expected", next.Loc())
 		if expr != nil {
 			loc.End = expr.Loc().End

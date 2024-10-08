@@ -143,7 +143,7 @@ func findBreakStatements(node Node, results *[]Exit) {
 		return
 	}
 	if n, ok := node.(Exit); ok {
-		if n.Operator.Kind() == parser.BREAK_KW {
+		if n.Operator.Kind() == parser.BreakKeyword {
 			*results = append(*results, n)
 		}
 		return

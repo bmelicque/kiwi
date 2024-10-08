@@ -16,7 +16,7 @@ func recover(p *Parser, at TokenKind) bool {
 	}
 	// FIXME: token text
 	p.report(fmt.Sprintf("'%v' expected", at), Loc{Start: start, End: end})
-	return next.Kind() == LBRACE
+	return next.Kind() == LeftBrace
 }
 
 func IsTypeToken(expr Node) bool {
@@ -25,7 +25,7 @@ func IsTypeToken(expr Node) bool {
 		return false
 	}
 
-	if token.Token.Kind() != IDENTIFIER {
+	if token.Token.Kind() != Name {
 		return false
 	}
 

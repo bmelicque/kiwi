@@ -17,7 +17,7 @@ func (t TypedExpression) Loc() Loc {
 func (p *Parser) parseTypedExpression() Node {
 	expr := ParseRange(p)
 	colon := false
-	if p.Peek().Kind() == COLON {
+	if p.Peek().Kind() == Colon {
 		p.Consume()
 		colon = true
 	}

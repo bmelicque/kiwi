@@ -26,14 +26,14 @@ func (p *Parser) parseIf() Node {
 }
 
 func parseAlternate(p *Parser) Node {
-	if p.Peek().Kind() != ELSE_KW {
+	if p.Peek().Kind() != ElseKeyword {
 		return nil
 	}
 	p.Consume() // "else"
 	switch p.Peek().Kind() {
-	case IF_KW:
+	case IfKeyword:
 		return p.parseIf()
-	case LBRACE:
+	case LeftBrace:
 		return *p.parseBlock()
 	default:
 		p.report("Block expected", p.Peek().Loc())

@@ -13,13 +13,13 @@ func (s SumType) Loc() Loc {
 }
 
 func (p *Parser) parseSumType() Node {
-	if p.Peek().Kind() != BOR {
+	if p.Peek().Kind() != BinaryOr {
 		return p.parseTypedExpression()
 	}
 
 	start := p.Peek().Loc().Start
 	members := []Node{}
-	for p.Peek().Kind() == BOR {
+	for p.Peek().Kind() == BinaryOr {
 		p.Consume()
 		members = append(members, p.parseTypedExpression())
 		handleSumTypeBadTokens(p)
@@ -31,7 +31,7 @@ func (p *Parser) parseSumType() Node {
 func handleSumTypeBadTokens(p *Parser) {
 	err := false
 	var start, end Position
-	for p.Peek().Kind() != EOL && p.Peek().Kind() != EOF && p.Peek().Kind() != BOR {
+	for p.Peek().Kind() != EOL && p.Peek().Kind() != EOF && p.Peek().Kind() != BinaryOr {
 		token := p.Consume()
 		if !err {
 			err = true

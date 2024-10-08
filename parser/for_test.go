@@ -4,11 +4,11 @@ import "testing"
 
 func TestForExpression(t *testing.T) {
 	tok := testTokenizer{tokens: []Token{
-		token{kind: FOR_KW},
-		literal{kind: BOOLEAN, value: "true"},
-		token{kind: LBRACE},
-		literal{kind: NUMBER, value: "42"},
-		token{kind: RBRACE},
+		token{kind: ForKeyword},
+		literal{kind: BooleanLiteral, value: "true"},
+		token{kind: LeftBrace},
+		literal{kind: NumberLiteral, value: "42"},
+		token{kind: RightBrace},
 	}}
 	parser := MakeParser(&tok)
 	parser.parseForExpression()

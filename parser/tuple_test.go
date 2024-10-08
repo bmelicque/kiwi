@@ -4,11 +4,11 @@ import "testing"
 
 func TestTuple(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: NUMBER, value: "1"},
-		token{kind: COMMA},
-		literal{kind: NUMBER, value: "2"},
-		token{kind: COMMA},
-		literal{kind: NUMBER, value: "3"},
+		literal{kind: NumberLiteral, value: "1"},
+		token{kind: Comma},
+		literal{kind: NumberLiteral, value: "2"},
+		token{kind: Comma},
+		literal{kind: NumberLiteral, value: "3"},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseTupleExpression()
@@ -25,14 +25,14 @@ func TestTuple(t *testing.T) {
 
 func TestTypedTuple(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: NUMBER, value: "1"},
-		token{kind: NUM_KW},
-		token{kind: COMMA},
-		literal{kind: NUMBER, value: "2"},
-		token{kind: NUM_KW},
-		token{kind: COMMA},
-		literal{kind: NUMBER, value: "3"},
-		token{kind: NUM_KW},
+		literal{kind: NumberLiteral, value: "1"},
+		token{kind: NumberKeyword},
+		token{kind: Comma},
+		literal{kind: NumberLiteral, value: "2"},
+		token{kind: NumberKeyword},
+		token{kind: Comma},
+		literal{kind: NumberLiteral, value: "3"},
+		token{kind: NumberKeyword},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseTupleExpression()

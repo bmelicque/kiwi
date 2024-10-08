@@ -10,18 +10,18 @@ func TestForLoop(t *testing.T) {
 	checker := MakeChecker()
 	loop := checker.checkLoop(parser.ForExpression{
 		Statement: parser.TokenExpression{
-			Token: testToken{kind: parser.BOOLEAN, value: "true"},
+			Token: testToken{kind: parser.BooleanLiteral, value: "true"},
 		},
 		Body: &parser.Block{Statements: []parser.Node{
 			parser.IfElse{
 				Condition: parser.TokenExpression{
-					Token: testToken{kind: parser.BOOLEAN, value: "true"},
+					Token: testToken{kind: parser.BooleanLiteral, value: "true"},
 				},
 				Body: &parser.Block{Statements: []parser.Node{
 					parser.Exit{
-						Operator: testToken{kind: parser.BREAK_KW},
+						Operator: testToken{kind: parser.BreakKeyword},
 						Value: parser.TokenExpression{
-							Token: testToken{kind: parser.NUMBER, value: "42"},
+							Token: testToken{kind: parser.NumberLiteral, value: "42"},
 						},
 					},
 				}},

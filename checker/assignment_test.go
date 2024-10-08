@@ -10,9 +10,9 @@ func TestSimpleAssignment(t *testing.T) {
 	checker := MakeChecker()
 	checker.scope.Add("n", parser.Loc{}, Primitive{NUMBER})
 	assignment := checker.checkAssignment(parser.Assignment{
-		Declared:    parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "n", parser.Loc{}}},
-		Initializer: parser.TokenExpression{Token: testToken{parser.NUMBER, "42", parser.Loc{}}},
-		Operator:    testToken{parser.ASSIGN, "=", parser.Loc{}},
+		Declared:    parser.TokenExpression{Token: testToken{parser.Name, "n", parser.Loc{}}},
+		Initializer: parser.TokenExpression{Token: testToken{parser.NumberLiteral, "42", parser.Loc{}}},
+		Operator:    testToken{parser.Assign, "=", parser.Loc{}},
 	})
 
 	if len(checker.errors) != 0 {
@@ -33,17 +33,17 @@ func TestTupleAssignment(t *testing.T) {
 	assignment := checker.checkAssignment(parser.Assignment{
 		Declared: parser.TupleExpression{
 			Elements: []parser.Node{
-				parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "n", parser.Loc{}}},
-				parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "s", parser.Loc{}}},
+				parser.TokenExpression{Token: testToken{parser.Name, "n", parser.Loc{}}},
+				parser.TokenExpression{Token: testToken{parser.Name, "s", parser.Loc{}}},
 			},
 		},
 		Initializer: parser.TupleExpression{
 			Elements: []parser.Node{
-				parser.TokenExpression{Token: testToken{parser.NUMBER, "1", parser.Loc{}}},
-				parser.TokenExpression{Token: testToken{parser.STRING, "\"string\"", parser.Loc{}}},
+				parser.TokenExpression{Token: testToken{parser.NumberLiteral, "1", parser.Loc{}}},
+				parser.TokenExpression{Token: testToken{parser.StringLiteral, "\"string\"", parser.Loc{}}},
 			},
 		},
-		Operator: testToken{parser.ASSIGN, "=", parser.Loc{}},
+		Operator: testToken{parser.Assign, "=", parser.Loc{}},
 	})
 
 	if len(checker.errors) != 0 {

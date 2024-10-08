@@ -22,7 +22,7 @@ func (p *Parser) parseTupleExpression() Node {
 		}
 		elements = append(elements, el)
 
-		if p.Peek().Kind() != COMMA {
+		if p.Peek().Kind() != Comma {
 			break
 		}
 		p.Consume()

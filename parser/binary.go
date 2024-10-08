@@ -44,27 +44,27 @@ func parseBinary(p *Parser, operators []TokenKind, fallback func(p *Parser) Node
 	return expression
 }
 func parseLogicalOr(p *Parser) Node {
-	return parseBinary(p, []TokenKind{LOR}, parseLogicalAnd)
+	return parseBinary(p, []TokenKind{LogicalOr}, parseLogicalAnd)
 }
 func parseLogicalAnd(p *Parser) Node {
-	return parseBinary(p, []TokenKind{LAND}, parseEquality)
+	return parseBinary(p, []TokenKind{LogicalAnd}, parseEquality)
 }
 func parseEquality(p *Parser) Node {
-	return parseBinary(p, []TokenKind{EQ, NEQ}, parseComparison)
+	return parseBinary(p, []TokenKind{Equal, NotEqual}, parseComparison)
 }
 func parseComparison(p *Parser) Node {
-	return parseBinary(p, []TokenKind{LESS, LEQ, GEQ, GREATER}, parseAddition)
+	return parseBinary(p, []TokenKind{Less, LessEqual, GreaterEqual, Greater}, parseAddition)
 }
 func parseAddition(p *Parser) Node {
-	return parseBinary(p, []TokenKind{ADD, CONCAT, SUB}, parseMultiplication)
+	return parseBinary(p, []TokenKind{Add, Concat, Sub}, parseMultiplication)
 }
 func parseMultiplication(p *Parser) Node {
-	return parseBinary(p, []TokenKind{MUL, DIV, MOD}, parseExponentiation)
+	return parseBinary(p, []TokenKind{Mul, Div, Mod}, parseExponentiation)
 }
 func parseExponentiation(p *Parser) Node {
 	expression := p.parseAccessExpression()
 	next := p.Peek()
-	for next.Kind() == POW {
+	for next.Kind() == Pow {
 		operator := p.Consume()
 		right := parseExponentiation(p)
 		expression = BinaryExpression{expression, right, operator}

@@ -34,22 +34,22 @@ func (c *Checker) checkAssignment(assignment parser.Assignment) Assignment {
 	case Identifier:
 		switch assignment.Operator.Kind() {
 		case
-			parser.ADD_ASSIGN,
-			parser.SUB_ASSIGN,
-			parser.MUL_ASSIGN,
-			parser.POW_ASSIGN,
-			parser.DIV_ASSIGN,
-			parser.MOD_ASSIGN:
+			parser.AddAssign,
+			parser.SubAssign,
+			parser.MulAssign,
+			parser.PowAssign,
+			parser.DivAssign,
+			parser.ModAssign:
 			c.checkArithmetic(pattern, value)
-		case parser.CONCAT_ASSIGN:
+		case parser.ConcatAssign:
 			c.checkConcat(pattern, value)
 		case
-			parser.LAND_ASSIGN,
-			parser.LOR_ASSIGN:
+			parser.LogicalAndAssign,
+			parser.LogicalOrAssign:
 			c.checkLogical(pattern, value)
 		}
 	case TupleExpression:
-		if assignment.Operator.Kind() != parser.ASSIGN {
+		if assignment.Operator.Kind() != parser.Assign {
 			c.report("Expected '='", assignment.Declared.Loc())
 		}
 		for _, element := range pattern.Elements {

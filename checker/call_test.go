@@ -11,7 +11,7 @@ func TestFunctionCall(t *testing.T) {
 	checker := MakeChecker()
 	checker.scope.Add("function", parser.Loc{}, Function{[]Generic{}, Tuple{}, Primitive{NUMBER}})
 	expr := checker.checkCallExpression(parser.CallExpression{
-		Callee: parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "function", parser.Loc{}}},
+		Callee: parser.TokenExpression{Token: testToken{parser.Name, "function", parser.Loc{}}},
 		Args:   parser.ParenthesizedExpression{Expr: nil},
 	})
 
@@ -36,9 +36,9 @@ func TestGenericFunctionCall(t *testing.T) {
 		},
 	)
 	expr := checker.checkCallExpression(parser.CallExpression{
-		Callee: parser.TokenExpression{Token: testToken{kind: parser.IDENTIFIER, value: "function"}},
+		Callee: parser.TokenExpression{Token: testToken{kind: parser.Name, value: "function"}},
 		Args: parser.ParenthesizedExpression{
-			Expr: parser.TokenExpression{Token: testToken{kind: parser.NUMBER, value: "42"}},
+			Expr: parser.TokenExpression{Token: testToken{kind: parser.NumberLiteral, value: "42"}},
 		},
 	})
 

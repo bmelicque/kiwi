@@ -22,18 +22,18 @@ func (p *Parser) parseFunctionExpression() Node {
 	paren := p.parseParenthesizedExpression()
 
 	next := p.Peek()
-	if next.Kind() != SLIM_ARR && next.Kind() != FAT_ARR {
+	if next.Kind() != SlimArrow && next.Kind() != FatArrow {
 		return paren
 	}
 	operator := p.Consume()
 
 	next = p.Peek()
-	if next.Kind() == LBRACE {
+	if next.Kind() == LeftBrace {
 		p.report("Expression expected", next.Loc())
 	}
 
 	var expr Node
-	if operator.Kind() == FAT_ARR {
+	if operator.Kind() == FatArrow {
 		old := p.allowBraceParsing
 		p.allowBraceParsing = false
 		expr = ParseRange(p)
@@ -42,7 +42,7 @@ func (p *Parser) parseFunctionExpression() Node {
 		expr = ParseRange(p)
 	}
 	res := FunctionExpression{nil, &paren, operator, expr, nil}
-	if operator.Kind() == FAT_ARR {
+	if operator.Kind() == FatArrow {
 		res.Body = p.parseBlock()
 	}
 	return res

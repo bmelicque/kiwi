@@ -16,15 +16,15 @@ func TestMethodDeclaration(t *testing.T) {
 	checker.checkMethodDeclaration(parser.Assignment{
 		Declared: parser.PropertyAccessExpression{
 			Expr: parser.ParenthesizedExpression{Expr: parser.TypedExpression{
-				Expr:   parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "t", parser.Loc{}}},
-				Typing: parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "Type", parser.Loc{}}},
+				Expr:   parser.TokenExpression{Token: testToken{parser.Name, "t", parser.Loc{}}},
+				Typing: parser.TokenExpression{Token: testToken{parser.Name, "Type", parser.Loc{}}},
 			}},
-			Property: parser.TokenExpression{Token: testToken{parser.IDENTIFIER, "method", parser.Loc{}}},
+			Property: parser.TokenExpression{Token: testToken{parser.Name, "method", parser.Loc{}}},
 		},
-		Operator: testToken{parser.DEFINE, "::", parser.Loc{}},
+		Operator: testToken{parser.Define, "::", parser.Loc{}},
 		Initializer: parser.FunctionExpression{
 			Params:   &parser.ParenthesizedExpression{},
-			Operator: testToken{kind: parser.FAT_ARR},
+			Operator: testToken{kind: parser.FatArrow},
 			Body:     &parser.Block{},
 		},
 	})

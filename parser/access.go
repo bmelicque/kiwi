@@ -43,14 +43,14 @@ func (p PropertyAccessExpression) Loc() Loc {
 	}
 }
 
-var operators = []TokenKind{LBRACKET, LPAREN, DOT, LBRACE}
+var operators = []TokenKind{LeftBracket, LeftParenthesis, Dot, LeftBrace}
 
 func (p *Parser) parseAccessExpression() Node {
 	expression := fallback(p)
 	for slices.Contains(operators, p.Peek().Kind()) {
 		next := p.Peek().Kind()
-		isForbidden := next == LBRACE && !p.allowBraceParsing ||
-			next == LPAREN && !p.allowCallExpr
+		isForbidden := next == LeftBrace && !p.allowBraceParsing ||
+			next == LeftParenthesis && !p.allowCallExpr
 		if isForbidden {
 			return expression
 		}
@@ -62,11 +62,11 @@ func (p *Parser) parseAccessExpression() Node {
 func parseOneAccess(p *Parser, expr Node) Node {
 	next := p.Peek()
 	switch next.Kind() {
-	case LBRACKET:
+	case LeftBracket:
 		return ComputedAccessExpression{expr, p.parseBracketedExpression()}
-	case LPAREN:
+	case LeftParenthesis:
 		return CallExpression{expr, p.parseParenthesizedExpression()}
-	case DOT:
+	case Dot:
 		p.Consume()
 		tmp := p.allowCallExpr
 		p.allowCallExpr = false

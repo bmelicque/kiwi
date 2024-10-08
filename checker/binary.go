@@ -11,24 +11,24 @@ type BinaryExpression struct {
 func (expr BinaryExpression) Type() ExpressionType {
 	switch expr.Operator.Kind() {
 	case
-		parser.ADD,
-		parser.SUB,
-		parser.MUL,
-		parser.POW,
-		parser.DIV,
-		parser.MOD:
+		parser.Add,
+		parser.Sub,
+		parser.Mul,
+		parser.Pow,
+		parser.Div,
+		parser.Mod:
 		return Primitive{NUMBER}
-	case parser.CONCAT:
+	case parser.Concat:
 		return expr.Left.Type()
 	case
-		parser.LAND,
-		parser.LOR,
-		parser.LESS,
-		parser.GREATER,
-		parser.LEQ,
-		parser.GEQ,
-		parser.EQ,
-		parser.NEQ:
+		parser.LogicalAnd,
+		parser.LogicalOr,
+		parser.Less,
+		parser.Greater,
+		parser.LessEqual,
+		parser.GreaterEqual,
+		parser.Equal,
+		parser.NotEqual:
 		return Primitive{BOOLEAN}
 	}
 	return Primitive{UNKNOWN}
@@ -62,26 +62,26 @@ func (c *Checker) checkBinaryExpression(expr parser.BinaryExpression) BinaryExpr
 
 	switch expr.Operator.Kind() {
 	case
-		parser.ADD,
-		parser.SUB,
-		parser.MUL,
-		parser.POW,
-		parser.DIV,
-		parser.MOD,
-		parser.LESS,
-		parser.GREATER,
-		parser.LEQ,
-		parser.GEQ:
+		parser.Add,
+		parser.Sub,
+		parser.Mul,
+		parser.Pow,
+		parser.Div,
+		parser.Mod,
+		parser.Less,
+		parser.Greater,
+		parser.LessEqual,
+		parser.GreaterEqual:
 		c.checkArithmetic(left, right)
-	case parser.CONCAT:
+	case parser.Concat:
 		c.checkConcat(left, right)
 	case
-		parser.LAND,
-		parser.LOR:
+		parser.LogicalAnd,
+		parser.LogicalOr:
 		c.checkLogical(left, right)
 	case
-		parser.EQ,
-		parser.NEQ:
+		parser.Equal,
+		parser.NotEqual:
 		c.checkEq(left, right)
 	}
 	return BinaryExpression{left, right, expr.Operator}
