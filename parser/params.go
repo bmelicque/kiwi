@@ -36,14 +36,14 @@ func (p *Parser) getValidatedTypeParams(node BracketedExpression) *Params {
 // Take an expression grouped between parentheses and tries to parse it as named arguments
 // The expected form is:
 // (identifier: value, identifier: value, ...)
-func (p *Parser) checkNamedArguments(node ParenthesizedExpression) *Params {
+func (p *Parser) getValidatedNamedArguments(node ParenthesizedExpression) *Params {
 	return getValidatedParamList(p, node.Expr, p.getValidatedNamedArgument)
 }
 
 // Take an expression grouped between parentheses and tries to parse it as arguments
 // The expected form is:
 // (value, value, ...)
-func (p *Parser) checkArguments(node ParenthesizedExpression) *Params {
+func (p *Parser) getValidatedArguments(node ParenthesizedExpression) *Params {
 	return getValidatedParamList(p, node.Expr, p.getValidatedArgument)
 }
 

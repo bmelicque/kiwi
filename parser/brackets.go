@@ -2,12 +2,13 @@ package parser
 
 // Expression between brackets, such as `[Type]`
 type BracketedExpression struct {
-	Expr Node
+	Expr Expression
 	loc  Loc
 }
 
-func (b BracketedExpression) Loc() Loc { return b.loc }
-func (p *Parser) parseBracketedExpression() BracketedExpression {
+func (b BracketedExpression) Loc() Loc             { return b.loc }
+func (b BracketedExpression) Type() ExpressionType { return nil }
+func (p *Parser) parseBracketedExpression() *BracketedExpression {
 	if p.Peek().Kind() != LeftBracket {
 		panic("'[' expected!")
 	}
@@ -28,5 +29,5 @@ func (p *Parser) parseBracketedExpression() BracketedExpression {
 		loc.End = p.Consume().Loc().End
 	}
 
-	return BracketedExpression{expr, loc}
+	return &BracketedExpression{expr, loc}
 }

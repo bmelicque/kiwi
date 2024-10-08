@@ -8,7 +8,7 @@ type Expression interface {
 	Type() ExpressionType
 }
 
-func fallback(p *Parser) Node {
+func fallback(p *Parser) Expression {
 	switch p.Peek().Kind() {
 	case LeftBracket:
 		return p.parseUnaryExpression()

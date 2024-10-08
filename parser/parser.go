@@ -35,6 +35,20 @@ func MakeParser(tokenizer Tokenizer) *Parser {
 	}
 }
 
+func (p *Parser) pushScope(scope *Scope) {
+	scope.outer = p.scope
+	p.scope = scope
+}
+
+func (p *Parser) dropScope() {
+	for _, info := range p.scope.variables {
+		if len(info.reads) == 0 {
+			p.report("Unused variable", info.declaredAt)
+		}
+	}
+	p.scope = p.scope.outer
+}
+
 func (p *Parser) ParseProgram() []Node {
 	statements := []Node{}
 
@@ -61,7 +75,7 @@ func (p *Parser) parseStatement() Node {
 	}
 }
 
-func ParseExpression(p *Parser) Node {
+func ParseExpression(p *Parser) Expression {
 	switch p.Peek().Kind() {
 	case ForKeyword:
 		return p.parseForExpression()
