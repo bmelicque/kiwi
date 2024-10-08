@@ -18,6 +18,9 @@ func (f FunctionExpression) Loc() Loc {
 	return loc
 }
 
+// FIXME:
+func (f FunctionExpression) Type() ExpressionType { return nil }
+
 func (p *Parser) parseFunctionExpression() Node {
 	paren := p.parseParenthesizedExpression()
 

@@ -29,7 +29,7 @@ func (p Parser) GetReport() []ParserError {
 func MakeParser(tokenizer Tokenizer) *Parser {
 	return &Parser{
 		Tokenizer:         tokenizer,
-		scope:             NewScope(ProgramScope),
+		scope:             &std,
 		allowBraceParsing: true,
 		allowCallExpr:     true,
 	}

@@ -127,3 +127,45 @@ func (s Scope) in(kind ScopeKind) bool {
 	}
 	return s.outer.in(kind)
 }
+
+// utility to create option types with different Some types
+func makeOptionType(t ExpressionType) TypeAlias {
+	return TypeAlias{
+		Name:   "Option",
+		Params: []Generic{{Name: "Type", Value: t}},
+		Ref: Sum{map[string]ExpressionType{
+			"Some": Generic{Name: "Type", Value: t},
+			"None": nil,
+		}},
+	}
+}
+
+// The vanilla option type.
+// It represents the presence or absence of some value.
+var optionType = makeOptionType(nil)
+
+// The scope containing the standard library
+var std = Scope{
+	variables: map[string]*Variable{
+		"List": {
+			typing: Type{TypeAlias{
+				Name:   "List",
+				Params: []Generic{{Name: "Type"}},
+				Ref:    List{Generic{Name: "Type"}},
+			}},
+		},
+		"Option": {
+			typing: Type{optionType},
+		},
+		"Result": {
+			typing: Type{TypeAlias{
+				Name:   "Result",
+				Params: []Generic{{Name: "Ok"}, {Name: "Err"}},
+				Ref: Sum{map[string]ExpressionType{
+					"Ok":  Type{Generic{Name: "Ok"}},
+					"Err": Type{Generic{Name: "Err"}},
+				}},
+			}},
+		},
+	},
+}
