@@ -75,6 +75,10 @@ func (p *Parser) parseStatement() Node {
 	}
 }
 
+func (p *Parser) parseExpression() Expression {
+	return ParseExpression(p)
+}
+
 func ParseExpression(p *Parser) Expression {
 	switch p.Peek().Kind() {
 	case ForKeyword:

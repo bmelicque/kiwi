@@ -6,7 +6,7 @@ import (
 
 var operators = []TokenKind{LeftBracket, LeftParenthesis, Dot, LeftBrace}
 
-func (p *Parser) parseAccessExpression() Node {
+func (p *Parser) parseAccessExpression() Expression {
 	expression := fallback(p)
 	for slices.Contains(operators, p.Peek().Kind()) {
 		next := p.Peek().Kind()
@@ -33,29 +33,8 @@ func parseOneAccess(p *Parser, expr Expression) Expression {
 			return parseFunctionCall(p, expr)
 		}
 	case Dot:
-		p.Consume()
-		tmp := p.allowCallExpr
-		p.allowCallExpr = false
-		property := fallback(p)
-		p.allowCallExpr = tmp
-		return PropertyAccessExpression{
-			Expr:     expr,
-			Property: property,
-		}
+		return parsePropertyAccess(p, expr)
 	default:
 		panic("switch should've been exhaustive!")
-	}
-}
-
-// Expr.Property
-type PropertyAccessExpression struct {
-	Expr     Node
-	Property Node
-}
-
-func (p PropertyAccessExpression) Loc() Loc {
-	return Loc{
-		Start: p.Expr.Loc().Start,
-		End:   p.Property.Loc().End,
 	}
 }
