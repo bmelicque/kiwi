@@ -1,5 +1,7 @@
 package parser
 
+import "fmt"
+
 type ExpressionStatement struct {
 	Expr Node
 }
@@ -32,6 +34,7 @@ func (p *Parser) parseAssignment() Node {
 	var typing Node
 	var operator Token
 	next := p.Peek()
+	fmt.Printf("%#v\n", next)
 	switch next.Kind() {
 	case Colon:
 		p.Consume()

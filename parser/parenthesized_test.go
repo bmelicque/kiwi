@@ -10,8 +10,8 @@ func TestParenthesized(t *testing.T) {
 	}}
 	parser := MakeParser(&tokenizer)
 	paren := parser.parseParenthesizedExpression()
-	if _, ok := paren.Expr.(TokenExpression); !ok {
-		t.Fatalf("Expected TokenExpression between parentheses, got %v", paren.Expr)
+	if _, ok := paren.Expr.(*Literal); !ok {
+		t.Fatalf("Expected literal between parentheses, got %v", paren.Expr)
 	}
 }
 

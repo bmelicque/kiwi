@@ -1,22 +1,20 @@
-package checker
-
-import "github.com/bmelicque/test-parser/parser"
+package parser
 
 type Variable struct {
-	declaredAt parser.Loc
+	declaredAt Loc
 	typing     ExpressionType
-	writes     []parser.Loc
-	reads      []parser.Loc
+	writes     []Loc
+	reads      []Loc
 }
 
-func (v *Variable) readAt(loc parser.Loc)  { v.reads = append(v.reads, loc) }
-func (v *Variable) writeAt(loc parser.Loc) { v.writes = append(v.writes, loc) }
+func (v *Variable) readAt(loc Loc)  { v.reads = append(v.reads, loc) }
+func (v *Variable) writeAt(loc Loc) { v.writes = append(v.writes, loc) }
 
 type Method struct {
 	self       ExpressionType
 	signature  Function
-	declaredAt parser.Loc
-	reads      []parser.Loc
+	declaredAt Loc
+	reads      []Loc
 }
 
 type ScopeKind int8
@@ -90,7 +88,7 @@ func (s Scope) Has(name string) bool {
 	return false
 }
 
-func (s *Scope) Add(name string, declaredAt parser.Loc, typing ExpressionType) {
+func (s *Scope) Add(name string, declaredAt Loc, typing ExpressionType) {
 	if name == "" || name == "_" {
 		return
 	}
@@ -100,11 +98,11 @@ func (s *Scope) Add(name string, declaredAt parser.Loc, typing ExpressionType) {
 	}
 }
 
-func (s *Scope) AddMethod(name string, declaredAt parser.Loc, self ExpressionType, signature Function) {
-	s.methods[name] = append(s.methods[name], Method{self, signature, declaredAt, []parser.Loc{}})
+func (s *Scope) AddMethod(name string, declaredAt Loc, self ExpressionType, signature Function) {
+	s.methods[name] = append(s.methods[name], Method{self, signature, declaredAt, []Loc{}})
 }
 
-func (s *Scope) WriteAt(name string, loc parser.Loc) {
+func (s *Scope) WriteAt(name string, loc Loc) {
 	variable, ok := s.Find(name)
 	// TODO: panic on error
 	if ok {
@@ -112,7 +110,7 @@ func (s *Scope) WriteAt(name string, loc parser.Loc) {
 	}
 }
 
-func (s *Scope) ReadAt(name string, loc parser.Loc) {
+func (s *Scope) ReadAt(name string, loc Loc) {
 	variable, ok := s.Find(name)
 	// TODO: panic on error
 	if ok {

@@ -16,10 +16,10 @@ func TestComputedPropertyAccess(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected ComputedAccessExpression, got %#v", node)
 	}
-	if _, ok := expr.Expr.(TokenExpression); !ok {
+	if _, ok := expr.Expr.(*Identifier); !ok {
 		t.Fatalf("Expected token 'n'")
 	}
-	if _, ok := expr.Property.Expr.(TokenExpression); !ok {
+	if _, ok := expr.Property.Expr.(*Identifier); !ok {
 		t.Fatalf("Expected token 'p'")
 	}
 }
@@ -37,10 +37,10 @@ func TestPropertyAccess(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected PropertyAccessExpression, got %#v", node)
 	}
-	if _, ok := expr.Expr.(TokenExpression); !ok {
+	if _, ok := expr.Expr.(*Identifier); !ok {
 		t.Fatalf("Expected token 'n'")
 	}
-	if _, ok := expr.Property.(TokenExpression); !ok {
+	if _, ok := expr.Property.(*Identifier); !ok {
 		t.Fatalf("Expected token 'p'")
 	}
 }
@@ -58,11 +58,11 @@ func TestTupleAccess(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected PropertyAccessExpression, got %#v", node)
 	}
-	if _, ok := expr.Expr.(TokenExpression); !ok {
+	if _, ok := expr.Expr.(*Identifier); !ok {
 		t.Fatalf("Expected token 'n'")
 	}
-	if _, ok := expr.Property.(TokenExpression); !ok {
-		t.Fatalf("Expected token 'p'")
+	if _, ok := expr.Property.(*Literal); !ok {
+		t.Fatalf("Expected literal 0")
 	}
 }
 
@@ -87,7 +87,7 @@ func TestMethodAccess(t *testing.T) {
 		t.Fatalf("Expected ParenthesizedExpression on LHS, got %#v", expr.Expr)
 	}
 
-	if _, ok := expr.Property.(TokenExpression); !ok {
+	if _, ok := expr.Property.(*Identifier); !ok {
 		t.Fatalf("Expected token 'method'")
 	}
 }
@@ -142,7 +142,7 @@ func TestFunctionCall(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected CallExpression, got %#v", node)
 	}
-	if _, ok := expr.Callee.(TokenExpression); !ok {
+	if _, ok := expr.Callee.(*Identifier); !ok {
 		t.Fatalf("Expected token 'f'")
 	}
 }

@@ -11,14 +11,18 @@ func TestAssignment(t *testing.T) {
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAssignment()
 
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+
 	expr, ok := node.(Assignment)
 	if !ok {
 		t.Fatalf("Expected Assignment, got %#v", node)
 	}
-	if _, ok := expr.Declared.(TokenExpression); !ok {
+	if _, ok := expr.Declared.(*Identifier); !ok {
 		t.Fatalf("Expected token 'n'")
 	}
-	if _, ok := expr.Initializer.(TokenExpression); !ok {
+	if _, ok := expr.Initializer.(*Literal); !ok {
 		t.Fatalf("Expected literal 42")
 	}
 }
@@ -69,7 +73,7 @@ func TestObjectDeclaration(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected Assignment, got %#v", node)
 	}
-	if _, ok := expr.Declared.(TokenExpression); !ok {
+	if _, ok := expr.Declared.(*Identifier); !ok {
 		t.Fatalf("Expected identifier 'Type'")
 	}
 	if _, ok := expr.Initializer.(ParenthesizedExpression); !ok {

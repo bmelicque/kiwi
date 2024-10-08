@@ -3,6 +3,10 @@ package parser
 type Node interface {
 	Loc() Loc
 }
+type Expression interface {
+	Node
+	Type() ExpressionType
+}
 
 func fallback(p *Parser) Node {
 	switch p.Peek().Kind() {
@@ -15,5 +19,5 @@ func fallback(p *Parser) Node {
 			return p.parseBlock()
 		}
 	}
-	return p.parseTokenExpression()
+	return p.parseToken(false)
 }

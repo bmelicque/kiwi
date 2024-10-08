@@ -12,6 +12,7 @@ func (e ParserError) Error() string {
 type Parser struct {
 	Tokenizer
 	errors            []ParserError
+	scope             *Scope
 	multiline         bool
 	allowEmptyExpr    bool
 	allowBraceParsing bool
@@ -26,7 +27,12 @@ func (p Parser) GetReport() []ParserError {
 }
 
 func MakeParser(tokenizer Tokenizer) *Parser {
-	return &Parser{Tokenizer: tokenizer, allowBraceParsing: true, allowCallExpr: true}
+	return &Parser{
+		Tokenizer:         tokenizer,
+		scope:             NewScope(ProgramScope),
+		allowBraceParsing: true,
+		allowCallExpr:     true,
+	}
 }
 
 func (p *Parser) ParseProgram() []Node {

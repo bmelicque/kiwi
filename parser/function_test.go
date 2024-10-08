@@ -22,8 +22,8 @@ func TestSlimArrowFunctionWithoutArgs(t *testing.T) {
 	if function.Operator.Kind() != SlimArrow {
 		t.Fatalf("Expected '->', got %v", function.Operator.Text())
 	}
-	if _, ok := function.Expr.(TokenExpression); !ok {
-		t.Fatalf("Expected TokenExpression, got %#v", function.Expr)
+	if _, ok := function.Expr.(*Literal); !ok {
+		t.Fatalf("Expected literal, got %#v", function.Expr)
 	}
 	if function.Body != nil {
 		t.Fatalf("Expected no Body, got %#v", function.Body)
@@ -82,8 +82,8 @@ func TestFunctionType(t *testing.T) {
 	if function.Operator.Kind() != SlimArrow {
 		t.Fatalf("Expected '->', got %v", function.Operator.Text())
 	}
-	if _, ok := function.Expr.(TokenExpression); !ok {
-		t.Fatalf("Expected TokenExpression, got %#v", function.Expr)
+	if _, ok := function.Expr.(*Literal); !ok {
+		t.Fatalf("Expected literal, got %#v", function.Expr)
 	}
 	if function.Body != nil {
 		t.Fatalf("Expected no Body, got %#v", function.Body)
@@ -115,8 +115,8 @@ func TestFatArrowFunctionWithoutArgs(t *testing.T) {
 	if function.Operator.Kind() != FatArrow {
 		t.Fatalf("Expected '=>', got %v", function.Operator.Text())
 	}
-	if _, ok := function.Expr.(TokenExpression); !ok {
-		t.Fatalf("Expected TokenExpression, got %#v", function.Expr)
+	if _, ok := function.Expr.(*Literal); !ok {
+		t.Fatalf("Expected literal, got %#v", function.Expr)
 	}
 	if function.Body == nil {
 		t.Fatalf("Expected Body, got nothing")
@@ -150,8 +150,8 @@ func TestFatArrowFunctionWithArgs(t *testing.T) {
 	if function.Operator.Kind() != FatArrow {
 		t.Fatalf("Expected '=>', got %v", function.Operator.Text())
 	}
-	if _, ok := function.Expr.(TokenExpression); !ok {
-		t.Fatalf("Expected TokenExpression, got %#v", function.Expr)
+	if _, ok := function.Expr.(*Literal); !ok {
+		t.Fatalf("Expected literal, got %#v", function.Expr)
 	}
 	if function.Body == nil {
 		t.Fatalf("Expected Body, got nothing")
