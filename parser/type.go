@@ -257,7 +257,7 @@ func (r Range) build(scope *Scope, compared ExpressionType) (ExpressionType, boo
 
 type Function struct {
 	TypeParams []Generic
-	Params     Tuple
+	Params     *Tuple
 	Returned   ExpressionType
 }
 
@@ -290,7 +290,7 @@ func (f Function) build(scope *Scope, compared ExpressionType) (ExpressionType, 
 		s.Add(param.Name, Loc{}, param)
 	}
 	c, k := compared.(Function)
-	f.Params = Tuple{make([]ExpressionType, len(f.Params.elements))}
+	f.Params = &Tuple{make([]ExpressionType, len(f.Params.elements))}
 	for i, param := range f.Params.elements {
 		var el ExpressionType
 		if len(c.Params.elements) > i {
@@ -349,7 +349,7 @@ func (o Object) build(scope *Scope, compared ExpressionType) (ExpressionType, bo
 }
 
 type Sum struct {
-	Members map[string]ExpressionType
+	Members map[string]*Function
 }
 
 func (s Sum) Kind() ExpressionTypeKind    { return SUM }
@@ -373,7 +373,8 @@ func (s Sum) build(scope *Scope, compared ExpressionType) (ExpressionType, bool)
 	for name, member := range s.Members {
 		var k bool
 		// FIXME: is compared a sum type? should it work like this?
-		s.Members[name], k = member.build(scope, compared)
+		m, k := member.build(scope, compared)
+		s.Members[name] = m.(*Function)
 		ok = ok && k
 	}
 	return s, ok

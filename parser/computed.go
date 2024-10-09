@@ -66,7 +66,7 @@ func getComputedAccessType(p *Parser, left Expression, right BracketedExpression
 		returned, _ := t.Returned.build(p.scope, nil)
 		return Function{
 			TypeParams: typeParams,
-			Params:     Tuple{params},
+			Params:     &Tuple{params},
 			Returned:   returned,
 		}
 	case List:

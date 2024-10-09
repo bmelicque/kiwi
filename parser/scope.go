@@ -130,19 +130,46 @@ func (s Scope) in(kind ScopeKind) bool {
 
 // utility to create option types with different Some types
 func makeOptionType(t ExpressionType) TypeAlias {
-	return TypeAlias{
+	alias := TypeAlias{
 		Name:   "Option",
 		Params: []Generic{{Name: "Type", Value: t}},
-		Ref: Sum{map[string]ExpressionType{
-			"Some": Generic{Name: "Type", Value: t},
-			"None": nil,
+		Ref: Sum{map[string]*Function{
+			"Some": &Function{
+				Params: &Tuple{[]ExpressionType{Generic{Name: "Type", Value: t}}},
+			},
+			"None": &Function{},
 		}},
 	}
+	alias.Ref.(Sum).Members["Some"].Returned = &alias
+	alias.Ref.(Sum).Members["None"].Returned = &alias
+	return alias
 }
 
 // The vanilla option type.
 // It represents the presence or absence of some value.
 var optionType = makeOptionType(nil)
+
+// utility to create option types with different Some types
+func makeResultType(ok ExpressionType, err ExpressionType) TypeAlias {
+	alias := TypeAlias{
+		Name: "Option",
+		Params: []Generic{
+			{Name: "Ok", Value: ok},
+			{Name: "Err", Value: err},
+		},
+		Ref: Sum{map[string]*Function{
+			"Ok": &Function{
+				Params: &Tuple{[]ExpressionType{Generic{Name: "Ok", Value: ok}}},
+			},
+			"Err": &Function{
+				Params: &Tuple{[]ExpressionType{Generic{Name: "Err", Value: err}}},
+			},
+		}},
+	}
+	alias.Ref.(Sum).Members["Ok"].Returned = &alias
+	alias.Ref.(Sum).Members["Err"].Returned = &alias
+	return alias
+}
 
 // The scope containing the standard library
 var std = Scope{
@@ -158,14 +185,7 @@ var std = Scope{
 			typing: Type{optionType},
 		},
 		"Result": {
-			typing: Type{TypeAlias{
-				Name:   "Result",
-				Params: []Generic{{Name: "Ok"}, {Name: "Err"}},
-				Ref: Sum{map[string]ExpressionType{
-					"Ok":  Type{Generic{Name: "Ok"}},
-					"Err": Type{Generic{Name: "Err"}},
-				}},
-			}},
+			typing: Type{makeResultType(nil, nil)},
 		},
 	},
 }

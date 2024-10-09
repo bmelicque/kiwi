@@ -27,7 +27,7 @@ func (u UnaryExpression) Type() ExpressionType {
 }
 
 type ListTypeExpression struct {
-	Bracketed BracketedExpression
+	Bracketed *BracketedExpression
 	Expr      Expression // Cannot be nil
 }
 
@@ -76,19 +76,10 @@ func parseInnerUnary(p *Parser) Expression {
 
 func parseListTypeExpression(p *Parser) Expression {
 	brackets := p.parseBracketedExpression()
-	// TODO: if brackets holds something, try to parse it as TypeParams and add them to scope?
-	// TODO: if next is '(', try function?
 	if p.Peek().Kind() == LeftParenthesis {
-
+		return p.parseFunctionExpression(brackets)
 	}
 	expr := parseInnerUnary(p)
-	// FIXME: also FunctionTypeExpression
-	function, ok := expr.(*FunctionExpression)
-	if ok && function.TypeParams == nil {
-		function.TypeParams = p.getValidatedTypeParams(*brackets)
-		// TODO: validate function (here?)
-		return function
-	}
 	list := ListTypeExpression{brackets, expr}
 	validateListExpressionType(p, list)
 	return &list

@@ -23,7 +23,8 @@ func (f FunctionExpression) Type() ExpressionType {
 	for i, param := range f.TypeParams.Params {
 		tp[i] = Generic{Name: param.Identifier.Token.Text()}
 	}
-	return Function{tp, f.Params.Type().(Tuple), f.returnType}
+	tuple, _ := f.Params.Type().(Tuple)
+	return Function{tp, &tuple, f.returnType}
 }
 
 type FunctionTypeExpression struct {
@@ -60,7 +61,7 @@ func (f FunctionTypeExpression) Type() ExpressionType {
 		t, _ := param.Type().(Type)
 		p.elements[i] = t.Value
 	}
-	return Type{Function{tp, p, f.Expr.Type().(Type).Value}}
+	return Type{Function{tp, &p, f.Expr.Type().(Type).Value}}
 }
 
 func (p *Parser) parseFunctionExpression(brackets *BracketedExpression) Expression {
