@@ -8,7 +8,7 @@ import (
 
 func TestIfExpression(t *testing.T) {
 	checker := MakeChecker()
-	expr := checker.checkIf(parser.IfElse{
+	expr := checker.checkIf(parser.IfExpression{
 		Keyword:   testToken{kind: parser.IfKeyword},
 		Condition: parser.TokenExpression{Token: testToken{kind: parser.BooleanLiteral, value: "true"}},
 		Body: &parser.Block{Statements: []parser.Node{
@@ -26,7 +26,7 @@ func TestIfExpression(t *testing.T) {
 
 func TestIfExpressionWithNonBoolean(t *testing.T) {
 	checker := MakeChecker()
-	expr := checker.checkIf(parser.IfElse{
+	expr := checker.checkIf(parser.IfExpression{
 		Keyword:   testToken{kind: parser.IfKeyword},
 		Condition: parser.TokenExpression{Token: testToken{kind: parser.NumberLiteral, value: "42"}},
 		Body:      &parser.Block{Statements: []parser.Node{}},
@@ -40,7 +40,7 @@ func TestIfExpressionWithNonBoolean(t *testing.T) {
 
 func TestIfElseExpression(t *testing.T) {
 	checker := MakeChecker()
-	expr := checker.checkIf(parser.IfElse{
+	expr := checker.checkIf(parser.IfExpression{
 		Keyword:   testToken{kind: parser.IfKeyword},
 		Condition: parser.TokenExpression{Token: testToken{kind: parser.BooleanLiteral, value: "true"}},
 		Body:      &parser.Block{Statements: []parser.Node{}},
@@ -61,7 +61,7 @@ func TestIfElseExpression(t *testing.T) {
 func TestIfElseExpressionTypeMismatch(t *testing.T) {
 	checker := MakeChecker()
 	// if true { 42 } else { "Hello, world!" }
-	checker.checkIf(parser.IfElse{
+	checker.checkIf(parser.IfExpression{
 		Keyword:   testToken{kind: parser.IfKeyword},
 		Condition: parser.TokenExpression{Token: testToken{kind: parser.BooleanLiteral, value: "true"}},
 		Body: &parser.Block{Statements: []parser.Node{
@@ -80,11 +80,11 @@ func TestIfElseExpressionTypeMismatch(t *testing.T) {
 func TestIfElseIfExpression(t *testing.T) {
 	checker := MakeChecker()
 	// if false {} else if true {}
-	expr := checker.checkIf(parser.IfElse{
+	expr := checker.checkIf(parser.IfExpression{
 		Keyword:   testToken{kind: parser.IfKeyword},
 		Condition: parser.TokenExpression{Token: testToken{kind: parser.BooleanLiteral, value: "false"}},
 		Body:      &parser.Block{Statements: []parser.Node{}},
-		Alternate: parser.IfElse{
+		Alternate: parser.IfExpression{
 			Condition: parser.TokenExpression{Token: testToken{kind: parser.BooleanLiteral, value: "true"}},
 			Body:      &parser.Block{Statements: []parser.Node{}},
 		},

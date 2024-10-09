@@ -15,14 +15,9 @@ func TestIf(t *testing.T) {
 		token{kind: RightBrace},
 	}}
 	parser := MakeParser(&tokenizer)
-	node := parser.parseIf()
-	statement, ok := node.(IfElse)
-	if !ok {
-		t.Fatalf("Expected 'if' statement, got %#v", node)
-		return
-	}
-	if statement.Body == nil {
-		t.Fatalf("Expected 'body' statement, got %#v", node)
+	node := parser.parseIfExpression()
+	if node.Body == nil {
+		t.Fatalf("Expected a body, got %#v", node)
 	}
 }
 
@@ -39,24 +34,20 @@ func TestIfElse(t *testing.T) {
 		token{kind: RightBrace},
 	}}
 	parser := MakeParser(&tokenizer)
-	node := parser.parseIf()
+	node := parser.parseIfExpression()
 
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 
-	statement, ok := node.(IfElse)
-	if !ok {
-		t.Fatalf("Expected 'if' statement, got %#v", node)
+	if node.Body == nil {
+		t.Fatal("Expected a body")
 	}
-	if statement.Body == nil {
-		t.Fatal("Expected 'body' statement")
-	}
-	if statement.Alternate == nil {
+	if node.Alternate == nil {
 		t.Fatal("Expected alternate")
 	}
-	if _, ok := statement.Alternate.(Block); !ok {
-		t.Fatalf("Expected body alternate, got %#v", statement.Alternate)
+	if _, ok := node.Alternate.(Block); !ok {
+		t.Fatalf("Expected body alternate, got %#v", node.Alternate)
 	}
 }
 
@@ -74,23 +65,19 @@ func TestIfElseIf(t *testing.T) {
 		token{kind: RightBrace},
 	}}
 	parser := MakeParser(&tokenizer)
-	node := parser.parseIf()
+	node := parser.parseIfExpression()
 
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 
-	statement, ok := node.(IfElse)
-	if !ok {
-		t.Fatalf("Expected 'if' statement, got %#v", node)
+	if node.Body == nil {
+		t.Fatal("Expected a body")
 	}
-	if statement.Body == nil {
-		t.Fatal("Expected 'body' statement")
-	}
-	if statement.Alternate == nil {
+	if node.Alternate == nil {
 		t.Fatal("Expected alternate")
 	}
-	if _, ok := statement.Alternate.(IfElse); !ok {
-		t.Fatalf("Expected another 'if' as alternate, got %#v", statement.Alternate)
+	if _, ok := node.Alternate.(*IfExpression); !ok {
+		t.Fatalf("Expected another 'if' as alternate, got %#v", node.Alternate)
 	}
 }

@@ -84,7 +84,7 @@ func ParseExpression(p *Parser) Expression {
 	case ForKeyword:
 		return p.parseForExpression()
 	case IfKeyword:
-		return p.parseIf()
+		return p.parseIfExpression()
 	case MatchKeyword:
 		return p.parseMatchExpression()
 	default:

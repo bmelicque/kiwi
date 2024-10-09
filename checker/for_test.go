@@ -13,7 +13,7 @@ func TestForLoop(t *testing.T) {
 			Token: testToken{kind: parser.BooleanLiteral, value: "true"},
 		},
 		Body: &parser.Block{Statements: []parser.Node{
-			parser.IfElse{
+			parser.IfExpression{
 				Condition: parser.TokenExpression{
 					Token: testToken{kind: parser.BooleanLiteral, value: "true"},
 				},

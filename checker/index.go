@@ -94,7 +94,7 @@ func (c *Checker) Check(node parser.Node) Node {
 		return c.checkExpressionStatement(node)
 	case parser.ForExpression:
 		return c.checkLoop(node)
-	case parser.IfElse:
+	case parser.IfExpression:
 		return c.checkIf(node)
 	case parser.MatchExpression:
 		return c.checkMatchExpression(node)

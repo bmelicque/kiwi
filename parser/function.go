@@ -176,7 +176,7 @@ func findReturnStatements(node Node, results *[]Exit) {
 		for _, statement := range node.Statements {
 			findReturnStatements(statement, results)
 		}
-	case *IfElse:
+	case *IfExpression:
 		findReturnStatements(node.Body, results)
 		findReturnStatements(node.Alternate, results)
 	}
