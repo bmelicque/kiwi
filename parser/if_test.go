@@ -19,18 +19,38 @@ func TestIf(t *testing.T) {
 	if node.Body == nil {
 		t.Fatalf("Expected a body, got %#v", node)
 	}
+	alias, ok := node.Type().(TypeAlias)
+	if !ok || alias.Name != "Option" {
+		t.Fatalf("Expected option type")
+	}
+}
+
+func TestIfWithNonBoolean(t *testing.T) {
+	// if 42 { }
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: IfKeyword},
+		literal{kind: NumberLiteral, value: "42"},
+		token{kind: LeftBrace},
+		token{kind: RightBrace},
+	}}
+	parser := MakeParser(&tokenizer)
+	parser.parseIfExpression()
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
+	}
 }
 
 func TestIfElse(t *testing.T) {
-	// if false {} else { true }
+	// if false { true } else { false }
 	tokenizer := testTokenizer{tokens: []Token{
 		token{kind: IfKeyword},
 		literal{kind: BooleanLiteral, value: "false"},
 		token{kind: LeftBrace},
+		literal{kind: BooleanLiteral, value: "true"},
 		token{kind: RightBrace},
 		token{kind: ElseKeyword},
 		token{kind: LeftBrace},
-		literal{kind: BooleanLiteral, value: "true"},
+		literal{kind: BooleanLiteral, value: "false"},
 		token{kind: RightBrace},
 	}}
 	parser := MakeParser(&tokenizer)
@@ -48,6 +68,30 @@ func TestIfElse(t *testing.T) {
 	}
 	if _, ok := node.Alternate.(Block); !ok {
 		t.Fatalf("Expected body alternate, got %#v", node.Alternate)
+	}
+	if node.Type().Kind() != BOOLEAN {
+		t.Fatalf("Expected a boolean")
+	}
+}
+
+func TestIfElseWithTypeMismatch(t *testing.T) {
+	// if false { 42 } else { false }
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: IfKeyword},
+		literal{kind: BooleanLiteral, value: "false"},
+		token{kind: LeftBrace},
+		literal{kind: NumberLiteral, value: "42"},
+		token{kind: RightBrace},
+		token{kind: ElseKeyword},
+		token{kind: LeftBrace},
+		literal{kind: BooleanLiteral, value: "false"},
+		token{kind: RightBrace},
+	}}
+	parser := MakeParser(&tokenizer)
+	parser.parseIfExpression()
+
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
 	}
 }
 
