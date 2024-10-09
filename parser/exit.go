@@ -2,7 +2,7 @@ package parser
 
 type Exit struct {
 	Operator Token
-	Value    Node
+	Value    Expression
 }
 
 func (r Exit) Loc() Loc {

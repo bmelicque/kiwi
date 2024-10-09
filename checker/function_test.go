@@ -60,7 +60,7 @@ func TestFunctionType(t *testing.T) {
 	expr := checker.checkFunctionExpression(parser.FunctionExpression{
 		Params:   &parser.ParenthesizedExpression{Expr: parser.TokenExpression{Token: testToken{kind: parser.NumberKeyword}}},
 		Operator: testToken{kind: parser.SlimArrow},
-		Expr:     parser.TokenExpression{Token: testToken{kind: parser.NumberKeyword}},
+		Explicit: parser.TokenExpression{Token: testToken{kind: parser.NumberKeyword}},
 	})
 
 	if len(checker.errors) != 0 {

@@ -13,7 +13,7 @@ func fallback(p *Parser) Expression {
 	case LeftBracket:
 		return p.parseUnaryExpression()
 	case LeftParenthesis:
-		return p.parseFunctionExpression()
+		return p.parseFunctionExpression(nil)
 	case LeftBrace:
 		if p.allowBraceParsing {
 			return p.parseBlock()

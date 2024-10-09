@@ -53,3 +53,15 @@ func (p *Parser) addTypeArgsToScope(args *TupleExpression, params []Generic) {
 		v.readAt(loc)
 	}
 }
+
+func addTypeParamsToScope(scope *Scope, params Params) {
+	for _, param := range params.Params {
+		if param.Complement == nil {
+			name := param.Identifier.Text()
+			t := Type{TypeAlias{Name: name, Ref: Generic{Name: name}}}
+			scope.Add(name, param.Loc(), t)
+		} else {
+			// TODO: constrained generic
+		}
+	}
+}

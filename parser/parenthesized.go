@@ -29,13 +29,13 @@ func (p ParenthesizedExpression) Unwrap() Expression {
 	return p.Expr
 }
 
-func (p *Parser) parseParenthesizedExpression() ParenthesizedExpression {
+func (p *Parser) parseParenthesizedExpression() *ParenthesizedExpression {
 	loc := p.Consume().Loc() // LPAREN
 	p.DiscardLineBreaks()
 	next := p.Peek()
 	if next.Kind() == RightParenthesis {
 		loc.End = p.Consume().Loc().End
-		return ParenthesizedExpression{nil, loc}
+		return &ParenthesizedExpression{nil, loc}
 	}
 
 	outerBrace := p.allowBraceParsing
@@ -52,7 +52,7 @@ func (p *Parser) parseParenthesizedExpression() ParenthesizedExpression {
 		p.report("')' expected", next.Loc())
 	}
 	loc.End = p.Consume().Loc().End
-	return ParenthesizedExpression{expr, loc}
+	return &ParenthesizedExpression{expr, loc}
 }
 
 // unwrap parenthesized expressions

@@ -100,7 +100,7 @@ func TestTraitExpression(t *testing.T) {
 			Typing: parser.FunctionExpression{
 				Params:   &parser.ParenthesizedExpression{},
 				Operator: testToken{kind: parser.SlimArrow},
-				Expr:     parser.TokenExpression{Token: testToken{kind: parser.Name, value: "Self"}},
+				Explicit: parser.TokenExpression{Token: testToken{kind: parser.Name, value: "Self"}},
 			},
 		}},
 	})

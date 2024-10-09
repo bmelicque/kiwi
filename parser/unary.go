@@ -76,10 +76,17 @@ func parseInnerUnary(p *Parser) Expression {
 
 func parseListTypeExpression(p *Parser) Expression {
 	brackets := p.parseBracketedExpression()
+	// TODO: if brackets holds something, try to parse it as TypeParams and add them to scope?
+	// TODO: if next is '(', try function?
+	if p.Peek().Kind() == LeftParenthesis {
+
+	}
 	expr := parseInnerUnary(p)
+	// FIXME: also FunctionTypeExpression
 	function, ok := expr.(*FunctionExpression)
 	if ok && function.TypeParams == nil {
-		function.TypeParams = &brackets
+		function.TypeParams = p.getValidatedTypeParams(*brackets)
+		// TODO: validate function (here?)
 		return function
 	}
 	list := ListTypeExpression{brackets, expr}

@@ -47,6 +47,14 @@ func (p *Parser) getValidatedArguments(node ParenthesizedExpression) *Params {
 	return getValidatedParamList(p, node.Expr, p.getValidatedArgument)
 }
 
+// Take an expression grouped between parentheses and tries to parse it as type list
+// The expected form is:
+// (Type, Type, ...)
+// This is useful mostly for parsing function types
+func (p *Parser) getValidatedTypeList(node ParenthesizedExpression) *Params {
+	return getValidatedParamList(p, node.Expr, p.getValidatedType)
+}
+
 func getValidatedParamList(p *Parser, node Node, validateOne func(Node) Param) *Params {
 	if node == nil {
 		// FIXME: loc
@@ -175,6 +183,15 @@ func (p *Parser) getValidatedArgument(node Node) Param {
 		p.report("Expression expected", node.Loc())
 	}
 	return Param{Complement: value}
+}
+
+// Take an expression and makes sure it's a valid type (for function types)
+func (p *Parser) getValidatedType(node Node) Param {
+	param := p.getValidatedArgument(node)
+	if param.Complement.Type().Kind() != TYPE {
+		p.report("Type expected", param.Complement.Loc())
+	}
+	return param
 }
 
 func checkParamIdentifier(p *Parser, node Node) *Identifier {

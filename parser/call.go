@@ -37,7 +37,7 @@ func parseInstanciation(p *Parser, expr Expression) *CallExpression {
 // Parse a primitive instanciation, like 'number(value)'.
 // This is mostly used for sum types
 func parsePrimitiveInstanciation(p *Parser, expr Expression, t Type) *CallExpression {
-	args := p.getValidatedArguments(p.parseParenthesizedExpression())
+	args := p.getValidatedArguments(*p.parseParenthesizedExpression())
 	if len(args.Params) != 1 {
 		p.report("Exactly 1 value expected", args.Loc())
 	}
@@ -66,7 +66,7 @@ func parseStructInstanciation(p *Parser, expr Expression, t Type) *CallExpressio
 	p.pushScope(NewScope(ProgramScope))
 	defer p.dropScope()
 	p.addTypeArgsToScope(nil, alias.Params)
-	members := p.getValidatedNamedArguments(p.parseParenthesizedExpression())
+	members := p.getValidatedNamedArguments(*p.parseParenthesizedExpression())
 	reportExcessMembers(p, object.Members, members.Params)
 	reportMissingMembers(p, object.Members, *members)
 	return &CallExpression{
@@ -112,7 +112,7 @@ func reportMissingMembers(p *Parser, expected map[string]ExpressionType, receive
 }
 
 func parseListInstanciation(p *Parser, expr Expression, t Type) *CallExpression {
-	args := p.getValidatedArguments(p.parseParenthesizedExpression())
+	args := p.getValidatedArguments(*p.parseParenthesizedExpression())
 	if len(args.Params) == 0 {
 		return &CallExpression{Callee: expr, Args: args, typing: getFinalType(t)}
 	}
@@ -153,7 +153,7 @@ func getFinalType(t Type) ExpressionType {
 
 // Parse a function call. The expected form is `callee(..arguments)`
 func parseFunctionCall(p *Parser, callee Expression) *CallExpression {
-	args := p.getValidatedArguments(p.parseParenthesizedExpression())
+	args := p.getValidatedArguments(*p.parseParenthesizedExpression())
 	function, ok := callee.Type().(Function)
 	if !ok {
 		return &CallExpression{callee, args, nil}
