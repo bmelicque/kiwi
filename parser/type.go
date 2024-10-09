@@ -32,6 +32,13 @@ type ExpressionType interface {
 	build(*Scope, ExpressionType) (ExpressionType, bool)
 }
 
+func Match(a ExpressionType, b ExpressionType) bool {
+	if a == nil || b == nil {
+		return true
+	}
+	return a.Extends(b) && b.Extends(a)
+}
+
 type Type struct {
 	Value ExpressionType
 }

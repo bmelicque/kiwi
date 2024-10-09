@@ -1,8 +1,8 @@
 package parser
 
 type RangeExpression struct {
-	Left     Node
-	Right    Node
+	Left     Expression
+	Right    Expression
 	Operator Token
 }
 
@@ -21,7 +21,17 @@ func (r RangeExpression) Loc() Loc {
 	return loc
 }
 
-func ParseRange(p *Parser) Expression {
+func (r RangeExpression) Type() ExpressionType {
+	var typing ExpressionType
+	if r.Left != nil {
+		typing = r.Left.Type()
+	} else if r.Right != nil {
+		typing = r.Right.Type()
+	}
+	return Range{typing}
+}
+
+func (p *Parser) parseRange() Expression {
 	token := p.Peek()
 
 	var left Expression
@@ -37,5 +47,18 @@ func ParseRange(p *Parser) Expression {
 
 	right := BinaryExpression{}.Parse(p)
 
-	return RangeExpression{left, right, operator}
+	return &RangeExpression{left, right, operator}
+}
+
+func validateRangeExpression(p *Parser, r RangeExpression) {
+	if r.Operator.Kind() == InclusiveRange && r.Right == nil {
+		p.report(
+			"Expected right operand with inclusive range operator '..='",
+			r.Operator.Loc(),
+		)
+	}
+
+	if r.Left != nil && r.Right != nil && !Match(r.Left.Type(), r.Right.Type()) {
+		p.report("Left and right types don't match", r.Loc())
+	}
 }

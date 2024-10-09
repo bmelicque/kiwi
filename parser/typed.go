@@ -18,7 +18,7 @@ func (t TypedExpression) Loc() Loc {
 func (t TypedExpression) Type() ExpressionType { return nil }
 
 func (p *Parser) parseTypedExpression() Expression {
-	expr := ParseRange(p)
+	expr := p.parseRange()
 	colon := false
 	if p.Peek().Kind() == Colon {
 		p.Consume()
@@ -28,7 +28,7 @@ func (p *Parser) parseTypedExpression() Expression {
 	if !colon {
 		p.allowEmptyExpr = true
 	}
-	typing := ParseRange(p)
+	typing := p.parseRange()
 	p.allowEmptyExpr = outer
 	if typing == nil {
 		return expr

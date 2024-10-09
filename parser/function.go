@@ -81,7 +81,7 @@ func (p *Parser) parseFunctionExpression(brackets *BracketedExpression) Expressi
 		params := p.getValidatedTypeList(*paren)
 		old := p.allowBraceParsing
 		p.allowBraceParsing = false
-		expr := ParseRange(p)
+		expr := p.parseRange()
 		p.allowBraceParsing = old
 		// expr == nil already reported while parsing
 		if expr != nil && expr.Type().Kind() != TYPE {
@@ -105,7 +105,7 @@ func (p *Parser) parseFunctionExpression(brackets *BracketedExpression) Expressi
 		if p.Peek().Kind() != LeftBrace {
 			old := p.allowBraceParsing
 			p.allowBraceParsing = false
-			explicit = ParseRange(p)
+			explicit = p.parseRange()
 			p.allowBraceParsing = old
 		}
 		body := p.parseBlock()
