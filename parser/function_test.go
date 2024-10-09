@@ -2,67 +2,6 @@ package parser
 
 import "testing"
 
-func TestSlimArrowFunctionWithoutArgs(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: LeftParenthesis},
-		token{kind: RightParenthesis},
-		token{kind: SlimArrow},
-		literal{kind: NumberLiteral, value: "42"},
-	}})
-	node := parser.parseFunctionExpression()
-
-	function, ok := node.(FunctionExpression)
-	if !ok {
-		t.Fatalf("Expected FunctionExpression, got %#v", node)
-	}
-
-	if function.Params.Expr != nil {
-		t.Fatalf("Expected no params, got %#v", function.Params.Expr)
-	}
-	if function.Operator.Kind() != SlimArrow {
-		t.Fatalf("Expected '->', got %v", function.Operator.Text())
-	}
-	if _, ok := function.Explicit.(*Literal); !ok {
-		t.Fatalf("Expected literal, got %#v", function.Explicit)
-	}
-	if function.Body != nil {
-		t.Fatalf("Expected no Body, got %#v", function.Body)
-	}
-}
-
-func TestSlimArrowFunctionWithArgs(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: LeftParenthesis},
-		literal{kind: Name, value: "n"},
-		token{kind: NumberKeyword},
-		token{kind: RightParenthesis},
-		token{kind: SlimArrow},
-		literal{kind: NumberLiteral, value: "2"},
-		token{kind: Mul},
-		literal{kind: Name, value: "n"},
-	}})
-	node := parser.parseFunctionExpression()
-
-	function, ok := node.(FunctionExpression)
-	if !ok {
-		t.Fatalf("Expected FunctionExpression, got %#v", node)
-		return
-	}
-
-	if _, ok := function.Params.Expr.(TypedExpression); !ok {
-		t.Fatalf("Expected TypedExpression, got %#v", function.Params.Expr)
-	}
-	if function.Operator.Kind() != SlimArrow {
-		t.Fatalf("Expected '->', got %v", function.Operator.Text())
-	}
-	if _, ok := function.Explicit.(BinaryExpression); !ok {
-		t.Fatalf("Expected BinaryExpression, got %#v", function.Explicit)
-	}
-	if function.Body != nil {
-		t.Fatalf("Expected no Body, got %#v", function.Body)
-	}
-}
-
 func TestFunctionType(t *testing.T) {
 	// (number) -> number
 	parser := MakeParser(&testTokenizer{tokens: []Token{
@@ -72,16 +11,13 @@ func TestFunctionType(t *testing.T) {
 		token{kind: SlimArrow},
 		token{kind: NumberKeyword},
 	}})
-	node := parser.parseFunctionExpression()
+	node := parser.parseFunctionExpression(nil)
 
 	function, ok := node.(FunctionExpression)
 	if !ok {
 		t.Fatalf("Expected FunctionExpression, got %#v", node)
 	}
 
-	if function.Operator.Kind() != SlimArrow {
-		t.Fatalf("Expected '->', got %v", function.Operator.Text())
-	}
 	if _, ok := function.Explicit.(*Literal); !ok {
 		t.Fatalf("Expected literal, got %#v", function.Explicit)
 	}
@@ -90,7 +26,7 @@ func TestFunctionType(t *testing.T) {
 	}
 }
 
-func TestFatArrowFunctionWithoutArgs(t *testing.T) {
+func TestFunctionExpressionWithoutArgs(t *testing.T) {
 	parser := MakeParser(&testTokenizer{tokens: []Token{
 		token{kind: LeftParenthesis},
 		token{kind: RightParenthesis},
@@ -101,7 +37,7 @@ func TestFatArrowFunctionWithoutArgs(t *testing.T) {
 		literal{kind: NumberLiteral, value: "42"},
 		token{kind: RightBrace},
 	}})
-	node := parser.parseFunctionExpression()
+	node := parser.parseFunctionExpression(nil)
 
 	function, ok := node.(FunctionExpression)
 	if !ok {
@@ -109,11 +45,8 @@ func TestFatArrowFunctionWithoutArgs(t *testing.T) {
 		return
 	}
 
-	if function.Params.Expr != nil {
-		t.Fatalf("Expected no params, got %#v", function.Params.Expr)
-	}
-	if function.Operator.Kind() != FatArrow {
-		t.Fatalf("Expected '=>', got %v", function.Operator.Text())
+	if function.Params.Params != nil {
+		t.Fatalf("Expected no params, got %#v", function.Params.Params)
 	}
 	if _, ok := function.Explicit.(*Literal); !ok {
 		t.Fatalf("Expected literal, got %#v", function.Explicit)
@@ -136,7 +69,7 @@ func TestFatArrowFunctionWithArgs(t *testing.T) {
 		literal{kind: Name, value: "n"},
 		token{kind: RightBrace},
 	}})
-	node := parser.parseFunctionExpression()
+	node := parser.parseFunctionExpression(nil)
 
 	function, ok := node.(FunctionExpression)
 	if !ok {
@@ -144,11 +77,8 @@ func TestFatArrowFunctionWithArgs(t *testing.T) {
 		return
 	}
 
-	if _, ok := function.Params.Expr.(TypedExpression); !ok {
-		t.Fatalf("Expected TypedExpression, got %#v", function.Params.Expr)
-	}
-	if function.Operator.Kind() != FatArrow {
-		t.Fatalf("Expected '=>', got %v", function.Operator.Text())
+	if len(function.Params.Params) != 1 {
+		t.Fatalf("Expected 1 param, got %#v", function.Params.Params)
 	}
 	if _, ok := function.Explicit.(*Literal); !ok {
 		t.Fatalf("Expected literal, got %#v", function.Explicit)
@@ -169,7 +99,7 @@ func TestFunctionWithTypeArgs(t *testing.T) {
 		token{kind: LeftBrace},
 		token{kind: RightBrace},
 	}})
-	node := ParseExpression(parser)
+	node := parser.parseExpression()
 
 	_, ok := node.(FunctionExpression)
 	if !ok {
