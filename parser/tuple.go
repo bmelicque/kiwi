@@ -5,13 +5,29 @@ type TupleExpression struct {
 	typing   ExpressionType
 }
 
-func (t TupleExpression) Loc() Loc {
+func (t *TupleExpression) typeCheck(p *Parser) {
+	// TODO:
+}
+
+func (t *TupleExpression) Loc() Loc {
 	return Loc{
 		Start: t.Elements[0].Loc().Start,
 		End:   t.Elements[len(t.Elements)-1].Loc().End,
 	}
 }
-func (t TupleExpression) Type() ExpressionType { return t.typing }
+func (t *TupleExpression) Type() ExpressionType { return t.typing }
+
+// Wrap the expression in a tuple if not one
+func makeTuple(expr Expression) *TupleExpression {
+	tuple, ok := expr.(*TupleExpression)
+	if ok {
+		return tuple
+	}
+	return &TupleExpression{
+		Elements: []Expression{expr},
+		typing:   expr.Type(),
+	}
+}
 
 func (p *Parser) parseTupleExpression() Expression {
 	var elements []Expression
@@ -41,5 +57,5 @@ func (p *Parser) parseTupleExpression() Expression {
 	if len(elements) == 1 {
 		return elements[0]
 	}
-	return TupleExpression{elements, nil}
+	return &TupleExpression{elements, nil}
 }

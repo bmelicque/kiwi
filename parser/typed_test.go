@@ -10,7 +10,7 @@ func TestTypedExpression(t *testing.T) {
 	parser := MakeParser(&tokenizer)
 	node := parser.parseTypedExpression()
 
-	_, ok := node.(TypedExpression)
+	_, ok := node.(*TypedExpression)
 	if !ok {
 		t.Fatalf("Expected TypedExpression, got %#v", node)
 	}
@@ -25,7 +25,7 @@ func TestTypedExpressionWithColon(t *testing.T) {
 	parser := MakeParser(&tokenizer)
 	node := parser.parseTypedExpression()
 
-	_, ok := node.(TypedExpression)
+	_, ok := node.(*TypedExpression)
 	if !ok {
 		t.Fatalf("Expected TypedExpression, got %#v", node)
 	}

@@ -7,13 +7,32 @@ type IfExpression struct {
 	Body      *Block
 }
 
-func (i IfExpression) Loc() Loc {
+func (i *IfExpression) typeCheck(p *Parser) {
+	p.pushScope(NewScope(BlockScope))
+	i.Condition.typeCheck(p)
+	if i.Condition.Type().Kind() != BOOLEAN {
+		p.report("Expected boolean condition", i.Condition.Loc())
+	}
+	i.Body.typeCheck(p)
+	p.dropScope()
+
+	if i.Alternate == nil {
+		return
+	}
+	i.Alternate.typeCheck(p)
+	if !Match(i.Body.Type(), i.Alternate.Type()) {
+		loc := Loc{i.Keyword.Loc().Start, i.Alternate.Loc().End}
+		p.report("Types of the main and alternate blocks don't match", loc)
+	}
+}
+
+func (i *IfExpression) Loc() Loc {
 	return Loc{
 		Start: i.Keyword.Loc().Start,
 		End:   i.Body.Loc().End,
 	}
 }
-func (i IfExpression) Type() ExpressionType {
+func (i *IfExpression) Type() ExpressionType {
 	if i.Alternate == nil {
 		return makeOptionType(i.Body.Type())
 	}
@@ -25,10 +44,6 @@ func (p *Parser) parseIfExpression() *IfExpression {
 	condition := parseIfCondition(p)
 	body := parseIfBody(p)
 	alternate := parseAlternate(p)
-	if alternate != nil && !Match(body.Type(), alternate.Type()) {
-		loc := Loc{keyword.Loc().Start, alternate.Loc().End}
-		p.report("Types of the main and alternate blocks don't match", loc)
-	}
 	return &IfExpression{keyword, condition, alternate, body}
 }
 
@@ -38,9 +53,6 @@ func parseIfCondition(p *Parser) Expression {
 	p.allowBraceParsing = false
 	condition := p.parseExpression()
 	p.allowBraceParsing = outer
-	if condition.Type().Kind() != BOOLEAN {
-		p.report("Expected boolean condition", condition.Loc())
-	}
 	return condition
 }
 
@@ -50,8 +62,6 @@ func parseIfBody(p *Parser) *Block {
 		p.report("Block expected", p.Peek().Loc())
 		return nil
 	}
-	p.pushScope(NewScope(BlockScope))
-	defer p.dropScope()
 	return p.parseBlock()
 }
 

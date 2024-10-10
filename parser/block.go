@@ -1,19 +1,30 @@
 package parser
 
+import "slices"
+
 type Block struct {
 	Statements []Node
 	loc        Loc
 }
 
-func (b Block) Loc() Loc { return b.loc }
-func (b Block) reportLoc() Loc {
+func (b *Block) typeCheck(p *Parser) {
+	for i := range b.Statements {
+		b.Statements[i].typeCheck(p)
+	}
+	if b.Type().Kind() == TYPE {
+		p.report("Blocks shouldn't return types", p.parseBlock().reportLoc())
+	}
+}
+
+func (b *Block) Loc() Loc { return b.loc }
+func (b *Block) reportLoc() Loc {
 	if len(b.Statements) > 0 {
 		return b.Statements[len(b.Statements)-1].Loc()
 	} else {
 		return b.loc
 	}
 }
-func (b Block) Type() ExpressionType {
+func (b *Block) Type() ExpressionType {
 	if len(b.Statements) == 0 {
 		return Primitive{NIL}
 	}
@@ -26,30 +37,31 @@ func (b Block) Type() ExpressionType {
 }
 
 func (p *Parser) parseBlock() *Block {
-	block := Block{}
-
-	token := p.Consume()
-	block.loc.Start = token.Loc().Start
-	if token.Kind() != LeftBrace {
-		p.report("'{' expected", token.Loc())
+	if p.Peek().Kind() != LeftBrace {
+		p.report("'{' expected", p.Peek().Loc())
+		return nil
 	}
+
+	start := p.Consume().Loc().Start // '{'
 	p.DiscardLineBreaks()
 
-	block.Statements = []Node{}
+	statements := []Node{}
+	stopAt := []TokenKind{RightBrace, EOL, EOF}
 	for p.Peek().Kind() != RightBrace && p.Peek().Kind() != EOF {
-		block.Statements = append(block.Statements, p.parseStatement())
+		statements = append(statements, p.parseStatement())
+		if !slices.Contains(stopAt, p.Peek().Kind()) {
+			recover(p, RightBrace)
+		}
 		p.DiscardLineBreaks()
 	}
+	reportUnreachableCode(p, statements)
 
-	token = p.Consume()
-	block.loc.End = token.Loc().End
-	if token.Kind() != RightBrace {
-		p.report("'}' expected", token.Loc())
+	if p.Peek().Kind() != RightBrace {
+		p.report("'}' expected", p.Peek().Loc())
 	}
+	end := p.Consume().Loc().End
 
-	reportUnreachableCode(p, block.Statements)
-
-	return &block
+	return &Block{statements, Loc{start, end}}
 }
 
 func reportUnreachableCode(p *Parser, statements []Node) {
@@ -63,7 +75,7 @@ func reportUnreachableCode(p *Parser, statements []Node) {
 			}
 			unreachable.End = statement.Loc().End
 		}
-		if _, ok := statement.(Exit); ok {
+		if _, ok := statement.(*Exit); ok {
 			foundExit = true
 		}
 	}

@@ -7,74 +7,71 @@ type ComputedAccessExpression struct {
 	typing   ExpressionType
 }
 
-func (c ComputedAccessExpression) Loc() Loc {
+func (c *ComputedAccessExpression) Loc() Loc {
 	return Loc{
 		Start: c.Expr.Loc().Start,
 		End:   c.Property.loc.End,
 	}
 }
-func (c ComputedAccessExpression) Type() ExpressionType {
+func (c *ComputedAccessExpression) Type() ExpressionType {
 	return c.typing
 }
 
 func parseComputedAccessExpression(p *Parser, expr Expression) *ComputedAccessExpression {
 	prop := p.parseBracketedExpression()
-	typing := getComputedAccessType(p, expr, *prop)
-	return &ComputedAccessExpression{
-		Expr:     expr,
-		Property: prop,
-		typing:   typing,
+	return &ComputedAccessExpression{Expr: expr, Property: prop}
+}
+
+func (expr *ComputedAccessExpression) typeCheck(p *Parser) {
+	switch t := expr.Expr.Type().(type) {
+	case Type:
+		typeCheckGenericType(p, expr)
+	case Function:
+		typeCheckGenericFunction(p, expr)
+	case List:
+		if expr.Property.Expr.Type().Kind() != NUMBER {
+			p.report("Number expected", expr.Property.loc)
+		}
+		expr.typing = t.Element
 	}
 }
 
-func getComputedAccessType(p *Parser, left Expression, right BracketedExpression) ExpressionType {
-	tuple, ok := right.Expr.(*TupleExpression)
+func typeCheckGenericType(p *Parser, expr *ComputedAccessExpression) {
+	alias, ok := expr.Expr.Type().(Type).Value.(TypeAlias)
 	if !ok {
-		tuple = &TupleExpression{
-			Elements: []Expression{right.Expr},
-			typing:   right.Expr.Type(),
-		}
+		p.report("No type arguments expected for this type", expr.Property.loc)
+		expr.typing = Primitive{UNKNOWN}
+		return
 	}
-	switch t := left.Type().(type) {
-	case Type:
-		// Generics
-		alias, ok := t.Value.(TypeAlias)
-		if !ok {
-			p.report("No type arguments expected", right.Expr.Loc())
-			return Primitive{UNKNOWN}
-		}
-		p.pushScope(NewScope(ProgramScope))
-		defer p.dropScope()
-		params := append(alias.Params[:0:0], alias.Params...)
-		p.addTypeArgsToScope(tuple, params)
-		ref, _ := alias.Ref.build(p.scope, nil)
-		return Type{TypeAlias{
-			Name:   alias.Name,
-			Params: params,
-			Ref:    ref,
-		}}
-	case Function:
-		// Generic function
-		p.pushScope(NewScope(ProgramScope))
-		defer p.dropScope()
-		typeParams := append(t.TypeParams[:0:0], t.TypeParams...)
-		p.addTypeArgsToScope(tuple, typeParams)
-		params := make([]ExpressionType, len(typeParams))
-		for i, param := range typeParams {
-			params[i], _ = param.build(p.scope, nil)
-		}
-		returned, _ := t.Returned.build(p.scope, nil)
-		return Function{
-			TypeParams: typeParams,
-			Params:     &Tuple{params},
-			Returned:   returned,
-		}
-	case List:
-		if tuple.Type().Kind() != NUMBER {
-			p.report("Number expected", tuple.Loc())
-		}
-		return t.Element
-	default:
-		return nil
+
+	p.pushScope(NewScope(ProgramScope))
+	defer p.dropScope()
+
+	params := append(alias.Params[:0:0], alias.Params...)
+	p.addTypeArgsToScope(makeTuple(expr.Property.Expr), params)
+	ref, _ := alias.Ref.build(p.scope, nil)
+	expr.typing = Type{TypeAlias{
+		Name:   alias.Name,
+		Params: params,
+		Ref:    ref,
+	}}
+}
+
+func typeCheckGenericFunction(p *Parser, expr *ComputedAccessExpression) {
+	p.pushScope(NewScope(ProgramScope))
+	defer p.dropScope()
+
+	t := expr.Expr.Type().(Function)
+	typeParams := append(t.TypeParams[:0:0], t.TypeParams...)
+	p.addTypeArgsToScope(makeTuple(expr.Property.Expr), typeParams)
+	params := make([]ExpressionType, len(typeParams))
+	for i, param := range typeParams {
+		params[i], _ = param.build(p.scope, nil)
+	}
+	returned, _ := t.Returned.build(p.scope, nil)
+	expr.typing = Function{
+		TypeParams: typeParams,
+		Params:     &Tuple{params},
+		Returned:   returned,
 	}
 }

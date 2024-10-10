@@ -5,7 +5,17 @@ type UnaryExpression struct {
 	Operand  Expression
 }
 
-func (u UnaryExpression) Loc() Loc {
+func (u *UnaryExpression) typeCheck(p *Parser) {
+	u.Operand.typeCheck(p)
+	switch u.Operator.Kind() {
+	case QuestionMark:
+		if u.Operand.Type().Kind() != TYPE {
+			p.report("Type expected with question mark operator", u.Operand.Loc())
+		}
+	}
+}
+
+func (u *UnaryExpression) Loc() Loc {
 	loc := u.Operator.Loc()
 	if u.Operand != nil {
 		loc.End = u.Operand.Loc().End
@@ -13,7 +23,7 @@ func (u UnaryExpression) Loc() Loc {
 	return loc
 }
 
-func (u UnaryExpression) Type() ExpressionType {
+func (u *UnaryExpression) Type() ExpressionType {
 	switch u.Operator.Kind() {
 	case QuestionMark:
 		t := u.Operand.Type()
@@ -31,7 +41,14 @@ type ListTypeExpression struct {
 	Expr      Expression // Cannot be nil
 }
 
-func (l ListTypeExpression) Loc() Loc {
+func (l *ListTypeExpression) typeCheck(p *Parser) {
+	l.Expr.typeCheck(p)
+	if l.Expr != nil && l.Expr.Type().Kind() != TYPE {
+		p.report("Type expected", l.Loc())
+	}
+}
+
+func (l *ListTypeExpression) Loc() Loc {
 	loc := l.Bracketed.Loc()
 	if l.Expr != nil {
 		loc.End = l.Expr.Loc().End
@@ -39,7 +56,7 @@ func (l ListTypeExpression) Loc() Loc {
 	return loc
 }
 
-func (l ListTypeExpression) Type() ExpressionType {
+func (l *ListTypeExpression) Type() ExpressionType {
 	t, ok := l.Expr.Type().(Type)
 	if !ok {
 		return Type{List{Primitive{UNKNOWN}}}
@@ -52,9 +69,6 @@ func (p *Parser) parseUnaryExpression() Expression {
 	case QuestionMark:
 		token := p.Consume()
 		expr := parseInnerUnary(p)
-		if expr.Type().Kind() != TYPE {
-			p.report("Type expected with question mark operator", expr.Loc())
-		}
 		return &UnaryExpression{token, expr}
 	case LeftBracket:
 		return parseListTypeExpression(p)
@@ -80,16 +94,8 @@ func parseListTypeExpression(p *Parser) Expression {
 		return p.parseFunctionExpression(brackets)
 	}
 	expr := parseInnerUnary(p)
-	list := ListTypeExpression{brackets, expr}
-	validateListExpressionType(p, list)
-	return &list
-}
-
-func validateListExpressionType(p *Parser, expr ListTypeExpression) {
-	if expr.Bracketed.Expr != nil {
-		p.report("No expression expected for list type", expr.Bracketed.Loc())
+	if brackets != nil && brackets.Expr != nil {
+		p.report("No expression expected for list type", brackets.Loc())
 	}
-	if expr.Expr != nil && expr.Expr.Type().Kind() != TYPE {
-		p.report("Type expected", expr.Loc())
-	}
+	return &ListTypeExpression{brackets, expr}
 }

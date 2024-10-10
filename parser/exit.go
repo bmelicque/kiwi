@@ -5,10 +5,16 @@ type Exit struct {
 	Value    Expression
 }
 
-func (r Exit) Loc() Loc {
-	loc := r.Operator.Loc()
-	if r.Value != nil {
-		loc.End = r.Value.Loc().End
+func (e *Exit) typeCheck(p *Parser) {
+	if e.Value != nil {
+		e.Value.typeCheck(p)
+	}
+}
+
+func (e *Exit) Loc() Loc {
+	loc := e.Operator.Loc()
+	if e.Value != nil {
+		loc.End = e.Value.Loc().End
 	}
 	return loc
 }

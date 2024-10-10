@@ -9,7 +9,9 @@ type Literal struct {
 	Token
 }
 
-func (l Literal) Type() ExpressionType {
+func (l *Literal) typeCheck(_ *Parser) { return }
+
+func (l *Literal) Type() ExpressionType {
 	switch l.Kind() {
 	case NumberLiteral:
 		return Primitive{NUMBER}
@@ -34,7 +36,15 @@ type Identifier struct {
 	isType bool
 }
 
-func (i Identifier) Type() ExpressionType { return i.typing }
+func (i *Identifier) typeCheck(p *Parser) {
+	name := i.Text()
+	if variable, ok := p.scope.Find(name); ok {
+		p.scope.ReadAt(name, i.Loc())
+		i.typing = variable.typing
+	}
+}
+
+func (i *Identifier) Type() ExpressionType { return i.typing }
 
 func (p *Parser) parseToken(expectNewName bool) Expression {
 	token := p.Peek()
@@ -45,24 +55,11 @@ func (p *Parser) parseToken(expectNewName bool) Expression {
 	case Name:
 		p.Consume()
 		isType := unicode.IsUpper(rune(token.Text()[0]))
-		var typing ExpressionType
-		if !expectNewName {
-			typing = getIdentifierType(p.scope, token)
-		}
-		return &Identifier{token, typing, isType}
+		return &Identifier{Token: token, isType: isType}
 	}
 	if !p.allowEmptyExpr {
 		p.Consume()
 		p.report("Expression expected", token.Loc())
-	}
-	return nil
-}
-
-func getIdentifierType(scope *Scope, token Token) ExpressionType {
-	name := token.Text()
-	if variable, ok := scope.Find(name); ok {
-		scope.ReadAt(name, token.Loc())
-		return variable.typing
 	}
 	return nil
 }

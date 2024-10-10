@@ -6,7 +6,11 @@ type TypedExpression struct {
 	Colon  bool
 }
 
-func (t TypedExpression) Loc() Loc {
+func (t *TypedExpression) typeCheck(p *Parser) {
+	// TODO:
+}
+
+func (t *TypedExpression) Loc() Loc {
 	loc := t.Expr.Loc()
 	if t.Typing != nil {
 		loc.End = t.Typing.Loc().End
@@ -15,7 +19,7 @@ func (t TypedExpression) Loc() Loc {
 }
 
 // FIXME:
-func (t TypedExpression) Type() ExpressionType { return nil }
+func (t *TypedExpression) Type() ExpressionType { return nil }
 
 func (p *Parser) parseTypedExpression() Expression {
 	expr := p.parseRange()
@@ -33,5 +37,5 @@ func (p *Parser) parseTypedExpression() Expression {
 	if typing == nil {
 		return expr
 	}
-	return TypedExpression{expr, typing, colon}
+	return &TypedExpression{expr, typing, colon}
 }

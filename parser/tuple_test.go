@@ -13,7 +13,7 @@ func TestTuple(t *testing.T) {
 	parser := MakeParser(&tokenizer)
 	node := parser.parseTupleExpression()
 
-	tuple, ok := node.(TupleExpression)
+	tuple, ok := node.(*TupleExpression)
 	if !ok {
 		t.Fatalf("Expected TupleExpression, got %#v", node)
 		return
@@ -37,7 +37,7 @@ func TestTypedTuple(t *testing.T) {
 	parser := MakeParser(&tokenizer)
 	node := parser.parseTupleExpression()
 
-	tuple, ok := node.(TupleExpression)
+	tuple, ok := node.(*TupleExpression)
 	if !ok {
 		t.Fatalf("Expected TupleExpression, got %#v", node)
 		return

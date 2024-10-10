@@ -10,7 +10,7 @@ type BinaryExpression struct {
 	Operator Token
 }
 
-func (expr BinaryExpression) Loc() Loc {
+func (expr *BinaryExpression) Loc() Loc {
 	loc := Loc{}
 	if expr.Left != nil {
 		loc.Start = expr.Left.Loc().Start
@@ -26,7 +26,7 @@ func (expr BinaryExpression) Loc() Loc {
 	return loc
 }
 
-func (expr BinaryExpression) Type() ExpressionType {
+func (expr *BinaryExpression) Type() ExpressionType {
 	switch expr.Operator.Kind() {
 	case
 		Add,
@@ -70,12 +70,7 @@ func parseBinary(p *Parser, operators []TokenKind, fallback func(p *Parser) Expr
 	return expression
 }
 func parseLogicalOr(p *Parser) Expression {
-	expr := parseBinary(p, []TokenKind{LogicalOr}, parseLogicalAnd)
-	binary, ok := expr.(*BinaryExpression)
-	if ok {
-		p.validateBinaryExpression(*binary)
-	}
-	return expr
+	return parseBinary(p, []TokenKind{LogicalOr}, parseLogicalAnd)
 }
 func parseLogicalAnd(p *Parser) Expression {
 	return parseBinary(p, []TokenKind{LogicalAnd}, parseEquality)
@@ -104,10 +99,10 @@ func parseExponentiation(p *Parser) Expression {
 	return expression
 }
 
-func (p *Parser) validateBinaryExpression(expr BinaryExpression) {
-	left := expr.Left
-	right := expr.Right
-	switch expr.Operator.Kind() {
+func (b *BinaryExpression) typeCheck(p *Parser) {
+	b.Left.typeCheck(p)
+	b.Right.typeCheck(p)
+	switch b.Operator.Kind() {
 	case
 		Add,
 		Sub,
@@ -119,21 +114,21 @@ func (p *Parser) validateBinaryExpression(expr BinaryExpression) {
 		Greater,
 		LessEqual,
 		GreaterEqual:
-		p.validateArithmeticExpression(left, right)
+		p.typeCheckArithmeticExpression(b.Left, b.Right)
 	case Concat:
-		p.validateConcatExpression(left, right)
+		p.typeCheckConcatExpression(b.Left, b.Right)
 	case
 		LogicalAnd,
 		LogicalOr:
-		p.validateLogicalExpression(left, right)
+		p.typeCheckLogicalExpression(b.Left, b.Right)
 	case
 		Equal,
 		NotEqual:
-		p.validateComparisonExpression(left, right)
+		p.typeCheckComparisonExpression(b.Left, b.Right)
 	}
 }
 
-func (p *Parser) validateLogicalExpression(left Expression, right Expression) {
+func (p *Parser) typeCheckLogicalExpression(left Expression, right Expression) {
 	if left != nil && !(Primitive{BOOLEAN}).Extends(left.Type()) {
 		p.report("The left-hand side of a logical operation must be a boolean", left.Loc())
 	}
@@ -142,7 +137,7 @@ func (p *Parser) validateLogicalExpression(left Expression, right Expression) {
 	}
 }
 
-func (p *Parser) validateComparisonExpression(left Expression, right Expression) {
+func (p *Parser) typeCheckComparisonExpression(left Expression, right Expression) {
 	if left == nil || right == nil {
 		return
 	}
@@ -152,7 +147,7 @@ func (p *Parser) validateComparisonExpression(left Expression, right Expression)
 		p.report("Types don't match", Loc{Start: left.Loc().Start, End: right.Loc().End})
 	}
 }
-func (p *Parser) validateConcatExpression(left Expression, right Expression) {
+func (p *Parser) typeCheckConcatExpression(left Expression, right Expression) {
 	var leftType ExpressionType
 	if left != nil {
 		leftType = left.Type()
@@ -168,7 +163,7 @@ func (p *Parser) validateConcatExpression(left Expression, right Expression) {
 		p.report("The right-hand side of concatenation must be a string or a list", right.Loc())
 	}
 }
-func (p *Parser) validateArithmeticExpression(left Expression, right Expression) {
+func (p *Parser) typeCheckArithmeticExpression(left Expression, right Expression) {
 	if left != nil && !(Primitive{NUMBER}).Extends(left.Type()) {
 		p.report("The left-hand side of an arithmetic operation must be a number", left.Loc())
 	}

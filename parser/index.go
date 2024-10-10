@@ -1,6 +1,7 @@
 package parser
 
 type Node interface {
+	typeCheck(*Parser)
 	Loc() Loc
 }
 type Expression interface {

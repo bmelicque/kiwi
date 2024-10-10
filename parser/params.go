@@ -124,7 +124,7 @@ func (p Param) Type() ExpressionType {
 
 // identifier Type
 func (p *Parser) getValidatedParam(node Node) Param {
-	expr, ok := node.(TypedExpression)
+	expr, ok := node.(*TypedExpression)
 	if !ok {
 		p.report("Identifier and Type expected", node.Loc())
 		return Param{}
@@ -156,7 +156,7 @@ func (p *Parser) getValidatedTypeParam(node Node) Param {
 // Take a node and try to parse it as a named argument.
 // The expected form is "name: value"
 func (p *Parser) getValidatedNamedArgument(node Node) Param {
-	expr, ok := node.(TypedExpression)
+	expr, ok := node.(*TypedExpression)
 	if !ok {
 		p.report("Identifier and value expected", node.Loc())
 		return Param{}
@@ -173,7 +173,7 @@ func (p *Parser) getValidatedNamedArgument(node Node) Param {
 
 // Take an expression and makes sure it is a valid argument for a function
 func (p *Parser) getValidatedArgument(node Node) Param {
-	expr, ok := node.(TypedExpression)
+	expr, ok := node.(*TypedExpression)
 	if ok {
 		p.report("Missing comma between expressions", node.Loc())
 		return Param{Complement: expr.Typing}

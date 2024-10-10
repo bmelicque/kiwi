@@ -2,12 +2,6 @@ package parser
 
 import "fmt"
 
-type ExpressionStatement struct {
-	Expr Expression
-}
-
-func (s ExpressionStatement) Loc() Loc { return s.Expr.Loc() }
-
 type Assignment struct {
 	Declared    Expression // "value", "Type", "(value: Type).method"
 	Initializer Expression
@@ -15,7 +9,11 @@ type Assignment struct {
 	Operator    Token // '=', ':=', '::', '+='...
 }
 
-func (a Assignment) Loc() Loc {
+func (a *Assignment) typeCheck(p *Parser) {
+	// TODO:
+}
+
+func (a *Assignment) Loc() Loc {
 	loc := a.Operator.Loc()
 	if a.Declared != nil {
 		loc.Start = a.Declared.Loc().Start
@@ -35,10 +33,13 @@ type VariableDeclaration struct {
 	Constant    bool
 }
 
-func (vd VariableDeclaration) Loc() Loc { return vd.loc }
+func (v *VariableDeclaration) typeCheck(p *Parser) {
+	//TODO:
+}
+func (v *VariableDeclaration) Loc() Loc { return v.loc }
 
 func (p *Parser) parseAssignment() Node {
-	expr := ParseExpression(p)
+	expr := p.parseExpression()
 
 	var typing Expression
 	var operator Token
@@ -57,8 +58,8 @@ func (p *Parser) parseAssignment() Node {
 		Assign:
 		operator = p.Consume()
 	default:
-		return ExpressionStatement{expr}
+		return expr
 	}
 	init := ParseExpression(p)
-	return Assignment{expr, init, typing, operator}
+	return &Assignment{expr, init, typing, operator}
 }

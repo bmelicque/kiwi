@@ -7,7 +7,31 @@ type ForExpression struct {
 	typing    ExpressionType
 }
 
-func (f ForExpression) Loc() Loc {
+func (f *ForExpression) typeCheck(p *Parser) {
+	switch s := f.Statement.(type) {
+	case *Assignment:
+		r := getLoopRangeType(s.Initializer)
+		if r == nil {
+			p.report("Range expected", s.Initializer.Loc())
+		}
+		switch pattern := s.Declared.(type) {
+		case *Identifier:
+			p.scope.Add(pattern.Text(), pattern.Loc(), r)
+		case *TupleExpression:
+			// TODO: FIXME:
+			// index, value := getValidatedRangeTuplePattern(p, pattern)
+		}
+	case Expression:
+		// s.Expr == nil already reported when parsing expression
+		if s != nil && s.Type().Kind() != BOOLEAN {
+			p.report("Boolean expected in loop condition", s.Loc())
+		}
+	}
+	f.Body.typeCheck(p)
+	f.typing = getLoopType(p, f.Body)
+}
+
+func (f *ForExpression) Loc() Loc {
 	loc := f.Keyword.Loc()
 	if f.Body != nil {
 		loc.End = f.Body.Loc().End
@@ -16,7 +40,7 @@ func (f ForExpression) Loc() Loc {
 	}
 	return loc
 }
-func (f ForExpression) Type() ExpressionType { return f.typing }
+func (f *ForExpression) Type() ExpressionType { return f.typing }
 
 func (p *Parser) parseForExpression() *ForExpression {
 	p.pushScope(NewScope(LoopScope))
@@ -32,33 +56,18 @@ func (p *Parser) parseForExpression() *ForExpression {
 
 	body := p.parseBlock()
 
-	typing := getLoopType(p, *body)
-
-	return &ForExpression{keyword, statement, body, typing}
+	return &ForExpression{keyword, statement, body, nil}
 }
 
 func validateForCondition(p *Parser, s Node) {
 	switch s := s.(type) {
-	case Assignment:
-		r := getLoopRangeType(s.Initializer)
-		if r == nil {
-			p.report("Range expected", s.Initializer.Loc())
-		}
+	case *Assignment:
 		switch pattern := s.Declared.(type) {
-		case *Identifier:
-			p.scope.Add(pattern.Text(), pattern.Loc(), r)
-		case *TupleExpression:
-			// TODO: FIXME:
-			// index, value := getValidatedRangeTuplePattern(p, pattern)
-			p.report("Invalid pattern", pattern.Loc())
+		case *Identifier, *TupleExpression:
 		default:
 			p.report("Invalid pattern", pattern.Loc())
 		}
-	case ExpressionStatement:
-		// s.Expr == nil already reported when parsing expression
-		if s.Expr != nil && s.Expr.Type().Kind() != BOOLEAN {
-			p.report("Boolean expected in loop condition", s.Expr.Loc())
-		}
+	case Expression:
 	default:
 		p.report("Assignment from range or condition expected", s.Loc())
 	}
@@ -92,8 +101,8 @@ func getValidatedRangeTuplePattern(p *Parser, tuple *TupleExpression) (*Identifi
 	return index, value
 }
 
-func getLoopType(p *Parser, body Block) ExpressionType {
-	breaks := []Exit{}
+func getLoopType(p *Parser, body *Block) ExpressionType {
+	breaks := []*Exit{}
 	findBreakStatements(body, &breaks)
 	if len(breaks) == 0 {
 		return Primitive{NIL}
@@ -115,22 +124,22 @@ func getLoopType(p *Parser, body Block) ExpressionType {
 	return t
 }
 
-func findBreakStatements(node Node, results *[]Exit) {
+func findBreakStatements(node Node, results *[]*Exit) {
 	if node == nil {
 		return
 	}
-	if n, ok := node.(Exit); ok {
+	if n, ok := node.(*Exit); ok {
 		if n.Operator.Kind() == BreakKeyword {
 			*results = append(*results, n)
 		}
 		return
 	}
 	switch node := node.(type) {
-	case Block:
+	case *Block:
 		for _, statement := range node.Statements {
 			findBreakStatements(statement, results)
 		}
-	case IfExpression:
+	case *IfExpression:
 		findBreakStatements(node.Body, results)
 		findBreakStatements(node.Alternate, results)
 	}
