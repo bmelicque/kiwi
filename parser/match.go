@@ -1,15 +1,35 @@
 package parser
 
-import "slices"
+import (
+	"fmt"
+	"slices"
+)
 
 type MatchCase struct {
-	Pattern    Node
+	Pattern    Expression
 	Statements []Node
+}
+
+func (m MatchCase) Type() ExpressionType {
+	if len(m.Statements) == 0 {
+		return Primitive{NIL}
+	}
+	expr, ok := m.Statements[len(m.Statements)-1].(*ExpressionStatement)
+	if !ok {
+		return Primitive{NIL}
+	}
+	t, _ := expr.Expr.Type().build(nil, nil)
+	return t
+}
+
+func (m MatchCase) IsCatchall() bool {
+	identifier, ok := m.Pattern.(*Identifier)
+	return ok && identifier.Text() == "_"
 }
 
 type MatchExpression struct {
 	Keyword Token
-	Value   Node
+	Value   Expression
 	Cases   []MatchCase
 	end     Position
 }
@@ -21,8 +41,17 @@ func (m MatchExpression) Loc() Loc {
 	}
 	return loc
 }
+func (m MatchExpression) Type() ExpressionType {
+	if len(m.Cases) == 0 {
+		return Primitive{NIL}
+	}
+	return m.Cases[0].Type()
+}
 
-func (p *Parser) parseMatchExpression() Node {
+var matchableType = []ExpressionTypeKind{SUM, TRAIT}
+
+// TODO: validate type
+func (p *Parser) parseMatchExpression() Expression {
 	keyword := p.Consume()
 	outer := p.allowBraceParsing
 	p.allowBraceParsing = false
@@ -34,11 +63,14 @@ func (p *Parser) parseMatchExpression() Node {
 	p.Consume()
 	p.DiscardLineBreaks()
 
+	// FIXME: limit possible types for match
+	matched := condition.Type()
 	cases := []MatchCase{}
 	stopAt := []TokenKind{RightBrace, EOF}
 	for !slices.Contains(stopAt, p.Peek().Kind()) {
-		cases = append(cases, parseMatchCase(p))
+		cases = append(cases, parseMatchCase(p, matched))
 	}
+	validateCaseList(p, cases, matched)
 
 	next := p.Peek()
 	end := next.Loc().End
@@ -47,20 +79,19 @@ func (p *Parser) parseMatchExpression() Node {
 	} else {
 		p.report("'}' expected", next.Loc())
 	}
-	return MatchExpression{keyword, condition, cases, end}
+	expr := MatchExpression{keyword, condition, cases, end}
+	if len(cases) < 2 {
+		p.report("At least 2 cases expected", expr.Loc())
+	}
+	return &expr
 }
 
-func parseMatchCase(p *Parser) MatchCase {
-	var pattern Node
-	if p.Peek().Kind() == CaseKeyword {
-		p.Consume()
-		pattern = ParseExpression(p)
-		if p.Peek().Kind() == Colon {
-			p.Consume()
-		} else {
-			p.report("':' expected", p.Peek().Loc())
-		}
-	}
+func parseMatchCase(p *Parser, matched ExpressionType) MatchCase {
+	p.pushScope(NewScope(BlockScope))
+	defer p.dropScope()
+
+	pattern := parseCaseStatement(p)
+	p.validatePattern(pattern, matched)
 
 	stopAt := []TokenKind{EOF, RightBrace, CaseKeyword}
 	statements := []Node{}
@@ -72,5 +103,110 @@ func parseMatchCase(p *Parser) MatchCase {
 	return MatchCase{
 		Pattern:    pattern,
 		Statements: statements,
+	}
+}
+
+func parseCaseStatement(p *Parser) Expression {
+	p.Consume()
+	pattern := p.parseExpression()
+
+	if p.Peek().Kind() != Colon {
+		recover(p, Colon)
+	}
+	if p.Peek().Kind() != EOL {
+		recover(p, EOL)
+	}
+	p.DiscardLineBreaks()
+	return pattern
+}
+
+func validateCaseList(p *Parser, cases []MatchCase, matched ExpressionType) {
+	if len(cases) == 0 {
+		return
+	}
+	if cases[0].Pattern == nil {
+		p.report("'case' keyword expected", cases[0].Statements[0].Loc())
+	}
+	hasCatchAll := reportUnreachableCases(p, cases)
+	reportDuplicatedCases(p, cases)
+	if !hasCatchAll {
+		reportMissingCases(p, cases, matched)
+	}
+}
+
+// return true if found a catch-all case
+func reportUnreachableCases(p *Parser, cases []MatchCase) bool {
+	var foundCatchall, foundUnreachable bool
+	var catchall Loc
+	for _, ca := range cases {
+		if foundCatchall {
+			foundUnreachable = true
+		}
+		if ca.IsCatchall() {
+			foundCatchall = true
+			catchall = ca.Pattern.Loc()
+		}
+	}
+	if foundUnreachable {
+		p.report("Catch-all case should be last", catchall)
+	}
+	return foundCatchall
+}
+
+func reportDuplicatedCases(p *Parser, cases []MatchCase) {
+	names := map[string][]Loc{}
+	for _, c := range cases {
+		identifier := getCaseIdentifier(c)
+		if identifier != nil {
+			name := identifier.Text()
+			names[name] = append(names[name], identifier.Loc())
+		}
+	}
+	for name, locs := range names {
+		if len(locs) == 1 {
+			continue
+		}
+		msg := fmt.Sprintf("Duplicated case '%v'", name)
+		for _, loc := range locs {
+			p.report(msg, loc)
+		}
+	}
+}
+
+// length of cases should be at least 1
+func reportMissingCases(p *Parser, cases []MatchCase, matched ExpressionType) {
+	last := cases[len(cases)-1]
+	loc := Loc{
+		cases[0].Pattern.Loc().Start,
+		last.Statements[len(last.Statements)-1].Loc().End,
+	}
+	if matched.Kind() != SUM {
+		p.report("Non exhaustive match, consider adding catch-all", loc)
+	}
+	names := map[string]bool{}
+	for _, c := range cases {
+		identifier := getCaseIdentifier(c)
+		if identifier != nil {
+			names[identifier.Text()] = true
+		}
+	}
+	sum := matched.(Sum)
+	for name := range sum.Members {
+		delete(names, name)
+	}
+	for name := range names {
+		p.report(fmt.Sprintf("Missing constructor '%v'", name), loc)
+	}
+}
+
+func getCaseIdentifier(c MatchCase) *Identifier {
+	switch pattern := c.Pattern.(type) {
+	case *Identifier:
+		return pattern
+	case *CallExpression:
+		identifier, _ := pattern.Callee.(*Identifier)
+		return identifier
+	default:
+		return nil
 	}
 }
