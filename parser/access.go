@@ -33,6 +33,7 @@ func parseOneAccess(p *Parser, expr Expression) Expression {
 			return parseFunctionCall(p, expr)
 		}
 	case Dot:
+		p.Consume()
 		return parsePropertyAccess(p, expr)
 	default:
 		panic("switch should've been exhaustive!")

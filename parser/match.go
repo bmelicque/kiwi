@@ -129,7 +129,7 @@ func validateCaseList(p *Parser, cases []MatchCase, matched ExpressionType) {
 	}
 	hasCatchAll := reportUnreachableCases(p, cases)
 	reportDuplicatedCases(p, cases)
-	if !hasCatchAll {
+	if !hasCatchAll && matched != nil {
 		reportMissingCases(p, cases, matched)
 	}
 }

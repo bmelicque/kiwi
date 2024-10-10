@@ -13,16 +13,13 @@ func TestFunctionType(t *testing.T) {
 	}})
 	node := parser.parseFunctionExpression(nil)
 
-	function, ok := node.(FunctionExpression)
+	function, ok := node.(*FunctionTypeExpression)
 	if !ok {
-		t.Fatalf("Expected FunctionExpression, got %#v", node)
+		t.Fatalf("Expected FunctionTypeExpression, got %#v", node)
 	}
 
-	if _, ok := function.Explicit.(*Literal); !ok {
-		t.Fatalf("Expected literal, got %#v", function.Explicit)
-	}
-	if function.Body != nil {
-		t.Fatalf("Expected no Body, got %#v", function.Body)
+	if _, ok := function.Expr.(*Literal); !ok {
+		t.Fatalf("Expected literal, got %#v", function.Expr)
 	}
 }
 
@@ -39,13 +36,13 @@ func TestFunctionExpressionWithoutArgs(t *testing.T) {
 	}})
 	node := parser.parseFunctionExpression(nil)
 
-	function, ok := node.(FunctionExpression)
+	function, ok := node.(*FunctionExpression)
 	if !ok {
 		t.Fatalf("Expected FunctionExpression, got %#v", node)
 		return
 	}
 
-	if function.Params.Params != nil {
+	if function.Params != nil && function.Params.Params != nil {
 		t.Fatalf("Expected no params, got %#v", function.Params.Params)
 	}
 	if _, ok := function.Explicit.(*Literal); !ok {
@@ -71,7 +68,7 @@ func TestFatArrowFunctionWithArgs(t *testing.T) {
 	}})
 	node := parser.parseFunctionExpression(nil)
 
-	function, ok := node.(FunctionExpression)
+	function, ok := node.(*FunctionExpression)
 	if !ok {
 		t.Fatalf("Expected FunctionExpression, got %#v", node)
 		return
@@ -101,7 +98,7 @@ func TestFunctionWithTypeArgs(t *testing.T) {
 	}})
 	node := parser.parseExpression()
 
-	_, ok := node.(FunctionExpression)
+	_, ok := node.(*FunctionExpression)
 	if !ok {
 		t.Fatalf("Expected FunctionExpression, got %#v", node)
 		return

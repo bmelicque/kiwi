@@ -15,7 +15,7 @@ func (i IfExpression) Loc() Loc {
 }
 func (i IfExpression) Type() ExpressionType {
 	if i.Alternate == nil {
-		return makeOptionType(i.Alternate.Type())
+		return makeOptionType(i.Body.Type())
 	}
 	return i.Alternate.Type()
 }

@@ -66,7 +66,7 @@ func TestIfElse(t *testing.T) {
 	if node.Alternate == nil {
 		t.Fatal("Expected alternate")
 	}
-	if _, ok := node.Alternate.(Block); !ok {
+	if _, ok := node.Alternate.(*Block); !ok {
 		t.Fatalf("Expected body alternate, got %#v", node.Alternate)
 	}
 	if node.Type().Kind() != BOOLEAN {

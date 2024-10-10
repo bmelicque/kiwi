@@ -142,12 +142,12 @@ func (p *Parser) getValidatedParam(node Node) Param {
 
 func (p *Parser) getValidatedTypeParam(node Node) Param {
 	var param Param
-	if _, ok := node.(TypedExpression); ok {
+	if _, ok := node.(*TypedExpression); ok {
 		param = p.getValidatedParam(node)
 	} else {
 		param = Param{checkParamIdentifier(p, node), nil}
 	}
-	if !param.Identifier.isType {
+	if param.Identifier != nil && !param.Identifier.isType {
 		p.report("Type name expected", param.Identifier.Loc())
 	}
 	return param

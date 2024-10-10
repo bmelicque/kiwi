@@ -7,8 +7,8 @@ import (
 
 // Expr.Property
 type PropertyAccessExpression struct {
-	Expr     Node
-	Property Node
+	Expr     Expression
+	Property Expression
 	typing   ExpressionType
 }
 
@@ -21,7 +21,7 @@ func (p PropertyAccessExpression) Loc() Loc {
 func (p PropertyAccessExpression) Type() ExpressionType { return p.typing }
 
 func parsePropertyAccess(p *Parser, left Expression) Expression {
-	prop := p.parseExpression()
+	prop := fallback(p)
 	if _, ok := prop.(*ParenthesizedExpression); ok {
 		trait := getValidatedTraitExpression(p, left, prop)
 		if trait != nil {
@@ -48,7 +48,7 @@ func getValidatedTupleIndexAccess(p *Parser, left Expression, right Expression) 
 
 	return &PropertyAccessExpression{
 		Expr:     left,
-		Property: Identifier{property.Token, property.Type(), false}, // FIXME:
+		Property: property,
 		typing:   typing,
 	}
 }
@@ -115,14 +115,21 @@ func getSumTypeConstructor(t Type, name string) ExpressionType {
 // check accessing an object's property or method: object.property
 func getValidatedObjectPropertyAccess(p *Parser, left Expression, right Expression) *PropertyAccessExpression {
 	property, ok := right.(*Identifier)
-	if !ok {
+	if right != nil && !ok {
 		p.report("Identifier expected", right.Loc())
 	}
-	name := property.Token.Text()
+	var name string
+	if property != nil {
+		name = property.Token.Text()
+	}
 
 	object, ok := getObjectType(left)
 	if !ok {
 		p.report("Object type expected", left.Loc())
+		return &PropertyAccessExpression{
+			Expr:     left,
+			Property: property,
+		}
 	}
 
 	// FIXME: methods should be on the TypeAlias

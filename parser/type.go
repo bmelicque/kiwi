@@ -261,6 +261,13 @@ type Function struct {
 	Returned   ExpressionType
 }
 
+func (f Function) arity() int {
+	if f.Params == nil {
+		return 0
+	}
+	return len(f.Params.elements)
+}
+
 func (f Function) Kind() ExpressionTypeKind    { return FUNCTION }
 func (f Function) Match(t ExpressionType) bool { /* FIXME: */ return false }
 func (f Function) Extends(t ExpressionType) bool {
@@ -268,8 +275,11 @@ func (f Function) Extends(t ExpressionType) bool {
 	if !ok {
 		return false
 	}
-	if len(f.Params.elements) != len(function.Params.elements) {
+	if f.arity() != function.arity() {
 		return false
+	}
+	if f.arity() == 0 {
+		return true
 	}
 	for i, param := range f.Params.elements {
 		if !param.Extends(function.Params.elements[i]) {

@@ -25,9 +25,9 @@ func TestMatch(t *testing.T) {
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseMatchExpression()
-	statement, ok := node.(MatchExpression)
+	statement, ok := node.(*MatchExpression)
 	if !ok {
-		t.Fatalf("Expected match statement, got %#v", node)
+		t.Fatalf("Expected match expression, got %#v", node)
 	}
 
 	if len(statement.Cases) != 1 {

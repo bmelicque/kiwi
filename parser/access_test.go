@@ -12,7 +12,7 @@ func TestComputedPropertyAccess(t *testing.T) {
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAccessExpression()
 
-	expr, ok := node.(ComputedAccessExpression)
+	expr, ok := node.(*ComputedAccessExpression)
 	if !ok {
 		t.Fatalf("Expected ComputedAccessExpression, got %#v", node)
 	}
@@ -33,7 +33,7 @@ func TestPropertyAccess(t *testing.T) {
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAccessExpression()
 
-	expr, ok := node.(PropertyAccessExpression)
+	expr, ok := node.(*PropertyAccessExpression)
 	if !ok {
 		t.Fatalf("Expected PropertyAccessExpression, got %#v", node)
 	}
@@ -52,9 +52,10 @@ func TestTupleAccess(t *testing.T) {
 		literal{kind: NumberLiteral, value: "0"},
 	}}
 	parser := MakeParser(&tokenizer)
+	parser.scope.Add("tuple", Loc{}, Tuple{[]ExpressionType{Primitive{NUMBER}}})
 	node := parser.parseAccessExpression()
 
-	expr, ok := node.(PropertyAccessExpression)
+	expr, ok := node.(*PropertyAccessExpression)
 	if !ok {
 		t.Fatalf("Expected PropertyAccessExpression, got %#v", node)
 	}
@@ -78,12 +79,12 @@ func TestMethodAccess(t *testing.T) {
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAccessExpression()
 
-	expr, ok := node.(PropertyAccessExpression)
+	expr, ok := node.(*PropertyAccessExpression)
 	if !ok {
 		t.Fatalf("Expected PropertyAccessExpression, got %#v", node)
 	}
 
-	if _, ok := expr.Expr.(ParenthesizedExpression); !ok {
+	if _, ok := expr.Expr.(*ParenthesizedExpression); !ok {
 		t.Fatalf("Expected ParenthesizedExpression on LHS, got %#v", expr.Expr)
 	}
 
@@ -93,6 +94,7 @@ func TestMethodAccess(t *testing.T) {
 }
 
 func TestTraitDefinition(t *testing.T) {
+	// (Self).(method() -> Self)
 	tokenizer := testTokenizer{tokens: []Token{
 		token{kind: LeftParenthesis},
 		literal{kind: Name, value: "Self"},
@@ -114,16 +116,16 @@ func TestTraitDefinition(t *testing.T) {
 		t.Fatalf("Got %v parsing errors: %#v", len(parser.errors), parser.errors)
 	}
 
-	expr, ok := node.(PropertyAccessExpression)
+	expr, ok := node.(*PropertyAccessExpression)
 	if !ok {
 		t.Fatalf("Expected PropertyAccessExpression, got %#v", node)
 	}
 
-	if _, ok := expr.Expr.(ParenthesizedExpression); !ok {
+	if _, ok := expr.Expr.(*ParenthesizedExpression); !ok {
 		t.Fatalf("Expected ParenthesizedExpression, got %#v", expr.Expr)
 	}
 
-	if _, ok := expr.Property.(ParenthesizedExpression); !ok {
+	if _, ok := expr.Property.(*ParenthesizedExpression); !ok {
 		t.Fatalf("Expected ParenthesizedExpression, got %#v", expr.Property)
 	}
 }
@@ -138,7 +140,7 @@ func TestFunctionCall(t *testing.T) {
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAccessExpression()
 
-	expr, ok := node.(CallExpression)
+	expr, ok := node.(*CallExpression)
 	if !ok {
 		t.Fatalf("Expected CallExpression, got %#v", node)
 	}
@@ -160,12 +162,12 @@ func TestFunctionCallWithTypeArgs(t *testing.T) {
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAccessExpression()
 
-	expr, ok := node.(CallExpression)
+	expr, ok := node.(*CallExpression)
 	if !ok {
 		t.Fatalf("Expected CallExpression, got %#v", node)
 	}
 
-	if _, ok := expr.Callee.(ComputedAccessExpression); !ok {
+	if _, ok := expr.Callee.(*ComputedAccessExpression); !ok {
 		t.Fatalf("Expected callee f[number], got %#v", node)
 
 	}
@@ -183,9 +185,9 @@ func TestObjectExpression(t *testing.T) {
 	parser := MakeParser(&tokenizer)
 	node := ParseExpression(parser)
 
-	_, ok := node.(CallExpression)
+	_, ok := node.(*CallExpression)
 	if !ok {
-		t.Fatalf("Expected ObjectExpression, got %#v", node)
+		t.Fatalf("Expected CallExpression, got %#v", node)
 	}
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
@@ -210,12 +212,12 @@ func TestListInstanciation(t *testing.T) {
 		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
 	}
 
-	object, ok := node.(CallExpression)
+	object, ok := node.(*CallExpression)
 	if !ok {
 		t.Fatalf("Expected ObjectExpression, got %#v", node)
 	}
 
-	_, ok = object.Callee.(ListTypeExpression)
+	_, ok = object.Callee.(*ListTypeExpression)
 	if !ok {
 		t.Fatalf("Expected a list type, got %#v", object.Callee)
 	}

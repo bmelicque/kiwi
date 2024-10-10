@@ -148,7 +148,7 @@ func (p *Parser) validateComparisonExpression(left Expression, right Expression)
 	}
 	leftType := left.Type()
 	rightType := right.Type()
-	if !leftType.Extends(rightType) && !rightType.Extends(leftType) {
+	if !Match(leftType, rightType) {
 		p.report("Types don't match", Loc{Start: left.Loc().Start, End: right.Loc().End})
 	}
 }

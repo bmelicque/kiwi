@@ -44,10 +44,10 @@ func TestTupleAssignment(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected Assignment, got %#v", node)
 	}
-	if _, ok := expr.Declared.(TupleExpression); !ok {
+	if _, ok := expr.Declared.(*TupleExpression); !ok {
 		t.Fatalf("Expected tuple 'n, m'")
 	}
-	if _, ok := expr.Initializer.(TupleExpression); !ok {
+	if _, ok := expr.Initializer.(*TupleExpression); !ok {
 		t.Fatalf("Expected tuple 'n, m'")
 	}
 }
@@ -76,7 +76,7 @@ func TestObjectDeclaration(t *testing.T) {
 	if _, ok := expr.Declared.(*Identifier); !ok {
 		t.Fatalf("Expected identifier 'Type'")
 	}
-	if _, ok := expr.Initializer.(ParenthesizedExpression); !ok {
+	if _, ok := expr.Initializer.(*ParenthesizedExpression); !ok {
 		t.Fatalf("Expected ParenthesizedExpression")
 	}
 }
@@ -103,10 +103,10 @@ func TestMethodDeclaration(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected Assignment, got %#v", node)
 	}
-	if _, ok := expr.Declared.(PropertyAccessExpression); !ok {
+	if _, ok := expr.Declared.(*PropertyAccessExpression); !ok {
 		t.Fatalf("Expected method declaration")
 	}
-	if _, ok := expr.Initializer.(FunctionExpression); !ok {
+	if _, ok := expr.Initializer.(*FunctionExpression); !ok {
 		t.Fatalf("Expected FunctionExpression")
 	}
 }

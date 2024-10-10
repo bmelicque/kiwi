@@ -53,10 +53,11 @@ func (p *Parser) parseBlock() *Block {
 }
 
 func reportUnreachableCode(p *Parser, statements []Node) {
-	var foundExit bool
+	var foundExit, foundUnreachable bool
 	var unreachable Loc
 	for _, statement := range statements {
 		if foundExit {
+			foundUnreachable = true
 			if unreachable.Start == (Position{}) {
 				unreachable.Start = statement.Loc().Start
 			}
@@ -66,7 +67,7 @@ func reportUnreachableCode(p *Parser, statements []Node) {
 			foundExit = true
 		}
 	}
-	if unreachable != (Loc{}) {
+	if foundUnreachable {
 		p.report("Detected unreachable code", unreachable)
 	}
 }
