@@ -3,15 +3,15 @@ package parser
 import "fmt"
 
 type ExpressionStatement struct {
-	Expr Node
+	Expr Expression
 }
 
 func (s ExpressionStatement) Loc() Loc { return s.Expr.Loc() }
 
 type Assignment struct {
-	Declared    Node // "value", "Type", "(value: Type).method"
-	Initializer Node
-	Typing      Node
+	Declared    Expression // "value", "Type", "(value: Type).method"
+	Initializer Expression
+	Typing      Expression
 	Operator    Token // '=', ':=', '::', '+='...
 }
 
@@ -28,10 +28,19 @@ func (a Assignment) Loc() Loc {
 	return loc
 }
 
+type VariableDeclaration struct {
+	Pattern     Expression
+	Initializer Expression
+	loc         Loc
+	Constant    bool
+}
+
+func (vd VariableDeclaration) Loc() Loc { return vd.loc }
+
 func (p *Parser) parseAssignment() Node {
 	expr := ParseExpression(p)
 
-	var typing Node
+	var typing Expression
 	var operator Token
 	next := p.Peek()
 	fmt.Printf("%#v\n", next)
