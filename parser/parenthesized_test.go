@@ -25,7 +25,7 @@ func TestParenthesizedTuple(t *testing.T) {
 	}}
 	parser := MakeParser(&tokenizer)
 	paren := parser.parseParenthesizedExpression()
-	if _, ok := paren.Expr.(TupleExpression); !ok {
+	if _, ok := paren.Expr.(*TupleExpression); !ok {
 		t.Fatalf("Expected TupleExpression between parentheses, got %#v", paren.Expr)
 	}
 }
@@ -44,7 +44,7 @@ func TestObjectDescriptionSingleLine(t *testing.T) {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 
-	if _, ok := node.Expr.(TypedExpression); !ok {
+	if _, ok := node.Expr.(*TypedExpression); !ok {
 		t.Fatalf("Expected TypedExpression, got %#v", node.Expr)
 	}
 }
@@ -73,7 +73,7 @@ func TestObjectDescription(t *testing.T) {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 
-	tuple, ok := node.Expr.(TupleExpression)
+	tuple, ok := node.Expr.(*TupleExpression)
 	if !ok {
 		t.Fatalf("Expected TupleExpression, got %#v", node.Expr)
 	}

@@ -15,7 +15,7 @@ func TestAssignment(t *testing.T) {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 
-	expr, ok := node.(Assignment)
+	expr, ok := node.(*Assignment)
 	if !ok {
 		t.Fatalf("Expected Assignment, got %#v", node)
 	}
@@ -40,7 +40,7 @@ func TestTupleAssignment(t *testing.T) {
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAssignment()
 
-	expr, ok := node.(Assignment)
+	expr, ok := node.(*Assignment)
 	if !ok {
 		t.Fatalf("Expected Assignment, got %#v", node)
 	}
@@ -69,7 +69,7 @@ func TestObjectDeclaration(t *testing.T) {
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAssignment()
 
-	expr, ok := node.(Assignment)
+	expr, ok := node.(*Assignment)
 	if !ok {
 		t.Fatalf("Expected Assignment, got %#v", node)
 	}
@@ -99,7 +99,7 @@ func TestMethodDeclaration(t *testing.T) {
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAssignment()
 
-	expr, ok := node.(Assignment)
+	expr, ok := node.(*Assignment)
 	if !ok {
 		t.Fatalf("Expected Assignment, got %#v", node)
 	}

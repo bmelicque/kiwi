@@ -17,7 +17,7 @@ func TestSumType(t *testing.T) {
 		t.Fatalf("Expected no errors, got %v: %#v", len(parser.errors), parser.errors)
 	}
 
-	sum, ok := node.(SumType)
+	sum, ok := node.(*SumType)
 	if !ok {
 		t.Fatalf("Expected SumType, got %#v", node)
 		return

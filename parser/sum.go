@@ -2,7 +2,7 @@ package parser
 
 type SumTypeConstructor struct {
 	Name   *Identifier
-	Params *Params
+	Params *ParenthesizedExpression // contains *TupleExpression
 }
 
 func (s SumTypeConstructor) Loc() Loc {
@@ -20,19 +20,47 @@ func (s SumTypeConstructor) Loc() Loc {
 	return Loc{start, end}
 }
 
+func (s *SumTypeConstructor) typeCheck(p *Parser) {
+	if s.Params == nil || s.Params.Expr == nil {
+		return
+	}
+	tuple := s.Params.Expr.(*TupleExpression)
+	for i := range tuple.Elements {
+		tuple.Elements[i].typeCheck(p)
+		if tuple.Elements[i].Type().Kind() != TYPE {
+			p.report("Type expected", tuple.Elements[i].Loc())
+		}
+	}
+}
+
 type SumType struct {
 	Members []SumTypeConstructor
 	typing  ExpressionType
 	start   Position
 }
 
-func (s SumType) Loc() Loc {
+func (s *SumType) Loc() Loc {
 	return Loc{
 		Start: s.start,
 		End:   s.Members[len(s.Members)-1].Loc().End,
 	}
 }
-func (s SumType) Type() ExpressionType { return s.typing }
+func (s *SumType) Type() ExpressionType { return s.typing }
+func (s *SumType) typeCheck(p *Parser) {
+	memberTypes := map[string]*Function{}
+	for i := range s.Members {
+		s.Members[i].typeCheck(p)
+		if s.Members[i].Name != nil {
+			name := s.Members[i].Name.Text()
+			memberTypes[name] = getSumConstructorType(s.Members[i])
+		}
+	}
+	typing := Sum{memberTypes}
+	for name := range memberTypes {
+		memberTypes[name].Returned = &typing
+	}
+	s.typing = typing
+}
 
 func (p *Parser) parseSumType() Expression {
 	if p.Peek().Kind() != BinaryOr {
@@ -40,27 +68,19 @@ func (p *Parser) parseSumType() Expression {
 	}
 
 	start := p.Peek().Loc().Start
-	memberTypes := map[string]*Function{}
 	constructors := []SumTypeConstructor{}
 	for p.Peek().Kind() == BinaryOr {
 		p.Consume()
 		constructor := parseSumTypeConstructor(p)
 		constructors = append(constructors, constructor)
-		if constructor.Name != nil {
-			name := constructor.Name.Text()
-			memberTypes[name] = getSumConstructorType(constructor)
-		}
 		handleSumTypeBadTokens(p)
 		p.DiscardLineBreaks()
 	}
 	if len(constructors) < 2 {
 		p.report("At least 2 constructors expected", constructors[0].Loc())
 	}
-	typing := Sum{memberTypes}
-	for name := range memberTypes {
-		memberTypes[name].Returned = &typing
-	}
-	return SumType{Members: constructors, start: start, typing: Type{typing}}
+
+	return &SumType{Members: constructors, start: start}
 }
 
 func handleSumTypeBadTokens(p *Parser) {
@@ -81,9 +101,10 @@ func handleSumTypeBadTokens(p *Parser) {
 
 func parseSumTypeConstructor(p *Parser) SumTypeConstructor {
 	identifier := parseSumTypeConstructorName(p)
-	var params *Params
+	var params *ParenthesizedExpression
 	if p.Peek().Kind() == LeftParenthesis {
-		params = p.getValidatedTypeList(*p.parseParenthesizedExpression())
+		params = p.parseParenthesizedExpression()
+		params.Expr = makeTuple(params.Expr)
 	}
 	return SumTypeConstructor{identifier, params}
 }
@@ -101,18 +122,19 @@ func parseSumTypeConstructorName(p *Parser) *Identifier {
 }
 
 func getSumConstructorType(member SumTypeConstructor) *Function {
-	if member.Params == nil {
+	if member.Params == nil || member.Params.Expr == nil {
 		return &Function{}
 	}
 
-	tuple := Tuple{make([]ExpressionType, len(member.Params.Params))}
-	for i, param := range member.Params.Params {
-		t, ok := param.Type().(Type)
+	tuple := member.Params.Expr.(*TupleExpression)
+	tu := Tuple{make([]ExpressionType, len(tuple.Elements))}
+	for i := range tuple.Elements {
+		t, ok := tuple.Elements[i].Type().(Type)
 		if ok {
-			tuple.elements[i] = t.Value
+			tu.elements[i] = t.Value
 		} else {
-			tuple.elements[i] = Primitive{UNKNOWN}
+			tu.elements[i] = Primitive{UNKNOWN}
 		}
 	}
-	return &Function{Params: &tuple}
+	return &Function{Params: &tu}
 }
