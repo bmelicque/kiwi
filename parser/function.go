@@ -8,7 +8,7 @@ type FunctionExpression struct {
 	returnType ExpressionType
 }
 
-func (f FunctionExpression) Loc() Loc {
+func (f *FunctionExpression) Loc() Loc {
 	loc := Loc{Start: f.Params.Loc().Start, End: Position{}}
 	if f.Body == nil {
 		loc.End = f.Explicit.Loc().End
@@ -18,7 +18,7 @@ func (f FunctionExpression) Loc() Loc {
 	return loc
 }
 
-func (f FunctionExpression) Type() ExpressionType {
+func (f *FunctionExpression) Type() ExpressionType {
 	tp := []Generic{}
 	for i, param := range f.TypeParams.Params {
 		tp[i] = Generic{Name: param.Identifier.Token.Text()}
@@ -27,81 +27,102 @@ func (f FunctionExpression) Type() ExpressionType {
 	return Function{tp, &tuple, f.returnType}
 }
 
+func (f *FunctionExpression) typeCheck(p *Parser) {
+	p.pushScope(NewScope(FunctionScope))
+	defer p.dropScope()
+
+	if f.TypeParams != nil {
+		addTypeParamsToScope(p.scope, *f.TypeParams)
+	}
+
+	if f.Params != nil {
+		addParamsToScope(p, *f.Params)
+	}
+	f.Body.typeCheck(p)
+	f.returnType = getFunctionReturnType(p, f.Explicit, f.Body)
+}
+
 type FunctionTypeExpression struct {
 	TypeParams *Params
-	Params     *Params
+	Params     *ParenthesizedExpression // Contains *TupleExpression
 	Expr       Expression
 }
 
-func (f FunctionTypeExpression) Loc() Loc {
+func (f *FunctionTypeExpression) Loc() Loc {
 	var start, end Position
 	if len(f.TypeParams.Params) > 0 {
 		start = f.TypeParams.loc.Start
-	} else if len(f.Params.Params) > 0 {
-		start = f.Params.Params[0].Loc().Start
+	} else if f.Params != nil {
+		start = f.Params.Loc().Start
 	} else {
 		start = f.Expr.Loc().Start
 	}
 	if f.Expr != nil {
 		end = f.Loc().End
-	} else if len(f.Params.Params) > 0 {
-		end = f.Params.Params[len(f.Params.Params)-1].Loc().End
+	} else if f.Params != nil {
+		end = f.Params.Loc().End
 	} else {
 		end = f.TypeParams.loc.End
 	}
 	return Loc{Start: start, End: end}
 }
-func (f FunctionTypeExpression) Type() ExpressionType {
+func (f *FunctionTypeExpression) Type() ExpressionType {
 	tp := []Generic{}
 	for i, param := range f.TypeParams.Params {
 		tp[i] = Generic{Name: param.Identifier.Token.Text()}
 	}
-	p := Tuple{make([]ExpressionType, len(f.Params.Params))}
-	for i, param := range f.Params.Params {
+	elements := f.Params.Expr.(*TupleExpression).Elements
+	p := Tuple{make([]ExpressionType, len(elements))}
+	for i, param := range elements {
 		t, _ := param.Type().(Type)
 		p.elements[i] = t.Value
 	}
 	return Type{Function{tp, &p, f.Expr.Type().(Type).Value}}
 }
 
-func (p *Parser) parseFunctionExpression(brackets *BracketedExpression) Expression {
+func (f *FunctionTypeExpression) typeCheck(p *Parser) {
+	tuple := f.Params.Expr.(*TupleExpression)
+	for i := range tuple.Elements {
+		tuple.Elements[i].typeCheck(p)
+		if tuple.Elements[i].Type().Kind() != TYPE {
+			p.report("Type expected", tuple.Elements[i].Loc())
+		}
+	}
+
+	if f.Expr != nil && f.Expr.Type().Kind() != TYPE {
+		p.report("Type expected", f.Expr.Loc())
+	}
+}
+
+func (p *Parser) parseFunctionExpression(bracketed *BracketedExpression) Expression {
 	p.pushScope(NewScope(FunctionScope))
 	defer p.dropScope()
 
 	var typeParams *Params
-	if brackets != nil {
-		typeParams = p.getValidatedTypeParams(*brackets)
-		addTypeParamsToScope(p.scope, *typeParams)
+	if bracketed != nil {
+		typeParams = getValidatedTypeParams(p, bracketed)
 	}
-	// Important: make sure that potential type params are already added to scope
 	paren := p.parseParenthesizedExpression()
 
 	switch p.Peek().Kind() {
 	case SlimArrow:
 		p.Consume() // ->
-		params := p.getValidatedTypeList(*paren)
+		paren.Expr = makeTuple(paren.Expr)
 		old := p.allowBraceParsing
 		p.allowBraceParsing = false
 		expr := p.parseRange()
 		p.allowBraceParsing = old
-		// expr == nil already reported while parsing
-		if expr != nil && expr.Type().Kind() != TYPE {
-			p.report("Type expected", expr.Loc())
-		}
 		if p.Peek().Kind() == LeftBrace {
 			p.report("No function body expected", p.Peek().Loc())
 		}
 		return &FunctionTypeExpression{
 			TypeParams: typeParams,
-			Params:     params,
+			Params:     paren,
 			Expr:       expr,
 		}
 	case FatArrow:
 		p.Consume() // =>
-		params := p.getValidatedParams(*paren)
-		if params != nil {
-			addParamsToScope(p, *params)
-		}
+		params := getValidatedFunctionParams(p, paren)
 		var explicit Expression
 		if p.Peek().Kind() != LeftBrace {
 			old := p.allowBraceParsing
@@ -110,20 +131,47 @@ func (p *Parser) parseFunctionExpression(brackets *BracketedExpression) Expressi
 			p.allowBraceParsing = old
 		}
 		body := p.parseBlock()
-		returnedType := getFunctionReturnType(p, explicit, *body)
 		return &FunctionExpression{
 			TypeParams: nil,
 			Params:     params,
 			Explicit:   explicit,
 			Body:       body,
-			returnType: returnedType,
+			returnType: nil,
 		}
 	default:
 		return paren
 	}
 }
 
-func getFunctionReturnType(p *Parser, explicit Expression, body Block) ExpressionType {
+func getValidatedTypeParams(p *Parser, bracketed *BracketedExpression) *Params {
+	tuple := makeTuple(bracketed.Expr)
+
+	params := make([]Param, len(tuple.Elements))
+	for i := range tuple.Elements {
+		identifier, ok := tuple.Elements[i].(*Identifier)
+		if !ok || !identifier.isType {
+			p.report("Type identifier expected", tuple.Elements[i].Loc())
+		}
+		params[i] = Param{Identifier: identifier}
+	}
+
+	return &Params{Params: params, loc: bracketed.loc}
+}
+
+func getValidatedFunctionParams(p *Parser, node *ParenthesizedExpression) *Params {
+	if node.Expr == nil {
+		return &Params{loc: node.loc}
+	}
+
+	tuple := makeTuple(node.Expr)
+	params := make([]Param, len(tuple.Elements))
+	for i := range params {
+		params[i] = p.getValidatedParam(tuple.Elements[i])
+	}
+	return &Params{Params: params, loc: node.loc}
+}
+
+func getFunctionReturnType(p *Parser, explicit Expression, body *Block) ExpressionType {
 	validateFunctionReturns(p, body)
 	if explicit == nil {
 		return body.Type()
@@ -140,7 +188,7 @@ func getFunctionReturnType(p *Parser, explicit Expression, body Block) Expressio
 }
 
 // Check if every return statement inside a body matches the body's type
-func validateFunctionReturns(p *Parser, body Block) {
+func validateFunctionReturns(p *Parser, body *Block) {
 	returns := []Exit{}
 	findReturnStatements(body, &returns)
 	bType := body.Type()
@@ -165,9 +213,9 @@ func findReturnStatements(node Node, results *[]Exit) {
 	if node == nil {
 		return
 	}
-	if n, ok := node.(Exit); ok {
+	if n, ok := node.(*Exit); ok {
 		if n.Operator.Kind() == ReturnKeyword {
-			*results = append(*results, n)
+			*results = append(*results, *n)
 		}
 		return
 	}

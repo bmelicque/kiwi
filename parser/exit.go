@@ -19,13 +19,13 @@ func (e *Exit) Loc() Loc {
 	return loc
 }
 
-func (p *Parser) parseExit() Exit {
+func (p *Parser) parseExit() *Exit {
 	keyword := p.Consume()
 
 	if p.Peek().Kind() == EOL {
-		return Exit{keyword, nil}
+		return &Exit{keyword, nil}
 	}
 
 	value := ParseExpression(p)
-	return Exit{keyword, value}
+	return &Exit{keyword, value}
 }

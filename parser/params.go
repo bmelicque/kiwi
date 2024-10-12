@@ -71,6 +71,9 @@ func (p *Parser) parseParamsRaw() *Params {
 	return &Params{raw: expr, loc: Loc{start, end}}
 }
 
+// TODO: getValidatedTypeParams
+// TODO: getValidatedParams
+
 type paramValidator = func(*Parser, Expression) Param
 
 func (params *Params) validate(p *Parser, validator paramValidator) {
@@ -115,7 +118,7 @@ type Param struct {
 	Identifier *Identifier
 	Complement Expression // Type for params, value for arguments
 	HasColon   bool
-	kind
+	kind       ParamKind
 }
 
 func (p Param) Loc() Loc {
@@ -181,24 +184,6 @@ func (p *Parser) getValidatedTypeParam(node Expression) Param {
 	return Param{Identifier: identifier, Complement: expr.Typing}
 }
 
-func getValidatedNamedArgument(p *Parser, node Expression) Param {
-	expr, ok := node.(*TypedExpression)
-	if !ok {
-		p.report("Named argument expected", node.Loc())
-		return Param{Complement: node}
-	}
-
-	identifier, ok := expr.Expr.(*Identifier)
-	if !ok {
-		p.report("Name expected", expr.Expr.Loc())
-	}
-
-	if expr.Colon {
-		p.report("':' expected between name and value", node.Loc())
-	}
-	return Param{identifier, expr.Typing, true}
-}
-
 func getValidatedArgument(p *Parser, node Expression) Param {
 	typed, ok := node.(*TypedExpression)
 	if !ok {
@@ -208,7 +193,7 @@ func getValidatedArgument(p *Parser, node Expression) Param {
 	if !ok {
 		p.report("Name expected", node.Loc())
 	}
-	if expr.Colon {
+	if !typed.Colon {
 		p.report("':' expected between name and value", node.Loc())
 	}
 	return Param{

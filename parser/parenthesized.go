@@ -6,24 +6,23 @@ type ParenthesizedExpression struct {
 	loc  Loc
 }
 
-func (p ParenthesizedExpression) Loc() Loc {
+func (p *ParenthesizedExpression) Loc() Loc {
 	return p.loc
 }
 
-func (p ParenthesizedExpression) Type() ExpressionType {
+func (p *ParenthesizedExpression) Type() ExpressionType {
 	if p.Expr == nil {
 		return Primitive{NIL}
-	}
-	if param, ok := p.Expr.(Param); ok {
-		return Type{Object{map[string]ExpressionType{
-			param.Identifier.Text(): param.Complement.Type(),
-		}}}
 	}
 	return p.Expr.Type()
 }
 
+func (expr *ParenthesizedExpression) typeCheck(p *Parser) {
+	expr.Expr.typeCheck(p)
+}
+
 func (p ParenthesizedExpression) Unwrap() Expression {
-	if expr, ok := p.Expr.(ParenthesizedExpression); ok {
+	if expr, ok := p.Expr.(*ParenthesizedExpression); ok {
 		return expr.Unwrap()
 	}
 	return p.Expr
@@ -57,7 +56,7 @@ func (p *Parser) parseParenthesizedExpression() *ParenthesizedExpression {
 
 // unwrap parenthesized expressions
 func Unwrap(expr Expression) Expression {
-	if paren, ok := expr.(ParenthesizedExpression); ok {
+	if paren, ok := expr.(*ParenthesizedExpression); ok {
 		return paren.Unwrap()
 	}
 	return expr
