@@ -9,82 +9,145 @@ type CallExpression struct {
 	typing ExpressionType
 }
 
-func (c CallExpression) Loc() Loc {
+func (c *CallExpression) Loc() Loc {
 	return Loc{
 		Start: c.Callee.Loc().Start,
 		End:   c.Args.loc.End,
 	}
 }
-func (c CallExpression) Type() ExpressionType { return c.typing }
+func (c *CallExpression) Type() ExpressionType { return c.typing }
 
-// Primitive(value) | Object(key: value) | List(..values)
-func parseInstanciation(p *Parser, expr Expression) *CallExpression {
-	typing := expr.Type().(Type)
+// Parse a call expression.
+// It can be either a function call or an instanciation.
+func parseCallExpression(p *Parser, callee Expression) *CallExpression {
+	args := p.parseArguments()
+	return &CallExpression{callee, args, nil}
+}
 
-	switch getFromType(typing).(type) {
-	case Primitive:
-		return parsePrimitiveInstanciation(p, expr, typing)
-	case TypeAlias:
-		return parseStructInstanciation(p, expr, typing)
-	case List:
-		return parseListInstanciation(p, expr, typing)
+func (c *CallExpression) typeCheck(p *Parser) {
+	switch typing := c.Callee.Type().(type) {
+	case Function:
+		typeCheckFunctionCall(p, c)
+	case Type:
+		switch typing.Value.(type) {
+		case TypeAlias:
+			typeCheckStructInstanciation(p, c)
+		case List:
+			typeCheckListInstanciation(p, c)
+		default:
+			p.report("This type is not callable", c.Callee.Loc())
+		}
 	default:
-		p.report("Unexpected typing", expr.Loc())
-		return &CallExpression{Callee: expr}
+		p.report(
+			"This expression is not callable, type or function expected",
+			c.Callee.Loc(),
+		)
+		c.Args.typeCheck(p)
 	}
 }
 
-// Parse a primitive instanciation, like 'number(value)'.
-// This is mostly used for sum types
-func parsePrimitiveInstanciation(p *Parser, expr Expression, t Type) *CallExpression {
-	args := p.getValidatedArguments(*p.parseParenthesizedExpression())
-	if len(args.Params) != 1 {
-		p.report("Exactly 1 value expected", args.Loc())
+func typeCheckFunctionCall(p *Parser, c *CallExpression) {
+	function := c.Callee.Type().(Function)
+
+	p.pushScope(NewScope(ProgramScope))
+	defer p.dropScope()
+	for _, param := range function.TypeParams {
+		// TODO: get declared location
+		p.scope.Add(param.Name, Loc{}, Type{param})
 	}
-	var value Expression
-	if len(args.Params) > 0 {
-		value = args.Params[0].Complement
-		if !getFromType(t).Extends(value.Type()) {
-			p.report("Type doesn't match", value.Loc())
+
+	params := function.Params.elements
+	typeCheckFunctionArguments(p, *c.Args, params)
+	validateArgumentsNumber(p, *c.Args, params)
+	t, ok := function.Returned.build(p.scope, nil)
+	if !ok {
+		p.report(
+			"Could not determine returned type (missing some type arguments)",
+			c.Loc(),
+		)
+		c.typing = Primitive{UNKNOWN}
+		return
+	}
+	c.typing = t
+}
+
+// Make sure that every parsed argument is compliant with the function's type
+func typeCheckFunctionArguments(p *Parser, args Params, params []ExpressionType) {
+	l := len(params)
+	if len(args.Params) < len(params) {
+		l = len(args.Params)
+	}
+	var ok bool
+	for i := range args.Params[:l] {
+		args.Params[i].Complement.typeCheck(p)
+		received := args.Params[i].Complement.Type()
+		params[i], ok = params[i].build(p.scope, received)
+		if !ok {
+			p.report("Could not determine exact type", args.Params[i].Loc())
+		}
+		if !params[i].Extends(received) {
+			p.report("Types don't match", args.Params[i].Loc())
 		}
 	}
-	return &CallExpression{
-		Callee: expr,
-		Args:   args,
-		typing: getFinalType(t),
+}
+
+// Make sure that the correct number of arguments were passed to the function
+func validateArgumentsNumber(p *Parser, args Params, params []ExpressionType) {
+	if len(params) < len(args.Params) {
+		loc := args.Params[len(params)].Loc()
+		loc.End = args.Params[len(args.Params)-1].Loc().End
+		p.report("Too many arguments", loc)
+	}
+	if len(params) > len(args.Params) {
+		p.report("Missing argument(s)", args.Loc())
 	}
 }
 
 // Parse a struct instanciation, like 'Object(key: value)'
-func parseStructInstanciation(p *Parser, expr Expression, t Type) *CallExpression {
-	alias := t.Value.(TypeAlias)
+func typeCheckStructInstanciation(p *Parser, c *CallExpression) {
+	// next line ensured by calling function
+	alias := c.Callee.Type().(Type).Value.(TypeAlias)
 	object, ok := alias.Ref.(Object)
 	if !ok {
-		p.report("Object type expected", expr.Loc())
-		return &CallExpression{Callee: expr, typing: t.Value}
+		p.report("Object type expected", c.Callee.Loc())
+		c.typing = Primitive{UNKNOWN}
+		return
 	}
 	p.pushScope(NewScope(ProgramScope))
 	defer p.dropScope()
 	p.addTypeArgsToScope(nil, alias.Params)
-	members := p.getValidatedNamedArguments(*p.parseParenthesizedExpression())
-	reportExcessMembers(p, object.Members, members.Params)
-	reportMissingMembers(p, object.Members, *members)
-	return &CallExpression{
-		Callee: expr,
-		Args:   members,
-		typing: getFinalType(t),
+	c.Args.typeCheck(p)
+
+	for _, arg := range c.Args.Params {
+		if arg.kind == Argument {
+			p.report("Named argument expected", arg.Loc())
+			continue
+		}
+		var name string
+		if arg.Identifier != nil {
+			name = arg.Identifier.Text()
+		}
+		expected := object.Members[name]
+		if !expected.Extends(arg.Complement.Type()) {
+			p.report("Type doesn't match the expected one", arg.Loc())
+		}
 	}
+
+	reportExcessMembers(p, object.Members, c.Args.Params)
+	reportMissingMembers(p, object.Members, *c.Args)
+
+	c.typing = alias
 }
 func reportExcessMembers(p *Parser, expected map[string]ExpressionType, received []Param) {
 	for _, param := range received {
 		name := param.Identifier.Text()
-		_, ok := expected[name]
-		if !ok {
-			p.report(
-				fmt.Sprintf("Property '%v' doesn't exist on this type", name),
-				param.Loc(),
-			)
+		if _, ok := expected[name]; ok {
+			continue
 		}
+		p.report(
+			fmt.Sprintf("Property '%v' doesn't exist on this type", name),
+			param.Loc(),
+		)
 	}
 }
 func reportMissingMembers(p *Parser, expected map[string]ExpressionType, received Params) {
@@ -111,98 +174,26 @@ func reportMissingMembers(p *Parser, expected map[string]ExpressionType, receive
 	p.report(fmt.Sprintf("Missing key(s) %v", msg), received.loc)
 }
 
-func parseListInstanciation(p *Parser, expr Expression, t Type) *CallExpression {
-	args := p.getValidatedArguments(*p.parseParenthesizedExpression())
-	if len(args.Params) == 0 {
-		return &CallExpression{Callee: expr, Args: args, typing: getFinalType(t)}
+func typeCheckListInstanciation(p *Parser, c *CallExpression) {
+	// next line ensured by calling function
+	c.typing = c.Callee.Type().(Type).Value.(List)
+	if len(c.Args.Params) == 0 {
+		return
 	}
-	first := args.Params[0].Complement
-	list := t.Value.(List)
-	el := list.Element
-	if alias, ok := list.Element.(TypeAlias); ok {
+	first := c.Args.Params[0].Complement
+	first.typeCheck(p)
+	el := c.typing.(List).Element
+	if alias, ok := el.(TypeAlias); ok {
 		p.pushScope(NewScope(ProgramScope))
 		defer p.dropScope()
 		p.addTypeArgsToScope(nil, alias.Params)
-		el, _ = list.Element.build(p.scope, first.Type())
+		el, _ = el.build(p.scope, first.Type())
 	}
 
-	for _, arg := range args.Params[1:] {
-		if !el.Extends(arg.Complement.Type()) {
-			p.report("Type doesn't match", arg.Loc())
+	for i := range c.Args.Params[1:] {
+		c.Args.Params[i+1].Complement.typeCheck(p)
+		if !el.Extends(c.Args.Params[i+1].Complement.Type()) {
+			p.report("Type doesn't match", c.Args.Params[i+1].Loc())
 		}
-	}
-	return &CallExpression{
-		Callee: expr,
-		Args:   args,
-		typing: getFinalType(t),
-	}
-}
-
-func getFromType(t Type) ExpressionType {
-	if constructor, ok := t.Value.(Constructor); ok {
-		return constructor.From
-	}
-	return t.Value
-}
-func getFinalType(t Type) ExpressionType {
-	if constructor, ok := t.Value.(Constructor); ok {
-		return constructor.To
-	}
-	return t.Value
-}
-
-// Parse a function call. The expected form is `callee(..arguments)`
-func parseFunctionCall(p *Parser, callee Expression) *CallExpression {
-	args := p.getValidatedArguments(*p.parseParenthesizedExpression())
-	function, ok := callee.Type().(Function)
-	if !ok {
-		return &CallExpression{callee, args, nil}
-	}
-
-	p.pushScope(NewScope(ProgramScope))
-	defer p.dropScope()
-	for _, param := range function.TypeParams {
-		// TODO: get declared location
-		p.scope.Add(param.Name, Loc{}, Type{param})
-	}
-
-	params := function.Params.elements
-	validateFunctionArguments(p, *args, params)
-	t, ok := function.Returned.build(p.scope, nil)
-	if !ok {
-		p.report("Could not determine exact type", callee.Loc())
-	}
-	validateArgumentsNumber(p, *args, params)
-	return &CallExpression{callee, args, t}
-}
-
-// Make sure that every parsed argument is compliant with the function's type
-func validateFunctionArguments(p *Parser, args Params, params []ExpressionType) {
-	l := len(params)
-	if len(args.Params) < len(params) {
-		l = len(args.Params)
-	}
-	var ok bool
-	for i, element := range args.Params[:l] {
-		received := element.Complement.Type()
-		params[i], ok = params[i].build(p.scope, received)
-		if !ok {
-			p.report("Could not determine exact type", element.Loc())
-		}
-		if !params[i].Extends(received) {
-			p.report("Types don't match", element.Loc())
-		}
-	}
-}
-
-// Make sure that the correct number of arguments were passed to the function
-func validateArgumentsNumber(p *Parser, args Params, params []ExpressionType) {
-	if len(params) < len(args.Params) {
-		loc := args.Params[len(params)].Loc()
-		loc.End = args.Params[len(args.Params)-1].Loc().End
-		p.report("Too many arguments", loc)
-	}
-	if len(params) > len(args.Params) {
-		p.report("Missing argument(s)", args.Loc())
 	}
 }

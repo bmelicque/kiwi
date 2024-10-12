@@ -5,6 +5,7 @@ import "fmt"
 // (param ParamType, otherParam OtherParamType)
 type Params struct {
 	Params []Param
+	raw    *TupleExpression
 	loc    Loc
 }
 
@@ -19,60 +20,70 @@ func (p Params) Type() ExpressionType {
 	return Tuple{types}
 }
 
-// Take an expression grouped between parentheses and tries to parse it as params
-// The expected form is:
-// (identifier Type, identifier Type, ...)
-func (p *Parser) getValidatedParams(node ParenthesizedExpression) *Params {
-	return getValidatedParamList(p, node.Expr, p.getValidatedParam)
-}
-
-// Take an expression grouped between brackets and tries to parse it as type params
-// The expected form is:
-// [TypeIdentifier, TypeIdentifier TypeConstraint, ...]
-func (p *Parser) getValidatedTypeParams(node BracketedExpression) *Params {
-	return getValidatedParamList(p, node.Expr, p.getValidatedTypeParam)
-}
-
-// Take an expression grouped between parentheses and tries to parse it as named arguments
-// The expected form is:
-// (identifier: value, identifier: value, ...)
-func (p *Parser) getValidatedNamedArguments(node ParenthesizedExpression) *Params {
-	return getValidatedParamList(p, node.Expr, p.getValidatedNamedArgument)
-}
-
-// Take an expression grouped between parentheses and tries to parse it as arguments
-// The expected form is:
-// (value, value, ...)
-func (p *Parser) getValidatedArguments(node ParenthesizedExpression) *Params {
-	return getValidatedParamList(p, node.Expr, p.getValidatedArgument)
-}
-
-// Take an expression grouped between parentheses and tries to parse it as type list
-// The expected form is:
-// (Type, Type, ...)
-// This is useful mostly for parsing function types
-func (p *Parser) getValidatedTypeList(node ParenthesizedExpression) *Params {
-	return getValidatedParamList(p, node.Expr, p.getValidatedType)
-}
-
-func getValidatedParamList(p *Parser, node Node, validateOne func(Node) Param) *Params {
-	if node == nil {
-		// FIXME: loc
-		return nil
+func (params *Params) typeCheck(p *Parser) {
+	for i := range params.Params {
+		params.Params[i].Complement.typeCheck(p)
 	}
-	params := &Params{loc: node.Loc()}
-	tuple, ok := node.(*TupleExpression)
-	if !ok {
-		params.Params = []Param{validateOne(node)}
-		return params
+}
+
+// next token should be a '('
+func (p *Parser) parseArguments() *Params {
+	token := p.Consume() //
+	start := token.Loc().Start
+
+	expr := makeTuple(p.parseTupleExpression())
+	params := make([]Param, len(expr.Elements))
+	for i := range expr.Elements {
+		params[i] = getValidatedArgument(p, expr.Elements[i])
 	}
-	params.Params = make([]Param, len(tuple.Elements))
-	for i, element := range tuple.Elements {
-		params.Params[i] = validateOne(element)
+
+	if p.Peek().Kind() != RightParenthesis {
+		var end Position
+		if len(expr.Elements) == 0 {
+			end = token.Loc().End
+		} else {
+			end = expr.Loc().End
+		}
+		p.report("')' expected", p.Peek().Loc())
+		return &Params{Params: params, loc: Loc{start, end}}
+	}
+	end := p.Consume().Loc().End
+	return &Params{Params: params, loc: Loc{start, end}}
+}
+
+// next token should be '(' or '['
+func (p *Parser) parseParamsRaw() *Params {
+	token := p.Consume() // '(' or '['
+	start := token.Loc().Start
+
+	expr := makeTuple(p.parseTupleExpression())
+
+	if token.Kind() == LeftParenthesis && p.Peek().Kind() != RightParenthesis {
+		recover(p, RightParenthesis)
+	}
+	if token.Kind() == LeftBracket && p.Peek().Kind() != RightBracket {
+		recover(p, RightBracket)
+	}
+	end := p.Peek().Loc().End
+	if p.Peek().Kind() == RightParenthesis || p.Peek().Kind() == RightBracket {
+		p.Consume()
+	}
+	return &Params{raw: expr, loc: Loc{start, end}}
+}
+
+type paramValidator = func(*Parser, Expression) Param
+
+func (params *Params) validate(p *Parser, validator paramValidator) {
+	params.Params = make([]Param, len(params.raw.Elements))
+	for i := range params.Params {
+		params.Params[i] = validator(p, params.raw.Elements[i])
 	}
 	reportDuplicatedParams(p, params.Params)
-	return params
+	// TODO: check that param kinds match (no mixing args and names args)
+	// return raw to GC
+	params.raw = nil
 }
+
 func reportDuplicatedParams(p *Parser, params []Param) {
 	declarations := map[string][]Loc{}
 	for _, param := range params {
@@ -91,10 +102,20 @@ func reportDuplicatedParams(p *Parser, params []Param) {
 	}
 }
 
+type ParamKind = int8
+
+const (
+	RegularParam ParamKind = iota
+	Argument
+	NamedArgument
+)
+
 // An identifier followed by a type expression
 type Param struct {
 	Identifier *Identifier
 	Complement Expression // Type for params, value for arguments
+	HasColon   bool
+	kind
 }
 
 func (p Param) Loc() Loc {
@@ -122,90 +143,77 @@ func (p Param) Type() ExpressionType {
 	return typing.Value
 }
 
-// identifier Type
-func (p *Parser) getValidatedParam(node Node) Param {
+func (p *Parser) getValidatedParam(node Expression) Param {
 	expr, ok := node.(*TypedExpression)
 	if !ok {
-		p.report("Identifier and Type expected", node.Loc())
-		return Param{}
+		return Param{Complement: node}
 	}
 
-	identifier := checkParamIdentifier(p, expr.Expr)
-	validateParamTyping(p, expr.Typing)
-
-	if expr.Colon {
-		p.report("Expected type (no use of ':')", expr.Typing.Loc())
-	}
-
-	return Param{identifier, expr.Typing}
-}
-
-func (p *Parser) getValidatedTypeParam(node Node) Param {
-	var param Param
-	if _, ok := node.(*TypedExpression); ok {
-		param = p.getValidatedParam(node)
-	} else {
-		param = Param{checkParamIdentifier(p, node), nil}
-	}
-	if param.Identifier != nil && !param.Identifier.isType {
-		p.report("Type name expected", param.Identifier.Loc())
-	}
-	return param
-}
-
-// Take a node and try to parse it as a named argument.
-// The expected form is "name: value"
-func (p *Parser) getValidatedNamedArgument(node Node) Param {
-	expr, ok := node.(*TypedExpression)
-	if !ok {
-		p.report("Identifier and value expected", node.Loc())
-		return Param{}
-	}
-
-	identifier := checkParamIdentifier(p, expr.Expr)
-
-	if !expr.Colon {
-		p.report("':' expected", expr.Typing.Loc())
-	}
-
-	return Param{identifier, expr.Typing}
-}
-
-// Take an expression and makes sure it is a valid argument for a function
-func (p *Parser) getValidatedArgument(node Node) Param {
-	expr, ok := node.(*TypedExpression)
-	if ok {
-		p.report("Missing comma between expressions", node.Loc())
-		return Param{Complement: expr.Typing}
-	}
-	value, ok := node.(Expression)
-	if !ok {
-		p.report("Expression expected", node.Loc())
-	}
-	return Param{Complement: value}
-}
-
-// Take an expression and makes sure it's a valid type (for function types)
-func (p *Parser) getValidatedType(node Node) Param {
-	param := p.getValidatedArgument(node)
-	if param.Complement.Type().Kind() != TYPE {
-		p.report("Type expected", param.Complement.Loc())
-	}
-	return param
-}
-
-func checkParamIdentifier(p *Parser, node Node) *Identifier {
-	identifier, ok := node.(*Identifier)
+	identifier, ok := expr.Expr.(*Identifier)
 	if !ok {
 		p.report("Identifier expected", node.Loc())
 	}
-	return identifier
-}
-func validateParamTyping(p *Parser, expr Expression) {
-	if expr == nil {
-		return
+
+	if expr.Colon {
+		p.report("No ':' expected between name and type", node.Loc())
 	}
-	if _, ok := expr.Type().(Type); !ok {
-		p.report("Typing expected", expr.Loc())
+	return Param{Identifier: identifier, Complement: expr.Typing}
+}
+
+func (p *Parser) getValidatedTypeParam(node Expression) Param {
+	expr, ok := node.(*TypedExpression)
+	if !ok {
+		identifier, ok := node.(*Identifier)
+		if !ok || !identifier.isType {
+			p.report("Type identifier expected", node.Loc())
+		}
+		return Param{Identifier: identifier}
+	}
+
+	identifier, ok := expr.Expr.(*Identifier)
+	if !ok || !identifier.isType {
+		p.report("Type identifier expected", expr.Expr.Loc())
+	}
+
+	if expr.Colon {
+		p.report("No ':' expected between name and type", node.Loc())
+	}
+	return Param{Identifier: identifier, Complement: expr.Typing}
+}
+
+func getValidatedNamedArgument(p *Parser, node Expression) Param {
+	expr, ok := node.(*TypedExpression)
+	if !ok {
+		p.report("Named argument expected", node.Loc())
+		return Param{Complement: node}
+	}
+
+	identifier, ok := expr.Expr.(*Identifier)
+	if !ok {
+		p.report("Name expected", expr.Expr.Loc())
+	}
+
+	if expr.Colon {
+		p.report("':' expected between name and value", node.Loc())
+	}
+	return Param{identifier, expr.Typing, true}
+}
+
+func getValidatedArgument(p *Parser, node Expression) Param {
+	typed, ok := node.(*TypedExpression)
+	if !ok {
+		return Param{Complement: node, kind: Argument}
+	}
+	identifier, ok := typed.Expr.(*Identifier)
+	if !ok {
+		p.report("Name expected", node.Loc())
+	}
+	if expr.Colon {
+		p.report("':' expected between name and value", node.Loc())
+	}
+	return Param{
+		Identifier: identifier,
+		Complement: typed.Typing,
+		kind:       NamedArgument,
 	}
 }

@@ -26,14 +26,8 @@ func parseOneAccess(p *Parser, expr Expression) Expression {
 	case LeftBracket:
 		return parseComputedAccessExpression(p, expr)
 	case LeftParenthesis:
-		_, isType := expr.Type().(Type)
-		if isType {
-			return parseInstanciation(p, expr)
-		} else {
-			return parseFunctionCall(p, expr)
-		}
+		return parseCallExpression(p, expr)
 	case Dot:
-		p.Consume()
 		return parsePropertyAccess(p, expr)
 	default:
 		panic("switch should've been exhaustive!")

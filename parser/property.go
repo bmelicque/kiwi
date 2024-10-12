@@ -21,6 +21,7 @@ func (p PropertyAccessExpression) Loc() Loc {
 func (p PropertyAccessExpression) Type() ExpressionType { return p.typing }
 
 func parsePropertyAccess(p *Parser, left Expression) Expression {
+	p.Consume() // .
 	prop := fallback(p)
 	if _, ok := prop.(*ParenthesizedExpression); ok {
 		trait := getValidatedTraitExpression(p, left, prop)
