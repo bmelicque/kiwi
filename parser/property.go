@@ -12,79 +12,78 @@ type PropertyAccessExpression struct {
 	typing   ExpressionType
 }
 
-func (p PropertyAccessExpression) Loc() Loc {
+func (p *PropertyAccessExpression) Loc() Loc {
 	return Loc{
 		Start: p.Expr.Loc().Start,
 		End:   p.Property.Loc().End,
 	}
 }
-func (p PropertyAccessExpression) Type() ExpressionType { return p.typing }
+func (p *PropertyAccessExpression) Type() ExpressionType { return p.typing }
+
+func (expr *PropertyAccessExpression) typeCheck(p *Parser) {
+	switch expr.Expr.Type().(type) {
+	case Tuple:
+		typeCheckTupleIndexAccess(p, expr)
+	case Type:
+		typeCheckSumConstructorAccess(p, expr)
+	default:
+		typeCheckPropertyAccess(p, expr)
+	}
+}
 
 func parsePropertyAccess(p *Parser, left Expression) Expression {
 	p.Consume() // .
-	prop := fallback(p)
-	if _, ok := prop.(*ParenthesizedExpression); ok {
-		trait := getValidatedTraitExpression(p, left, prop)
-		if trait != nil {
-			return trait
+	if _, ok := left.(*ParenthesizedExpression); ok {
+		if p.Peek().Kind() == LeftParenthesis {
+			parseTraitExpression(p, left)
 		}
 	}
-	switch left.Type().(type) {
-	case Tuple:
-		return getValidatedTupleIndexAccess(p, left, prop)
-	case Type:
-		return getValidatedSumConstructorAccess(p, left, prop)
+	prop := fallback(p)
+	switch prop.(type) {
+	case *Identifier, *Literal:
 	default:
-		return getValidatedObjectPropertyAccess(p, left, prop)
+		p.report("Key name expected", prop.Loc())
 	}
+	return &PropertyAccessExpression{Expr: left, Property: prop}
 }
 
 // check accessing a tuple's index: tuple.0
-func getValidatedTupleIndexAccess(p *Parser, left Expression, right Expression) *PropertyAccessExpression {
-	property, ok := right.(*Literal)
+func typeCheckTupleIndexAccess(p *Parser, expr *PropertyAccessExpression) {
+	property, ok := expr.Property.(*Literal)
 	if !ok || property.Type().Kind() != NUMBER {
-		p.report("Number expected", right.Loc())
-	}
-	typing := getTupleAccessType(p, *property, left.Type())
-
-	return &PropertyAccessExpression{
-		Expr:     left,
-		Property: property,
-		typing:   typing,
-	}
-}
-func getTupleAccessType(p *Parser, property Literal, typing ExpressionType) ExpressionType {
-	if property.Type().Kind() != NUMBER {
-		return Primitive{UNKNOWN}
+		expr.typing = Primitive{UNKNOWN}
+		return
 	}
 	number, err := strconv.Atoi(property.Text())
 	if err != nil {
 		p.report("Integer expected", property.Loc())
-		return Primitive{UNKNOWN}
+		expr.typing = Primitive{UNKNOWN}
+		return
 	}
-	if number > len(typing.(Tuple).elements)-1 || number < 0 {
+	elements := expr.Expr.Type().(Tuple).elements
+	if number > len(elements)-1 || number < 0 {
 		p.report("Index out of range", property.Loc())
-		return Primitive{UNKNOWN}
+		expr.typing = Primitive{UNKNOWN}
+		return
 	}
-	return typing.(Tuple).elements[number]
+	expr.typing = elements[number]
 }
 
 // check accessing a sum type's subconstructor: SumType.Constructor
-func getValidatedSumConstructorAccess(p *Parser, left Expression, right Expression) *PropertyAccessExpression {
-	property, ok := right.(*Identifier)
+func typeCheckSumConstructorAccess(p *Parser, expr *PropertyAccessExpression) {
+	property, ok := expr.Property.(*Identifier)
 	if !ok {
-		p.report("Identifier expected", right.Loc())
+		expr.typing = Primitive{UNKNOWN}
+		return
 	}
 	name := property.Token.Text()
 
-	typing := getSumTypeConstructor(left.Type().(Type), name)
-	if typing == (Primitive{UNKNOWN}) {
-		p.report(fmt.Sprintf("Property '%v' doesn't exist on this type", name), right.Loc())
-	}
-	return &PropertyAccessExpression{
-		Expr:     left,
-		Property: property,
-		typing:   typing,
+	expr.typing = getSumTypeConstructor(expr.Expr.Type().(Type), name)
+	if expr.typing == (Primitive{UNKNOWN}) {
+		p.report(
+			fmt.Sprintf("Property '%v' doesn't exist on this type", name),
+			expr.Property.Loc(),
+		)
 	}
 }
 
@@ -107,131 +106,97 @@ func getSumTypeConstructor(t Type, name string) ExpressionType {
 	if constructor == nil {
 		return alias
 	}
-	return Type{Constructor{
-		From: constructor,
-		To:   t,
-	}}
+	return *constructor
 }
 
 // check accessing an object's property or method: object.property
-func getValidatedObjectPropertyAccess(p *Parser, left Expression, right Expression) *PropertyAccessExpression {
-	property, ok := right.(*Identifier)
-	if right != nil && !ok {
-		p.report("Identifier expected", right.Loc())
+func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
+	property, ok := expr.Property.(*Identifier)
+	if expr.Property != nil && !ok {
+		expr.typing = Primitive{UNKNOWN}
+		return
 	}
 	var name string
 	if property != nil {
 		name = property.Token.Text()
 	}
 
-	object, ok := getObjectType(left)
+	alias, ok := expr.Expr.Type().(TypeAlias)
 	if !ok {
-		p.report("Object type expected", left.Loc())
-		return &PropertyAccessExpression{
-			Expr:     left,
-			Property: property,
-		}
+		p.report(
+			fmt.Sprintf("Property '%v' doesn't exist on this type", name),
+			expr.Property.Loc(),
+		)
+		expr.typing = Primitive{UNKNOWN}
+		return
+	}
+	if method, ok := alias.Methods[name]; ok {
+		expr.typing = method
+		return
 	}
 
-	// FIXME: methods should be on the TypeAlias
-	var typing ExpressionType
-	if method, ok := p.scope.FindMethod(name, object); ok {
-		typing = method.signature
-	} else {
-		typing = object.Ref.(Object).Members[name].(Type).Value
-	}
-
-	return &PropertyAccessExpression{
-		Expr:     left,
-		Property: property,
-		typing:   typing,
-	}
-}
-
-// Return the type of the given object as a `TypeAlias{Object{}}`
-func getObjectType(expr Expression) (TypeAlias, bool) {
-	ref, ok := expr.Type().(TypeAlias)
+	object, ok := alias.Ref.(Object)
 	if !ok {
-		return TypeAlias{}, false
+		p.report(
+			fmt.Sprintf("Property '%v' doesn't exist on this type", name),
+			expr.Property.Loc(),
+		)
+		expr.typing = Primitive{UNKNOWN}
+		return
 	}
-	if _, ok := ref.Ref.(Object); !ok {
-		return TypeAlias{}, false
+
+	t, ok := object.Members[name]
+	if !ok {
+		p.report(
+			fmt.Sprintf("Property '%v' doesn't exist on this type", name),
+			expr.Property.Loc(),
+		)
+		expr.typing = Primitive{UNKNOWN}
+		return
 	}
-	return ref, true
+	expr.typing = t
 }
 
 type TraitExpression struct {
 	Receiver *ParenthesizedExpression // Receiver.Expr is an Identifier
-	Def      *ParenthesizedExpression
+	Def      *Params
 }
 
-func (t TraitExpression) Loc() Loc {
+func (t *TraitExpression) Loc() Loc {
 	return Loc{t.Receiver.loc.Start, t.Def.loc.End}
 }
-func (t TraitExpression) Type() ExpressionType {
+func (t *TraitExpression) Type() ExpressionType {
 	return Trait{
-		Self:    Generic{Name: t.Receiver.Expr.(Identifier).Text()},
+		Self:    Generic{Name: t.Receiver.Expr.(*Identifier).Text()},
 		Members: t.Def.Type().(Type).Value.(Object).Members,
 	}
 }
-
-// check a trait expression: (ReceiverType).{ ..methods }
-func getValidatedTraitExpression(p *Parser, left Expression, right Expression) Expression {
-	receiver, ok := left.(*ParenthesizedExpression)
-	if !ok {
-		return nil
-	}
-	identifier, ok := receiver.Expr.(*Identifier)
-	if !ok {
-		return nil
-	}
-	if !identifier.isType {
-		p.report("Type expected", identifier.Loc())
-	}
-
+func (t *TraitExpression) typeCheck(p *Parser) {
 	p.pushScope(NewScope(ProgramScope))
 	defer p.dropScope()
-	name := identifier.Text()
-	p.scope.Add(name, identifier.Loc(), Type{TypeAlias{Name: name, Ref: Generic{Name: identifier.Text()}}})
 
-	paren := right.(*ParenthesizedExpression)
-	validateTraitType(p, *paren)
+	receiver := t.Receiver.Expr.(*Identifier)
+	if receiver != nil {
+		p.scope.Add(
+			receiver.Text(),
+			receiver.Loc(),
+			Generic{Name: receiver.Text()},
+		)
+	}
 
-	return TraitExpression{
-		Receiver: receiver,
-		Def:      paren,
+	for _, param := range t.Def.Params {
+		typing, ok := param.Complement.Type().(Type)
+		if !ok || typing.Value == nil || typing.Value.Kind() != FUNCTION {
+			p.report("Function type expected", param.Complement.Loc())
+		}
 	}
 }
 
-func validateTraitType(p *Parser, expr ParenthesizedExpression) {
-	ty, ok := expr.Type().(Type)
-	if !ok {
-		p.report("Object type expected", expr.Loc())
-		return
-	}
-	if _, ok := ty.Value.(Object); !ok {
-		p.report("Object type expected", expr.Loc())
-		return
-	}
-
-	tuple, ok := expr.Expr.(*TupleExpression)
-	if !ok {
-		validateTraitMethod(p, expr.Expr)
-		return
-	}
-	for _, element := range tuple.Elements {
-		validateTraitMethod(p, element)
-	}
-}
-
-func validateTraitMethod(p *Parser, expr Expression) {
-	param, ok := expr.(Param)
-	if !ok {
-		p.report("Method declaration expected", expr.Loc())
-		return
-	}
-	typing, ok := param.Complement.Type().(Type)
-	if !ok || typing.Value == nil || typing.Value.Kind() != FUNCTION {
-		p.report("Function type expected", param.Complement.Loc())
+func parseTraitExpression(p *Parser, left Expression) Expression {
+	paren := p.parseParenthesizedExpression()
+	params := getValidatedFunctionParams(p, paren)
+	return &TraitExpression{
+		Receiver: left.(*ParenthesizedExpression),
+		Def:      params,
 	}
 }
