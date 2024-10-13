@@ -1,5 +1,7 @@
 package parser
 
+import "slices"
+
 type SumTypeConstructor struct {
 	Name   *Identifier
 	Params *ParenthesizedExpression // contains *TupleExpression
@@ -69,11 +71,14 @@ func (p *Parser) parseSumType() Expression {
 
 	start := p.Peek().Loc().Start
 	constructors := []SumTypeConstructor{}
+	expected := []TokenKind{BinaryOr, EOL, EOF}
 	for p.Peek().Kind() == BinaryOr {
 		p.Consume()
 		constructor := parseSumTypeConstructor(p)
 		constructors = append(constructors, constructor)
-		handleSumTypeBadTokens(p)
+		if !slices.Contains(expected, p.Peek().Kind()) {
+			recover(p, BinaryOr)
+		}
 		p.DiscardLineBreaks()
 	}
 	if len(constructors) < 2 {

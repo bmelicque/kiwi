@@ -79,6 +79,7 @@ func TestUnreachableCode(t *testing.T) {
 		token{kind: EOL},
 	}}
 	parser := MakeParser(&tokenizer)
+	parser.pushScope(NewScope(FunctionScope))
 	parser.parseBlock()
 
 	if len(parser.errors) != 1 {
