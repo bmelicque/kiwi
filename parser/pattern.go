@@ -2,7 +2,7 @@ package parser
 
 import "fmt"
 
-func (p *Parser) validatePattern(pattern Expression, matched ExpressionType) {
+func (p *Parser) typeCheckPattern(pattern Expression, matched ExpressionType) {
 	switch matched := matched.(type) {
 	case Sum:
 	case Trait:

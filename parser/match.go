@@ -14,11 +14,11 @@ func (m MatchCase) Type() ExpressionType {
 	if len(m.Statements) == 0 {
 		return Primitive{NIL}
 	}
-	expr, ok := m.Statements[len(m.Statements)-1].(*ExpressionStatement)
+	expr, ok := m.Statements[len(m.Statements)-1].(Expression)
 	if !ok {
 		return Primitive{NIL}
 	}
-	t, _ := expr.Expr.Type().build(nil, nil)
+	t, _ := expr.Type().build(nil, nil)
 	return t
 }
 
@@ -34,14 +34,14 @@ type MatchExpression struct {
 	end     Position
 }
 
-func (m MatchExpression) Loc() Loc {
+func (m *MatchExpression) Loc() Loc {
 	loc := m.Keyword.Loc()
 	if m.end != (Position{}) {
 		loc.End = m.end
 	}
 	return loc
 }
-func (m MatchExpression) Type() ExpressionType {
+func (m *MatchExpression) Type() ExpressionType {
 	if len(m.Cases) == 0 {
 		return Primitive{NIL}
 	}
@@ -50,27 +50,45 @@ func (m MatchExpression) Type() ExpressionType {
 
 var matchableType = []ExpressionTypeKind{SUM, TRAIT}
 
+// FIXME: limit possible types for match
+func (m *MatchExpression) typeCheck(p *Parser) {
+	t := m.Value.Type()
+	if t == nil {
+		return
+	}
+	if !slices.Contains(matchableType, t.Kind()) {
+		p.report("Cannot match this type", m.Value.Loc())
+	}
+	for i := range m.Cases {
+		p.pushScope(NewScope(BlockScope))
+		p.typeCheckPattern(m.Cases[i].Pattern, t)
+		for j := range m.Cases[i].Statements {
+			m.Cases[i].Statements[j].typeCheck(p)
+		}
+		p.dropScope()
+	}
+	reportMissingCases(p, m.Cases, t)
+}
+
 // TODO: validate type
 func (p *Parser) parseMatchExpression() Expression {
 	keyword := p.Consume()
 	outer := p.allowBraceParsing
 	p.allowBraceParsing = false
-	condition := ParseExpression(p)
+	condition := p.parseExpression()
 	p.allowBraceParsing = outer
 	if p.Peek().Kind() != LeftBrace && !recover(p, LeftBrace) {
-		return MatchExpression{Keyword: keyword, Value: condition}
+		return &MatchExpression{Keyword: keyword, Value: condition}
 	}
 	p.Consume()
 	p.DiscardLineBreaks()
 
-	// FIXME: limit possible types for match
-	matched := condition.Type()
 	cases := []MatchCase{}
 	stopAt := []TokenKind{RightBrace, EOF}
 	for !slices.Contains(stopAt, p.Peek().Kind()) {
-		cases = append(cases, parseMatchCase(p, matched))
+		cases = append(cases, parseMatchCase(p))
 	}
-	validateCaseList(p, cases, matched)
+	validateCaseList(p, cases)
 
 	next := p.Peek()
 	end := next.Loc().End
@@ -86,20 +104,14 @@ func (p *Parser) parseMatchExpression() Expression {
 	return &expr
 }
 
-func parseMatchCase(p *Parser, matched ExpressionType) MatchCase {
-	p.pushScope(NewScope(BlockScope))
-	defer p.dropScope()
-
+func parseMatchCase(p *Parser) MatchCase {
 	pattern := parseCaseStatement(p)
-	p.validatePattern(pattern, matched)
-
 	stopAt := []TokenKind{EOF, RightBrace, CaseKeyword}
 	statements := []Node{}
 	for !slices.Contains(stopAt, p.Peek().Kind()) {
 		statements = append(statements, p.parseStatement())
 		p.DiscardLineBreaks()
 	}
-
 	return MatchCase{
 		Pattern:    pattern,
 		Statements: statements,
@@ -120,22 +132,19 @@ func parseCaseStatement(p *Parser) Expression {
 	return pattern
 }
 
-func validateCaseList(p *Parser, cases []MatchCase, matched ExpressionType) {
+func validateCaseList(p *Parser, cases []MatchCase) {
 	if len(cases) == 0 {
 		return
 	}
 	if cases[0].Pattern == nil {
 		p.report("'case' keyword expected", cases[0].Statements[0].Loc())
 	}
-	hasCatchAll := reportUnreachableCases(p, cases)
+	reportUnreachableCases(p, cases)
 	reportDuplicatedCases(p, cases)
-	if !hasCatchAll && matched != nil {
-		reportMissingCases(p, cases, matched)
-	}
 }
 
 // return true if found a catch-all case
-func reportUnreachableCases(p *Parser, cases []MatchCase) bool {
+func reportUnreachableCases(p *Parser, cases []MatchCase) {
 	var foundCatchall, foundUnreachable bool
 	var catchall Loc
 	for _, ca := range cases {
@@ -150,7 +159,6 @@ func reportUnreachableCases(p *Parser, cases []MatchCase) bool {
 	if foundUnreachable {
 		p.report("Catch-all case should be last", catchall)
 	}
-	return foundCatchall
 }
 
 func reportDuplicatedCases(p *Parser, cases []MatchCase) {
@@ -180,17 +188,22 @@ func reportMissingCases(p *Parser, cases []MatchCase, matched ExpressionType) {
 		cases[0].Pattern.Loc().Start,
 		last.Statements[len(last.Statements)-1].Loc().End,
 	}
-	if matched.Kind() != SUM {
-		p.report("Non exhaustive match, consider adding catch-all", loc)
-	}
 	names := map[string]bool{}
 	for _, c := range cases {
 		identifier := getCaseIdentifier(c)
-		if identifier != nil {
-			names[identifier.Text()] = true
+		if identifier == nil {
+			continue
 		}
+		if identifier.Text() == "_" {
+			// No missing case if catch-all is found
+			return
+		}
+		names[identifier.Text()] = true
 	}
-	sum := matched.(Sum)
+	sum, ok := matched.(Sum)
+	if !ok {
+		p.report("Non exhaustive match, consider adding catch-all", loc)
+	}
 	for name := range sum.Members {
 		delete(names, name)
 	}
