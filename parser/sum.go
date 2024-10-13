@@ -109,7 +109,7 @@ func parseSumTypeConstructor(p *Parser) SumTypeConstructor {
 	return SumTypeConstructor{identifier, params}
 }
 func parseSumTypeConstructorName(p *Parser) *Identifier {
-	token := p.parseToken(true)
+	token := p.parseToken()
 	if token == nil {
 		return nil
 	}

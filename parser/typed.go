@@ -6,9 +6,7 @@ type TypedExpression struct {
 	Colon  bool
 }
 
-func (t *TypedExpression) typeCheck(p *Parser) {
-	// TODO:
-}
+func (t *TypedExpression) typeCheck(p *Parser) {}
 
 func (t *TypedExpression) Loc() Loc {
 	loc := t.Expr.Loc()

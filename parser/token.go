@@ -9,7 +9,7 @@ type Literal struct {
 	Token
 }
 
-func (l *Literal) typeCheck(_ *Parser) { return }
+func (l *Literal) typeCheck(_ *Parser) {}
 
 func (l *Literal) Type() ExpressionType {
 	switch l.Kind() {
@@ -46,7 +46,7 @@ func (i *Identifier) typeCheck(p *Parser) {
 
 func (i *Identifier) Type() ExpressionType { return i.typing }
 
-func (p *Parser) parseToken(expectNewName bool) Expression {
+func (p *Parser) parseToken() Expression {
 	token := p.Peek()
 	switch token.Kind() {
 	case BooleanLiteral, NumberLiteral, StringLiteral, BooleanKeyword, NumberKeyword, StringKeyword:
@@ -58,7 +58,6 @@ func (p *Parser) parseToken(expectNewName bool) Expression {
 		return &Identifier{Token: token, isType: isType}
 	}
 	if !p.allowEmptyExpr {
-		p.Consume()
 		p.report("Expression expected", token.Loc())
 	}
 	return nil

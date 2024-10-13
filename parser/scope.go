@@ -134,15 +134,21 @@ func makeOptionType(t ExpressionType) TypeAlias {
 		Name:   "Option",
 		Params: []Generic{{Name: "Type", Value: t}},
 		Ref: Sum{map[string]*Function{
-			"Some": &Function{
+			"Some": {
 				Params: &Tuple{[]ExpressionType{Generic{Name: "Type", Value: t}}},
 			},
-			"None": &Function{},
+			"None": {},
 		}},
 	}
 	alias.Ref.(Sum).Members["Some"].Returned = &alias
 	alias.Ref.(Sum).Members["None"].Returned = &alias
 	return alias
+}
+
+// extracts the Some type from an Option
+func getSomeType(t Sum) ExpressionType {
+	some := t.Members["Some"]
+	return some.Params.elements[0].(Generic).Value
 }
 
 // The vanilla option type.

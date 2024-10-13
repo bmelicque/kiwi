@@ -20,5 +20,5 @@ func fallback(p *Parser) Expression {
 			return p.parseBlock()
 		}
 	}
-	return p.parseToken(false)
+	return p.parseToken()
 }

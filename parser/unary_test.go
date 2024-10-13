@@ -33,12 +33,38 @@ func TestUnaryExpression(t *testing.T) {
 	}
 }
 
+func TestCheckOptionType(t *testing.T) {
+	// ?number
+	parser := MakeParser(nil)
+	expr := &UnaryExpression{
+		Operator: token{kind: QuestionMark},
+		Operand:  &Literal{Token: token{kind: NumberKeyword}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+	ty, ok := expr.Type().(Type)
+	if !ok {
+		t.Fatal("Expected type")
+	}
+	alias, ok := ty.Value.(TypeAlias)
+	if !ok || alias.Name != "Option" {
+		t.Fatal("Expected option type")
+	}
+	if getSomeType(alias.Ref.(Sum)).Kind() != NUMBER {
+		t.Fatal("Expected number option type")
+	}
+}
+
 func TestNoOptionValue(t *testing.T) {
 	parser := MakeParser(&testTokenizer{tokens: []Token{
 		token{kind: QuestionMark},
 		literal{kind: NumberLiteral, value: "42"},
 	}})
-	parser.parseUnaryExpression()
+	expr := parser.parseUnaryExpression()
+	expr.typeCheck(parser)
 
 	if len(parser.errors) != 1 {
 		t.Fatalf("Expected 1 error, got %#v", parser.errors)
@@ -67,6 +93,55 @@ func TestListTypeExpression(t *testing.T) {
 	}
 }
 
+func TestCheckListType(t *testing.T) {
+	// []number
+	parser := MakeParser(nil)
+	expr := &ListTypeExpression{
+		Expr: &Literal{Token: token{kind: NumberKeyword}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+	ty, ok := expr.Type().(Type)
+	if !ok {
+		t.Fatal("Expected type")
+	}
+	list, ok := ty.Value.(List)
+	if !ok {
+		t.Fatal("Expected list type")
+	}
+	if list.Element.Kind() != NUMBER {
+		t.Fatal("Expected number list type")
+	}
+}
+
+func TestCheckListTypeNoValue(t *testing.T) {
+	// []42
+	parser := MakeParser(nil)
+	expr := &ListTypeExpression{
+		Bracketed: &BracketedExpression{},
+		Expr:      &Literal{Token: literal{kind: NumberLiteral, value: "42"}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
+	}
+	ty, ok := expr.Type().(Type)
+	if !ok {
+		t.Fatal("Expected type")
+	}
+	list, ok := ty.Value.(List)
+	if !ok {
+		t.Fatal("Expected list type")
+	}
+	if list.Element.Kind() != UNKNOWN {
+		t.Fatal("Expected unknown list type")
+	}
+}
+
 func TestNestedListTypeExpression(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
 		token{kind: LeftBracket},
@@ -91,5 +166,19 @@ func TestNestedListTypeExpression(t *testing.T) {
 	}
 	if list.Expr == nil {
 		t.Fatalf("Expected a Type")
+	}
+}
+
+func TestListTypeExpressionWithBracketed(t *testing.T) {
+	parser := MakeParser(&testTokenizer{tokens: []Token{
+		token{kind: LeftBracket},
+		token{kind: NumberKeyword},
+		token{kind: RightBracket},
+		token{kind: NumberKeyword},
+	}})
+	parser.parseExpression()
+
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
 	}
 }
