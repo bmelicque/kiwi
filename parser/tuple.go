@@ -6,7 +6,22 @@ type TupleExpression struct {
 }
 
 func (t *TupleExpression) typeCheck(p *Parser) {
-	// TODO:
+	for i := range t.Elements {
+		t.Elements[i].typeCheck(p)
+	}
+	if len(t.Elements) == 0 {
+		t.typing = Primitive{NIL}
+		return
+	}
+	if len(t.Elements) == 1 {
+		t.typing = t.Elements[0].Type()
+		return
+	}
+	types := make([]ExpressionType, len(t.Elements))
+	for i := range t.Elements {
+		types[i] = t.Elements[i].Type()
+	}
+	t.typing = Tuple{types}
 }
 
 func (t *TupleExpression) Loc() Loc {

@@ -60,8 +60,6 @@ func addTypeParamsToScope(scope *Scope, params Params) {
 			name := param.Identifier.Text()
 			t := Type{TypeAlias{Name: name, Ref: Generic{Name: name}}}
 			scope.Add(name, param.Loc(), t)
-		} else {
-			// TODO: constrained generic
 		}
 	}
 }
