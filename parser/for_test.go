@@ -31,6 +31,7 @@ func TestForExpressionType(t *testing.T) {
 	}}
 	parser := MakeParser(&tok)
 	expr := parser.parseForExpression()
+	expr.typeCheck(parser)
 
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)

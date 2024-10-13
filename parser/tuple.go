@@ -19,6 +19,9 @@ func (t *TupleExpression) Type() ExpressionType { return t.typing }
 
 // Wrap the expression in a tuple if not one
 func makeTuple(expr Expression) *TupleExpression {
+	if expr == nil {
+		return &TupleExpression{nil, Primitive{NIL}}
+	}
 	tuple, ok := expr.(*TupleExpression)
 	if ok {
 		return tuple

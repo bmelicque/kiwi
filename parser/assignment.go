@@ -1,7 +1,5 @@
 package parser
 
-import "fmt"
-
 type Assignment struct {
 	Declared    Expression // "value", "Type", "(value: Type).method"
 	Initializer Expression
@@ -44,7 +42,6 @@ func (p *Parser) parseAssignment() Node {
 	var typing Expression
 	var operator Token
 	next := p.Peek()
-	fmt.Printf("%#v\n", next)
 	switch next.Kind() {
 	case Colon:
 		p.Consume()
