@@ -159,7 +159,7 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 
 type TraitExpression struct {
 	Receiver *ParenthesizedExpression // Receiver.Expr is an Identifier
-	Def      *Params
+	Def      *ParenthesizedExpression // contains *TupleExpression
 }
 
 func (t *TraitExpression) Loc() Loc {
@@ -184,7 +184,11 @@ func (t *TraitExpression) typeCheck(p *Parser) {
 		)
 	}
 
-	for _, param := range t.Def.Params {
+	for _, element := range t.Def.Expr.(*TupleExpression).Elements {
+		param, ok := element.(*Param)
+		if !ok {
+			continue
+		}
 		typing, ok := param.Complement.Type().(Type)
 		if !ok || typing.Value == nil || typing.Value.Kind() != FUNCTION {
 			p.report("Function type expected", param.Complement.Loc())
@@ -194,9 +198,12 @@ func (t *TraitExpression) typeCheck(p *Parser) {
 
 func parseTraitExpression(p *Parser, left Expression) Expression {
 	paren := p.parseParenthesizedExpression()
-	params := getValidatedFunctionParams(p, paren)
+	if paren != nil {
+		paren.Expr = makeTuple(paren.Expr)
+		validateFunctionParams(p, paren)
+	}
 	return &TraitExpression{
 		Receiver: left.(*ParenthesizedExpression),
-		Def:      params,
+		Def:      paren,
 	}
 }

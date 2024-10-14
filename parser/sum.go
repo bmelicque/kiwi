@@ -66,7 +66,7 @@ func (s *SumType) typeCheck(p *Parser) {
 
 func (p *Parser) parseSumType() Expression {
 	if p.Peek().Kind() != BinaryOr {
-		return p.parseTypedExpression()
+		return p.parseParam()
 	}
 
 	start := p.Peek().Loc().Start
@@ -86,22 +86,6 @@ func (p *Parser) parseSumType() Expression {
 	}
 
 	return &SumType{Members: constructors, start: start}
-}
-
-func handleSumTypeBadTokens(p *Parser) {
-	err := false
-	var start, end Position
-	for p.Peek().Kind() != EOL && p.Peek().Kind() != EOF && p.Peek().Kind() != BinaryOr {
-		token := p.Consume()
-		if !err {
-			err = true
-			start = token.Loc().Start
-		}
-		end = token.Loc().End
-	}
-	if err {
-		p.report("EOL or '|' expected", Loc{Start: start, End: end})
-	}
 }
 
 func parseSumTypeConstructor(p *Parser) SumTypeConstructor {

@@ -44,7 +44,7 @@ func TestObjectDescriptionSingleLine(t *testing.T) {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 
-	if _, ok := node.Expr.(*TypedExpression); !ok {
+	if _, ok := node.Expr.(*Param); !ok {
 		t.Fatalf("Expected TypedExpression, got %#v", node.Expr)
 	}
 }

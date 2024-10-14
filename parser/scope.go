@@ -164,10 +164,10 @@ func makeResultType(ok ExpressionType, err ExpressionType) TypeAlias {
 			{Name: "Err", Value: err},
 		},
 		Ref: Sum{map[string]*Function{
-			"Ok": &Function{
+			"Ok": {
 				Params: &Tuple{[]ExpressionType{Generic{Name: "Ok", Value: ok}}},
 			},
-			"Err": &Function{
+			"Err": {
 				Params: &Tuple{[]ExpressionType{Generic{Name: "Err", Value: err}}},
 			},
 		}},

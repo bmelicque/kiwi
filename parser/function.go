@@ -2,8 +2,8 @@ package parser
 
 type FunctionExpression struct {
 	TypeParams *Params
-	Params     *Params
-	Explicit   Expression // Explicit return type (if any)
+	Params     *ParenthesizedExpression // contains *TupleExpression
+	Explicit   Expression               // Explicit return type (if any)
 	Body       *Block
 	returnType ExpressionType
 }
@@ -36,7 +36,7 @@ func (f *FunctionExpression) typeCheck(p *Parser) {
 	}
 
 	if f.Params != nil {
-		addParamsToScope(p, *f.Params)
+		addParamsToScope(p, f.Params.Expr.(*TupleExpression).Elements)
 	}
 	f.Body.typeCheck(p)
 	f.returnType = getFunctionReturnType(p, f.Explicit, f.Body)
@@ -107,7 +107,9 @@ func (p *Parser) parseFunctionExpression(bracketed *BracketedExpression) Express
 	switch p.Peek().Kind() {
 	case SlimArrow:
 		p.Consume() // ->
-		paren.Expr = makeTuple(paren.Expr)
+		if paren != nil {
+			paren.Expr = makeTuple(paren.Expr)
+		}
 		old := p.allowBraceParsing
 		p.allowBraceParsing = false
 		expr := p.parseRange()
@@ -122,7 +124,10 @@ func (p *Parser) parseFunctionExpression(bracketed *BracketedExpression) Express
 		}
 	case FatArrow:
 		p.Consume() // =>
-		params := getValidatedFunctionParams(p, paren)
+		if paren != nil {
+			paren.Expr = makeTuple(paren.Expr)
+			validateFunctionParams(p, paren)
+		}
 		var explicit Expression
 		if p.Peek().Kind() != LeftBrace {
 			old := p.allowBraceParsing
@@ -133,7 +138,7 @@ func (p *Parser) parseFunctionExpression(bracketed *BracketedExpression) Express
 		body := p.parseBlock()
 		return &FunctionExpression{
 			TypeParams: nil,
-			Params:     params,
+			Params:     paren,
 			Explicit:   explicit,
 			Body:       body,
 			returnType: nil,
@@ -158,17 +163,27 @@ func getValidatedTypeParams(p *Parser, bracketed *BracketedExpression) *Params {
 	return &Params{Params: params, loc: bracketed.loc}
 }
 
-func getValidatedFunctionParams(p *Parser, node *ParenthesizedExpression) *Params {
+func validateFunctionParams(p *Parser, node *ParenthesizedExpression) {
 	if node.Expr == nil {
-		return &Params{loc: node.loc}
+		return
 	}
 
-	tuple := makeTuple(node.Expr)
-	params := make([]Param, len(tuple.Elements))
-	for i := range params {
-		params[i] = p.getValidatedParam(tuple.Elements[i])
+	tuple := node.Expr.(*TupleExpression)
+	for _, element := range tuple.Elements {
+		param, ok := element.(*Param)
+		if !ok {
+			p.report("Parameter expected: (name Type)", element.Loc())
+			continue
+		}
+		if param.HasColon {
+			p.report(
+				"No ':' expected between parameter name and type",
+				element.Loc(),
+			)
+		}
 	}
-	return &Params{Params: params, loc: node.loc}
+
+	tuple.reportDuplicatedParams(p)
 }
 
 func getFunctionReturnType(p *Parser, explicit Expression, body *Block) ExpressionType {
@@ -230,9 +245,13 @@ func findReturnStatements(node Node, results *[]Exit) {
 	}
 }
 
-func addParamsToScope(p *Parser, params Params) {
-	for _, param := range params.Params {
-		if param.Complement == nil {
+func addParamsToScope(p *Parser, tuple []Expression) {
+	for _, expr := range tuple {
+		param, ok := expr.(*Param)
+		if !ok {
+			continue
+		}
+		if param.Complement == nil || param.Complement.Type().Kind() != TYPE {
 			p.report("Typing expected", param.Loc())
 			p.scope.Add(param.Identifier.Text(), param.Loc(), Primitive{UNKNOWN})
 		} else {

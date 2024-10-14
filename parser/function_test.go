@@ -42,8 +42,9 @@ func TestFunctionExpressionWithoutArgs(t *testing.T) {
 		return
 	}
 
-	if function.Params != nil && function.Params.Params != nil {
-		t.Fatalf("Expected no params, got %#v", function.Params.Params)
+	params := function.Params.Expr.(*TupleExpression).Elements
+	if len(params) > 0 {
+		t.Fatalf("Expected no params, got %#v", function.Params.Expr)
 	}
 	if _, ok := function.Explicit.(*Literal); !ok {
 		t.Fatalf("Expected literal, got %#v", function.Explicit)
@@ -74,8 +75,8 @@ func TestFatArrowFunctionWithArgs(t *testing.T) {
 		return
 	}
 
-	if len(function.Params.Params) != 1 {
-		t.Fatalf("Expected 1 param, got %#v", function.Params.Params)
+	if len(function.Params.Expr.(*TupleExpression).Elements) != 1 {
+		t.Fatalf("Expected 1 param, got %#v", function.Params.Expr)
 	}
 	if _, ok := function.Explicit.(*Literal); !ok {
 		t.Fatalf("Expected literal, got %#v", function.Explicit)

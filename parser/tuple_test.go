@@ -29,13 +29,13 @@ func TestTuple(t *testing.T) {
 
 func TestTypedTuple(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: NumberLiteral, value: "1"},
+		literal{kind: Name, value: "a"},
 		token{kind: NumberKeyword},
 		token{kind: Comma},
-		literal{kind: NumberLiteral, value: "2"},
+		literal{kind: Name, value: "b"},
 		token{kind: NumberKeyword},
 		token{kind: Comma},
-		literal{kind: NumberLiteral, value: "3"},
+		literal{kind: Name, value: "c"},
 		token{kind: NumberKeyword},
 	}}
 	parser := MakeParser(&tokenizer)

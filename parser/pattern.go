@@ -36,10 +36,15 @@ func validateTraitPattern(p *Parser, pattern Expression, trait Trait) {
 		return
 	}
 
-	if len(call.Args.Params) != 1 {
+	elements := call.Args.Expr.(*TupleExpression).Elements
+	if len(elements) != 1 {
 		p.report("Only 1 argument expected", call.Args.loc)
 		return
 	}
-	identifier := call.Args.Params[0].Identifier
+	identifier, ok := elements[0].(*Identifier)
+	if !ok {
+		p.report("Invalid pattern, expected 'Type(identifier)'", elements[0].Loc())
+		return
+	}
 	p.scope.Add(identifier.Text(), identifier.Loc(), alias)
 }

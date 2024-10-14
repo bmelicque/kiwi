@@ -5,7 +5,7 @@ import "fmt"
 // Callee(...Args)
 type CallExpression struct {
 	Callee Expression
-	Args   *Params
+	Args   *ParenthesizedExpression // contains a *TupleExpression
 	typing ExpressionType
 }
 
@@ -20,7 +20,10 @@ func (c *CallExpression) Type() ExpressionType { return c.typing }
 // Parse a call expression.
 // It can be either a function call or an instanciation.
 func parseCallExpression(p *Parser, callee Expression) *CallExpression {
-	args := p.parseArguments()
+	args := p.parseParenthesizedExpression()
+	if args.Expr != nil {
+		args.Expr = makeTuple(args.Expr)
+	}
 	return &CallExpression{callee, args, nil}
 }
 
@@ -57,8 +60,8 @@ func typeCheckFunctionCall(p *Parser, c *CallExpression) {
 	}
 
 	params := function.Params.elements
-	typeCheckFunctionArguments(p, *c.Args, params)
-	validateArgumentsNumber(p, *c.Args, params)
+	typeCheckFunctionArguments(p, c.Args.Expr.(*TupleExpression), params)
+	validateArgumentsNumber(p, c.Args.Expr.(*TupleExpression), params)
 	t, ok := function.Returned.build(p.scope, nil)
 	if !ok {
 		p.report(
@@ -72,33 +75,37 @@ func typeCheckFunctionCall(p *Parser, c *CallExpression) {
 }
 
 // Make sure that every parsed argument is compliant with the function's type
-func typeCheckFunctionArguments(p *Parser, args Params, params []ExpressionType) {
+func typeCheckFunctionArguments(p *Parser, args *TupleExpression, params []ExpressionType) {
 	l := len(params)
-	if len(args.Params) < len(params) {
-		l = len(args.Params)
+	if len(args.Elements) < len(params) {
+		l = len(args.Elements)
 	}
 	var ok bool
-	for i := range args.Params[:l] {
-		args.Params[i].Complement.typeCheck(p)
-		received := args.Params[i].Complement.Type()
+	for i, element := range args.Elements[:l] {
+		element.typeCheck(p)
+		if _, ok := element.(*Param); ok {
+			p.report("Single expression expected", element.Loc())
+			continue
+		}
+		received := element.Type()
 		params[i], ok = params[i].build(p.scope, received)
 		if !ok {
-			p.report("Could not determine exact type", args.Params[i].Loc())
+			p.report("Could not determine exact type", element.Loc())
 		}
 		if !params[i].Extends(received) {
-			p.report("Types don't match", args.Params[i].Loc())
+			p.report("Types don't match", element.Loc())
 		}
 	}
 }
 
 // Make sure that the correct number of arguments were passed to the function
-func validateArgumentsNumber(p *Parser, args Params, params []ExpressionType) {
-	if len(params) < len(args.Params) {
-		loc := args.Params[len(params)].Loc()
-		loc.End = args.Params[len(args.Params)-1].Loc().End
+func validateArgumentsNumber(p *Parser, args *TupleExpression, params []ExpressionType) {
+	if len(params) < len(args.Elements) {
+		loc := args.Elements[len(params)].Loc()
+		loc.End = args.Elements[len(args.Elements)-1].Loc().End
 		p.report("Too many arguments", loc)
 	}
-	if len(params) > len(args.Params) {
+	if len(params) > len(args.Elements) {
 		p.report("Missing argument(s)", args.Loc())
 	}
 }
@@ -118,45 +125,57 @@ func typeCheckStructInstanciation(p *Parser, c *CallExpression) {
 	p.addTypeArgsToScope(nil, alias.Params)
 	c.Args.typeCheck(p)
 
-	for _, arg := range c.Args.Params {
-		if arg.kind == Argument {
+	args := c.Args.Expr.(*TupleExpression).Elements
+	for _, arg := range args {
+		namedArg, ok := arg.(*Param)
+		if !ok {
 			p.report("Named argument expected", arg.Loc())
 			continue
 		}
 		var name string
-		if arg.Identifier != nil {
-			name = arg.Identifier.Text()
+		if namedArg.Identifier != nil {
+			name = namedArg.Identifier.Text()
 		}
 		expected := object.Members[name]
-		if !expected.Extends(arg.Complement.Type()) {
+		if !expected.Extends(namedArg.Complement.Type()) {
 			p.report("Type doesn't match the expected one", arg.Loc())
 		}
 	}
 
-	reportExcessMembers(p, object.Members, c.Args.Params)
-	reportMissingMembers(p, object.Members, *c.Args)
+	reportExcessMembers(p, object.Members, args)
+	reportMissingMembers(p, object.Members, c.Args)
 
 	c.typing = alias
 }
-func reportExcessMembers(p *Parser, expected map[string]ExpressionType, received []Param) {
-	for _, param := range received {
-		name := param.Identifier.Text()
+func reportExcessMembers(p *Parser, expected map[string]ExpressionType, received []Expression) {
+	for _, arg := range received {
+		namedArg, ok := arg.(*Param)
+		if !ok {
+			continue
+		}
+		name := namedArg.Identifier.Text()
 		if _, ok := expected[name]; ok {
 			continue
 		}
 		p.report(
 			fmt.Sprintf("Property '%v' doesn't exist on this type", name),
-			param.Loc(),
+			arg.Loc(),
 		)
 	}
 }
-func reportMissingMembers(p *Parser, expected map[string]ExpressionType, received Params) {
+func reportMissingMembers(
+	p *Parser,
+	expected map[string]ExpressionType,
+	received *ParenthesizedExpression,
+) {
 	membersSet := map[string]bool{}
 	for name := range expected {
 		membersSet[name] = true
 	}
-	for _, member := range received.Params {
-		delete(membersSet, member.Identifier.Text())
+	for _, member := range received.Expr.(*TupleExpression).Elements {
+		if named, ok := member.(*Param); ok {
+			delete(membersSet, named.Identifier.Text())
+		}
 	}
 
 	if len(membersSet) == 0 {
@@ -177,10 +196,11 @@ func reportMissingMembers(p *Parser, expected map[string]ExpressionType, receive
 func typeCheckListInstanciation(p *Parser, c *CallExpression) {
 	// next line ensured by calling function
 	c.typing = c.Callee.Type().(Type).Value.(List)
-	if len(c.Args.Params) == 0 {
+	elements := c.Args.Expr.(*TupleExpression).Elements
+	if len(elements) == 0 {
 		return
 	}
-	first := c.Args.Params[0].Complement
+	first := elements[0]
 	first.typeCheck(p)
 	el := c.typing.(List).Element
 	if alias, ok := el.(TypeAlias); ok {
@@ -190,10 +210,10 @@ func typeCheckListInstanciation(p *Parser, c *CallExpression) {
 		el, _ = el.build(p.scope, first.Type())
 	}
 
-	for i := range c.Args.Params[1:] {
-		c.Args.Params[i+1].Complement.typeCheck(p)
-		if !el.Extends(c.Args.Params[i+1].Complement.Type()) {
-			p.report("Type doesn't match", c.Args.Params[i+1].Loc())
+	for i := range elements[1:] {
+		elements[i+1].typeCheck(p)
+		if !el.Extends(elements[i+1].Type()) {
+			p.report("Type doesn't match", elements[i+1].Loc())
 		}
 	}
 }
