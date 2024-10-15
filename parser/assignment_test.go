@@ -106,7 +106,7 @@ func TestMethodDeclaration(t *testing.T) {
 	if _, ok := expr.Declared.(*PropertyAccessExpression); !ok {
 		t.Fatalf("Expected method declaration")
 	}
-	if _, ok := expr.Initializer.(*FunctionExpression); !ok {
-		t.Fatalf("Expected FunctionExpression")
+	if _, ok := expr.Initializer.(*FunctionTypeExpression); !ok {
+		t.Fatalf("Expected FunctionTypeExpression, got %#v", expr.Initializer)
 	}
 }

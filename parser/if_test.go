@@ -27,14 +27,12 @@ func TestIf(t *testing.T) {
 
 func TestIfWithNonBoolean(t *testing.T) {
 	// if 42 { }
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: IfKeyword},
-		literal{kind: NumberLiteral, value: "42"},
-		token{kind: LeftBrace},
-		token{kind: RightBrace},
-	}}
-	parser := MakeParser(&tokenizer)
-	parser.parseIfExpression()
+	parser := MakeParser(nil)
+	expr := IfExpression{
+		Condition: &Literal{Token: literal{kind: NumberLiteral, value: "42"}},
+		Body:      &Block{},
+	}
+	expr.typeCheck(parser)
 	if len(parser.errors) != 1 {
 		t.Fatalf("Expected 1 error, got %#v", parser.errors)
 	}
@@ -76,19 +74,18 @@ func TestIfElse(t *testing.T) {
 
 func TestIfElseWithTypeMismatch(t *testing.T) {
 	// if false { 42 } else { false }
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: IfKeyword},
-		literal{kind: BooleanLiteral, value: "false"},
-		token{kind: LeftBrace},
-		literal{kind: NumberLiteral, value: "42"},
-		token{kind: RightBrace},
-		token{kind: ElseKeyword},
-		token{kind: LeftBrace},
-		literal{kind: BooleanLiteral, value: "false"},
-		token{kind: RightBrace},
-	}}
-	parser := MakeParser(&tokenizer)
-	parser.parseIfExpression()
+	parser := MakeParser(nil)
+	expr := IfExpression{
+		Keyword:   token{kind: IfKeyword},
+		Condition: &Literal{literal{kind: BooleanLiteral, value: "false"}},
+		Body: &Block{Statements: []Node{
+			&Literal{literal{kind: NumberLiteral, value: "42"}},
+		}},
+		Alternate: &Block{Statements: []Node{
+			&Literal{literal{kind: BooleanLiteral, value: "false"}},
+		}},
+	}
+	expr.typeCheck(parser)
 
 	if len(parser.errors) != 1 {
 		t.Fatalf("Expected 1 error, got %#v", parser.errors)
