@@ -23,6 +23,7 @@ func parseComputedAccessExpression(p *Parser, expr Expression) *ComputedAccessEx
 }
 
 func (expr *ComputedAccessExpression) typeCheck(p *Parser) {
+	expr.Expr.typeCheck(p)
 	switch t := expr.Expr.Type().(type) {
 	case Type:
 		typeCheckGenericType(p, expr)

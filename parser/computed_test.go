@@ -1,25 +1,27 @@
-package checker
+package parser
 
-import (
-	"testing"
-
-	"github.com/bmelicque/test-parser/parser"
-)
+import "testing"
 
 func TestGenericWithTypeArgs(t *testing.T) {
-	checker := MakeChecker()
-	checker.scope.Add("Generic", parser.Loc{}, Type{TypeAlias{
-		Name:   "Generic",
+	parser := MakeParser(nil)
+	parser.scope.Add("Boxed", Loc{}, Type{TypeAlias{
+		Name:   "Boxed",
 		Params: []Generic{{Name: "Type"}},
-		Ref:    Object{map[string]ExpressionType{"value": Type{Generic{Name: "Type"}}}},
+		Ref: Object{map[string]ExpressionType{
+			"value": Type{Generic{Name: "Type"}},
+		}},
 	}})
-	expr := checker.checkComputedAccessExpression(parser.ComputedAccessExpression{
-		Expr:     parser.TokenExpression{Token: testToken{parser.Name, "Generic", parser.Loc{}}},
-		Property: parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{parser.NumberKeyword, "number", parser.Loc{}}}},
-	})
+	expr := &ComputedAccessExpression{
+		Expr: &Identifier{
+			Token:  literal{kind: Name, value: "Boxed"},
+			isType: true,
+		},
+		Property: &BracketedExpression{Expr: &Literal{literal{kind: NumberKeyword}}},
+	}
+	expr.typeCheck(parser)
 
-	if len(checker.errors) != 0 {
-		t.Fatalf("Expected no errors, got %#v", checker.errors)
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 
 	typing, ok := expr.typing.(Type)
@@ -57,20 +59,20 @@ func TestGenericWithTypeArgs(t *testing.T) {
 }
 
 func TestGenericFunctionWithTypeArgs(t *testing.T) {
-	checker := MakeChecker()
-	checker.scope.Add("function", parser.Loc{}, Function{
+	parser := MakeParser(nil)
+	parser.scope.Add("function", Loc{}, Function{
 		TypeParams: []Generic{{Name: "Type"}},
-		Params:     Tuple{[]ExpressionType{Generic{Name: "Type"}}},
+		Params:     &Tuple{[]ExpressionType{Generic{Name: "Type"}}},
 		Returned:   Generic{Name: "Type"},
 	})
+	expr := &ComputedAccessExpression{
+		Expr:     &Identifier{Token: literal{kind: Name, value: "function"}},
+		Property: &BracketedExpression{Expr: &Literal{literal{kind: NumberKeyword}}},
+	}
+	expr.typeCheck(parser)
 
-	expr := checker.checkComputedAccessExpression(parser.ComputedAccessExpression{
-		Expr:     parser.TokenExpression{Token: testToken{parser.Name, "function", parser.Loc{}}},
-		Property: parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{parser.NumberKeyword, "number", parser.Loc{}}}},
-	})
-
-	if len(checker.errors) != 0 {
-		t.Fatalf("Expected no errors, got %#v", checker.errors)
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 
 	function, ok := expr.typing.(Function)
