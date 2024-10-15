@@ -116,17 +116,9 @@ func TestTraitDefinition(t *testing.T) {
 		t.Fatalf("Got %v parsing errors: %#v", len(parser.errors), parser.errors)
 	}
 
-	expr, ok := node.(*PropertyAccessExpression)
+	_, ok := node.(*TraitExpression)
 	if !ok {
 		t.Fatalf("Expected PropertyAccessExpression, got %#v", node)
-	}
-
-	if _, ok := expr.Expr.(*ParenthesizedExpression); !ok {
-		t.Fatalf("Expected ParenthesizedExpression, got %#v", expr.Expr)
-	}
-
-	if _, ok := expr.Property.(*ParenthesizedExpression); !ok {
-		t.Fatalf("Expected ParenthesizedExpression, got %#v", expr.Property)
 	}
 }
 

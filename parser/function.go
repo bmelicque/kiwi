@@ -68,8 +68,10 @@ func (f *FunctionTypeExpression) Loc() Loc {
 }
 func (f *FunctionTypeExpression) Type() ExpressionType {
 	tp := []Generic{}
-	for i, param := range f.TypeParams.Params {
-		tp[i] = Generic{Name: param.Identifier.Token.Text()}
+	if f.TypeParams != nil {
+		for _, param := range f.TypeParams.Params {
+			tp = append(tp, Generic{Name: param.Identifier.Token.Text()})
+		}
 	}
 	elements := f.Params.Expr.(*TupleExpression).Elements
 	p := Tuple{make([]ExpressionType, len(elements))}
@@ -77,7 +79,14 @@ func (f *FunctionTypeExpression) Type() ExpressionType {
 		t, _ := param.Type().(Type)
 		p.elements[i] = t.Value
 	}
-	return Type{Function{tp, &p, f.Expr.Type().(Type).Value}}
+	var ret ExpressionType = Primitive{UNKNOWN}
+	if f.Expr != nil {
+		t, ok := f.Expr.Type().(Type)
+		if ok {
+			ret = t.Value
+		}
+	}
+	return Type{Function{tp, &p, ret}}
 }
 
 func (f *FunctionTypeExpression) typeCheck(p *Parser) {

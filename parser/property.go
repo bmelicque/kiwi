@@ -35,7 +35,7 @@ func parsePropertyAccess(p *Parser, left Expression) Expression {
 	p.Consume() // .
 	if _, ok := left.(*ParenthesizedExpression); ok {
 		if p.Peek().Kind() == LeftParenthesis {
-			parseTraitExpression(p, left)
+			return parseTraitExpression(p, left)
 		}
 	}
 	prop := fallback(p)
@@ -197,7 +197,11 @@ func (t *TraitExpression) typeCheck(p *Parser) {
 }
 
 func parseTraitExpression(p *Parser, left Expression) Expression {
+	outer := p.allowCallExpr
+	p.allowCallExpr = false
 	paren := p.parseParenthesizedExpression()
+	p.allowCallExpr = outer
+
 	if paren != nil {
 		paren.Expr = makeTuple(paren.Expr)
 		validateFunctionParams(p, paren)
