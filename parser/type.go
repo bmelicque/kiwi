@@ -359,7 +359,7 @@ func (o Object) build(scope *Scope, compared ExpressionType) (ExpressionType, bo
 }
 
 type Sum struct {
-	Members map[string]*Function
+	Members map[string]Function
 }
 
 func (s Sum) Kind() ExpressionTypeKind    { return SUM }
@@ -384,7 +384,7 @@ func (s Sum) build(scope *Scope, compared ExpressionType) (ExpressionType, bool)
 		var k bool
 		// FIXME: is compared a sum type? should it work like this?
 		m, k := member.build(scope, compared)
-		s.Members[name] = m.(*Function)
+		s.Members[name] = m.(Function)
 		ok = ok && k
 	}
 	return s, ok

@@ -133,15 +133,20 @@ func makeOptionType(t ExpressionType) TypeAlias {
 	alias := TypeAlias{
 		Name:   "Option",
 		Params: []Generic{{Name: "Type", Value: t}},
-		Ref: Sum{map[string]*Function{
+		Ref: Sum{map[string]Function{
 			"Some": {
 				Params: &Tuple{[]ExpressionType{Generic{Name: "Type", Value: t}}},
 			},
 			"None": {},
 		}},
 	}
-	alias.Ref.(Sum).Members["Some"].Returned = &alias
-	alias.Ref.(Sum).Members["None"].Returned = &alias
+	some := alias.Ref.(Sum).Members["Some"]
+	some.Returned = alias
+	alias.Ref.(Sum).Members["Some"] = some
+
+	none := alias.Ref.(Sum).Members["None"]
+	none.Returned = alias
+	alias.Ref.(Sum).Members["None"] = none
 	return alias
 }
 
@@ -163,7 +168,7 @@ func makeResultType(ok ExpressionType, err ExpressionType) TypeAlias {
 			{Name: "Ok", Value: ok},
 			{Name: "Err", Value: err},
 		},
-		Ref: Sum{map[string]*Function{
+		Ref: Sum{map[string]Function{
 			"Ok": {
 				Params: &Tuple{[]ExpressionType{Generic{Name: "Ok", Value: ok}}},
 			},
@@ -172,8 +177,13 @@ func makeResultType(ok ExpressionType, err ExpressionType) TypeAlias {
 			},
 		}},
 	}
-	alias.Ref.(Sum).Members["Ok"].Returned = &alias
-	alias.Ref.(Sum).Members["Err"].Returned = &alias
+	okConst := alias.Ref.(Sum).Members["Ok"]
+	okConst.Returned = alias
+	alias.Ref.(Sum).Members["Ok"] = okConst
+
+	errConst := alias.Ref.(Sum).Members["Err"]
+	errConst.Returned = alias
+	alias.Ref.(Sum).Members["Err"] = errConst
 	return alias
 }
 

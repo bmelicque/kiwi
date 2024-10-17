@@ -21,6 +21,7 @@ func (p *PropertyAccessExpression) Loc() Loc {
 func (p *PropertyAccessExpression) Type() ExpressionType { return p.typing }
 
 func (expr *PropertyAccessExpression) typeCheck(p *Parser) {
+	expr.Expr.typeCheck(p)
 	switch expr.Expr.Type().(type) {
 	case Tuple:
 		typeCheckTupleIndexAccess(p, expr)
@@ -103,10 +104,7 @@ func getSumTypeConstructor(t Type, name string) ExpressionType {
 		return Primitive{UNKNOWN}
 	}
 
-	if constructor == nil {
-		return alias
-	}
-	return *constructor
+	return constructor
 }
 
 // check accessing an object's property or method: object.property
