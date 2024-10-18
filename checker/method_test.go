@@ -14,7 +14,7 @@ func TestMethodDeclaration(t *testing.T) {
 	}})
 	// (t Type).method :: () ->
 	checker.checkMethodDeclaration(parser.Assignment{
-		Declared: parser.PropertyAccessExpression{
+		Pattern: parser.PropertyAccessExpression{
 			Expr: parser.ParenthesizedExpression{Expr: parser.TypedExpression{
 				Expr:   parser.TokenExpression{Token: testToken{parser.Name, "t", parser.Loc{}}},
 				Typing: parser.TokenExpression{Token: testToken{parser.Name, "Type", parser.Loc{}}},
@@ -22,7 +22,7 @@ func TestMethodDeclaration(t *testing.T) {
 			Property: parser.TokenExpression{Token: testToken{parser.Name, "method", parser.Loc{}}},
 		},
 		Operator: testToken{parser.Define, "::", parser.Loc{}},
-		Initializer: parser.FunctionExpression{
+		Value: parser.FunctionExpression{
 			Params:   &parser.ParenthesizedExpression{},
 			Operator: testToken{kind: parser.FatArrow},
 			Body:     &parser.Block{},

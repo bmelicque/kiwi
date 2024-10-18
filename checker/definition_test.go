@@ -9,9 +9,9 @@ import (
 func TestObjectDeclaration(t *testing.T) {
 	checker := MakeChecker()
 	assignment := checker.checkDefinition(parser.Assignment{
-		Declared: parser.TokenExpression{Token: testToken{kind: parser.Name, value: "Type"}},
+		Pattern:  parser.TokenExpression{Token: testToken{kind: parser.Name, value: "Type"}},
 		Operator: testToken{kind: parser.Assign},
-		Initializer: parser.ParenthesizedExpression{
+		Value: parser.ParenthesizedExpression{
 			Expr: parser.TypedExpression{
 				Expr:   parser.TokenExpression{Token: testToken{kind: parser.Name, value: "n"}},
 				Typing: parser.TokenExpression{Token: testToken{kind: parser.NumberKeyword}},
@@ -49,12 +49,12 @@ func TestObjectDeclaration(t *testing.T) {
 func TestGenericObjectDefinition(t *testing.T) {
 	checker := MakeChecker()
 	checker.checkDefinition(parser.Assignment{
-		Declared: parser.ComputedAccessExpression{
+		Pattern: parser.ComputedAccessExpression{
 			Expr:     parser.TokenExpression{Token: testToken{kind: parser.Name, value: "Generic"}},
 			Property: parser.BracketedExpression{Expr: parser.TokenExpression{Token: testToken{kind: parser.Name, value: "TypeParam"}}},
 		},
 		Operator: testToken{parser.Assign, "::", parser.Loc{}},
-		Initializer: parser.ParenthesizedExpression{
+		Value: parser.ParenthesizedExpression{
 			Expr: parser.TypedExpression{
 				Expr:   parser.TokenExpression{Token: testToken{kind: parser.Name, value: "value"}},
 				Typing: parser.TokenExpression{Token: testToken{kind: parser.Name, value: "TypeParam"}},

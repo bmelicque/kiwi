@@ -11,12 +11,13 @@ func (e ParserError) Error() string {
 
 type Parser struct {
 	Tokenizer
-	errors            []ParserError
-	scope             *Scope
-	multiline         bool
-	allowEmptyExpr    bool
-	allowBraceParsing bool
-	allowCallExpr     bool
+	errors                 []ParserError
+	scope                  *Scope
+	multiline              bool
+	allowEmptyExpr         bool
+	allowBraceParsing      bool
+	allowCallExpr          bool
+	conditionalDeclaration bool
 }
 
 func (p *Parser) report(message string, loc Loc) {
@@ -67,7 +68,6 @@ func (p *Parser) ParseProgram() []Node {
 
 func (p *Parser) parseStatement() Node {
 	switch p.Peek().Kind() {
-
 	case BreakKeyword, ContinueKeyword, ReturnKeyword:
 		return p.parseExit()
 	default:

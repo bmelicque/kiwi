@@ -19,11 +19,39 @@ func TestAssignment(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected Assignment, got %#v", node)
 	}
-	if _, ok := expr.Declared.(*Identifier); !ok {
+	if _, ok := expr.Pattern.(*Identifier); !ok {
 		t.Fatalf("Expected token 'n'")
 	}
-	if _, ok := expr.Initializer.(*Literal); !ok {
+	if _, ok := expr.Value.(*Literal); !ok {
 		t.Fatalf("Expected literal 42")
+	}
+}
+
+func TestCheckAssignmentToIdentifier(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("value", Loc{}, Primitive{NUMBER})
+	assignment := &Assignment{
+		Pattern:  &Identifier{Token: literal{kind: Name, value: "value"}},
+		Value:    &Literal{literal{kind: NumberLiteral, value: "42"}},
+		Operator: token{kind: Assign},
+	}
+	assignment.typeCheck(parser)
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+}
+
+func TestCheckAssignmentToIdentifierBadType(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("value", Loc{}, Primitive{NUMBER})
+	assignment := &Assignment{
+		Pattern:  &Identifier{Token: literal{kind: Name, value: "value"}},
+		Value:    &Literal{literal{kind: StringLiteral, value: "\"Hi!\""}},
+		Operator: token{kind: Assign},
+	}
+	assignment.typeCheck(parser)
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
 	}
 }
 
@@ -44,11 +72,71 @@ func TestTupleAssignment(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected Assignment, got %#v", node)
 	}
-	if _, ok := expr.Declared.(*TupleExpression); !ok {
+	if _, ok := expr.Pattern.(*TupleExpression); !ok {
 		t.Fatalf("Expected tuple 'n, m'")
 	}
-	if _, ok := expr.Initializer.(*TupleExpression); !ok {
+	if _, ok := expr.Value.(*TupleExpression); !ok {
 		t.Fatalf("Expected tuple 'n, m'")
+	}
+}
+
+func TestCheckAssignmentToTuple(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("a", Loc{}, Primitive{NUMBER})
+	parser.scope.Add("b", Loc{}, Primitive{STRING})
+	assignment := &Assignment{
+		Pattern: &TupleExpression{Elements: []Expression{
+			&Identifier{Token: literal{kind: Name, value: "a"}},
+			&Identifier{Token: literal{kind: Name, value: "b"}},
+		}},
+		Value: &TupleExpression{Elements: []Expression{
+			&Literal{literal{kind: NumberLiteral, value: "42"}},
+			&Literal{literal{kind: StringLiteral, value: "\"Hi!\""}},
+		}},
+		Operator: token{kind: Assign},
+	}
+	assignment.typeCheck(parser)
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+}
+
+func TestCheckAssignmentToTupleBadType(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("a", Loc{}, Primitive{NUMBER})
+	parser.scope.Add("b", Loc{}, Primitive{STRING})
+	assignment := &Assignment{
+		Pattern: &TupleExpression{Elements: []Expression{
+			&Identifier{Token: literal{kind: Name, value: "a"}},
+			&Identifier{Token: literal{kind: Name, value: "b"}},
+		}},
+		Value: &TupleExpression{Elements: []Expression{
+			&Literal{literal{kind: StringLiteral, value: "\"Hi!\""}},
+			&Literal{literal{kind: NumberLiteral, value: "42"}},
+		}},
+		Operator: token{kind: Assign},
+	}
+	assignment.typeCheck(parser)
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
+	}
+}
+
+func TestCheckVariableDeclaration(t *testing.T) {
+	parser := MakeParser(nil)
+	declaration := &Assignment{
+		Pattern:  &Identifier{Token: literal{kind: Name, value: "v"}},
+		Value:    &Literal{literal{kind: NumberLiteral, value: "42"}},
+		Operator: token{kind: Declare},
+	}
+	declaration.typeCheck(parser)
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+
+	v, ok := parser.scope.Find("v")
+	if !ok || v.typing.Kind() != NUMBER {
+		t.Fatalf("Expected 'v' to have been declared as a number (got %#v)", v)
 	}
 }
 
@@ -73,10 +161,10 @@ func TestObjectDeclaration(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected Assignment, got %#v", node)
 	}
-	if _, ok := expr.Declared.(*Identifier); !ok {
+	if _, ok := expr.Pattern.(*Identifier); !ok {
 		t.Fatalf("Expected identifier 'Type'")
 	}
-	if _, ok := expr.Initializer.(*ParenthesizedExpression); !ok {
+	if _, ok := expr.Value.(*ParenthesizedExpression); !ok {
 		t.Fatalf("Expected ParenthesizedExpression")
 	}
 }
@@ -103,10 +191,10 @@ func TestMethodDeclaration(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected Assignment, got %#v", node)
 	}
-	if _, ok := expr.Declared.(*PropertyAccessExpression); !ok {
+	if _, ok := expr.Pattern.(*PropertyAccessExpression); !ok {
 		t.Fatalf("Expected method declaration")
 	}
-	if _, ok := expr.Initializer.(*FunctionTypeExpression); !ok {
-		t.Fatalf("Expected FunctionTypeExpression, got %#v", expr.Initializer)
+	if _, ok := expr.Value.(*FunctionTypeExpression); !ok {
+		t.Fatalf("Expected FunctionTypeExpression, got %#v", expr.Value)
 	}
 }

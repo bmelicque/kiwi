@@ -6,7 +6,7 @@ func (c *Checker) checkDefinition(a parser.Assignment) Node {
 	var pattern Expression
 	constant := a.Operator.Kind() == parser.Define
 
-	declared := a.Declared
+	declared := a.Pattern
 	if d, ok := declared.(parser.ParenthesizedExpression); ok {
 		declared = d.Expr
 	}
@@ -19,25 +19,25 @@ func (c *Checker) checkDefinition(a parser.Assignment) Node {
 		return c.checkMethodDeclaration(a)
 	default:
 		c.report("Invalid pattern", declared.Loc())
-		init := c.checkExpression(a.Initializer)
+		init := c.checkExpression(a.Value)
 		return VariableDeclaration{pattern, init, a.Loc(), constant}
 	}
 }
 
 func (c *Checker) checkIdentifierDefinition(a parser.Assignment) VariableDeclaration {
-	declared := a.Declared.(parser.TokenExpression)
+	declared := a.Pattern.(parser.TokenExpression)
 	identifier, ok := c.checkToken(declared, false).(Identifier)
 	if !ok {
 		c.report("Identifier expected", declared.Loc())
 		return VariableDeclaration{
 			Pattern:     identifier,
-			Initializer: c.checkExpression(a.Initializer),
+			Initializer: c.checkExpression(a.Value),
 			loc:         a.Loc(),
 			Constant:    true,
 		}
 	}
 
-	init := c.checkExpression(a.Initializer)
+	init := c.checkExpression(a.Value)
 	if identifier.isType {
 		c.declareType(identifier, init)
 	} else {
@@ -72,7 +72,7 @@ func (c *Checker) declareFunction(identifier Identifier, init Expression) {
 
 // check a generic type definition, like:  Generic[TypeParam] :: { value TypeParam }
 func (c *Checker) checkGenericTypeDefinition(a parser.Assignment) VariableDeclaration {
-	declared := a.Declared.(parser.ComputedAccessExpression)
+	declared := a.Pattern.(parser.ComputedAccessExpression)
 	identifier, ok := checkTypeIdentifier(c, declared.Expr)
 	if !ok {
 		c.report("Type identifier expected", declared.Expr.Loc())
@@ -85,7 +85,7 @@ func (c *Checker) checkGenericTypeDefinition(a parser.Assignment) VariableDeclar
 
 	c.pushScope(NewScope(ProgramScope))
 	addTypeParamsToScope(c.scope, params)
-	init := c.checkExpression(a.Initializer)
+	init := c.checkExpression(a.Value)
 	c.dropScope()
 	addGenericTypeToScope(c, identifier, params, init)
 

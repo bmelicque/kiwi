@@ -54,7 +54,7 @@ func (c *Checker) checkMethodDeclarationFunction(receiver Receiver, expr parser.
 
 // checks method declaration (r Receiver).methodName :: functionExpression
 func (c *Checker) checkMethodDeclaration(a parser.Assignment) MethodDeclaration {
-	left := a.Declared.(parser.PropertyAccessExpression)
+	left := a.Pattern.(parser.PropertyAccessExpression)
 
 	start := left.Expr.Loc().Start
 	receiver, ok := c.checkMethodDeclarationReceiver(left.Expr)
@@ -67,9 +67,9 @@ func (c *Checker) checkMethodDeclaration(a parser.Assignment) MethodDeclaration 
 		c.report("Expected method name", left.Property.Loc())
 	}
 
-	init := c.checkMethodDeclarationFunction(receiver, a.Initializer)
+	init := c.checkMethodDeclarationFunction(receiver, a.Value)
 	if _, ok := init.Type().(Function); !ok {
-		c.report("Expected function type", a.Initializer.Loc())
+		c.report("Expected function type", a.Value.Loc())
 	}
 
 	declareMethod(c, receiver, identifier, init.Type())

@@ -39,10 +39,10 @@ func (c *Checker) declareIdentifier(declared parser.Node, typing ExpressionType)
 func (c *Checker) checkVariableDeclaration(a parser.Assignment) VariableDeclaration {
 	var pattern Expression
 	var err error
-	init := c.checkExpression(a.Initializer)
+	init := c.checkExpression(a.Value)
 	constant := a.Operator.Kind() == parser.Define
 
-	declared := a.Declared
+	declared := a.Pattern
 	if d, ok := declared.(parser.ParenthesizedExpression); ok {
 		declared = d.Expr
 	}

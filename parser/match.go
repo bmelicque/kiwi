@@ -121,9 +121,8 @@ func parseMatchCase(p *Parser) MatchCase {
 func parseCaseStatement(p *Parser) Expression {
 	p.Consume()
 	pattern := p.parseExpression()
-
-	if p.Peek().Kind() != Colon {
-		recover(p, Colon)
+	if p.Peek().Kind() == Colon || recover(p, Colon) {
+		p.Consume()
 	}
 	if p.Peek().Kind() != EOL {
 		recover(p, EOL)

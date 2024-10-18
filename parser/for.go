@@ -10,11 +10,11 @@ type ForExpression struct {
 func (f *ForExpression) typeCheck(p *Parser) {
 	switch s := f.Statement.(type) {
 	case *Assignment:
-		r := getLoopRangeType(s.Initializer)
+		r := getLoopRangeType(s.Value)
 		if r == nil {
-			p.report("Range expected", s.Initializer.Loc())
+			p.report("Range expected", s.Value.Loc())
 		}
-		switch pattern := s.Declared.(type) {
+		switch pattern := s.Pattern.(type) {
 		case *Identifier:
 			p.scope.Add(pattern.Text(), pattern.Loc(), r)
 		case *TupleExpression:
@@ -62,7 +62,7 @@ func (p *Parser) parseForExpression() *ForExpression {
 func validateForCondition(p *Parser, s Node) {
 	switch s := s.(type) {
 	case *Assignment:
-		switch pattern := s.Declared.(type) {
+		switch pattern := s.Pattern.(type) {
 		case *Identifier, *TupleExpression:
 		default:
 			p.report("Invalid pattern", pattern.Loc())

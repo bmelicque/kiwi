@@ -1,55 +1,42 @@
 package parser
 
+import "fmt"
+
 type Assignment struct {
-	Declared    Expression // "value", "Type", "(value: Type).method"
-	Initializer Expression
-	Typing      Expression
-	Operator    Token // '=', ':=', '::', '+='...
+	Pattern  Expression // "value", "Type", "(value: Type).method"
+	Value    Expression
+	Operator Token // '=', ':=', '::', '+='...
 }
 
 func (a *Assignment) typeCheck(p *Parser) {
-	// TODO:
+	a.Value.typeCheck(p)
+	switch a.Operator.Kind() {
+	case Assign:
+		typeCheckAssignment(p, a)
+	case Declare:
+		typeCheckDeclaration(p, a)
+	default:
+		panic("Assignment type check should've been exhaustive!")
+	}
 }
 
 func (a *Assignment) Loc() Loc {
 	loc := a.Operator.Loc()
-	if a.Declared != nil {
-		loc.Start = a.Declared.Loc().Start
-	} else if a.Typing != nil {
-		loc.Start = a.Typing.Loc().Start
+	if a.Pattern != nil {
+		loc.Start = a.Pattern.Loc().Start
 	}
-	if a.Initializer != nil {
-		loc.End = a.Initializer.Loc().End
+	if a.Value != nil {
+		loc.End = a.Value.Loc().End
 	}
 	return loc
 }
 
-type VariableDeclaration struct {
-	Pattern     Expression
-	Initializer Expression
-	loc         Loc
-	Constant    bool
-}
-
-func (v *VariableDeclaration) typeCheck(p *Parser) {
-	//TODO:
-}
-func (v *VariableDeclaration) Loc() Loc { return v.loc }
-
 func (p *Parser) parseAssignment() Node {
 	expr := p.parseExpression()
 
-	var typing Expression
 	var operator Token
 	next := p.Peek()
 	switch next.Kind() {
-	case Colon:
-		p.Consume()
-		typing = ParseExpression(p)
-		operator = p.Consume()
-		if operator.Kind() != Assign {
-			p.report("'=' expected", operator.Loc())
-		}
 	case Declare,
 		Define,
 		Assign:
@@ -57,6 +44,57 @@ func (p *Parser) parseAssignment() Node {
 	default:
 		return expr
 	}
-	init := ParseExpression(p)
-	return &Assignment{expr, init, typing, operator}
+	init := p.parseExpression()
+	return &Assignment{expr, init, operator}
+}
+
+// type check assignment where operator is '='
+func typeCheckAssignment(p *Parser, a *Assignment) {
+	a.Pattern.typeCheck(p)
+
+	switch pattern := a.Pattern.(type) {
+	case *Identifier:
+		if pattern.typing.Extends(a.Value.Type()) {
+			return
+		}
+		p.report(
+			fmt.Sprintf(
+				"Cannot assign value to '%v' (types don't match)",
+				pattern.Text(),
+			),
+			pattern.Loc(),
+		)
+	case *TupleExpression:
+		for _, element := range pattern.Elements {
+			if _, ok := element.(*Identifier); !ok {
+				p.report("Expected identifier", element.Loc())
+			}
+		}
+		if !pattern.typing.Extends(a.Value.Type()) {
+			p.report("Type doesn't match assignee's type", pattern.Loc())
+		}
+	default:
+		p.report("Invalid pattern for assignment", a.Pattern.Loc())
+	}
+}
+
+// type check assignment where operator is ':='
+func typeCheckDeclaration(p *Parser, a *Assignment) {
+	switch pattern := a.Pattern.(type) {
+	case *Identifier:
+		name := pattern.Text()
+		if name == "" || name == "_" {
+			return
+		}
+		p.scope.Add(name, pattern.Loc(), a.Value.Type())
+	case *TupleExpression:
+		// TODO: validate pattern declaration
+	case *CallExpression:
+		if !p.conditionalDeclaration {
+			p.report("Invalid pattern", a.Pattern.Loc())
+			return
+		}
+	default:
+		p.report("Invalid pattern", a.Pattern.Loc())
+	}
 }
