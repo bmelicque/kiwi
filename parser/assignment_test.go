@@ -140,6 +140,71 @@ func TestCheckVariableDeclaration(t *testing.T) {
 	}
 }
 
+func TestCheckTupleDeclaration(t *testing.T) {
+	parser := MakeParser(nil)
+	declaration := &Assignment{
+		Pattern: &TupleExpression{Elements: []Expression{
+			&Identifier{Token: literal{kind: Name, value: "a"}},
+			&Identifier{Token: literal{kind: Name, value: "b"}},
+		}},
+		Value: &TupleExpression{Elements: []Expression{
+			&Literal{literal{kind: NumberLiteral, value: "42"}},
+			&Literal{literal{kind: StringLiteral, value: "\"Hi!\""}},
+		}},
+		Operator: token{kind: Declare},
+	}
+	declaration.typeCheck(parser)
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+
+	a, ok := parser.scope.Find("a")
+	if !ok || a.typing.Kind() != NUMBER {
+		t.Fatalf("Expected 'a' to have been declared as a number (got %#v)", a)
+	}
+
+	b, ok := parser.scope.Find("b")
+	if !ok || b.typing.Kind() != STRING {
+		t.Fatalf("Expected 'b' to have been declared as a string (got %#v)", b)
+	}
+}
+
+func TestCheckTupleDeclarationBadInit(t *testing.T) {
+	parser := MakeParser(nil)
+	declaration := &Assignment{
+		Pattern: &TupleExpression{Elements: []Expression{
+			&Identifier{Token: literal{kind: Name, value: "a"}},
+			&Identifier{Token: literal{kind: Name, value: "b"}},
+		}},
+		Value:    &Literal{literal{kind: NumberLiteral, value: "42"}},
+		Operator: token{kind: Declare},
+	}
+	declaration.typeCheck(parser)
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
+	}
+}
+
+func TestCheckTupleDeclarationTooMany(t *testing.T) {
+	parser := MakeParser(nil)
+	declaration := &Assignment{
+		Pattern: &TupleExpression{Elements: []Expression{
+			&Identifier{Token: literal{kind: Name, value: "a"}},
+			&Identifier{Token: literal{kind: Name, value: "b"}},
+			&Identifier{Token: literal{kind: Name, value: "c"}},
+		}},
+		Value: &TupleExpression{Elements: []Expression{
+			&Literal{literal{kind: NumberLiteral, value: "42"}},
+			&Literal{literal{kind: StringLiteral, value: "\"Hi!\""}},
+		}},
+		Operator: token{kind: Declare},
+	}
+	declaration.typeCheck(parser)
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
+	}
+}
+
 func TestObjectDeclaration(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
 		literal{kind: Name, value: "Type"},

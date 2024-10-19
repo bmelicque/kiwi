@@ -80,15 +80,12 @@ func typeCheckAssignment(p *Parser, a *Assignment) {
 
 // type check assignment where operator is ':='
 func typeCheckDeclaration(p *Parser, a *Assignment) {
+	a.Value.typeCheck(p)
 	switch pattern := a.Pattern.(type) {
 	case *Identifier:
-		name := pattern.Text()
-		if name == "" || name == "_" {
-			return
-		}
-		p.scope.Add(name, pattern.Loc(), a.Value.Type())
+		declareIdentifier(p, pattern, a.Value.Type())
 	case *TupleExpression:
-		// TODO: validate pattern declaration
+		declareTuple(p, pattern, a.Value.Type())
 	case *CallExpression:
 		if !p.conditionalDeclaration {
 			p.report("Invalid pattern", a.Pattern.Loc())
@@ -96,5 +93,39 @@ func typeCheckDeclaration(p *Parser, a *Assignment) {
 		}
 	default:
 		p.report("Invalid pattern", a.Pattern.Loc())
+	}
+}
+
+func declareIdentifier(p *Parser, identifier *Identifier, typing ExpressionType) {
+	name := identifier.Text()
+	if name == "" || name == "_" {
+		return
+	}
+	p.scope.Add(name, identifier.Loc(), typing)
+}
+
+func declareTuple(p *Parser, pattern *TupleExpression, typing ExpressionType) {
+	tuple, ok := typing.(Tuple)
+	if !ok {
+		p.report(
+			"Initializer type doesn't match pattern (expected tuple)",
+			pattern.Loc(),
+		)
+		return
+	}
+	l := len(pattern.Elements)
+	if l > len(tuple.elements) {
+		start := pattern.Elements[len(tuple.elements)-1].Loc().Start
+		end := pattern.Elements[l-1].Loc().End
+		p.report("Too many elements", Loc{start, end})
+		l = len(tuple.elements)
+	}
+	for i := 0; i < l; i++ {
+		identifier, ok := pattern.Elements[i].(*Identifier)
+		if !ok {
+			p.report("Identifier expected", pattern.Elements[i].Loc())
+			continue
+		}
+		declareIdentifier(p, identifier, tuple.elements[i])
 	}
 }
