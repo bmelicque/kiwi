@@ -15,6 +15,8 @@ func (a *Assignment) typeCheck(p *Parser) {
 		typeCheckAssignment(p, a)
 	case Declare:
 		typeCheckDeclaration(p, a)
+	case Define:
+		typeCheckDefinition(p, a)
 	default:
 		panic("Assignment type check should've been exhaustive!")
 	}
@@ -127,5 +129,33 @@ func declareTuple(p *Parser, pattern *TupleExpression, typing ExpressionType) {
 			continue
 		}
 		declareIdentifier(p, identifier, tuple.elements[i])
+	}
+}
+
+func typeCheckDefinition(p *Parser, a *Assignment) {
+	a.Value.typeCheck(p)
+	switch pattern := a.Pattern.(type) {
+	case *Identifier:
+		ok := true
+		if !pattern.isType {
+			p.report("Type identifier expected", pattern.Loc())
+			ok = false
+		}
+		if a.Value != nil && a.Value.Type().Kind() != TYPE {
+			p.report("Type expected", a.Value.Loc())
+			ok = false
+		}
+		if !ok {
+			return
+		}
+		t := Type{TypeAlias{
+			Name: pattern.Text(),
+			Ref:  a.Value.Type().(Type).Value,
+		}}
+		declareIdentifier(p, pattern, t)
+	default:
+		// TODO: generic type
+		// TODO: functions
+		p.report("Invalid pattern", pattern.Loc())
 	}
 }

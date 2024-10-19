@@ -205,7 +205,7 @@ func TestCheckTupleDeclarationTooMany(t *testing.T) {
 	}
 }
 
-func TestObjectDeclaration(t *testing.T) {
+func TestObjectTypeDefinition(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
 		literal{kind: Name, value: "Type"},
 		token{kind: Define},
@@ -232,6 +232,44 @@ func TestObjectDeclaration(t *testing.T) {
 	if _, ok := expr.Value.(*ParenthesizedExpression); !ok {
 		t.Fatalf("Expected ParenthesizedExpression")
 	}
+}
+
+func TestCheckObjectTypeDefinition(t *testing.T) {
+	parser := MakeParser(nil)
+	declaration := &Assignment{
+		Pattern: &Identifier{
+			Token:  literal{kind: Name, value: "Type"},
+			isType: true,
+		},
+		Value: &ParenthesizedExpression{Expr: &Param{
+			Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
+			Complement: &Literal{token{kind: NumberKeyword}},
+		}},
+		Operator: token{kind: Define},
+	}
+	declaration.typeCheck(parser)
+
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+
+	ty, ok := parser.scope.Find("Type")
+	if !ok {
+		t.Fatal("Expected 'Type' to have been added to scope")
+	}
+	typing, ok := ty.typing.(Type)
+	if !ok {
+		t.Fatal("Expected type 'Type'")
+	}
+	alias, ok := typing.Value.(TypeAlias)
+	if !ok {
+		t.Fatal("Expected an alias")
+	}
+	object, ok := alias.Ref.(Object)
+	if !ok {
+		t.Fatal("Expected an object")
+	}
+	_ = object
 }
 
 func TestMethodDeclaration(t *testing.T) {

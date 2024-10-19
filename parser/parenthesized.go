@@ -14,6 +14,21 @@ func (p *ParenthesizedExpression) Type() ExpressionType {
 	if p.Expr == nil {
 		return Primitive{NIL}
 	}
+	if param, ok := p.Expr.(*Param); ok {
+		o := Object{map[string]ExpressionType{}}
+		name := param.Identifier.Text()
+		if name == "" {
+			return Primitive{NIL}
+		}
+		t := param.Complement.Type()
+		if v, ok := t.(Type); ok {
+			t = v.Value
+		} else {
+			t = Primitive{NIL}
+		}
+		o.Members[name] = t
+		return Type{o}
+	}
 	return p.Expr.Type()
 }
 

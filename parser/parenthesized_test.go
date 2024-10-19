@@ -49,6 +49,29 @@ func TestObjectDescriptionSingleLine(t *testing.T) {
 	}
 }
 
+func TestCheckObjectDescriptionSingleLine(t *testing.T) {
+	parser := MakeParser(nil)
+	expr := &ParenthesizedExpression{Expr: &Param{
+		Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
+		Complement: &Literal{token{kind: NumberKeyword}},
+	}}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+
+	typing, ok := expr.Type().(Type)
+	if !ok {
+		t.Fatalf("Expected type 'Type', got %#v", expr.Type())
+	}
+	object, ok := typing.Value.(Object)
+	if !ok {
+		t.Fatal("Expected an object")
+	}
+	_ = object
+}
+
 func TestObjectDescription(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
 		token{kind: LeftParenthesis},
