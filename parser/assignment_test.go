@@ -237,10 +237,7 @@ func TestObjectTypeDefinition(t *testing.T) {
 func TestCheckObjectTypeDefinition(t *testing.T) {
 	parser := MakeParser(nil)
 	declaration := &Assignment{
-		Pattern: &Identifier{
-			Token:  literal{kind: Name, value: "Type"},
-			isType: true,
-		},
+		Pattern: &Identifier{Token: literal{kind: Name, value: "Type"}},
 		Value: &ParenthesizedExpression{Expr: &Param{
 			Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
 			Complement: &Literal{token{kind: NumberKeyword}},
@@ -315,10 +312,7 @@ func TestCheckMethodDeclaration(t *testing.T) {
 		Pattern: &PropertyAccessExpression{
 			Expr: &ParenthesizedExpression{Expr: &Param{
 				Identifier: &Identifier{Token: literal{kind: Name, value: "t"}},
-				Complement: &Identifier{
-					Token:  literal{kind: Name, value: "Type"},
-					isType: true,
-				},
+				Complement: &Identifier{Token: literal{kind: Name, value: "Type"}},
 			}},
 			Property: &Identifier{Token: literal{kind: Name, value: "method"}},
 		},

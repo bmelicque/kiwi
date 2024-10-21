@@ -17,7 +17,7 @@ func validateTraitPattern(p *Parser, pattern Expression, trait Trait) {
 		return
 	}
 	callee, ok := call.Callee.(*Identifier)
-	if !ok || !callee.isType {
+	if !ok || !callee.IsType() {
 		p.report("Type identifier expected", call.Callee.Loc())
 		return
 	}

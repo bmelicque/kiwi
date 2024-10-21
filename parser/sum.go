@@ -105,9 +105,9 @@ func parseSumTypeConstructorName(p *Parser) *Identifier {
 		return nil
 	}
 	identifier, ok := token.(*Identifier)
-	if !ok || !identifier.isType {
+	if !ok || !identifier.IsType() {
 		p.report("Type identifier expected for type constructor", token.Loc())
-		return &Identifier{Token: token.(Token), isType: true}
+		return &Identifier{Token: token.(Token)}
 	}
 	return identifier
 }

@@ -33,7 +33,10 @@ func (l *Literal) Type() ExpressionType {
 type Identifier struct {
 	Token
 	typing ExpressionType
-	isType bool
+}
+
+func (i *Identifier) IsType() bool {
+	return unicode.IsUpper(rune(i.Token.Text()[0]))
 }
 
 func (i *Identifier) typeCheck(p *Parser) {
@@ -41,6 +44,8 @@ func (i *Identifier) typeCheck(p *Parser) {
 	if variable, ok := p.scope.Find(name); ok {
 		p.scope.ReadAt(name, i.Loc())
 		i.typing = variable.typing
+	} else {
+		i.typing = Primitive{UNKNOWN}
 	}
 }
 
@@ -54,8 +59,7 @@ func (p *Parser) parseToken() Expression {
 		return &Literal{token}
 	case Name:
 		p.Consume()
-		isType := unicode.IsUpper(rune(token.Text()[0]))
-		return &Identifier{Token: token, isType: isType}
+		return &Identifier{Token: token}
 	}
 	if !p.allowEmptyExpr {
 		p.report("Expression expected", token.Loc())
