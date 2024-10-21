@@ -3,25 +3,24 @@ package emitter
 import (
 	"testing"
 
-	"github.com/bmelicque/test-parser/checker"
 	"github.com/bmelicque/test-parser/parser"
 )
 
 func TestIfStatement(t *testing.T) {
 	emitter := makeEmitter()
-	emitter.emit(checker.ExpressionStatement{Expr: checker.If{
-		Condition: checker.Literal{TokenExpression: parser.TokenExpression{
+	emitter.emit(&parser.IfExpression{
+		Condition: &parser.Literal{
 			Token: testToken{kind: parser.BooleanLiteral, value: "false"},
-		}},
-		Block: checker.Block{Statements: []checker.Node{}},
-		Alternate: checker.If{
-			Condition: checker.Literal{TokenExpression: parser.TokenExpression{
-				Token: testToken{kind: parser.BooleanLiteral, value: "false"},
-			}},
-			Block:     checker.Block{Statements: []checker.Node{}},
-			Alternate: checker.Block{},
 		},
-	}})
+		Body: &parser.Block{Statements: []parser.Node{}},
+		Alternate: &parser.IfExpression{
+			Condition: &parser.Literal{
+				Token: testToken{kind: parser.BooleanLiteral, value: "false"},
+			},
+			Body:      &parser.Block{Statements: []parser.Node{}},
+			Alternate: &parser.Block{},
+		},
+	})
 
 	text := emitter.string()
 	expected := "if (false) {} else if (false) {} else {}"

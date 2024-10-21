@@ -1,15 +1,14 @@
 package emitter
 
 import (
-	"github.com/bmelicque/test-parser/checker"
 	"github.com/bmelicque/test-parser/parser"
 )
 
-func Precedence(expr checker.Expression) uint8 {
+func Precedence(expr parser.Expression) uint8 {
 	switch expr := expr.(type) {
-	case checker.TupleExpression:
+	case *parser.TupleExpression:
 		return 1
-	case checker.BinaryExpression:
+	case *parser.BinaryExpression:
 		switch expr.Operator.Kind() {
 		case parser.LogicalOr:
 			return 4
@@ -26,9 +25,9 @@ func Precedence(expr checker.Expression) uint8 {
 		case parser.Pow:
 			return 14
 		}
-	case checker.CallExpression, checker.PropertyAccessExpression:
+	case *parser.CallExpression, *parser.PropertyAccessExpression:
 		return 18
-	case checker.Identifier, checker.Literal, checker.ParenthesizedExpression:
+	case *parser.Identifier, *parser.Literal, *parser.ParenthesizedExpression:
 		return 20
 	}
 	return 0

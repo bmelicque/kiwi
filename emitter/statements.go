@@ -4,20 +4,42 @@ import (
 	"fmt"
 	"unicode"
 
-	"github.com/bmelicque/test-parser/checker"
 	"github.com/bmelicque/test-parser/parser"
 )
 
 const maxClassParamsLength = 66
 
-func (e *Emitter) emitAssignment(a checker.Assignment) {
-	e.emit(a.Pattern)
-	e.write(" = ")
-	e.emit(a.Value)
-	e.write(";\n")
+func (e *Emitter) emitAssignment(a *parser.Assignment) {
+	switch a.Operator.Kind() {
+	case parser.Assign:
+		e.emit(a.Pattern)
+		e.write(" = ")
+		e.emit(a.Value)
+		e.write(";\n")
+	case parser.Declare:
+		e.write("let ")
+		e.emit(a.Pattern)
+		e.write(" = ")
+		e.emit(a.Value)
+		e.write(";\n")
+	case parser.Define:
+		if isTypePattern(a.Pattern) {
+			e.emitTypeDeclaration(a)
+			return
+		}
+		if _, ok := a.Pattern.(*parser.PropertyAccessExpression); ok {
+			e.emitMethodDeclaration(a)
+			return
+		}
+
+		e.write("const ")
+		e.emit(a.Pattern)
+		e.write(" = ")
+		e.emit(a.Value)
+	}
 }
 
-func (e *Emitter) emitBlock(b checker.Block) {
+func (e *Emitter) emitBlock(b *parser.Block) {
 	e.write("{")
 	if len(b.Statements) == 0 {
 		e.write("}")
@@ -36,63 +58,48 @@ func (e *Emitter) emitBlock(b checker.Block) {
 	}
 }
 
-func (e *Emitter) emitExpressionStatement(s checker.ExpressionStatement) {
-	switch expr := s.Expr.(type) {
-	case checker.If:
-		e.emitIfStatement(expr)
-	default:
-		e.emit(s.Expr)
-		e.write(";\n")
+func (e *Emitter) emitFor(f *parser.ForExpression) {
+	a, ok := f.Statement.(*parser.Assignment)
+	if !ok {
+		e.write("while (")
+		e.emit(f.Statement)
+		e.write(") ")
+		e.emitBlock(f.Body)
 	}
-}
 
-func (e *Emitter) emitFor(f checker.For) {
-	e.write("while (")
-	e.emit(f.Condition)
-	e.write(") ")
-	e.emitBlock(f.Body)
-}
-
-func (e *Emitter) emitForRange(f checker.ForRange) {
-	e.write("for (")
-	if f.Declaration.Constant {
-		e.write("const")
-	} else {
-		e.write("let")
-	}
-	e.write(" ")
+	e.write("for (let ")
 	// FIXME: tuples...
-	e.emit(f.Declaration.Pattern)
+	e.emit(a.Pattern)
 	e.write(" of ")
-	e.emit(f.Declaration.Range)
+	e.emit(a.Value)
 	e.write(") ")
 	e.emitBlock(f.Body)
 }
 
-func (e *Emitter) emitIfStatement(i checker.If) {
+func (e *Emitter) emitIfStatement(i *parser.IfExpression) {
 	e.write("if (")
 	e.emit(i.Condition)
 	e.write(") ")
-	e.emitBlock(i.Block)
+	e.emitBlock(i.Body)
 	if i.Alternate == nil {
 		return
 	}
 	e.write(" else ")
 	switch alternate := i.Alternate.(type) {
-	case checker.Block:
+	case *parser.Block:
 		e.emitBlock(alternate)
-	case checker.If:
+	case *parser.IfExpression:
 		e.emitIfStatement(alternate)
 	}
 }
 
-func (e *Emitter) emitMatchStatement(m checker.MatchExpression) {
+func (e *Emitter) emitMatchStatement(m parser.MatchExpression) {
 	// TODO: break outer loop
 	// TODO: declare _m only if calling something
 	e.write("const _m = ")
 	e.emit(m.Value)
 	e.write(";\n")
-	if m.Value.Type().Kind() == checker.SUM {
+	if m.Value.Type().Kind() == parser.SUM {
 		e.write("switch (_m._tag) {\n")
 	} else {
 		e.write("switch (_m.constructor) {\n")
@@ -101,14 +108,20 @@ func (e *Emitter) emitMatchStatement(m checker.MatchExpression) {
 		e.indent()
 		if c.IsCatchall() {
 			e.write("default:")
-		} else {
-			e.write(fmt.Sprintf("case %v: {\n", c.Typing.Text()))
+		} else if call, ok := c.Pattern.(*parser.CallExpression); ok {
+			e.write("case ")
+			e.emit(call.Callee)
+			e.write(": {\n")
+		} else if id, ok := c.Pattern.(*parser.Identifier); ok {
+			e.write("case ")
+			e.emit(id)
+			e.write(": {\n")
 		}
 		e.depth++
 		if c.Pattern != nil {
-			id := c.Pattern.(checker.Identifier)
+			id := c.Pattern.(*parser.Identifier)
 			e.indent()
-			if m.Value.Type().Kind() == checker.SUM {
+			if m.Value.Type().Kind() == parser.SUM {
 				e.write(fmt.Sprintf("let %v = _m._value;\n", id.Text()))
 			} else {
 				e.write(fmt.Sprintf("let %v = _m;\n", id.Text()))
@@ -128,23 +141,34 @@ func (e *Emitter) emitMatchStatement(m checker.MatchExpression) {
 	e.write("}\n")
 }
 
-func (e *Emitter) emitMethodDeclaration(method checker.MethodDeclaration) {
-	e.emit(method.Receiver.Typing)
+func (e *Emitter) emitMethodDeclaration(a *parser.Assignment) {
+	pattern := a.Pattern.(*parser.PropertyAccessExpression)
+	receiver := pattern.Expr.(*parser.ParenthesizedExpression).Expr.(*parser.Param)
+
+	e.emit(receiver.Complement)
 	e.write(".prototype.")
-	e.emit(method.Name)
+	e.emit(pattern.Property)
 	e.write(" = function ")
 
-	e.thisName = method.Receiver.Name.Text()
+	e.thisName = receiver.Identifier.Text()
 	defer func() { e.thisName = "" }()
 
-	init := method.Initializer.(checker.FunctionExpression)
-	e.emitParams(init.Params)
-	e.write(" ")
+	init := a.Value.(*parser.FunctionExpression)
+	e.write("(")
+	params := init.Params.Expr.(*parser.TupleExpression).Elements
+	max := len(params)
+	for i := range params[:max] {
+		param := params[i].(*parser.Param)
+		e.emit(param.Identifier)
+		e.write(", ")
+	}
+	e.emit(params[max].(*parser.Param).Identifier)
+	e.write(") ")
 	e.emitBlock(init.Body)
 	e.write("\n")
 }
 
-func (e *Emitter) emitExit(r checker.Exit) {
+func (e *Emitter) emitExit(r *parser.Exit) {
 	switch r.Operator.Kind() {
 	case parser.ReturnKeyword:
 		e.write("return")
@@ -160,10 +184,10 @@ func (e *Emitter) emitExit(r checker.Exit) {
 	e.write(";\n")
 }
 
-func (e *Emitter) getClassParamNames(expr checker.Expression) []string {
-	params, ok := expr.(checker.TupleExpression)
+func (e *Emitter) getClassParamNames(expr parser.Expression) []string {
+	params, ok := expr.(*parser.TupleExpression)
 	if !ok {
-		param := expr.(checker.Param)
+		param := expr.(*parser.Param)
 		return []string{getSanitizedName(param.Identifier.Text())}
 
 	}
@@ -171,7 +195,7 @@ func (e *Emitter) getClassParamNames(expr checker.Expression) []string {
 	names := make([]string, len(params.Elements))
 	length := 0
 	for i, member := range params.Elements {
-		param := member.(checker.Param)
+		param := member.(*parser.Param)
 		name := getSanitizedName(param.Identifier.Text())
 		names[i] = name
 		length += len(name) + 2
@@ -195,12 +219,12 @@ func (e *Emitter) getClassParamNames(expr checker.Expression) []string {
 	}
 	return names
 }
-func (e *Emitter) emitTypeDeclaration(declaration checker.VariableDeclaration) {
-	init := declaration.Initializer.Type().(checker.Type).Value.Kind()
+func (e *Emitter) emitTypeDeclaration(declaration *parser.Assignment) {
+	init := declaration.Value.Type().(parser.Type).Value.Kind()
 	switch init {
-	case checker.TRAIT:
+	case parser.TRAIT:
 		return
-	case checker.SUM:
+	case parser.SUM:
 		e.addFlag(SumFlag)
 		e.write("class ")
 		e.write(getTypeIdentifier(declaration.Pattern))
@@ -211,7 +235,7 @@ func (e *Emitter) emitTypeDeclaration(declaration checker.VariableDeclaration) {
 		e.write(getTypeIdentifier(declaration.Pattern))
 		e.write(" {\n    constructor(")
 		defer e.write("    }\n}\n")
-		object := declaration.Initializer.(checker.ParenthesizedExpression)
+		object := declaration.Value.(*parser.ParenthesizedExpression)
 		names := e.getClassParamNames(object.Expr)
 		e.write(") {\n")
 		for _, name := range names {
@@ -219,44 +243,23 @@ func (e *Emitter) emitTypeDeclaration(declaration checker.VariableDeclaration) {
 		}
 	}
 }
-func (e *Emitter) emitVariableDeclaration(declaration checker.VariableDeclaration) {
-	if isTypePattern(declaration.Pattern) {
-		e.emitTypeDeclaration(declaration)
-		return
-	}
 
-	if declaration.Constant {
-		e.write("const ")
-	} else {
-		e.write("let ")
-	}
-
-	e.emit(declaration.Pattern)
-	e.write(" = ")
-	e.emit(declaration.Initializer)
-	switch declaration.Initializer.(type) {
-	case checker.FunctionExpression:
-	default:
-		e.write(";\n")
-	}
-}
-
-func isTypePattern(expr checker.Expression) bool {
-	c, ok := expr.(checker.ComputedAccessExpression)
+func isTypePattern(expr parser.Expression) bool {
+	c, ok := expr.(*parser.ComputedAccessExpression)
 	if ok {
 		expr = c
 	}
-	identifier, ok := expr.(checker.Identifier)
+	identifier, ok := expr.(*parser.Identifier)
 	if !ok {
 		return false
 	}
 	return unicode.IsUpper(rune(identifier.Token.Text()[0]))
 }
-func getTypeIdentifier(expr checker.Node) string {
-	c, ok := expr.(checker.ComputedAccessExpression)
+func getTypeIdentifier(expr parser.Node) string {
+	c, ok := expr.(*parser.ComputedAccessExpression)
 	if ok {
 		expr = c
 	}
-	identifier := expr.(checker.Identifier)
+	identifier := expr.(*parser.Identifier)
 	return identifier.Text()
 }
