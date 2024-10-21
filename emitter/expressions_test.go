@@ -46,7 +46,7 @@ func TestBlockExpression(t *testing.T) {
 
 func TestIfExpression(t *testing.T) {
 	emitter := makeEmitter()
-	emitter.emit(&parser.IfExpression{
+	emitter.emitExpression(&parser.IfExpression{
 		Condition: &parser.Literal{
 			Token: testToken{kind: parser.BooleanLiteral, value: "false"},
 		},

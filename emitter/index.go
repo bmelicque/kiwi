@@ -81,38 +81,44 @@ func (e *Emitter) emit(node parser.Node) {
 	case *parser.ForExpression:
 		e.emitFor(node)
 	case *parser.IfExpression:
-		e.emitIfExpression(node)
+		e.emitIfStatement(node)
 	case *parser.MatchExpression:
 		e.emitMatchStatement(*node)
 	case *parser.Exit:
 		e.emitExit(node)
-
-	// Expressions
-	case *parser.BinaryExpression:
-		e.emitBinaryExpression(node)
-	case *parser.CallExpression:
-		e.emitCallExpression(node)
-	case *parser.ComputedAccessExpression:
-		e.emitComputedAccessExpression(node)
-	case *parser.FunctionExpression:
-		e.emitFunctionExpression(node)
-	case *parser.Identifier:
-		e.emitIdentifier(node)
-	case *parser.Literal:
-		e.write(node.Token.Text())
-	case *parser.ParenthesizedExpression:
-		e.write("(")
-		e.emit(node.Expr)
-		e.write(")")
-	case *parser.PropertyAccessExpression:
-		e.emitPropertyAccessExpression(node)
-	case *parser.RangeExpression:
-		e.emitRangeExpression(node)
-	case *parser.TupleExpression:
-		e.emitTupleExpression(node)
-
+	case parser.Expression:
+		e.emitExpression(node)
 	default:
 		panic(fmt.Sprintf("Cannot emit type '%v' (not implemented yet)", reflect.TypeOf(node)))
+	}
+}
+
+func (e *Emitter) emitExpression(expr parser.Expression) {
+	switch expr := expr.(type) {
+	case *parser.BinaryExpression:
+		e.emitBinaryExpression(expr)
+	case *parser.CallExpression:
+		e.emitCallExpression(expr)
+	case *parser.ComputedAccessExpression:
+		e.emitComputedAccessExpression(expr)
+	case *parser.FunctionExpression:
+		e.emitFunctionExpression(expr)
+	case *parser.Identifier:
+		e.emitIdentifier(expr)
+	case *parser.IfExpression:
+		e.emitIfExpression(expr)
+	case *parser.Literal:
+		e.write(expr.Token.Text())
+	case *parser.ParenthesizedExpression:
+		e.write("(")
+		e.emit(expr.Expr)
+		e.write(")")
+	case *parser.PropertyAccessExpression:
+		e.emitPropertyAccessExpression(expr)
+	case *parser.RangeExpression:
+		e.emitRangeExpression(expr)
+	case *parser.TupleExpression:
+		e.emitTupleExpression(expr)
 	}
 }
 
