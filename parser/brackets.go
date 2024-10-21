@@ -1,36 +1,33 @@
 package parser
 
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
-
 // Expression between brackets, such as `[Type]`
 type BracketedExpression struct {
-	Expr Node
-	loc  tokenizer.Loc
+	Expr Expression
+	loc  Loc
 }
 
-func (b BracketedExpression) Loc() tokenizer.Loc { return b.loc }
-func (p *Parser) parseBracketedExpression() BracketedExpression {
-	if p.tokenizer.Peek().Kind() != tokenizer.LBRACKET {
+func (b BracketedExpression) Loc() Loc             { return b.loc }
+func (b BracketedExpression) Type() ExpressionType { return nil }
+func (p *Parser) parseBracketedExpression() *BracketedExpression {
+	if p.Peek().Kind() != LeftBracket {
 		panic("'[' expected!")
 	}
-	loc := p.tokenizer.Consume().Loc()
+	loc := p.Consume().Loc()
 
 	outer := p.allowEmptyExpr
 	p.allowEmptyExpr = true
 	expr := ParseExpression(p)
 	p.allowEmptyExpr = outer
 
-	next := p.tokenizer.Peek()
-	if next.Kind() != tokenizer.RBRACKET {
+	next := p.Peek()
+	if next.Kind() != RightBracket {
 		p.report("']' expected", next.Loc())
 		if expr != nil {
 			loc.End = expr.Loc().End
 		}
 	} else {
-		loc.End = p.tokenizer.Consume().Loc().End
+		loc.End = p.Consume().Loc().End
 	}
 
-	return BracketedExpression{expr, loc}
+	return &BracketedExpression{expr, loc}
 }

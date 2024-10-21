@@ -1,31 +1,55 @@
 package parser
 
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
-
+// An expression grouped between parentheses
 type ParenthesizedExpression struct {
-	Expr Node
-	loc  tokenizer.Loc
+	Expr Expression
+	loc  Loc
 }
 
-func (p ParenthesizedExpression) Loc() tokenizer.Loc {
+func (p *ParenthesizedExpression) Loc() Loc {
 	return p.loc
 }
-func (p ParenthesizedExpression) Unwrap() Node {
-	if expr, ok := p.Expr.(ParenthesizedExpression); ok {
+
+func (p *ParenthesizedExpression) Type() ExpressionType {
+	if p.Expr == nil {
+		return Primitive{NIL}
+	}
+	if param, ok := p.Expr.(*Param); ok {
+		o := Object{map[string]ExpressionType{}}
+		name := param.Identifier.Text()
+		if name == "" {
+			return Primitive{NIL}
+		}
+		t := param.Complement.Type()
+		if v, ok := t.(Type); ok {
+			t = v.Value
+		} else {
+			t = Primitive{NIL}
+		}
+		o.Members[name] = t
+		return Type{o}
+	}
+	return p.Expr.Type()
+}
+
+func (expr *ParenthesizedExpression) typeCheck(p *Parser) {
+	expr.Expr.typeCheck(p)
+}
+
+func (p ParenthesizedExpression) Unwrap() Expression {
+	if expr, ok := p.Expr.(*ParenthesizedExpression); ok {
 		return expr.Unwrap()
 	}
 	return p.Expr
 }
 
-func (p *Parser) parseParenthesizedExpression() ParenthesizedExpression {
-	loc := p.tokenizer.Consume().Loc() // LPAREN
-	p.tokenizer.DiscardLineBreaks()
-	next := p.tokenizer.Peek()
-	if next.Kind() == tokenizer.RPAREN {
-		loc.End = p.tokenizer.Consume().Loc().End
-		return ParenthesizedExpression{nil, loc}
+func (p *Parser) parseParenthesizedExpression() *ParenthesizedExpression {
+	loc := p.Consume().Loc() // LPAREN
+	p.DiscardLineBreaks()
+	next := p.Peek()
+	if next.Kind() == RightParenthesis {
+		loc.End = p.Consume().Loc().End
+		return &ParenthesizedExpression{nil, loc}
 	}
 
 	outerBrace := p.allowBraceParsing
@@ -36,19 +60,19 @@ func (p *Parser) parseParenthesizedExpression() ParenthesizedExpression {
 	p.allowBraceParsing = outerBrace
 	p.multiline = outerMultiline
 
-	p.tokenizer.DiscardLineBreaks()
-	next = p.tokenizer.Peek()
-	if next.Kind() != tokenizer.RPAREN {
+	p.DiscardLineBreaks()
+	next = p.Peek()
+	if next.Kind() != RightParenthesis {
 		p.report("')' expected", next.Loc())
 	}
-	loc.End = p.tokenizer.Consume().Loc().End
-	return ParenthesizedExpression{expr, loc}
+	loc.End = p.Consume().Loc().End
+	return &ParenthesizedExpression{expr, loc}
 }
 
 // unwrap parenthesized expressions
-func Unwrap(node Node) Node {
-	if paren, ok := node.(ParenthesizedExpression); ok {
+func Unwrap(expr Expression) Expression {
+	if paren, ok := expr.(*ParenthesizedExpression); ok {
 		return paren.Unwrap()
 	}
-	return node
+	return expr
 }

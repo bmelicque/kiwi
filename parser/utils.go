@@ -3,33 +3,63 @@ package parser
 import (
 	"fmt"
 	"slices"
-	"unicode"
-
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
-func recover(p *Parser, at tokenizer.TokenKind) bool {
-	next := p.tokenizer.Peek()
+func recover(p *Parser, at TokenKind) bool {
+	next := p.Peek()
 	start := next.Loc().Start
 	end := start
-	recovery := []tokenizer.TokenKind{at, tokenizer.EOL, tokenizer.EOF}
-	for ; slices.Contains(recovery, next.Kind()); next = p.tokenizer.Peek() {
-		end = p.tokenizer.Consume().Loc().End
+	recovery := []TokenKind{at, EOL, EOF}
+	for ; slices.Contains(recovery, next.Kind()); next = p.Peek() {
+		end = p.Consume().Loc().End
 	}
 	// FIXME: token text
-	p.report(fmt.Sprintf("'%v' expected", at), tokenizer.Loc{Start: start, End: end})
-	return next.Kind() == tokenizer.LBRACE
+	p.report(fmt.Sprintf("'%v' expected", at), Loc{Start: start, End: end})
+	return next.Kind() == LeftBrace
 }
 
-func IsTypeToken(expr Node) bool {
-	token, ok := expr.(TokenExpression)
-	if !ok {
-		return false
+func (p *Parser) addTypeArgsToScope(args *TupleExpression, params []Generic) {
+	var l int
+	if args != nil {
+		l = len(args.Elements)
 	}
 
-	if token.Token.Kind() != tokenizer.IDENTIFIER {
-		return false
+	if l > len(params) {
+		loc := args.Elements[len(params)].Loc()
+		loc.End = args.Elements[len(args.Elements)-1].Loc().End
+		p.report("Too many type arguments", loc)
 	}
 
-	return unicode.IsUpper(rune(token.Token.Text()[0]))
+	for i, param := range params {
+		var loc Loc
+		var t ExpressionType
+		if i < l {
+			arg := args.Elements[i]
+			loc = arg.Loc()
+			typing, ok := arg.Type().(Type)
+			if ok {
+				t = typing.Value
+			} else {
+				p.report("Typing expected", arg.Loc())
+			}
+		}
+		if t != nil && param.Value != nil && !param.Value.Extends(t) {
+			p.report("Type doesn't match", args.Elements[i].Loc())
+		} else {
+			params[i].Value = t
+		}
+		p.scope.Add(param.Name, loc, Type{Generic{Name: param.Name, Value: t}})
+		v, _ := p.scope.Find(param.Name)
+		v.readAt(loc)
+	}
+}
+
+func addTypeParamsToScope(scope *Scope, params Params) {
+	for _, param := range params.Params {
+		if param.Complement == nil {
+			name := param.Identifier.Text()
+			t := Type{TypeAlias{Name: name, Ref: Generic{Name: name}}}
+			scope.Add(name, param.Loc(), t)
+		}
+	}
 }

@@ -2,57 +2,16 @@ package parser
 
 import (
 	"slices"
-
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
-// Expr[Property]
-type ComputedAccessExpression struct {
-	Expr     Node
-	Property BracketedExpression
-}
+var operators = []TokenKind{LeftBracket, LeftParenthesis, Dot, LeftBrace}
 
-func (c ComputedAccessExpression) Loc() tokenizer.Loc {
-	return tokenizer.Loc{
-		Start: c.Expr.Loc().Start,
-		End:   c.Property.loc.End,
-	}
-}
-
-// Callee(...Args)
-type CallExpression struct {
-	Callee Node
-	Args   ParenthesizedExpression
-}
-
-func (c CallExpression) Loc() tokenizer.Loc {
-	return tokenizer.Loc{
-		Start: c.Callee.Loc().Start,
-		End:   c.Args.loc.End,
-	}
-}
-
-// Expr.Property
-type PropertyAccessExpression struct {
-	Expr     Node
-	Property Node
-}
-
-func (p PropertyAccessExpression) Loc() tokenizer.Loc {
-	return tokenizer.Loc{
-		Start: p.Expr.Loc().Start,
-		End:   p.Property.Loc().End,
-	}
-}
-
-var operators = []tokenizer.TokenKind{tokenizer.LBRACKET, tokenizer.LPAREN, tokenizer.DOT, tokenizer.LBRACE}
-
-func (p *Parser) parseAccessExpression() Node {
+func (p *Parser) parseAccessExpression() Expression {
 	expression := fallback(p)
-	for slices.Contains(operators, p.tokenizer.Peek().Kind()) {
-		next := p.tokenizer.Peek().Kind()
-		isForbidden := next == tokenizer.LBRACE && !p.allowBraceParsing ||
-			next == tokenizer.LPAREN && !p.allowCallExpr
+	for slices.Contains(operators, p.Peek().Kind()) {
+		next := p.Peek().Kind()
+		isForbidden := next == LeftBrace && !p.allowBraceParsing ||
+			next == LeftParenthesis && !p.allowCallExpr
 		if isForbidden {
 			return expression
 		}
@@ -61,23 +20,15 @@ func (p *Parser) parseAccessExpression() Node {
 	return expression
 }
 
-func parseOneAccess(p *Parser, expr Node) Node {
-	next := p.tokenizer.Peek()
+func parseOneAccess(p *Parser, expr Expression) Expression {
+	next := p.Peek()
 	switch next.Kind() {
-	case tokenizer.LBRACKET:
-		return ComputedAccessExpression{expr, p.parseBracketedExpression()}
-	case tokenizer.LPAREN:
-		return CallExpression{expr, p.parseParenthesizedExpression()}
-	case tokenizer.DOT:
-		p.tokenizer.Consume()
-		tmp := p.allowCallExpr
-		p.allowCallExpr = false
-		property := fallback(p)
-		p.allowCallExpr = tmp
-		return PropertyAccessExpression{
-			Expr:     expr,
-			Property: property,
-		}
+	case LeftBracket:
+		return parseComputedAccessExpression(p, expr)
+	case LeftParenthesis:
+		return parseCallExpression(p, expr)
+	case Dot:
+		return parsePropertyAccess(p, expr)
 	default:
 		panic("switch should've been exhaustive!")
 	}

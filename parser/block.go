@@ -1,37 +1,94 @@
 package parser
 
 import (
-	"github.com/bmelicque/test-parser/tokenizer"
+	"slices"
 )
 
 type Block struct {
 	Statements []Node
-	loc        tokenizer.Loc
+	loc        Loc
 }
 
-func (b Block) Loc() tokenizer.Loc { return b.loc }
+func (b *Block) typeCheck(p *Parser) {
+	for i := range b.Statements {
+		b.Statements[i].typeCheck(p)
+	}
+	if len(b.Statements) == 0 {
+		return
+	}
+	expr, ok := b.Statements[len(b.Statements)-1].(Expression)
+	if !ok {
+		return
+	}
+	if expr.Type().Kind() == TYPE {
+		p.report("Blocks shouldn't return types", b.reportLoc())
+	}
+}
+
+func (b *Block) Loc() Loc { return b.loc }
+func (b *Block) reportLoc() Loc {
+	if len(b.Statements) > 0 {
+		return b.Statements[len(b.Statements)-1].Loc()
+	} else {
+		return b.loc
+	}
+}
+func (b *Block) Type() ExpressionType {
+	if len(b.Statements) == 0 {
+		return Primitive{NIL}
+	}
+	last := b.Statements[len(b.Statements)-1]
+	expr, ok := last.(Expression)
+	if !ok {
+		return Primitive{NIL}
+	}
+	return expr.Type()
+}
 
 func (p *Parser) parseBlock() *Block {
-	block := Block{}
-
-	token := p.tokenizer.Consume()
-	block.loc.Start = token.Loc().Start
-	if token.Kind() != tokenizer.LBRACE {
-		p.report("'{' expected", token.Loc())
-	}
-	p.tokenizer.DiscardLineBreaks()
-
-	block.Statements = []Node{}
-	for p.tokenizer.Peek().Kind() != tokenizer.RBRACE && p.tokenizer.Peek().Kind() != tokenizer.EOF {
-		block.Statements = append(block.Statements, p.parseStatement())
-		p.tokenizer.DiscardLineBreaks()
+	if p.Peek().Kind() != LeftBrace {
+		p.report("'{' expected", p.Peek().Loc())
+		return nil
 	}
 
-	token = p.tokenizer.Consume()
-	block.loc.End = token.Loc().End
-	if token.Kind() != tokenizer.RBRACE {
-		p.report("'}' expected", token.Loc())
-	}
+	start := p.Consume().Loc().Start // '{'
+	p.DiscardLineBreaks()
 
-	return &block
+	statements := []Node{}
+	stopAt := []TokenKind{RightBrace, EOL, EOF}
+	for p.Peek().Kind() != RightBrace && p.Peek().Kind() != EOF {
+		statements = append(statements, p.parseStatement())
+		if !slices.Contains(stopAt, p.Peek().Kind()) {
+			recover(p, RightBrace)
+		}
+		p.DiscardLineBreaks()
+	}
+	reportUnreachableCode(p, statements)
+
+	if p.Peek().Kind() != RightBrace {
+		p.report("'}' expected", p.Peek().Loc())
+	}
+	end := p.Consume().Loc().End
+
+	return &Block{statements, Loc{start, end}}
+}
+
+func reportUnreachableCode(p *Parser, statements []Node) {
+	var foundExit, foundUnreachable bool
+	var unreachable Loc
+	for _, statement := range statements {
+		if foundExit {
+			foundUnreachable = true
+			if unreachable.Start == (Position{}) {
+				unreachable.Start = statement.Loc().Start
+			}
+			unreachable.End = statement.Loc().End
+		}
+		if _, ok := statement.(*Exit); ok {
+			foundExit = true
+		}
+	}
+	if foundUnreachable {
+		p.report("Detected unreachable code", unreachable)
+	}
 }

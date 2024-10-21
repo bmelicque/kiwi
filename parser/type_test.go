@@ -1,15 +1,13 @@
-package checker
+package parser
 
 import (
 	"reflect"
 	"testing"
-
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 func TestBuildGeneric(t *testing.T) {
 	scope := NewScope(ProgramScope)
-	scope.Add("Type", tokenizer.Loc{}, Type{Generic{}})
+	scope.Add("Type", Loc{}, Type{Generic{}})
 	typing := List{Generic{Name: "Type"}}
 
 	compared := List{Primitive{NUMBER}}

@@ -1,114 +1,112 @@
 package parser
 
-import (
-	"testing"
-
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "testing"
 
 func TestComputedPropertyAccess(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.IDENTIFIER, "n", tokenizer.Loc{}},
-		testToken{tokenizer.LBRACKET, "[", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "p", tokenizer.Loc{}},
-		testToken{tokenizer.RBRACKET, "]", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		literal{kind: Name, value: "n"},
+		token{kind: LeftBracket},
+		literal{kind: Name, value: "p"},
+		token{kind: RightBracket},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAccessExpression()
 
-	expr, ok := node.(ComputedAccessExpression)
+	expr, ok := node.(*ComputedAccessExpression)
 	if !ok {
 		t.Fatalf("Expected ComputedAccessExpression, got %#v", node)
 	}
-	if _, ok := expr.Expr.(TokenExpression); !ok {
+	if _, ok := expr.Expr.(*Identifier); !ok {
 		t.Fatalf("Expected token 'n'")
 	}
-	if _, ok := expr.Property.Expr.(TokenExpression); !ok {
+	if _, ok := expr.Property.Expr.(*Identifier); !ok {
 		t.Fatalf("Expected token 'p'")
 	}
 }
 
 func TestPropertyAccess(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.IDENTIFIER, "n", tokenizer.Loc{}},
-		testToken{tokenizer.DOT, ".", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "p", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		literal{kind: Name, value: "n"},
+		token{kind: Dot},
+		literal{kind: Name, value: "p"},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAccessExpression()
 
-	expr, ok := node.(PropertyAccessExpression)
+	expr, ok := node.(*PropertyAccessExpression)
 	if !ok {
 		t.Fatalf("Expected PropertyAccessExpression, got %#v", node)
 	}
-	if _, ok := expr.Expr.(TokenExpression); !ok {
+	if _, ok := expr.Expr.(*Identifier); !ok {
 		t.Fatalf("Expected token 'n'")
 	}
-	if _, ok := expr.Property.(TokenExpression); !ok {
+	if _, ok := expr.Property.(*Identifier); !ok {
 		t.Fatalf("Expected token 'p'")
 	}
 }
 
 func TestTupleAccess(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.IDENTIFIER, value: "tuple"},
-		testToken{kind: tokenizer.DOT},
-		testToken{kind: tokenizer.NUMBER, value: "0"},
+	tokenizer := testTokenizer{tokens: []Token{
+		literal{kind: Name, value: "tuple"},
+		token{kind: Dot},
+		literal{kind: NumberLiteral, value: "0"},
 	}}
 	parser := MakeParser(&tokenizer)
+	parser.scope.Add("tuple", Loc{}, Tuple{[]ExpressionType{Primitive{NUMBER}}})
 	node := parser.parseAccessExpression()
 
-	expr, ok := node.(PropertyAccessExpression)
+	expr, ok := node.(*PropertyAccessExpression)
 	if !ok {
 		t.Fatalf("Expected PropertyAccessExpression, got %#v", node)
 	}
-	if _, ok := expr.Expr.(TokenExpression); !ok {
+	if _, ok := expr.Expr.(*Identifier); !ok {
 		t.Fatalf("Expected token 'n'")
 	}
-	if _, ok := expr.Property.(TokenExpression); !ok {
-		t.Fatalf("Expected token 'p'")
+	if _, ok := expr.Property.(*Literal); !ok {
+		t.Fatalf("Expected literal 0")
 	}
 }
 
 func TestMethodAccess(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.LPAREN, "(", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "t", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "Type", tokenizer.Loc{}},
-		testToken{tokenizer.RPAREN, ")", tokenizer.Loc{}},
-		testToken{tokenizer.DOT, ".", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "method", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LeftParenthesis},
+		literal{kind: Name, value: "t"},
+		literal{kind: Name, value: "Type"},
+		token{kind: RightParenthesis},
+		token{kind: Dot},
+		literal{kind: Name, value: "method"},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAccessExpression()
 
-	expr, ok := node.(PropertyAccessExpression)
+	expr, ok := node.(*PropertyAccessExpression)
 	if !ok {
 		t.Fatalf("Expected PropertyAccessExpression, got %#v", node)
 	}
 
-	if _, ok := expr.Expr.(ParenthesizedExpression); !ok {
+	if _, ok := expr.Expr.(*ParenthesizedExpression); !ok {
 		t.Fatalf("Expected ParenthesizedExpression on LHS, got %#v", expr.Expr)
 	}
 
-	if _, ok := expr.Property.(TokenExpression); !ok {
+	if _, ok := expr.Property.(*Identifier); !ok {
 		t.Fatalf("Expected token 'method'")
 	}
 }
 
 func TestTraitDefinition(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.LPAREN},
-		testToken{kind: tokenizer.IDENTIFIER, value: "Self"},
-		testToken{kind: tokenizer.RPAREN},
-		testToken{kind: tokenizer.DOT},
-		testToken{kind: tokenizer.LPAREN},
-		testToken{kind: tokenizer.IDENTIFIER, value: "method"},
-		testToken{kind: tokenizer.LPAREN},
-		testToken{kind: tokenizer.RPAREN},
-		testToken{kind: tokenizer.SLIM_ARR},
-		testToken{kind: tokenizer.IDENTIFIER, value: "Self"},
-		testToken{kind: tokenizer.RPAREN},
+	// (Self).(method() -> Self)
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LeftParenthesis},
+		literal{kind: Name, value: "Self"},
+		token{kind: RightParenthesis},
+		token{kind: Dot},
+		token{kind: LeftParenthesis},
+		literal{kind: Name, value: "method"},
+		token{kind: LeftParenthesis},
+		token{kind: RightParenthesis},
+		token{kind: SlimArrow},
+		literal{kind: Name, value: "Self"},
+		token{kind: RightParenthesis},
 	}}
 
 	parser := MakeParser(&tokenizer)
@@ -118,78 +116,70 @@ func TestTraitDefinition(t *testing.T) {
 		t.Fatalf("Got %v parsing errors: %#v", len(parser.errors), parser.errors)
 	}
 
-	expr, ok := node.(PropertyAccessExpression)
+	_, ok := node.(*TraitExpression)
 	if !ok {
 		t.Fatalf("Expected PropertyAccessExpression, got %#v", node)
-	}
-
-	if _, ok := expr.Expr.(ParenthesizedExpression); !ok {
-		t.Fatalf("Expected ParenthesizedExpression, got %#v", expr.Expr)
-	}
-
-	if _, ok := expr.Property.(ParenthesizedExpression); !ok {
-		t.Fatalf("Expected ParenthesizedExpression, got %#v", expr.Property)
 	}
 }
 
 func TestFunctionCall(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.IDENTIFIER, "f", tokenizer.Loc{}},
-		testToken{tokenizer.LPAREN, "(", tokenizer.Loc{}},
-		testToken{tokenizer.NUMBER, "42", tokenizer.Loc{}},
-		testToken{tokenizer.RPAREN, ")", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		literal{kind: Name, value: "f"},
+		token{kind: LeftParenthesis},
+		literal{kind: NumberLiteral, value: "42"},
+		token{kind: RightParenthesis},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAccessExpression()
 
-	expr, ok := node.(CallExpression)
+	expr, ok := node.(*CallExpression)
 	if !ok {
 		t.Fatalf("Expected CallExpression, got %#v", node)
 	}
-	if _, ok := expr.Callee.(TokenExpression); !ok {
+	if _, ok := expr.Callee.(*Identifier); !ok {
 		t.Fatalf("Expected token 'f'")
 	}
 }
 
 func TestFunctionCallWithTypeArgs(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{tokenizer.IDENTIFIER, "f", tokenizer.Loc{}},
-		testToken{tokenizer.LBRACKET, "[", tokenizer.Loc{}},
-		testToken{tokenizer.IDENTIFIER, "number", tokenizer.Loc{}},
-		testToken{tokenizer.RBRACKET, "]", tokenizer.Loc{}},
-		testToken{tokenizer.LPAREN, "(", tokenizer.Loc{}},
-		testToken{tokenizer.NUMBER, "42", tokenizer.Loc{}},
-		testToken{tokenizer.RPAREN, ")", tokenizer.Loc{}},
+	tokenizer := testTokenizer{tokens: []Token{
+		literal{kind: Name, value: "f"},
+		token{kind: LeftBracket},
+		token{kind: NumberKeyword},
+		token{kind: RightBracket},
+		token{kind: LeftParenthesis},
+		literal{kind: NumberLiteral, value: "42"},
+		token{kind: RightParenthesis},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAccessExpression()
 
-	expr, ok := node.(CallExpression)
+	expr, ok := node.(*CallExpression)
 	if !ok {
 		t.Fatalf("Expected CallExpression, got %#v", node)
 	}
 
-	if _, ok := expr.Callee.(ComputedAccessExpression); !ok {
+	if _, ok := expr.Callee.(*ComputedAccessExpression); !ok {
 		t.Fatalf("Expected callee f[number], got %#v", node)
 
 	}
 }
 
 func TestObjectExpression(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.IDENTIFIER, value: "Type"},
-		testToken{kind: tokenizer.LPAREN},
-		testToken{kind: tokenizer.IDENTIFIER, value: "value"},
-		testToken{kind: tokenizer.COLON},
-		testToken{kind: tokenizer.NUMBER, value: "42"},
-		testToken{kind: tokenizer.RPAREN},
+	tokenizer := testTokenizer{tokens: []Token{
+		literal{kind: Name, value: "Type"},
+		token{kind: LeftParenthesis},
+		literal{kind: Name, value: "value"},
+		token{kind: Colon},
+		literal{kind: NumberLiteral, value: "42"},
+		token{kind: RightParenthesis},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := ParseExpression(parser)
 
-	_, ok := node.(CallExpression)
+	_, ok := node.(*CallExpression)
 	if !ok {
-		t.Fatalf("Expected ObjectExpression, got %#v", node)
+		t.Fatalf("Expected CallExpression, got %#v", node)
 	}
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
@@ -197,15 +187,15 @@ func TestObjectExpression(t *testing.T) {
 }
 
 func TestListInstanciation(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.LBRACKET},
-		testToken{kind: tokenizer.RBRACKET},
-		testToken{kind: tokenizer.NUM_KW},
-		testToken{kind: tokenizer.LPAREN},
-		testToken{kind: tokenizer.NUMBER, value: "1"},
-		testToken{kind: tokenizer.COMMA},
-		testToken{kind: tokenizer.NUMBER, value: "2"},
-		testToken{kind: tokenizer.RPAREN},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LeftBracket},
+		token{kind: RightBracket},
+		token{kind: NumberKeyword},
+		token{kind: LeftParenthesis},
+		literal{kind: NumberLiteral, value: "1"},
+		token{kind: Comma},
+		literal{kind: NumberLiteral, value: "2"},
+		token{kind: RightParenthesis},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := ParseExpression(parser)
@@ -214,12 +204,12 @@ func TestListInstanciation(t *testing.T) {
 		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
 	}
 
-	object, ok := node.(CallExpression)
+	object, ok := node.(*CallExpression)
 	if !ok {
 		t.Fatalf("Expected ObjectExpression, got %#v", node)
 	}
 
-	_, ok = object.Callee.(ListTypeExpression)
+	_, ok = object.Callee.(*ListTypeExpression)
 	if !ok {
 		t.Fatalf("Expected a list type, got %#v", object.Callee)
 	}

@@ -1,18 +1,18 @@
 package emitter
 
-import "github.com/bmelicque/test-parser/checker"
+import "github.com/bmelicque/test-parser/parser"
 
 type hoistedBlock struct {
-	block           *checker.Block
+	block           *parser.Block
 	label           string
-	parentStatement *checker.Node
+	parentStatement *parser.Node
 }
 
 type blockHoister struct {
 	blocks []hoistedBlock
 }
 
-func (b blockHoister) findStatementBlocks(statement *checker.Node) []hoistedBlock {
+func (b blockHoister) findStatementBlocks(statement *parser.Node) []hoistedBlock {
 	blocks := []hoistedBlock{}
 	for _, h := range b.blocks {
 		if h.parentStatement == statement {
@@ -22,7 +22,7 @@ func (b blockHoister) findStatementBlocks(statement *checker.Node) []hoistedBloc
 	return blocks
 }
 
-func (b blockHoister) findBlockLabel(block *checker.Block) (string, bool) {
+func (b blockHoister) findBlockLabel(block *parser.Block) (string, bool) {
 	for _, h := range b.blocks {
 		if h.block == block {
 			return h.label, true
@@ -32,71 +32,67 @@ func (b blockHoister) findBlockLabel(block *checker.Block) (string, bool) {
 }
 
 // doesn't look for nested blocks
-func findBlocks(node checker.Node, blocks *[]checker.Block) {
+func findBlocks(node parser.Node, blocks *[]*parser.Block) {
 	if node == nil {
 		return
 	}
 	switch node := node.(type) {
-	case checker.Assignment:
+	case *parser.Assignment:
 		findBlocks(node.Value, blocks)
-	case checker.BinaryExpression:
+	case *parser.BinaryExpression:
 		findBlocks(node.Left, blocks)
 		findBlocks(node.Right, blocks)
-	case checker.Block:
+	case *parser.Block:
 		*blocks = append(*blocks, node)
-	case checker.CallExpression:
+	case *parser.CallExpression:
 		findBlocks(node.Callee, blocks)
-		for _, arg := range node.Args.Params {
+		for _, arg := range node.Args.Expr.(*parser.TupleExpression).Elements {
 			findBlocks(arg, blocks)
 		}
-	case checker.ComputedAccessExpression:
+	case *parser.ComputedAccessExpression:
 		findBlocks(node.Expr, blocks)
-		findBlocks(node.Property, blocks)
-	case checker.Exit:
+		findBlocks(node.Property.Expr, blocks)
+	case *parser.Exit:
 		findBlocks(node.Value, blocks)
-	case checker.ExpressionStatement:
-		findBlocks(node.Expr, blocks)
-	case checker.If:
-		*blocks = append(*blocks, node.Block)
+	case *parser.IfExpression:
+		*blocks = append(*blocks, node.Body)
 		findBlocks(node.Alternate, blocks)
-	case checker.MatchExpression:
+	case *parser.MatchExpression:
 		for _, c := range node.Cases {
 			for _, s := range c.Statements {
 				findBlocks(s, blocks)
 			}
 		}
-	case checker.ParenthesizedExpression:
+	case *parser.ParenthesizedExpression:
 		findBlocks(node.Expr, blocks)
-	case checker.PropertyAccessExpression:
+	case *parser.PropertyAccessExpression:
 		findBlocks(node.Expr, blocks)
-	case checker.RangeExpression:
+	case *parser.RangeExpression:
 		findBlocks(node.Left, blocks)
 		findBlocks(node.Right, blocks)
-	case checker.TupleExpression:
+	case *parser.TupleExpression:
 		for _, e := range node.Elements {
 			findBlocks(e, blocks)
 		}
-	case checker.VariableDeclaration:
-		findBlocks(node.Initializer, blocks)
 	}
 }
 
 // Check if a statement triggers a block hoisting.
 // Sub-blocks are added to the hoisted list
 // Return true if the statement needs hoisting
-func findHoisted(statement checker.Node, hoisted *[]hoistedBlock) bool {
+func findHoisted(statement parser.Node, hoisted *[]hoistedBlock) bool {
 	var trig bool
-	switch statement.(type) {
+	switch s := statement.(type) {
 	case
-		checker.Exit,
-		checker.For,
-		checker.ForRange,
-		checker.MethodDeclaration,
-		checker.VariableDeclaration:
+		*parser.Exit,
+		*parser.ForExpression:
 		trig = true
+	case *parser.Assignment:
+		o := s.Operator.Kind()
+		trig = o == parser.Declare || o == parser.Define
 	}
 
-	blocks := []checker.Block{}
+	blocks := []*parser.Block{}
 	findBlocks(statement, &blocks)
 	for _, block := range blocks {
 		var ok bool
@@ -105,7 +101,7 @@ func findHoisted(statement checker.Node, hoisted *[]hoistedBlock) bool {
 		}
 		if ok {
 			el := hoistedBlock{
-				block:           &block,
+				block:           block,
 				label:           "", // TODO: id_generator
 				parentStatement: &statement,
 			}

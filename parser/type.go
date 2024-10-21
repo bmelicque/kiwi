@@ -1,8 +1,4 @@
-package checker
-
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+package parser
 
 type ExpressionTypeKind int
 
@@ -34,6 +30,13 @@ type ExpressionType interface {
 	Match(ExpressionType) bool
 	Extends(ExpressionType) bool
 	build(*Scope, ExpressionType) (ExpressionType, bool)
+}
+
+func Match(a ExpressionType, b ExpressionType) bool {
+	if a == nil || b == nil {
+		return true
+	}
+	return a.Extends(b) && b.Extends(a)
 }
 
 type Type struct {
@@ -113,7 +116,7 @@ func (ta TypeAlias) build(scope *Scope, compared ExpressionType) (ExpressionType
 	s := NewScope(ProgramScope)
 	s.outer = scope
 	for _, param := range ta.Params {
-		s.Add(param.Name, tokenizer.Loc{}, param)
+		s.Add(param.Name, Loc{}, param)
 	}
 	var ref ExpressionType
 	if c, ok := compared.(TypeAlias); ok {
@@ -254,8 +257,15 @@ func (r Range) build(scope *Scope, compared ExpressionType) (ExpressionType, boo
 
 type Function struct {
 	TypeParams []Generic
-	Params     Tuple
+	Params     *Tuple
 	Returned   ExpressionType
+}
+
+func (f Function) arity() int {
+	if f.Params == nil {
+		return 0
+	}
+	return len(f.Params.elements)
 }
 
 func (f Function) Kind() ExpressionTypeKind    { return FUNCTION }
@@ -265,8 +275,11 @@ func (f Function) Extends(t ExpressionType) bool {
 	if !ok {
 		return false
 	}
-	if len(f.Params.elements) != len(function.Params.elements) {
+	if f.arity() != function.arity() {
 		return false
+	}
+	if f.arity() == 0 {
+		return true
 	}
 	for i, param := range f.Params.elements {
 		if !param.Extends(function.Params.elements[i]) {
@@ -284,10 +297,10 @@ func (f Function) build(scope *Scope, compared ExpressionType) (ExpressionType, 
 	s := NewScope(ProgramScope)
 	s.outer = scope
 	for _, param := range f.TypeParams {
-		s.Add(param.Name, tokenizer.Loc{}, param)
+		s.Add(param.Name, Loc{}, param)
 	}
 	c, k := compared.(Function)
-	f.Params = Tuple{make([]ExpressionType, len(f.Params.elements))}
+	f.Params = &Tuple{make([]ExpressionType, len(f.Params.elements))}
 	for i, param := range f.Params.elements {
 		var el ExpressionType
 		if len(c.Params.elements) > i {
@@ -346,7 +359,7 @@ func (o Object) build(scope *Scope, compared ExpressionType) (ExpressionType, bo
 }
 
 type Sum struct {
-	Members map[string]ExpressionType
+	Members map[string]Function
 }
 
 func (s Sum) Kind() ExpressionTypeKind    { return SUM }
@@ -370,7 +383,8 @@ func (s Sum) build(scope *Scope, compared ExpressionType) (ExpressionType, bool)
 	for name, member := range s.Members {
 		var k bool
 		// FIXME: is compared a sum type? should it work like this?
-		s.Members[name], k = member.build(scope, compared)
+		m, k := member.build(scope, compared)
+		s.Members[name] = m.(Function)
 		ok = ok && k
 	}
 	return s, ok
@@ -438,7 +452,7 @@ func (g Generic) build(scope *Scope, compared ExpressionType) (ExpressionType, b
 	if !ok {
 		return Primitive{UNKNOWN}, false
 	}
-	variable.readAt(tokenizer.Loc{})
+	variable.readAt(Loc{})
 	ok = isGenericType(variable.typing)
 	if !ok {
 		return variable.typing, true

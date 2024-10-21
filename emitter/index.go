@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/bmelicque/test-parser/checker"
+	"github.com/bmelicque/test-parser/parser"
 )
 
 type EmitterFlag int
@@ -21,7 +21,7 @@ type Emitter struct {
 	flags        EmitterFlag
 	builder      strings.Builder
 	thisName     string
-	constructors map[string]map[string]checker.Expression
+	constructors map[string]map[string]parser.Expression
 	blockHoister
 }
 
@@ -30,7 +30,7 @@ func makeEmitter() *Emitter {
 		depth:        0,
 		flags:        NoFlags,
 		builder:      strings.Builder{},
-		constructors: map[string]map[string]checker.Expression{},
+		constructors: map[string]map[string]parser.Expression{},
 		blockHoister: blockHoister{[]hoistedBlock{}},
 	}
 }
@@ -57,73 +57,72 @@ func (e Emitter) string() string {
 	return e.builder.String()
 }
 
-func (e *Emitter) emit(node checker.Node) {
+// FIXME: emit vs. emitExpression
+func (e *Emitter) emit(node parser.Node) {
 	if blocks := e.blockHoister.findStatementBlocks(&node); len(blocks) > 0 {
 		for _, block := range blocks {
 			e.write(fmt.Sprintf("let %v;\n", block.label))
 			e.indent()
-			e.emitBlock(*block.block)
+			e.emitBlock(block.block)
 			e.indent()
 		}
 	}
 	switch node := node.(type) {
 	// Statements
-	case checker.Assignment:
+	case *parser.Assignment:
 		e.emitAssignment(node)
-	case checker.Block:
-		label, ok := e.findBlockLabel(&node)
+	case *parser.Block:
+		label, ok := e.findBlockLabel(node)
 		if !ok {
 			e.emitBlockExpression(node)
 		} else {
 			e.write(label)
 		}
-	case checker.ExpressionStatement:
-		e.emitExpressionStatement(node)
-	case checker.For:
+	case *parser.ForExpression:
 		e.emitFor(node)
-	case checker.ForRange:
-		e.emitForRange(node)
-	case checker.If:
-		e.emitIfExpression(node)
-	case checker.MatchExpression:
-		e.emitMatchStatement(node)
-	case checker.MethodDeclaration:
-		e.emitMethodDeclaration(node)
-	case checker.Exit:
+	case *parser.IfExpression:
+		e.emitIfStatement(node)
+	case *parser.MatchExpression:
+		e.emitMatchStatement(*node)
+	case *parser.Exit:
 		e.emitExit(node)
-	case checker.VariableDeclaration:
-		e.emitVariableDeclaration(node)
-
-	// Expressions
-	case checker.BinaryExpression:
-		e.emitBinaryExpression(node)
-	case checker.CallExpression:
-		e.emitCallExpression(node)
-	case checker.ComputedAccessExpression:
-		e.emitComputedAccessExpression(node)
-	case checker.FunctionExpression:
-		e.emitFatArrowFunction(node)
-	case checker.Identifier:
-		e.emitIdentifier(node)
-	case checker.Literal:
-		e.write(node.Token.Text())
-	case checker.ParenthesizedExpression:
-		e.write("(")
-		e.emit(node.Expr)
-		e.write(")")
-	case checker.PropertyAccessExpression:
-		e.emitPropertyAccessExpression(node)
-	case checker.RangeExpression:
-		e.emitRangeExpression(node)
-	case checker.TupleExpression:
-		e.emitTupleExpression(node)
-
+	case parser.Expression:
+		e.emitExpression(node)
 	default:
 		panic(fmt.Sprintf("Cannot emit type '%v' (not implemented yet)", reflect.TypeOf(node)))
 	}
 }
 
-func EmitProgram(nodes []checker.Node) string {
+func (e *Emitter) emitExpression(expr parser.Expression) {
+	switch expr := expr.(type) {
+	case *parser.BinaryExpression:
+		e.emitBinaryExpression(expr)
+	case *parser.CallExpression:
+		e.emitCallExpression(expr)
+	case *parser.ComputedAccessExpression:
+		e.emitComputedAccessExpression(expr)
+	case *parser.FunctionExpression:
+		e.emitFunctionExpression(expr)
+	case *parser.Identifier:
+		e.emitIdentifier(expr)
+	case *parser.IfExpression:
+		e.emitIfExpression(expr)
+	case *parser.Literal:
+		e.write(expr.Token.Text())
+	case *parser.ParenthesizedExpression:
+		e.write("(")
+		e.emit(expr.Expr)
+		e.write(")")
+	case *parser.PropertyAccessExpression:
+		e.emitPropertyAccessExpression(expr)
+	case *parser.RangeExpression:
+		e.emitRangeExpression(expr)
+	case *parser.TupleExpression:
+		e.emitTupleExpression(expr)
+	}
+}
+
+func EmitProgram(nodes []parser.Node) string {
 	e := makeEmitter()
 	for _, node := range nodes {
 		findHoisted(node, &e.blockHoister.blocks)

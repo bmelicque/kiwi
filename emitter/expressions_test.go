@@ -3,14 +3,12 @@ package emitter
 import (
 	"testing"
 
-	"github.com/bmelicque/test-parser/checker"
 	"github.com/bmelicque/test-parser/parser"
-	"github.com/bmelicque/test-parser/tokenizer"
 )
 
 func TestEmptyBlockExpression(t *testing.T) {
 	emitter := makeEmitter()
-	emitter.emit(checker.Block{})
+	emitter.emit(&parser.Block{})
 
 	text := emitter.string()
 	expected := "undefined"
@@ -21,10 +19,8 @@ func TestEmptyBlockExpression(t *testing.T) {
 
 func TestSingleLineBlockExpression(t *testing.T) {
 	emitter := makeEmitter()
-	emitter.emit(checker.Block{Statements: []checker.Node{
-		checker.Literal{TokenExpression: parser.TokenExpression{
-			Token: testToken{kind: tokenizer.NUMBER, value: "42"},
-		}},
+	emitter.emit(&parser.Block{Statements: []parser.Node{
+		&parser.Literal{Token: testToken{kind: parser.NumberLiteral, value: "42"}},
 	}})
 
 	text := emitter.string()
@@ -36,13 +32,9 @@ func TestSingleLineBlockExpression(t *testing.T) {
 
 func TestBlockExpression(t *testing.T) {
 	emitter := makeEmitter()
-	emitter.emit(checker.Block{Statements: []checker.Node{
-		checker.Literal{TokenExpression: parser.TokenExpression{
-			Token: testToken{kind: tokenizer.NUMBER, value: "42"},
-		}},
-		checker.Literal{TokenExpression: parser.TokenExpression{
-			Token: testToken{kind: tokenizer.NUMBER, value: "42"},
-		}},
+	emitter.emit(&parser.Block{Statements: []parser.Node{
+		&parser.Literal{Token: testToken{kind: parser.NumberLiteral, value: "42"}},
+		&parser.Literal{Token: testToken{kind: parser.NumberLiteral, value: "42"}},
 	}})
 
 	text := emitter.string()
@@ -54,17 +46,17 @@ func TestBlockExpression(t *testing.T) {
 
 func TestIfExpression(t *testing.T) {
 	emitter := makeEmitter()
-	emitter.emit(checker.If{
-		Condition: checker.Literal{TokenExpression: parser.TokenExpression{
-			Token: testToken{kind: tokenizer.BOOLEAN, value: "false"},
-		}},
-		Block: checker.Block{Statements: []checker.Node{}},
-		Alternate: checker.If{
-			Condition: checker.Literal{TokenExpression: parser.TokenExpression{
-				Token: testToken{kind: tokenizer.BOOLEAN, value: "false"},
-			}},
-			Block:     checker.Block{Statements: []checker.Node{}},
-			Alternate: checker.Block{},
+	emitter.emitExpression(&parser.IfExpression{
+		Condition: &parser.Literal{
+			Token: testToken{kind: parser.BooleanLiteral, value: "false"},
+		},
+		Body: &parser.Block{Statements: []parser.Node{}},
+		Alternate: &parser.IfExpression{
+			Condition: &parser.Literal{
+				Token: testToken{kind: parser.BooleanLiteral, value: "false"},
+			},
+			Body:      &parser.Block{Statements: []parser.Node{}},
+			Alternate: &parser.Block{},
 		},
 	})
 

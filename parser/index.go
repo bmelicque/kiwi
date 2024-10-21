@@ -1,23 +1,24 @@
 package parser
 
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
-
 type Node interface {
-	Loc() tokenizer.Loc
+	typeCheck(*Parser)
+	Loc() Loc
+}
+type Expression interface {
+	Node
+	Type() ExpressionType
 }
 
-func fallback(p *Parser) Node {
-	switch p.tokenizer.Peek().Kind() {
-	case tokenizer.LBRACKET:
+func fallback(p *Parser) Expression {
+	switch p.Peek().Kind() {
+	case LeftBracket:
 		return p.parseUnaryExpression()
-	case tokenizer.LPAREN:
-		return p.parseFunctionExpression()
-	case tokenizer.LBRACE:
+	case LeftParenthesis:
+		return p.parseFunctionExpression(nil)
+	case LeftBrace:
 		if p.allowBraceParsing {
 			return p.parseBlock()
 		}
 	}
-	return p.parseTokenExpression()
+	return p.parseToken()
 }

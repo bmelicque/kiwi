@@ -1,100 +1,124 @@
 package parser
 
-import (
-	"testing"
-
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "testing"
 
 func TestIf(t *testing.T) {
 	// if n == 2 { return 1 }
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.IF_KW},
-		testToken{kind: tokenizer.IDENTIFIER, value: "n"},
-		testToken{kind: tokenizer.EQ},
-		testToken{kind: tokenizer.NUMBER, value: "2"},
-		testToken{kind: tokenizer.LBRACE},
-		testToken{kind: tokenizer.RETURN_KW},
-		testToken{kind: tokenizer.NUMBER, value: "1"},
-		testToken{kind: tokenizer.RBRACE},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: IfKeyword},
+		literal{kind: Name, value: "n"},
+		token{kind: Equal},
+		literal{kind: NumberLiteral, value: "2"},
+		token{kind: LeftBrace},
+		token{kind: ReturnKeyword},
+		literal{kind: NumberLiteral, value: "1"},
+		token{kind: RightBrace},
 	}}
 	parser := MakeParser(&tokenizer)
-	node := parser.parseIf()
-	statement, ok := node.(IfElse)
-	if !ok {
-		t.Fatalf("Expected 'if' statement, got %#v", node)
-		return
+	node := parser.parseIfExpression()
+	if node.Body == nil {
+		t.Fatalf("Expected a body, got %#v", node)
 	}
-	if statement.Body == nil {
-		t.Fatalf("Expected 'body' statement, got %#v", node)
+	alias, ok := node.Type().(TypeAlias)
+	if !ok || alias.Name != "Option" {
+		t.Fatalf("Expected option type")
+	}
+}
+
+func TestIfWithNonBoolean(t *testing.T) {
+	// if 42 { }
+	parser := MakeParser(nil)
+	expr := IfExpression{
+		Condition: &Literal{Token: literal{kind: NumberLiteral, value: "42"}},
+		Body:      &Block{},
+	}
+	expr.typeCheck(parser)
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
 	}
 }
 
 func TestIfElse(t *testing.T) {
-	// if false {} else { true }
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.IF_KW},
-		testToken{kind: tokenizer.BOOLEAN, value: "false"},
-		testToken{kind: tokenizer.LBRACE},
-		testToken{kind: tokenizer.RBRACE},
-		testToken{kind: tokenizer.ELSE_KW},
-		testToken{kind: tokenizer.LBRACE},
-		testToken{kind: tokenizer.BOOLEAN, value: "true"},
-		testToken{kind: tokenizer.RBRACE},
+	// if false { true } else { false }
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: IfKeyword},
+		literal{kind: BooleanLiteral, value: "false"},
+		token{kind: LeftBrace},
+		literal{kind: BooleanLiteral, value: "true"},
+		token{kind: RightBrace},
+		token{kind: ElseKeyword},
+		token{kind: LeftBrace},
+		literal{kind: BooleanLiteral, value: "false"},
+		token{kind: RightBrace},
 	}}
 	parser := MakeParser(&tokenizer)
-	node := parser.parseIf()
+	node := parser.parseIfExpression()
 
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 
-	statement, ok := node.(IfElse)
-	if !ok {
-		t.Fatalf("Expected 'if' statement, got %#v", node)
+	if node.Body == nil {
+		t.Fatal("Expected a body")
 	}
-	if statement.Body == nil {
-		t.Fatal("Expected 'body' statement")
-	}
-	if statement.Alternate == nil {
+	if node.Alternate == nil {
 		t.Fatal("Expected alternate")
 	}
-	if _, ok := statement.Alternate.(Block); !ok {
-		t.Fatalf("Expected body alternate, got %#v", statement.Alternate)
+	if _, ok := node.Alternate.(*Block); !ok {
+		t.Fatalf("Expected body alternate, got %#v", node.Alternate)
+	}
+	if node.Type().Kind() != BOOLEAN {
+		t.Fatalf("Expected a boolean")
+	}
+}
+
+func TestIfElseWithTypeMismatch(t *testing.T) {
+	// if false { 42 } else { false }
+	parser := MakeParser(nil)
+	expr := IfExpression{
+		Keyword:   token{kind: IfKeyword},
+		Condition: &Literal{literal{kind: BooleanLiteral, value: "false"}},
+		Body: &Block{Statements: []Node{
+			&Literal{literal{kind: NumberLiteral, value: "42"}},
+		}},
+		Alternate: &Block{Statements: []Node{
+			&Literal{literal{kind: BooleanLiteral, value: "false"}},
+		}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
 	}
 }
 
 func TestIfElseIf(t *testing.T) {
 	// if false {} else if true {}
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.IF_KW},
-		testToken{kind: tokenizer.BOOLEAN, value: "false"},
-		testToken{kind: tokenizer.LBRACE},
-		testToken{kind: tokenizer.RBRACE},
-		testToken{kind: tokenizer.ELSE_KW},
-		testToken{kind: tokenizer.IF_KW},
-		testToken{kind: tokenizer.BOOLEAN, value: "true"},
-		testToken{kind: tokenizer.LBRACE},
-		testToken{kind: tokenizer.RBRACE},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: IfKeyword},
+		literal{kind: BooleanLiteral, value: "false"},
+		token{kind: LeftBrace},
+		token{kind: RightBrace},
+		token{kind: ElseKeyword},
+		token{kind: IfKeyword},
+		literal{kind: BooleanLiteral, value: "true"},
+		token{kind: LeftBrace},
+		token{kind: RightBrace},
 	}}
 	parser := MakeParser(&tokenizer)
-	node := parser.parseIf()
+	node := parser.parseIfExpression()
 
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 
-	statement, ok := node.(IfElse)
-	if !ok {
-		t.Fatalf("Expected 'if' statement, got %#v", node)
+	if node.Body == nil {
+		t.Fatal("Expected a body")
 	}
-	if statement.Body == nil {
-		t.Fatal("Expected 'body' statement")
-	}
-	if statement.Alternate == nil {
+	if node.Alternate == nil {
 		t.Fatal("Expected alternate")
 	}
-	if _, ok := statement.Alternate.(IfElse); !ok {
-		t.Fatalf("Expected another 'if' as alternate, got %#v", statement.Alternate)
+	if _, ok := node.Alternate.(*IfExpression); !ok {
+		t.Fatalf("Expected another 'if' as alternate, got %#v", node.Alternate)
 	}
 }

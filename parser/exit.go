@@ -1,29 +1,47 @@
 package parser
 
-import (
-	"github.com/bmelicque/test-parser/tokenizer"
-)
-
 type Exit struct {
-	Operator tokenizer.Token
-	Value    Node
+	Operator Token
+	Value    Expression
 }
 
-func (r Exit) Loc() tokenizer.Loc {
-	loc := r.Operator.Loc()
-	if r.Value != nil {
-		loc.End = r.Value.Loc().End
+func (e *Exit) typeCheck(p *Parser) {
+	if e.Value != nil {
+		e.Value.typeCheck(p)
+	}
+}
+
+func (e *Exit) Loc() Loc {
+	loc := e.Operator.Loc()
+	if e.Value != nil {
+		loc.End = e.Value.Loc().End
 	}
 	return loc
 }
 
-func (p *Parser) parseExit() Exit {
-	keyword := p.tokenizer.Consume()
+func (p *Parser) parseExit() *Exit {
+	keyword := p.Consume()
 
-	if p.tokenizer.Peek().Kind() == tokenizer.EOL {
-		return Exit{keyword, nil}
+	if p.Peek().Kind() == EOL {
+		return &Exit{keyword, nil}
 	}
 
-	value := ParseExpression(p)
-	return Exit{keyword, value}
+	value := p.parseExpression()
+
+	operator := keyword.Kind()
+	if keyword.Kind() == ContinueKeyword && value != nil {
+		p.report("No value expected after 'continue'", value.Loc())
+	}
+
+	statement := &Exit{keyword, value}
+	if keyword.Kind() == ReturnKeyword && !p.scope.in(FunctionScope) {
+		p.report("Cannot return outside of a function", statement.Loc())
+	}
+	if operator == BreakKeyword && !p.scope.in(LoopScope) {
+		p.report("Cannot break outside of a loop", statement.Loc())
+	}
+	if operator == ContinueKeyword && !p.scope.in(LoopScope) {
+		p.report("Cannot continue outside of a loop", statement.Loc())
+	}
+	return statement
 }

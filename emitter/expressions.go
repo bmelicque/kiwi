@@ -1,11 +1,10 @@
 package emitter
 
 import (
-	"github.com/bmelicque/test-parser/checker"
-	"github.com/bmelicque/test-parser/tokenizer"
+	"github.com/bmelicque/test-parser/parser"
 )
 
-func (e *Emitter) emitBinaryExpression(expr checker.BinaryExpression) {
+func (e *Emitter) emitBinaryExpression(expr *parser.BinaryExpression) {
 	precedence := Precedence(expr)
 	if expr.Left != nil {
 		left := Precedence(expr.Left)
@@ -34,8 +33,8 @@ func (e *Emitter) emitBinaryExpression(expr checker.BinaryExpression) {
 	}
 }
 
-func (e *Emitter) emitBlockExpression(b checker.Block) {
-	label, ok := e.findBlockLabel(&b)
+func (e *Emitter) emitBlockExpression(b *parser.Block) {
+	label, ok := e.findBlockLabel(b)
 	if ok {
 		e.write(label)
 		return
@@ -61,50 +60,57 @@ func (e *Emitter) emitBlockExpression(b checker.Block) {
 	e.write(")")
 }
 
-func (e *Emitter) emitIfExpression(i checker.If) {
+func (e *Emitter) emitIfExpression(i *parser.IfExpression) {
 	e.emit(i.Condition)
 	e.write(" ? ")
-	e.emitBlockExpression(i.Block)
+	e.emitBlockExpression(i.Body)
 	e.write(" : ")
 	if i.Alternate == nil {
 		e.write("undefined")
 		return
 	}
 	switch alternate := i.Alternate.(type) {
-	case checker.Block:
+	case *parser.Block:
 		e.emitBlockExpression(alternate)
-	case checker.If:
+	case *parser.IfExpression:
 		e.emitIfExpression(alternate)
 	}
 }
 
-func findMemberByName(members checker.Params, name string) checker.Node {
-	for _, member := range members.Params {
-		text := member.Identifier.Text()
+func findMemberByName(members *parser.TupleExpression, name string) parser.Node {
+	for _, member := range members.Elements {
+		param := member.(*parser.Param)
+		text := param.Identifier.Text()
 		if text == name {
-			return member.Complement
+			return param.Complement
 		}
 	}
 	return nil
 }
-func (e *Emitter) emitListInstance(constructor checker.ListTypeExpression, args checker.Params) {
+func (e *Emitter) emitListInstance(constructor *parser.ListTypeExpression, args *parser.TupleExpression) {
 	e.write("[")
 	c := constructor.Expr
-	max := len(args.Params) - 1
-	for _, arg := range args.Params[:max] {
-		e.emitInstance(c, checker.Params{Params: []checker.Param{arg}})
+	max := len(args.Elements) - 1
+	for _, arg := range args.Elements[:max] {
+		e.emitInstance(
+			c,
+			&parser.TupleExpression{Elements: []parser.Expression{arg}},
+		)
 		e.write(", ")
 	}
-	e.emitInstance(c, checker.Params{Params: []checker.Param{args.Params[max]}})
+	e.emitInstance(
+		c,
+		&parser.TupleExpression{Elements: []parser.Expression{args.Elements[max]}},
+	)
 	e.write("]")
 }
-func (e *Emitter) emitObjectInstance(constructor checker.Identifier, args checker.Params) {
+func (e *Emitter) emitObjectInstance(constructor *parser.Identifier, args *parser.TupleExpression) {
 	e.write("new ")
 	e.emit(constructor)
 	e.write("(")
 	defer e.write(")")
-	typing := constructor.Type().(checker.Type).Value.(checker.TypeAlias).Ref.(checker.Object)
-	max := len(args.Params) - 1
+	typing := constructor.Type().(parser.Type).Value.(parser.TypeAlias).Ref.(parser.Object)
+	max := len(args.Elements) - 1
 	i := 0
 	for name := range typing.Members {
 		e.emit(findMemberByName(args, name))
@@ -114,31 +120,33 @@ func (e *Emitter) emitObjectInstance(constructor checker.Identifier, args checke
 		i++
 	}
 }
-func (e *Emitter) emitSumInstance(constructor checker.PropertyAccessExpression, args checker.Params) {
+func (e *Emitter) emitSumInstance(constructor *parser.PropertyAccessExpression, args *parser.TupleExpression) {
 	e.write("new ")
 	e.emit(constructor.Expr)
 	e.write("(\"")
 	e.emit(constructor.Property)
 	e.write("\", ")
-	c := e.constructors[constructor.Expr.(checker.Identifier).Text()][constructor.Property.Text()]
+	sum := constructor.Expr.(*parser.Identifier).Text()
+	cons := constructor.Property.(*parser.Identifier).Text()
+	c := e.constructors[sum][cons]
 	e.emitInstance(c, args)
 	e.write(")")
 }
-func (e *Emitter) emitInstance(constructor checker.Expression, args checker.Params) {
+func (e *Emitter) emitInstance(constructor parser.Expression, args *parser.TupleExpression) {
 	switch c := constructor.(type) {
-	case checker.ListTypeExpression:
+	case *parser.ListTypeExpression:
 		e.emitListInstance(c, args)
-	case checker.PropertyAccessExpression:
+	case *parser.PropertyAccessExpression:
 		e.emitSumInstance(c, args)
-	case checker.Identifier:
+	case *parser.Identifier:
 		e.emitObjectInstance(c, args)
 	}
 }
-func (e *Emitter) emitInstanceExpression(expr checker.CallExpression) {
-	e.emitInstance(expr.Callee, expr.Args)
+func (e *Emitter) emitInstanceExpression(expr *parser.CallExpression) {
+	e.emitInstance(expr.Callee, expr.Args.Expr.(*parser.TupleExpression))
 }
-func (e *Emitter) emitCallExpression(expr checker.CallExpression) {
-	if expr.Callee.Type().Kind() == checker.TYPE {
+func (e *Emitter) emitCallExpression(expr *parser.CallExpression) {
+	if expr.Callee.Type().Kind() == parser.TYPE {
 		e.emitInstanceExpression(expr)
 		return
 	}
@@ -147,32 +155,40 @@ func (e *Emitter) emitCallExpression(expr checker.CallExpression) {
 	e.write("(")
 	defer e.write(")")
 
-	args := expr.Args // This should be ensured by checker
-	for i, el := range args.Params {
-		e.emit(el)
-		if i != len(args.Params)-1 {
-			e.write(", ")
-		}
+	args := expr.Args.Expr.(*parser.TupleExpression).Elements
+	max := len(args) - 1
+	for i := range args[:max] {
+		e.emit(args[i])
+		e.write(", ")
 	}
+	e.emit(args[max])
 }
 
-func (e *Emitter) emitComputedAccessExpression(expr checker.ComputedAccessExpression) {
+func (e *Emitter) emitComputedAccessExpression(expr *parser.ComputedAccessExpression) {
 	e.emit(expr.Expr)
 	t := expr.Expr.Type()
-	if _, ok := t.(checker.List); ok {
+	if _, ok := t.(parser.List); ok {
 		e.write("[")
-		e.emit(expr.Property)
+		e.emit(expr.Property.Expr)
 		e.write("]")
 	}
 }
 
-func (e *Emitter) emitFatArrowFunction(f checker.FunctionExpression) {
-	e.emitParams(f.Params)
-	e.write(" => ")
+func (e *Emitter) emitFunctionExpression(f *parser.FunctionExpression) {
+	e.write("(")
+	args := f.Params.Expr.(*parser.TupleExpression).Elements
+	max := len(args)
+	for i := range args[:max] {
+		param := args[i].(*parser.Param)
+		e.emit(param.Identifier)
+		e.write(", ")
+	}
+	e.emit(args[max].(*parser.Param).Identifier)
+	e.write(") => ")
 	e.emit(f.Body)
 }
 
-func (e *Emitter) emitIdentifier(i checker.Identifier) {
+func (e *Emitter) emitIdentifier(i *parser.Identifier) {
 	text := i.Token.Text()
 	if text == e.thisName {
 		e.write("this")
@@ -181,21 +197,9 @@ func (e *Emitter) emitIdentifier(i checker.Identifier) {
 	e.write(getSanitizedName(text))
 }
 
-func (e *Emitter) emitParams(params checker.Params) {
-	e.write("(")
-	length := len(params.Params)
-	for i, param := range params.Params {
-		e.emit(param.Identifier)
-		if i != length-1 {
-			e.write(", ")
-		}
-	}
-	e.write(")")
-}
-
-func (e *Emitter) emitPropertyAccessExpression(p checker.PropertyAccessExpression) {
+func (e *Emitter) emitPropertyAccessExpression(p *parser.PropertyAccessExpression) {
 	e.emit(p.Expr)
-	if p.Expr.Type().Kind() == checker.TUPLE {
+	if p.Expr.Type().Kind() == parser.TUPLE {
 		e.write("[")
 		e.emit(p.Property)
 		e.write("]")
@@ -205,7 +209,7 @@ func (e *Emitter) emitPropertyAccessExpression(p checker.PropertyAccessExpressio
 	}
 }
 
-func (e *Emitter) emitRangeExpression(r checker.RangeExpression) {
+func (e *Emitter) emitRangeExpression(r *parser.RangeExpression) {
 	e.addFlag(RangeFlag)
 
 	e.write("_range(")
@@ -220,7 +224,7 @@ func (e *Emitter) emitRangeExpression(r checker.RangeExpression) {
 
 	if r.Right != nil {
 		e.emit(r.Right)
-		if r.Operator.Kind() == tokenizer.RANGE_INCLUSIVE {
+		if r.Operator.Kind() == parser.InclusiveRange {
 			e.write(" + 1")
 		}
 	} else {
@@ -230,7 +234,7 @@ func (e *Emitter) emitRangeExpression(r checker.RangeExpression) {
 	e.write(")")
 }
 
-func (e *Emitter) emitTupleExpression(t checker.TupleExpression) {
+func (e *Emitter) emitTupleExpression(t *parser.TupleExpression) {
 	if len(t.Elements) == 1 {
 		e.emit(t.Elements[0])
 		return

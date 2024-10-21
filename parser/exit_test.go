@@ -1,54 +1,91 @@
 package parser
 
-import (
-	"testing"
-
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "testing"
 
 func TestReturn(t *testing.T) {
-	tok := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.RETURN_KW},
-		testToken{kind: tokenizer.BOOLEAN, value: "true"},
+	tok := testTokenizer{tokens: []Token{
+		token{kind: ReturnKeyword},
+		literal{kind: BooleanLiteral, value: "true"},
 	}}
 	parser := MakeParser(&tok)
+	parser.pushScope(NewScope(FunctionScope))
 	exit := parser.parseExit()
 
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	if exit.Operator.Kind() != tokenizer.RETURN_KW {
+	if exit.Operator.Kind() != ReturnKeyword {
 		t.Fatal("Expected 'return' keyword")
+	}
+}
+
+func TestReturnOutsideFunction(t *testing.T) {
+	tok := testTokenizer{tokens: []Token{
+		token{kind: ReturnKeyword},
+		literal{kind: BooleanLiteral, value: "true"},
+	}}
+	parser := MakeParser(&tok)
+	parser.parseExit()
+
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
 	}
 }
 
 func TestBreak(t *testing.T) {
-	tok := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.BREAK_KW},
-		testToken{kind: tokenizer.BOOLEAN, value: "true"},
+	tok := testTokenizer{tokens: []Token{
+		token{kind: BreakKeyword},
+		literal{kind: BooleanLiteral, value: "true"},
 	}}
 	parser := MakeParser(&tok)
+	parser.pushScope(NewScope(LoopScope))
 	exit := parser.parseExit()
 
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	if exit.Operator.Kind() != tokenizer.BREAK_KW {
-		t.Fatal("Expected 'return' keyword")
+	if exit.Operator.Kind() != BreakKeyword {
+		t.Fatal("Expected 'break' keyword")
+	}
+}
+
+func TestBreakOutsideLoop(t *testing.T) {
+	tok := testTokenizer{tokens: []Token{
+		token{kind: BreakKeyword},
+		literal{kind: BooleanLiteral, value: "true"},
+	}}
+	parser := MakeParser(&tok)
+	parser.parseExit()
+
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
 	}
 }
 
 func TestContinue(t *testing.T) {
-	tok := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.CONTINUE_KW},
+	tok := testTokenizer{tokens: []Token{
+		token{kind: ContinueKeyword},
 	}}
 	parser := MakeParser(&tok)
+	parser.pushScope(NewScope(LoopScope))
 	exit := parser.parseExit()
 
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	if exit.Operator.Kind() != tokenizer.CONTINUE_KW {
-		t.Fatal("Expected 'return' keyword")
+	if exit.Operator.Kind() != ContinueKeyword {
+		t.Fatal("Expected 'continue' keyword")
+	}
+}
+
+func TestContinueOutsideLoop(t *testing.T) {
+	tok := testTokenizer{tokens: []Token{
+		token{kind: ContinueKeyword},
+	}}
+	parser := MakeParser(&tok)
+	parser.parseExit()
+
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
 	}
 }

@@ -1,45 +1,41 @@
 package parser
 
-import (
-	"testing"
-
-	"github.com/bmelicque/test-parser/tokenizer"
-)
+import "testing"
 
 func TestParenthesized(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.LPAREN},
-		testToken{kind: tokenizer.NUMBER, value: "42"},
-		testToken{kind: tokenizer.RPAREN},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LeftParenthesis},
+		literal{kind: NumberLiteral, value: "42"},
+		token{kind: RightParenthesis},
 	}}
 	parser := MakeParser(&tokenizer)
 	paren := parser.parseParenthesizedExpression()
-	if _, ok := paren.Expr.(TokenExpression); !ok {
-		t.Fatalf("Expected TokenExpression between parentheses, got %v", paren.Expr)
+	if _, ok := paren.Expr.(*Literal); !ok {
+		t.Fatalf("Expected literal between parentheses, got %v", paren.Expr)
 	}
 }
 
 func TestParenthesizedTuple(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.LPAREN},
-		testToken{kind: tokenizer.NUMBER, value: "1"},
-		testToken{kind: tokenizer.COMMA},
-		testToken{kind: tokenizer.NUMBER, value: "2"},
-		testToken{kind: tokenizer.RPAREN},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LeftParenthesis},
+		literal{kind: NumberLiteral, value: "1"},
+		token{kind: Comma},
+		literal{kind: NumberLiteral, value: "2"},
+		token{kind: RightParenthesis},
 	}}
 	parser := MakeParser(&tokenizer)
 	paren := parser.parseParenthesizedExpression()
-	if _, ok := paren.Expr.(TupleExpression); !ok {
+	if _, ok := paren.Expr.(*TupleExpression); !ok {
 		t.Fatalf("Expected TupleExpression between parentheses, got %#v", paren.Expr)
 	}
 }
 
 func TestObjectDescriptionSingleLine(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.LPAREN},
-		testToken{kind: tokenizer.IDENTIFIER, value: "n"},
-		testToken{kind: tokenizer.NUM_KW},
-		testToken{kind: tokenizer.RPAREN},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LeftParenthesis},
+		literal{kind: Name, value: "n"},
+		token{kind: NumberKeyword},
+		token{kind: RightParenthesis},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseParenthesizedExpression()
@@ -48,27 +44,50 @@ func TestObjectDescriptionSingleLine(t *testing.T) {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 
-	if _, ok := node.Expr.(TypedExpression); !ok {
+	if _, ok := node.Expr.(*Param); !ok {
 		t.Fatalf("Expected TypedExpression, got %#v", node.Expr)
 	}
 }
 
+func TestCheckObjectDescriptionSingleLine(t *testing.T) {
+	parser := MakeParser(nil)
+	expr := &ParenthesizedExpression{Expr: &Param{
+		Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
+		Complement: &Literal{token{kind: NumberKeyword}},
+	}}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+
+	typing, ok := expr.Type().(Type)
+	if !ok {
+		t.Fatalf("Expected type 'Type', got %#v", expr.Type())
+	}
+	object, ok := typing.Value.(Object)
+	if !ok {
+		t.Fatal("Expected an object")
+	}
+	_ = object
+}
+
 func TestObjectDescription(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.LPAREN},
-		testToken{kind: tokenizer.EOL},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LeftParenthesis},
+		token{kind: EOL},
 
-		testToken{kind: tokenizer.IDENTIFIER, value: "n"},
-		testToken{kind: tokenizer.NUM_KW},
-		testToken{kind: tokenizer.COMMA},
-		testToken{kind: tokenizer.EOL},
+		literal{kind: Name, value: "n"},
+		token{kind: NumberKeyword},
+		token{kind: Comma},
+		token{kind: EOL},
 
-		testToken{kind: tokenizer.IDENTIFIER, value: "s"},
-		testToken{kind: tokenizer.STR_KW},
-		testToken{kind: tokenizer.COMMA},
-		testToken{kind: tokenizer.EOL},
+		literal{kind: Name, value: "s"},
+		token{kind: StringKeyword},
+		token{kind: Comma},
+		token{kind: EOL},
 
-		testToken{kind: tokenizer.RPAREN},
+		token{kind: RightParenthesis},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseParenthesizedExpression()
@@ -77,7 +96,7 @@ func TestObjectDescription(t *testing.T) {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 
-	tuple, ok := node.Expr.(TupleExpression)
+	tuple, ok := node.Expr.(*TupleExpression)
 	if !ok {
 		t.Fatalf("Expected TupleExpression, got %#v", node.Expr)
 	}
@@ -87,12 +106,12 @@ func TestObjectDescription(t *testing.T) {
 }
 
 func TestObjectDescriptionNoColon(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []tokenizer.Token{
-		testToken{kind: tokenizer.LPAREN},
-		testToken{kind: tokenizer.IDENTIFIER, value: "n"},
-		testToken{kind: tokenizer.COLON},
-		testToken{kind: tokenizer.NUM_KW},
-		testToken{kind: tokenizer.RPAREN},
+	tokenizer := testTokenizer{tokens: []Token{
+		token{kind: LeftParenthesis},
+		literal{kind: Name, value: "n"},
+		token{kind: Colon},
+		token{kind: NumberKeyword},
+		token{kind: RightParenthesis},
 	}}
 	parser := MakeParser(&tokenizer)
 	parser.parseParenthesizedExpression()
