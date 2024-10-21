@@ -10,13 +10,6 @@ type Variable struct {
 func (v *Variable) readAt(loc Loc)  { v.reads = append(v.reads, loc) }
 func (v *Variable) writeAt(loc Loc) { v.writes = append(v.writes, loc) }
 
-type Method struct {
-	self       ExpressionType
-	signature  Function
-	declaredAt Loc
-	reads      []Loc
-}
-
 type ScopeKind int8
 
 const (
@@ -28,7 +21,6 @@ const (
 
 type Scope struct {
 	variables map[string]*Variable
-	methods   map[string][]Method
 	kind      ScopeKind
 	outer     *Scope
 	shadow    bool
@@ -38,14 +30,12 @@ func NewScope(kind ScopeKind) *Scope {
 	return &Scope{
 		kind:      kind,
 		variables: map[string]*Variable{},
-		methods:   map[string][]Method{},
 	}
 }
 
 func NewShadowScope() *Scope {
 	return &Scope{
 		variables: map[string]*Variable{},
-		methods:   map[string][]Method{},
 		shadow:    true,
 	}
 }
@@ -57,22 +47,6 @@ func (s Scope) Find(name string) (*Variable, bool) {
 	}
 	if s.outer != nil {
 		return s.outer.Find(name)
-	}
-	return nil, false
-}
-
-func (s Scope) FindMethod(name string, typing ExpressionType) (*Method, bool) {
-	for _, method := range s.methods[name] {
-		found := method.self
-		if f, ok := found.(Type); ok {
-			found = f.Value
-		}
-		if found.Match(typing) {
-			return &method, true
-		}
-	}
-	if s.outer != nil {
-		return s.outer.FindMethod(name, typing)
 	}
 	return nil, false
 }
@@ -103,10 +77,7 @@ func (s *Scope) AddMethod(name string, self TypeAlias, signature Function) {
 	if !ok {
 		return
 	}
-	if self.Methods == nil {
-		self.Methods = map[string]ExpressionType{}
-	}
-	self.Methods[name] = signature
+	self.registerMethod(name, signature)
 	t.typing = Type{self}
 }
 

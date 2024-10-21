@@ -67,6 +67,10 @@ func (p *Parser) ParseProgram() []Node {
 		}
 	}
 
+	for i := range statements {
+		statements[i].typeCheck(p)
+	}
+
 	return statements
 }
 
