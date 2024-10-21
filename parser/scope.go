@@ -98,8 +98,16 @@ func (s *Scope) Add(name string, declaredAt Loc, typing ExpressionType) {
 	}
 }
 
-func (s *Scope) AddMethod(name string, declaredAt Loc, self ExpressionType, signature Function) {
-	s.methods[name] = append(s.methods[name], Method{self, signature, declaredAt, []Loc{}})
+func (s *Scope) AddMethod(name string, self TypeAlias, signature Function) {
+	t, ok := s.Find(self.Name)
+	if !ok {
+		return
+	}
+	if self.Methods == nil {
+		self.Methods = map[string]ExpressionType{}
+	}
+	self.Methods[name] = signature
+	t.typing = Type{self}
 }
 
 func (s *Scope) WriteAt(name string, loc Loc) {

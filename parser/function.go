@@ -20,8 +20,10 @@ func (f *FunctionExpression) Loc() Loc {
 
 func (f *FunctionExpression) Type() ExpressionType {
 	tp := []Generic{}
-	for i, param := range f.TypeParams.Params {
-		tp[i] = Generic{Name: param.Identifier.Token.Text()}
+	if f.TypeParams != nil {
+		for i, param := range f.TypeParams.Params {
+			tp[i] = Generic{Name: param.Identifier.Token.Text()}
+		}
 	}
 	tuple, _ := f.Params.Type().(Tuple)
 	return Function{tp, &tuple, f.returnType}

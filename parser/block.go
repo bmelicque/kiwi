@@ -1,6 +1,8 @@
 package parser
 
-import "slices"
+import (
+	"slices"
+)
 
 type Block struct {
 	Statements []Node
@@ -11,8 +13,15 @@ func (b *Block) typeCheck(p *Parser) {
 	for i := range b.Statements {
 		b.Statements[i].typeCheck(p)
 	}
-	if b.Type().Kind() == TYPE {
-		p.report("Blocks shouldn't return types", p.parseBlock().reportLoc())
+	if len(b.Statements) == 0 {
+		return
+	}
+	expr, ok := b.Statements[len(b.Statements)-1].(Expression)
+	if !ok {
+		return
+	}
+	if expr.Type().Kind() == TYPE {
+		p.report("Blocks shouldn't return types", b.reportLoc())
 	}
 }
 

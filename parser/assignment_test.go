@@ -283,9 +283,10 @@ func TestMethodDeclaration(t *testing.T) {
 		token{kind: Define},
 		token{kind: LeftParenthesis},
 		token{kind: RightParenthesis},
-		token{kind: SlimArrow},
-		token{kind: LeftParenthesis},
-		token{kind: RightParenthesis},
+		token{kind: FatArrow},
+		token{kind: LeftBrace},
+		literal{kind: Name, value: "t"},
+		token{kind: RightBrace},
 	}}
 	parser := MakeParser(&tokenizer)
 	node := parser.parseAssignment()
@@ -297,7 +298,49 @@ func TestMethodDeclaration(t *testing.T) {
 	if _, ok := expr.Pattern.(*PropertyAccessExpression); !ok {
 		t.Fatalf("Expected method declaration")
 	}
-	if _, ok := expr.Value.(*FunctionTypeExpression); !ok {
-		t.Fatalf("Expected FunctionTypeExpression, got %#v", expr.Value)
+	if _, ok := expr.Value.(*FunctionExpression); !ok {
+		t.Fatalf("Expected FunctionExpression, got %#v", expr.Value)
 	}
+}
+
+func TestCheckMethodDeclaration(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add(
+		"Type",
+		Loc{},
+		Type{TypeAlias{Name: "Type", Ref: Primitive{NUMBER}}},
+	)
+	// (t Type).method :: () => { t }
+	node := &Assignment{
+		Pattern: &PropertyAccessExpression{
+			Expr: &ParenthesizedExpression{Expr: &Param{
+				Identifier: &Identifier{Token: literal{kind: Name, value: "t"}},
+				Complement: &Identifier{
+					Token:  literal{kind: Name, value: "Type"},
+					isType: true,
+				},
+			}},
+			Property: &Identifier{Token: literal{kind: Name, value: "method"}},
+		},
+		Value: &FunctionExpression{
+			Params: &ParenthesizedExpression{Expr: &TupleExpression{}},
+			Body: &Block{Statements: []Node{
+				&Identifier{Token: literal{kind: Name, value: "t"}},
+			}},
+		},
+		Operator: token{kind: Define},
+	}
+	node.typeCheck(parser)
+
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+
+	v, _ := parser.scope.Find("Type")
+	alias := v.typing.(Type).Value.(TypeAlias)
+	method, ok := alias.Methods["method"]
+	if !ok {
+		t.Fatal("Expected method to have been declared")
+	}
+	_ = method
 }

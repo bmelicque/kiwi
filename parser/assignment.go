@@ -9,11 +9,12 @@ type Assignment struct {
 }
 
 func (a *Assignment) typeCheck(p *Parser) {
-	a.Value.typeCheck(p)
 	switch a.Operator.Kind() {
 	case Assign:
+		a.Value.typeCheck(p)
 		typeCheckAssignment(p, a)
 	case Declare:
+		a.Value.typeCheck(p)
 		typeCheckDeclaration(p, a)
 	case Define:
 		typeCheckDefinition(p, a)
@@ -133,9 +134,9 @@ func declareTuple(p *Parser, pattern *TupleExpression, typing ExpressionType) {
 }
 
 func typeCheckDefinition(p *Parser, a *Assignment) {
-	a.Value.typeCheck(p)
 	switch pattern := a.Pattern.(type) {
 	case *Identifier:
+		a.Value.typeCheck(p)
 		ok := true
 		if !pattern.isType {
 			p.report("Type identifier expected", pattern.Loc())
@@ -153,9 +154,78 @@ func typeCheckDefinition(p *Parser, a *Assignment) {
 			Ref:  a.Value.Type().(Type).Value,
 		}}
 		declareIdentifier(p, pattern, t)
+	case *PropertyAccessExpression:
+		typeCheckMethod(p, pattern, a.Value)
 	default:
+		a.Value.typeCheck(p)
+
 		// TODO: generic type
 		// TODO: functions
 		p.report("Invalid pattern", pattern.Loc())
 	}
+}
+
+func typeCheckMethod(p *Parser, expr *PropertyAccessExpression, init Expression) {
+	p.pushScope(NewScope(ProgramScope))
+	defer p.dropScope()
+
+	typeIdentifier := declareMethodReceiver(p, expr.Expr)
+
+	method, ok := expr.Property.(*Identifier)
+	if !ok {
+		p.report("Identifier expected", expr.Property.Loc())
+	}
+
+	init.typeCheck(p)
+
+	fmt.Println("before checks")
+
+	if init.Type().Kind() != FUNCTION {
+		p.report("Function expected", init.Loc())
+		return
+	}
+	if !ok || typeIdentifier == nil {
+		return
+	}
+	fmt.Println("after checks")
+
+	t, ok := typeIdentifier.Type().(Type)
+	if !ok {
+		return
+	}
+	alias, ok := t.Value.(TypeAlias)
+	if !ok {
+		return
+	}
+
+	p.scope.AddMethod(method.Text(), alias, init.Type().(Function))
+}
+
+func declareMethodReceiver(p *Parser, receiver Expression) *Identifier {
+	paren, ok := receiver.(*ParenthesizedExpression)
+	if !ok || paren.Expr == nil {
+		p.report("Receiver argument expected", receiver.Loc())
+		return nil
+	}
+	param, ok := paren.Expr.(*Param)
+	if !ok {
+		p.report("Receiver argument expected", paren.Expr.Loc())
+		return nil
+	}
+
+	typeIdentifier, ok := param.Complement.(*Identifier)
+	if !ok || !typeIdentifier.isType {
+		p.report("Type identifier expected", param.Complement.Loc())
+		return nil
+	}
+	typeIdentifier.typeCheck(p)
+
+	if t, ok := typeIdentifier.Type().(Type); ok {
+		p.scope.Add(
+			param.Identifier.Text(),
+			param.Identifier.Loc(),
+			t.Value,
+		)
+	}
+	return typeIdentifier
 }
