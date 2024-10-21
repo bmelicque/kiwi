@@ -2,16 +2,23 @@ package parser
 
 type IfExpression struct {
 	Keyword   Token
-	Condition Expression
+	Condition Node       // *Assignment | Expression
 	Alternate Expression // *IfExpression | *Block
 	Body      *Block
 }
 
 func (i *IfExpression) typeCheck(p *Parser) {
 	p.pushScope(NewScope(BlockScope))
+
+	outer := p.conditionalDeclaration
+	p.conditionalDeclaration = true
 	i.Condition.typeCheck(p)
-	if i.Condition.Type().Kind() != BOOLEAN {
-		p.report("Expected boolean condition", i.Condition.Loc())
+	p.conditionalDeclaration = outer
+
+	if expr, ok := i.Condition.(Expression); ok {
+		if expr.Type().Kind() != BOOLEAN {
+			p.report("Expected boolean condition", i.Condition.Loc())
+		}
 	}
 	i.Body.typeCheck(p)
 	p.dropScope()
@@ -48,10 +55,10 @@ func (p *Parser) parseIfExpression() *IfExpression {
 }
 
 // Parse the condition of an If expression: if condition {...}
-func parseIfCondition(p *Parser) Expression {
+func parseIfCondition(p *Parser) Node {
 	outer := p.allowBraceParsing
 	p.allowBraceParsing = false
-	condition := p.parseExpression()
+	condition := p.parseAssignment()
 	p.allowBraceParsing = outer
 	return condition
 }

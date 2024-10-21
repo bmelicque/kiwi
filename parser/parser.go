@@ -11,12 +11,16 @@ func (e ParserError) Error() string {
 
 type Parser struct {
 	Tokenizer
-	errors                 []ParserError
-	scope                  *Scope
-	multiline              bool
-	allowEmptyExpr         bool
-	allowBraceParsing      bool
-	allowCallExpr          bool
+	errors            []ParserError
+	scope             *Scope
+	multiline         bool
+	allowEmptyExpr    bool
+	allowBraceParsing bool
+	allowCallExpr     bool
+
+	// If true, declarations are considered as being part of an if statement.
+	// For example: 'if Some(s) := option {}'.
+	// Some patterns are allowed in if statements, but not in regular declarations.
 	conditionalDeclaration bool
 }
 

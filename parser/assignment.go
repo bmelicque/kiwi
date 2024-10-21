@@ -94,6 +94,7 @@ func typeCheckDeclaration(p *Parser, a *Assignment) {
 			p.report("Invalid pattern", a.Pattern.Loc())
 			return
 		}
+		p.typeCheckPattern(a.Pattern, a.Value.Type())
 	default:
 		p.report("Invalid pattern", a.Pattern.Loc())
 	}

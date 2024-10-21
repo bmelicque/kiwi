@@ -122,3 +122,63 @@ func TestIfElseIf(t *testing.T) {
 		t.Fatalf("Expected another 'if' as alternate, got %#v", node.Alternate)
 	}
 }
+
+func TestIfPattern(t *testing.T) {
+	// if Some(s) := option {}
+	parser := MakeParser(&testTokenizer{tokens: []Token{
+		token{kind: IfKeyword},
+		literal{kind: Name, value: "Some"},
+		token{kind: LeftParenthesis},
+		literal{kind: Name, value: "s"},
+		token{kind: RightParenthesis},
+		token{kind: Declare},
+		literal{kind: Name, value: "option"},
+		token{kind: LeftBrace},
+		token{kind: RightBrace},
+	}})
+	expr := parser.parseIfExpression()
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+
+	if _, ok := expr.Condition.(*Assignment); !ok {
+		t.Fatalf("Expected assignment, got %#v", expr.Condition)
+	}
+}
+
+func TestCheckIfPattern(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("option", Loc{}, makeOptionType(Primitive{NUMBER}))
+	// if Some(s) := option { s } else { 0 }
+	expr := &IfExpression{
+		Condition: &Assignment{
+			Pattern: &CallExpression{
+				Callee: &Identifier{
+					Token:  literal{kind: Name, value: "Some"},
+					isType: true,
+				},
+				Args: &ParenthesizedExpression{
+					Expr: &Identifier{Token: literal{kind: Name, value: "s"}},
+				},
+			},
+			Value:    &Identifier{Token: literal{kind: Name, value: "option"}},
+			Operator: token{kind: Declare},
+		},
+		Body: &Block{Statements: []Node{
+			&Identifier{Token: literal{kind: Name, value: "s"}},
+		}},
+		Alternate: &Block{Statements: []Node{
+			&Literal{literal{kind: NumberLiteral, value: "0"}},
+		}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+
+	if expr.Type().Kind() != NUMBER {
+		t.Fatalf("Expected a number, got %#v", expr.Type())
+	}
+}

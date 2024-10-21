@@ -41,6 +41,8 @@ func (i *Identifier) typeCheck(p *Parser) {
 	if variable, ok := p.scope.Find(name); ok {
 		p.scope.ReadAt(name, i.Loc())
 		i.typing = variable.typing
+	} else {
+		i.typing = Primitive{UNKNOWN}
 	}
 }
 
