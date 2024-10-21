@@ -36,7 +36,7 @@ func (p *Parser) parseRange() Expression {
 
 	var left Expression
 	if token.Kind() != InclusiveRange && token.Kind() != ExclusiveRange {
-		left = BinaryExpression{}.Parse(p)
+		left = p.parseBinaryExpression()
 	}
 
 	token = p.Peek()
@@ -45,7 +45,7 @@ func (p *Parser) parseRange() Expression {
 	}
 	operator := p.Consume()
 
-	right := BinaryExpression{}.Parse(p)
+	right := p.parseBinaryExpression()
 	if operator.Kind() == InclusiveRange && right == nil {
 		p.report(
 			"Expected right operand with inclusive range operator '..='",

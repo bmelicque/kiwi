@@ -55,7 +55,7 @@ func (expr *BinaryExpression) Type() ExpressionType {
 /******************************
  *  PARSING HELPER FUNCTIONS  *
  ******************************/
-func (BinaryExpression) Parse(p *Parser) Expression {
+func (p *Parser) parseBinaryExpression() Expression {
 	return parseLogicalOr(p)
 }
 func parseBinary(p *Parser, operators []TokenKind, fallback func(p *Parser) Expression) Expression {
@@ -161,6 +161,18 @@ func (p *Parser) typeCheckConcatExpression(left Expression, right Expression) {
 	}
 	if rightType != nil && !(Primitive{STRING}).Extends(rightType) && !(List{Primitive{UNKNOWN}}).Extends(rightType) {
 		p.report("The right-hand side of concatenation must be a string or a list", right.Loc())
+	}
+
+	rightList, ok := rightType.(List)
+	if !ok {
+		return
+	}
+	leftList, ok := leftType.(List)
+	if !ok {
+		return
+	}
+	if !leftList.Element.Extends(rightList.Element) {
+		p.report("Element type doesn't match lhs", right.Loc())
 	}
 }
 func (p *Parser) typeCheckArithmeticExpression(left Expression, right Expression) {
