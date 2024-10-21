@@ -41,3 +41,28 @@ func TestSumTypeLength(t *testing.T) {
 		t.Fatalf("Expected 1 error, got %#v", parser.errors)
 	}
 }
+
+func TestCheckSumType(t *testing.T) {
+	parser := MakeParser(nil)
+	expr := &SumType{Members: []SumTypeConstructor{
+		{
+			Name: &Identifier{Token: literal{kind: Name, value: "A"}},
+			Params: &ParenthesizedExpression{
+				Expr: &TupleExpression{Elements: []Expression{
+					&Literal{token{kind: NumberKeyword}},
+				}},
+			},
+		},
+		{
+			Name: &Identifier{Token: literal{kind: Name, value: "B"}},
+		},
+	}}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no errors, got %v: %#v", len(parser.errors), parser.errors)
+	}
+	if expr.Type().Kind() != TYPE {
+		t.Fatalf("Expected type, got %v", expr.Type().Kind())
+	}
+}

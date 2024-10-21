@@ -63,7 +63,7 @@ func (s *SumType) typeCheck(p *Parser) {
 		constructor.Returned = typing
 		memberTypes[name] = constructor
 	}
-	s.typing = typing
+	s.typing = Type{typing}
 }
 
 func (p *Parser) parseSumType() Expression {
