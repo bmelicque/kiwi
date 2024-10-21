@@ -139,7 +139,7 @@ func typeCheckDefinition(p *Parser, a *Assignment) {
 	case *Identifier:
 		a.Value.typeCheck(p)
 		ok := true
-		if !pattern.isType {
+		if !pattern.IsType() {
 			p.report("Type identifier expected", pattern.Loc())
 			ok = false
 		}
@@ -215,7 +215,7 @@ func declareMethodReceiver(p *Parser, receiver Expression) *Identifier {
 	}
 
 	typeIdentifier, ok := param.Complement.(*Identifier)
-	if !ok || !typeIdentifier.isType {
+	if !ok || !typeIdentifier.IsType() {
 		p.report("Type identifier expected", param.Complement.Loc())
 		return nil
 	}

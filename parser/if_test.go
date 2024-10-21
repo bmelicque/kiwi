@@ -154,10 +154,7 @@ func TestCheckIfPattern(t *testing.T) {
 	expr := &IfExpression{
 		Condition: &Assignment{
 			Pattern: &CallExpression{
-				Callee: &Identifier{
-					Token:  literal{kind: Name, value: "Some"},
-					isType: true,
-				},
+				Callee: &Identifier{Token: literal{kind: Name, value: "Some"}},
 				Args: &ParenthesizedExpression{
 					Expr: &Identifier{Token: literal{kind: Name, value: "s"}},
 				},

@@ -165,7 +165,7 @@ func getValidatedTypeParams(p *Parser, bracketed *BracketedExpression) *Params {
 	params := make([]Param, len(tuple.Elements))
 	for i := range tuple.Elements {
 		identifier, ok := tuple.Elements[i].(*Identifier)
-		if !ok || !identifier.isType {
+		if !ok || !identifier.IsType() {
 			p.report("Type identifier expected", tuple.Elements[i].Loc())
 		}
 		params[i] = Param{Identifier: identifier}

@@ -33,7 +33,10 @@ func (l *Literal) Type() ExpressionType {
 type Identifier struct {
 	Token
 	typing ExpressionType
-	isType bool
+}
+
+func (i *Identifier) IsType() bool {
+	return unicode.IsUpper(rune(i.Token.Text()[0]))
 }
 
 func (i *Identifier) typeCheck(p *Parser) {
@@ -56,8 +59,7 @@ func (p *Parser) parseToken() Expression {
 		return &Literal{token}
 	case Name:
 		p.Consume()
-		isType := unicode.IsUpper(rune(token.Text()[0]))
-		return &Identifier{Token: token, isType: isType}
+		return &Identifier{Token: token}
 	}
 	if !p.allowEmptyExpr {
 		p.report("Expression expected", token.Loc())

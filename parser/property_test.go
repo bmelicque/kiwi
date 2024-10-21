@@ -5,8 +5,8 @@ import "testing"
 func TestSumTypeConstructor1(t *testing.T) {
 	parser := MakeParser(nil)
 	expr := PropertyAccessExpression{
-		Expr:     &Identifier{Token: literal{kind: Name, value: "Option"}, isType: true},
-		Property: &Identifier{Token: literal{kind: Name, value: "Some"}, isType: true},
+		Expr:     &Identifier{Token: literal{kind: Name, value: "Option"}},
+		Property: &Identifier{Token: literal{kind: Name, value: "Some"}},
 	}
 	expr.typeCheck(parser)
 

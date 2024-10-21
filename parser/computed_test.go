@@ -12,10 +12,7 @@ func TestGenericWithTypeArgs(t *testing.T) {
 		}},
 	}})
 	expr := &ComputedAccessExpression{
-		Expr: &Identifier{
-			Token:  literal{kind: Name, value: "Boxed"},
-			isType: true,
-		},
+		Expr:     &Identifier{Token: literal{kind: Name, value: "Boxed"}},
 		Property: &BracketedExpression{Expr: &Literal{literal{kind: NumberKeyword}}},
 	}
 	expr.typeCheck(parser)
