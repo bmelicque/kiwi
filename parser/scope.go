@@ -23,20 +23,12 @@ type Scope struct {
 	variables map[string]*Variable
 	kind      ScopeKind
 	outer     *Scope
-	shadow    bool
 }
 
 func NewScope(kind ScopeKind) *Scope {
 	return &Scope{
 		kind:      kind,
 		variables: map[string]*Variable{},
-	}
-}
-
-func NewShadowScope() *Scope {
-	return &Scope{
-		variables: map[string]*Variable{},
-		shadow:    true,
 	}
 }
 
@@ -56,7 +48,7 @@ func (s Scope) Has(name string) bool {
 	if ok {
 		return true
 	}
-	if s.outer != nil && s.outer.shadow {
+	if s.outer != nil {
 		return s.outer.Has(name)
 	}
 	return false
@@ -142,7 +134,7 @@ var optionType = makeOptionType(nil)
 // utility to create option types with different Some types
 func makeResultType(ok ExpressionType, err ExpressionType) TypeAlias {
 	alias := TypeAlias{
-		Name: "Option",
+		Name: "Result",
 		Params: []Generic{
 			{Name: "Ok", Value: ok},
 			{Name: "Err", Value: err},

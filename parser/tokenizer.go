@@ -41,6 +41,7 @@ const (
 	BreakKeyword    // break
 	ContinueKeyword // continue
 	ReturnKeyword   // return
+	TryKeyword      // try
 
 	Add        // +
 	Concat     // ++
@@ -271,6 +272,8 @@ func makeToken(text string, loc Loc) Token {
 		return token{ContinueKeyword, loc}
 	case "return":
 		return token{ReturnKeyword, loc}
+	case "try":
+		return token{TryKeyword, loc}
 	case "+":
 		return token{Add, loc}
 	case "++":

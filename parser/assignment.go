@@ -179,8 +179,6 @@ func typeCheckMethod(p *Parser, expr *PropertyAccessExpression, init Expression)
 
 	init.typeCheck(p)
 
-	fmt.Println("before checks")
-
 	if init.Type().Kind() != FUNCTION {
 		p.report("Function expected", init.Loc())
 		return
@@ -188,7 +186,6 @@ func typeCheckMethod(p *Parser, expr *PropertyAccessExpression, init Expression)
 	if !ok || typeIdentifier == nil {
 		return
 	}
-	fmt.Println("after checks")
 
 	t, ok := typeIdentifier.Type().(Type)
 	if !ok {

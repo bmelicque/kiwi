@@ -73,3 +73,11 @@ func TestTrait(t *testing.T) {
 		t.Fatalf("Should've extended!")
 	}
 }
+
+func TestGetSumTypeMember(t *testing.T) {
+	option := makeOptionType(Primitive{NUMBER})
+	some := option.Ref.(Sum).getMember("Some")
+	if some.Kind() != NUMBER {
+		t.Fatalf("Expected number, got %v", some)
+	}
+}

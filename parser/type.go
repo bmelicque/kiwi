@@ -389,6 +389,21 @@ func (s Sum) build(scope *Scope, compared ExpressionType) (ExpressionType, bool)
 	}
 	return s, ok
 }
+func (s Sum) getMember(name string) ExpressionType {
+	member, ok := s.Members[name]
+	if !ok {
+		return Primitive{UNKNOWN}
+	}
+	if len(member.Params.elements) == 1 {
+		ret, _ := member.Params.elements[0].build(nil, nil)
+		return ret
+	}
+	tuple := Tuple{make([]ExpressionType, len(member.Params.elements))}
+	for i := range member.Params.elements {
+		tuple.elements[i], _ = member.Params.elements[i].build(nil, nil)
+	}
+	return tuple
+}
 
 type Trait struct {
 	Self    Generic
@@ -447,6 +462,9 @@ func (g Generic) Extends(t ExpressionType) bool {
 func (g Generic) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	if g.Value != nil {
 		return g.Value, true
+	}
+	if scope == nil {
+		return Primitive{UNKNOWN}, false
 	}
 	variable, ok := scope.Find(g.Name)
 	if !ok {
