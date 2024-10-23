@@ -234,6 +234,10 @@ func (e *Emitter) emitRangeExpression(r *parser.RangeExpression) {
 	e.write(")")
 }
 
+func (e *Emitter) emitTryExpression(t *parser.TryExpression) {
+	e.emitExpression(t.Expr)
+}
+
 func (e *Emitter) emitTupleExpression(t *parser.TupleExpression) {
 	if len(t.Elements) == 1 {
 		e.emit(t.Elements[0])
