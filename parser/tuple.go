@@ -7,6 +7,16 @@ type TupleExpression struct {
 	typing   ExpressionType
 }
 
+func (t *TupleExpression) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(t) {
+		return
+	}
+	cb(t)
+	for i := range t.Elements {
+		t.Elements[i].Walk(cb, skip)
+	}
+}
+
 func (t *TupleExpression) typeCheck(p *Parser) {
 	for i := range t.Elements {
 		t.Elements[i].typeCheck(p)

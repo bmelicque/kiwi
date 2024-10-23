@@ -5,6 +5,16 @@ type TryExpression struct {
 	Expr    Expression
 }
 
+func (t *TryExpression) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(t) {
+		return
+	}
+	cb(t)
+	if t.Expr != nil {
+		t.Expr.Walk(cb, skip)
+	}
+}
+
 func (t *TryExpression) Loc() Loc {
 	loc := t.Keyword.Loc()
 	if t.Expr != nil {

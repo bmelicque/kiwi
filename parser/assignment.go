@@ -34,6 +34,19 @@ func (a *Assignment) Loc() Loc {
 	return loc
 }
 
+func (a *Assignment) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(a) {
+		return
+	}
+	cb(a)
+	if a.Pattern != nil {
+		a.Pattern.Walk(cb, skip)
+	}
+	if a.Value != nil {
+		a.Value.Walk(cb, skip)
+	}
+}
+
 func (p *Parser) parseAssignment() Node {
 	expr := p.parseExpression()
 

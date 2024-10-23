@@ -7,6 +7,19 @@ type ForExpression struct {
 	typing    ExpressionType
 }
 
+func (f *ForExpression) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(f) {
+		return
+	}
+	cb(f)
+	if f.Statement != nil {
+		f.Statement.Walk(cb, skip)
+	}
+	if f.Body != nil {
+		f.Body.Walk(cb, skip)
+	}
+}
+
 func (f *ForExpression) typeCheck(p *Parser) {
 	switch s := f.Statement.(type) {
 	case *Assignment:

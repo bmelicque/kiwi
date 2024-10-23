@@ -10,6 +10,15 @@ type MatchCase struct {
 	Statements []Node
 }
 
+func (m *MatchCase) Walk(cb func(Node), skip func(Node) bool) {
+	if m.Pattern != nil {
+		m.Pattern.Walk(cb, skip)
+	}
+	for i := range m.Statements {
+		m.Statements[i].Walk(cb, skip)
+	}
+}
+
 func (m MatchCase) Type() ExpressionType {
 	if len(m.Statements) == 0 {
 		return Primitive{NIL}
@@ -32,6 +41,19 @@ type MatchExpression struct {
 	Value   Expression
 	Cases   []MatchCase
 	end     Position
+}
+
+func (m *MatchExpression) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(m) {
+		return
+	}
+	cb(m)
+	if m.Value != nil {
+		m.Value.Walk(cb, skip)
+	}
+	for i := range m.Cases {
+		m.Cases[i].Walk(cb, skip)
+	}
 }
 
 func (m *MatchExpression) Loc() Loc {

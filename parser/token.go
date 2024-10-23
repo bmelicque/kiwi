@@ -9,6 +9,13 @@ type Literal struct {
 	Token
 }
 
+func (l *Literal) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(l) {
+		return
+	}
+	cb(l)
+}
+
 func (l *Literal) typeCheck(_ *Parser) {}
 
 func (l *Literal) Type() ExpressionType {
@@ -33,6 +40,13 @@ func (l *Literal) Type() ExpressionType {
 type Identifier struct {
 	Token
 	typing ExpressionType
+}
+
+func (i *Identifier) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(i) {
+		return
+	}
+	cb(i)
 }
 
 func (i *Identifier) IsType() bool {

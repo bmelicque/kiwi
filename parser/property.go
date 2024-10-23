@@ -12,6 +12,17 @@ type PropertyAccessExpression struct {
 	typing   ExpressionType
 }
 
+func (p *PropertyAccessExpression) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(p) {
+		return
+	}
+	cb(p)
+	p.Expr.Walk(cb, skip)
+	if p.Property != nil {
+		p.Property.Walk(cb, skip)
+	}
+}
+
 func (p *PropertyAccessExpression) Loc() Loc {
 	return Loc{
 		Start: p.Expr.Loc().Start,
@@ -158,6 +169,15 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 type TraitExpression struct {
 	Receiver *ParenthesizedExpression // Receiver.Expr is an Identifier
 	Def      *ParenthesizedExpression // contains *TupleExpression
+}
+
+func (t *TraitExpression) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(t) {
+		return
+	}
+	cb(t)
+	t.Receiver.Walk(cb, skip)
+	t.Def.Walk(cb, skip)
 }
 
 func (t *TraitExpression) Loc() Loc {

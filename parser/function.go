@@ -8,6 +8,20 @@ type FunctionExpression struct {
 	returnType ExpressionType
 }
 
+func (f *FunctionExpression) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(f) {
+		return
+	}
+	cb(f)
+	f.Params.Walk(cb, skip)
+	if f.Explicit != nil {
+		f.Explicit.Walk(cb, skip)
+	}
+	if f.Body != nil {
+		f.Body.Walk(cb, skip)
+	}
+}
+
 func (f *FunctionExpression) Loc() Loc {
 	loc := Loc{Start: f.Params.Loc().Start, End: Position{}}
 	if f.Body == nil {
@@ -48,6 +62,17 @@ type FunctionTypeExpression struct {
 	TypeParams *Params
 	Params     *ParenthesizedExpression // Contains *TupleExpression
 	Expr       Expression
+}
+
+func (f *FunctionTypeExpression) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(f) {
+		return
+	}
+	cb(f)
+	f.Params.Walk(cb, skip)
+	if f.Expr != nil {
+		f.Expr.Walk(cb, skip)
+	}
 }
 
 func (f *FunctionTypeExpression) Loc() Loc {

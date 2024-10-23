@@ -10,6 +10,19 @@ type BinaryExpression struct {
 	Operator Token
 }
 
+func (b *BinaryExpression) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(b) {
+		return
+	}
+	cb(b)
+	if b.Left != nil {
+		b.Left.Walk(cb, skip)
+	}
+	if b.Right != nil {
+		b.Right.Walk(cb, skip)
+	}
+}
+
 func (expr *BinaryExpression) Loc() Loc {
 	loc := Loc{}
 	if expr.Left != nil {

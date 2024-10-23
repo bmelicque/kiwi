@@ -6,6 +6,16 @@ type Params struct {
 	loc    Loc
 }
 
+func (p *Params) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(p) {
+		return
+	}
+	cb(p)
+	for i := range p.Params {
+		p.Params[i].Walk(cb, skip)
+	}
+}
+
 func (p Params) Loc() Loc { return p.loc }
 
 // FIXME: object
@@ -28,6 +38,19 @@ type Param struct {
 	Identifier *Identifier
 	Complement Expression // Type for params, value for arguments
 	HasColon   bool
+}
+
+func (p *Param) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(p) {
+		return
+	}
+	cb(p)
+	if p.Identifier != nil {
+		p.Identifier.Walk(cb, skip)
+	}
+	if p.Complement != nil {
+		p.Complement.Walk(cb, skip)
+	}
 }
 
 func (p *Param) Loc() Loc {

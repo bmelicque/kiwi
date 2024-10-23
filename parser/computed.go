@@ -7,6 +7,15 @@ type ComputedAccessExpression struct {
 	typing   ExpressionType
 }
 
+func (c *ComputedAccessExpression) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(c) {
+		return
+	}
+	cb(c)
+	c.Expr.Walk(cb, skip)
+	c.Property.Walk(cb, skip)
+}
+
 func (c *ComputedAccessExpression) Loc() Loc {
 	return Loc{
 		Start: c.Expr.Loc().Start,

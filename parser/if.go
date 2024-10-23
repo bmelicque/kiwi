@@ -7,6 +7,22 @@ type IfExpression struct {
 	Body      *Block
 }
 
+func (i *IfExpression) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(i) {
+		return
+	}
+	cb(i)
+	if i.Condition != nil {
+		i.Condition.Walk(cb, skip)
+	}
+	if i.Body != nil {
+		i.Body.Walk(cb, skip)
+	}
+	if i.Alternate != nil {
+		i.Alternate.Walk(cb, skip)
+	}
+}
+
 func (i *IfExpression) typeCheck(p *Parser) {
 	p.pushScope(NewScope(BlockScope))
 

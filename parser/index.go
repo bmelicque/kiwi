@@ -3,6 +3,7 @@ package parser
 type Node interface {
 	typeCheck(*Parser)
 	Loc() Loc
+	Walk(cb func(Node), skip func(Node) bool)
 }
 type Expression interface {
 	Node

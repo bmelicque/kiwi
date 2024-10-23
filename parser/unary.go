@@ -5,6 +5,16 @@ type UnaryExpression struct {
 	Operand  Expression
 }
 
+func (u *UnaryExpression) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(u) {
+		return
+	}
+	cb(u)
+	if u.Operand != nil {
+		u.Operand.Walk(cb, skip)
+	}
+}
+
 func (u *UnaryExpression) typeCheck(p *Parser) {
 	u.Operand.typeCheck(p)
 	switch u.Operator.Kind() {
@@ -39,6 +49,16 @@ func (u *UnaryExpression) Type() ExpressionType {
 type ListTypeExpression struct {
 	Bracketed *BracketedExpression
 	Expr      Expression // Cannot be nil
+}
+
+func (l *ListTypeExpression) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(l) {
+		return
+	}
+	cb(l)
+	if l.Expr != nil {
+		l.Expr.Walk(cb, skip)
+	}
 }
 
 func (l *ListTypeExpression) typeCheck(p *Parser) {

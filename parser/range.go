@@ -6,7 +6,20 @@ type RangeExpression struct {
 	Operator Token
 }
 
-func (r RangeExpression) Loc() Loc {
+func (r *RangeExpression) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(r) {
+		return
+	}
+	cb(r)
+	if r.Left != nil {
+		r.Left.Walk(cb, skip)
+	}
+	if r.Right != nil {
+		r.Right.Walk(cb, skip)
+	}
+}
+
+func (r *RangeExpression) Loc() Loc {
 	var loc Loc
 	if r.Left != nil {
 		loc.Start = r.Left.Loc().Start
@@ -21,7 +34,7 @@ func (r RangeExpression) Loc() Loc {
 	return loc
 }
 
-func (r RangeExpression) Type() ExpressionType {
+func (r *RangeExpression) Type() ExpressionType {
 	var typing ExpressionType
 	if r.Left != nil {
 		typing = r.Left.Type()

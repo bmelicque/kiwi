@@ -6,8 +6,22 @@ type BracketedExpression struct {
 	loc  Loc
 }
 
-func (b BracketedExpression) Loc() Loc             { return b.loc }
-func (b BracketedExpression) Type() ExpressionType { return nil }
+func (b *BracketedExpression) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(b) {
+		return
+	}
+	cb(b)
+	if b.Expr != nil {
+		b.Expr.Walk(cb, skip)
+	}
+}
+
+func (b *BracketedExpression) typeCheck(p *Parser) {
+	b.Expr.typeCheck(p)
+}
+
+func (b *BracketedExpression) Loc() Loc             { return b.loc }
+func (b *BracketedExpression) Type() ExpressionType { return nil }
 func (p *Parser) parseBracketedExpression() *BracketedExpression {
 	if p.Peek().Kind() != LeftBracket {
 		panic("'[' expected!")

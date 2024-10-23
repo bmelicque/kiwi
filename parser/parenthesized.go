@@ -6,6 +6,16 @@ type ParenthesizedExpression struct {
 	loc  Loc
 }
 
+func (p *ParenthesizedExpression) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(p) {
+		return
+	}
+	cb(p)
+	if p.Expr != nil {
+		p.Expr.Walk(cb, skip)
+	}
+}
+
 func (p *ParenthesizedExpression) Loc() Loc {
 	return p.loc
 }

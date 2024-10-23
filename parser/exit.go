@@ -5,6 +5,16 @@ type Exit struct {
 	Value    Expression
 }
 
+func (e *Exit) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(e) {
+		return
+	}
+	cb(e)
+	if e.Value != nil {
+		e.Value.Walk(cb, skip)
+	}
+}
+
 func (e *Exit) typeCheck(p *Parser) {
 	if e.Value != nil {
 		e.Value.typeCheck(p)

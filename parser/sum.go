@@ -7,6 +7,15 @@ type SumTypeConstructor struct {
 	Params *ParenthesizedExpression // contains *TupleExpression
 }
 
+func (s *SumTypeConstructor) Walk(cb func(Node), skip func(Node) bool) {
+	if s.Name != nil {
+		s.Name.Walk(cb, skip)
+	}
+	if s.Params != nil {
+		s.Params.Walk(cb, skip)
+	}
+}
+
 func (s SumTypeConstructor) Loc() Loc {
 	var start, end Position
 	if s.Name != nil {
@@ -39,6 +48,16 @@ type SumType struct {
 	Members []SumTypeConstructor
 	typing  ExpressionType
 	start   Position
+}
+
+func (s *SumType) Walk(cb func(Node), skip func(Node) bool) {
+	if skip(s) {
+		return
+	}
+	cb(s)
+	for i := range s.Members {
+		s.Members[i].Walk(cb, skip)
+	}
 }
 
 func (s *SumType) Loc() Loc {
