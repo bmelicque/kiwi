@@ -51,11 +51,16 @@ func (f *FunctionExpression) typeCheck(p *Parser) {
 		addTypeParamsToScope(p.scope, *f.TypeParams)
 	}
 
-	if f.Params != nil {
+	if f.Params != nil && f.Params.Expr != nil {
 		addParamsToScope(p, f.Params.Expr.(*TupleExpression).Elements)
 	}
 	f.Body.typeCheck(p)
-	f.returnType = getFunctionReturnType(p, f.Explicit, f.Body)
+
+	if f.Explicit != nil {
+		typeCheckExplicitReturn(p, f)
+	} else {
+		typeCheckImplicitReturn(p, f)
+	}
 }
 
 type FunctionTypeExpression struct {
@@ -199,6 +204,7 @@ func getValidatedTypeParams(p *Parser, bracketed *BracketedExpression) *Params {
 	return &Params{Params: params, loc: bracketed.loc}
 }
 
+// Validate all of a function params' structures
 func validateFunctionParams(p *Parser, node *ParenthesizedExpression) {
 	if node.Expr == nil {
 		return
@@ -206,79 +212,123 @@ func validateFunctionParams(p *Parser, node *ParenthesizedExpression) {
 
 	tuple := node.Expr.(*TupleExpression)
 	for _, element := range tuple.Elements {
-		param, ok := element.(*Param)
-		if !ok {
-			p.report("Parameter expected: (name Type)", element.Loc())
-			continue
-		}
-		if param.HasColon {
-			p.report(
-				"No ':' expected between parameter name and type",
-				element.Loc(),
-			)
-		}
+		validateFunctionParam(p, element)
 	}
 
 	tuple.reportDuplicatedParams(p)
 }
 
-func getFunctionReturnType(p *Parser, explicit Expression, body *Block) ExpressionType {
-	validateFunctionReturns(p, body)
-	if explicit == nil {
-		return body.Type()
-	}
-	t, ok := explicit.Type().(Type)
+// Validate a function param's structure
+func validateFunctionParam(p *Parser, expr Expression) {
+	param, ok := expr.(*Param)
 	if !ok {
-		p.report("Type expected", explicit.Loc())
-		return Primitive{UNKNOWN}
+		p.report("Parameter expected: (name Type)", expr.Loc())
+		return
 	}
-	if !t.Value.Extends(body.Type()) {
-		p.report("Returned type doesn't match expected return type", body.reportLoc())
+	if param.HasColon {
+		p.report("No ':' expected between parameter name and type", expr.Loc())
 	}
-	return t.Value
 }
 
-// Check if every return statement inside a body matches the body's type
-func validateFunctionReturns(p *Parser, body *Block) {
-	returns := []Exit{}
-	findReturnStatements(body, &returns)
-	bType := body.Type()
-	ok := true
-	for _, r := range returns {
-		var t ExpressionType
-		if r.Value != nil {
-			t = r.Value.Type()
-		} else {
-			t = Primitive{NIL}
-		}
-		if !bType.Extends(t) {
-			ok = false
-			p.report("Mismatched types", r.Value.Loc())
-		}
+// Type check all possible return points against the explicit return type.
+// Also check possible failure points.
+func typeCheckExplicitReturn(p *Parser, f *FunctionExpression) {
+	explicit := f.Explicit.Type()
+	if t, ok := explicit.(Type); ok {
+		explicit = t.Value
+	} else {
+		explicit = Primitive{UNKNOWN}
 	}
-	if !ok {
-		p.report("Mismatched types", body.reportLoc())
+	f.returnType = explicit
+
+	typeCheckHappyReturn(p, f.Body, explicit)
+
+	err := getErrorType(explicit)
+	tries := findTryExpressions(f.Body)
+	for _, t := range tries {
+		if !err.Extends(getErrorType(t.Expr.Type())) {
+			p.report("Error type doesn't match expected type", t.Expr.Loc())
+		}
 	}
 }
-func findReturnStatements(node Node, results *[]Exit) {
-	if node == nil {
-		return
+
+// Type check all possible return points and see if they match
+func typeCheckImplicitReturn(p *Parser, f *FunctionExpression) {
+	f.returnType = f.Body.Type()
+
+	if !typeCheckHappyReturn(p, f.Body, f.Body.Type()) {
+		p.report("Mismatched types", f.Body.reportLoc())
 	}
-	if n, ok := node.(*Exit); ok {
-		if n.Operator.Kind() == ReturnKeyword {
-			*results = append(*results, *n)
+
+	tries := findTryExpressions(f.Body)
+	for _, t := range tries {
+		p.report(
+			"Failable expressions are not allowed in functions without explicit returns",
+			t.Loc(),
+		)
+	}
+}
+
+// Check all return points in a function body against an expected typing.
+func typeCheckHappyReturn(p *Parser, body *Block, expected ExpressionType) bool {
+	happy := getHappyType(expected)
+	returns := findReturnStatements(body)
+	ok := true
+	if !expected.Extends(body.Type()) && !happy.Extends(body.Type()) {
+		p.report("Type doesn't match expected type", body.reportLoc())
+	}
+	for _, r := range returns {
+		returnType := getExitType(r)
+		if !expected.Extends(returnType) && !happy.Extends(returnType) {
+			ok = false
+			p.report("Type doesn't match expected type", r.Value.Loc())
 		}
-		return
 	}
-	switch node := node.(type) {
-	case *Block:
-		for _, statement := range node.Statements {
-			findReturnStatements(statement, results)
+	return ok
+}
+
+func getExitType(e *Exit) ExpressionType {
+	if e.Value == nil {
+		return Primitive{NIL}
+	}
+	return e.Value.Type()
+}
+
+// Find all the return statements in a function body.
+// Don't check inside nested functions.
+func findReturnStatements(body *Block) []*Exit {
+	results := []*Exit{}
+	appendIfReturn := func(node Node) {
+		if isReturnStatement(node) {
+			results = append(results, node.(*Exit))
 		}
-	case *IfExpression:
-		findReturnStatements(node.Body, results)
-		findReturnStatements(node.Alternate, results)
 	}
+	body.Walk(appendIfReturn, isFunctionExpression)
+	return results
+}
+func isReturnStatement(node Node) bool {
+	exit, ok := node.(*Exit)
+	if !ok {
+		return false
+	}
+	return exit.Operator.Kind() == ReturnKeyword
+}
+
+// Find all the try expressions in a function body.
+// Don't check inside nested functions.
+func findTryExpressions(body *Block) []*TryExpression {
+	results := []*TryExpression{}
+	appendIfTry := func(node Node) {
+		if n, ok := node.(*TryExpression); ok {
+			results = append(results, n)
+		}
+	}
+	body.Walk(appendIfTry, isFunctionExpression)
+	return results
+}
+func isFunctionExpression(node Node) bool {
+	_, ok := node.(*FunctionExpression)
+	return ok
 }
 
 func addParamsToScope(p *Parser, tuple []Expression) {

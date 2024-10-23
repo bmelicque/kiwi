@@ -63,3 +63,21 @@ func addTypeParamsToScope(scope *Scope, params Params) {
 		}
 	}
 }
+
+// If the given is a result, return its "Ok" type.
+// Else return the given type.
+func getHappyType(t ExpressionType) ExpressionType {
+	if alias, ok := t.(TypeAlias); ok && alias.Name == "Result" {
+		return alias.Ref.(Sum).getMember("Ok")
+	}
+	return t
+}
+
+// If the given is a result, return its "Err" type.
+// Else return nil.
+func getErrorType(t ExpressionType) ExpressionType {
+	if alias, ok := t.(TypeAlias); ok && alias.Name == "Result" {
+		return alias.Ref.(Sum).getMember("Err")
+	}
+	return nil
+}

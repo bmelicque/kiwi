@@ -54,7 +54,7 @@ func TestFunctionExpressionWithoutArgs(t *testing.T) {
 	}
 }
 
-func TestFatArrowFunctionWithArgs(t *testing.T) {
+func TestFunctionExpressionWithArgs(t *testing.T) {
 	parser := MakeParser(&testTokenizer{tokens: []Token{
 		token{kind: LeftParenthesis},
 		literal{kind: Name, value: "n"},
@@ -103,5 +103,65 @@ func TestFunctionWithTypeArgs(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected FunctionExpression, got %#v", node)
 		return
+	}
+}
+
+func TestCheckImplicitReturn(t *testing.T) {
+	parser := MakeParser(nil)
+	expr := &FunctionExpression{
+		Params: &ParenthesizedExpression{},
+		Body: &Block{Statements: []Node{
+			&IfExpression{
+				Condition: &Literal{literal{kind: BooleanLiteral, value: "true"}},
+				Body: &Block{Statements: []Node{
+					&Exit{
+						Operator: token{kind: ReturnKeyword},
+						Value:    &Literal{literal{kind: NumberLiteral, value: "42"}},
+					},
+				}},
+			},
+			&Literal{literal{kind: NumberLiteral, value: "42"}},
+		}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+	if expr.returnType.Kind() != NUMBER {
+		t.Fatalf("Expected number, got %v", expr.returnType.Kind())
+	}
+}
+
+func TestCheckImplicitReturnBadReturns(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("result", Loc{}, makeResultType(Primitive{NIL}, Primitive{NUMBER}))
+	expr := &FunctionExpression{
+		Params: &ParenthesizedExpression{},
+		Body: &Block{Statements: []Node{
+			&IfExpression{
+				Condition: &Literal{literal{kind: BooleanLiteral, value: "true"}},
+				Body: &Block{Statements: []Node{
+					&Exit{
+						Operator: token{kind: ReturnKeyword},
+						Value:    &Literal{literal{kind: BooleanLiteral, value: "false"}},
+					},
+				}},
+				Alternate: &Block{Statements: []Node{
+					&TryExpression{
+						Keyword: token{kind: TryKeyword},
+						Expr:    &Identifier{Token: literal{kind: Name, value: "result"}},
+					},
+				}},
+			},
+			&Literal{literal{kind: NumberLiteral, value: "42"}},
+		}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 3 {
+		// expect 2 errors for mismatched body and return types
+		// expect a 3rd error for try with implicit return type
+		t.Fatalf("Expected 3 errors, got %#v", parser.errors)
 	}
 }
