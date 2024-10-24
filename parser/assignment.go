@@ -11,10 +11,8 @@ type Assignment struct {
 func (a *Assignment) typeCheck(p *Parser) {
 	switch a.Operator.Kind() {
 	case Assign:
-		a.Value.typeCheck(p)
 		typeCheckAssignment(p, a)
 	case Declare:
-		a.Value.typeCheck(p)
 		typeCheckDeclaration(p, a)
 	case Define:
 		typeCheckDefinition(p, a)
@@ -67,6 +65,8 @@ func (p *Parser) parseAssignment() Node {
 // type check assignment where operator is '='
 func typeCheckAssignment(p *Parser, a *Assignment) {
 	a.Pattern.typeCheck(p)
+	a.Value.typeCheck(p)
+	reportResultAssignment(p, a.Value)
 
 	switch pattern := a.Pattern.(type) {
 	case *Identifier:
@@ -97,6 +97,7 @@ func typeCheckAssignment(p *Parser, a *Assignment) {
 // type check assignment where operator is ':='
 func typeCheckDeclaration(p *Parser, a *Assignment) {
 	a.Value.typeCheck(p)
+	reportResultAssignment(p, a.Value)
 	switch pattern := a.Pattern.(type) {
 	case *Identifier:
 		declareIdentifier(p, pattern, a.Value.Type())
@@ -151,6 +152,7 @@ func typeCheckDefinition(p *Parser, a *Assignment) {
 	switch pattern := a.Pattern.(type) {
 	case *Identifier:
 		a.Value.typeCheck(p)
+		reportResultAssignment(p, a.Value)
 		ok := true
 		if !pattern.IsType() {
 			p.report("Type identifier expected", pattern.Loc())
@@ -172,6 +174,7 @@ func typeCheckDefinition(p *Parser, a *Assignment) {
 		typeCheckMethod(p, pattern, a.Value)
 	default:
 		a.Value.typeCheck(p)
+		reportResultAssignment(p, a.Value)
 
 		// TODO: generic type
 		// TODO: functions
@@ -239,4 +242,12 @@ func declareMethodReceiver(p *Parser, receiver Expression) *Identifier {
 		)
 	}
 	return typeIdentifier
+}
+
+func reportResultAssignment(p *Parser, value Expression) {
+	t, ok := value.Type().(TypeAlias)
+	if !ok || t.Name != "Result" {
+		return
+	}
+	p.report("Cannot use raw result (use 'try' or 'catch')", value.Loc())
 }
