@@ -62,7 +62,7 @@ func (expr *BinaryExpression) Type() ExpressionType {
 		Equal,
 		NotEqual:
 		return Primitive{BOOLEAN}
-	case Not:
+	case Bang:
 		left := expr.Left.Type()
 		if t, ok := left.(Type); ok {
 			left = t.Value
@@ -100,7 +100,7 @@ func parseBinary(p *Parser, operators []TokenKind, fallback func(p *Parser) Expr
 	return expression
 }
 func parseBinaryErrorType(p *Parser) Expression {
-	return parseBinary(p, []TokenKind{Not}, parseLogicalOr)
+	return parseBinary(p, []TokenKind{Bang}, parseLogicalOr)
 }
 func parseLogicalOr(p *Parser) Expression {
 	return parseBinary(p, []TokenKind{LogicalOr}, parseLogicalAnd)
@@ -158,7 +158,7 @@ func (b *BinaryExpression) typeCheck(p *Parser) {
 		Equal,
 		NotEqual:
 		p.typeCheckComparisonExpression(b.Left, b.Right)
-	case Not:
+	case Bang:
 		typeCheckBinaryErrorType(p, b.Left, b.Right)
 	default:
 		panic(fmt.Sprintf("operator '%v' not implemented", b.Operator.Kind()))

@@ -1,5 +1,7 @@
 package parser
 
+import "fmt"
+
 type UnaryExpression struct {
 	Operator Token
 	Operand  Expression
@@ -18,10 +20,17 @@ func (u *UnaryExpression) Walk(cb func(Node), skip func(Node) bool) {
 func (u *UnaryExpression) typeCheck(p *Parser) {
 	u.Operand.typeCheck(p)
 	switch u.Operator.Kind() {
+	case Bang:
+		t := u.Operand.Type().Kind()
+		if t != TYPE && t != BOOLEAN {
+			p.report("Type or boolean expected wiyh '!' operator", u.Operand.Loc())
+		}
 	case QuestionMark:
 		if u.Operand.Type().Kind() != TYPE {
 			p.report("Type expected with question mark operator", u.Operand.Loc())
 		}
+	default:
+		panic(fmt.Sprintf("Operator '%v' not implemented!", u.Operator.Kind()))
 	}
 }
 
@@ -35,6 +44,14 @@ func (u *UnaryExpression) Loc() Loc {
 
 func (u *UnaryExpression) Type() ExpressionType {
 	switch u.Operator.Kind() {
+	case Bang:
+		t := u.Operand.Type()
+		if ty, ok := t.(Type); ok {
+			t = ty.Value
+			return Type{makeResultType(t, nil)}
+		} else {
+			return Primitive{BOOLEAN}
+		}
 	case QuestionMark:
 		t := u.Operand.Type()
 		if ty, ok := t.(Type); ok {
@@ -86,7 +103,7 @@ func (l *ListTypeExpression) Type() ExpressionType {
 
 func (p *Parser) parseUnaryExpression() Expression {
 	switch p.Peek().Kind() {
-	case QuestionMark:
+	case Bang, QuestionMark:
 		token := p.Consume()
 		expr := parseInnerUnary(p)
 		return &UnaryExpression{token, expr}

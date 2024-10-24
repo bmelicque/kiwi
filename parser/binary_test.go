@@ -26,7 +26,7 @@ func TestBinaryErrorType(t *testing.T) {
 	// ErrType!OkType
 	parser := MakeParser(&testTokenizer{tokens: []Token{
 		literal{kind: Name, value: "ErrType"},
-		token{kind: Not},
+		token{kind: Bang},
 		literal{kind: Name, value: "OkType"},
 	}})
 	expr := parser.parseExpression()
@@ -186,7 +186,7 @@ func TestCheckBinaryErrorType(t *testing.T) {
 	expr := &BinaryExpression{
 		Left:     &Literal{literal{kind: StringKeyword}},
 		Right:    &Literal{literal{kind: NumberKeyword}},
-		Operator: token{kind: Not},
+		Operator: token{kind: Bang},
 	}
 	expr.typeCheck(parser)
 

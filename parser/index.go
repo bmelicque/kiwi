@@ -12,7 +12,7 @@ type Expression interface {
 
 func fallback(p *Parser) Expression {
 	switch p.Peek().Kind() {
-	case LeftBracket:
+	case Bang, QuestionMark, LeftBracket:
 		return p.parseUnaryExpression()
 	case LeftParenthesis:
 		return p.parseFunctionExpression(nil)

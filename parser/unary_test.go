@@ -71,6 +71,55 @@ func TestNoOptionValue(t *testing.T) {
 	}
 }
 
+func TestCheckErrorType(t *testing.T) {
+	// !number
+	parser := MakeParser(nil)
+	expr := &UnaryExpression{
+		Operator: token{kind: Bang},
+		Operand:  &Literal{Token: token{kind: NumberKeyword}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+	ty, ok := expr.Type().(Type)
+	if !ok {
+		t.Fatal("Expected type")
+	}
+	alias, ok := ty.Value.(TypeAlias)
+	if !ok || alias.Name != "Result" {
+		t.Fatal("Expected result type")
+	}
+	if alias.Ref.(Sum).getMember("Ok").Kind() != NUMBER {
+		t.Fatal("Expected number option type")
+	}
+}
+
+func TestCheckLogicalNot(t *testing.T) {
+	// !true
+	parser := MakeParser(nil)
+	expr := &UnaryExpression{
+		Operator: token{kind: Bang},
+		Operand:  &Literal{literal{kind: BooleanLiteral, value: "true"}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+	if expr.Type().Kind() != BOOLEAN {
+		t.Fatalf("Expected boolean")
+	}
+
+	// !42
+	expr.Operand = &Literal{literal{kind: NumberLiteral, value: "42"}}
+	expr.typeCheck(parser)
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
+	}
+}
+
 func TestListTypeExpression(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
 		token{kind: LeftBracket},
