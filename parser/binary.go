@@ -121,7 +121,7 @@ func parseMultiplication(p *Parser) Expression {
 	return parseBinary(p, []TokenKind{Mul, Div, Mod}, parseExponentiation)
 }
 func parseExponentiation(p *Parser) Expression {
-	expression := p.parseAccessExpression()
+	expression := p.parseCatchExpression()
 	next := p.Peek()
 	for next.Kind() == Pow {
 		operator := p.Consume()

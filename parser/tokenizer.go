@@ -43,6 +43,7 @@ const (
 	ReturnKeyword   // return
 	TryKeyword      // try
 	ThrowKeyword    // throw
+	CatchKeyword    // catch
 
 	Add        // +
 	Concat     // ++
@@ -278,6 +279,8 @@ func makeToken(text string, loc Loc) Token {
 		return token{TryKeyword, loc}
 	case "throw":
 		return token{ThrowKeyword, loc}
+	case "catch":
+		return token{CatchKeyword, loc}
 	case "+":
 		return token{Add, loc}
 	case "++":
