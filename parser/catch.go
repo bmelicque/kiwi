@@ -39,7 +39,7 @@ func (c *CatchExpression) typeCheck(p *Parser) {
 	var happy, err ExpressionType
 	alias, ok := c.Left.Type().(TypeAlias)
 	if !ok || alias.Name != "Result" {
-		p.report("Result type expected", c.Left.Loc())
+		p.report("Catch not need (lhs is not a result type)", c.Loc())
 		happy = c.Left.Type()
 		err = Primitive{UNKNOWN}
 	} else {
