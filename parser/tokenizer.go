@@ -52,6 +52,7 @@ const (
 	Mod        // %
 	LogicalAnd // &&
 	LogicalOr  // ||
+	Not        // !
 	BinaryAnd  // &
 	BinaryOr   // |
 

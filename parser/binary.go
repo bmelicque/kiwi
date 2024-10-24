@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"slices"
 )
 
@@ -61,15 +62,31 @@ func (expr *BinaryExpression) Type() ExpressionType {
 		Equal,
 		NotEqual:
 		return Primitive{BOOLEAN}
+	case Not:
+		left := expr.Left.Type()
+		if t, ok := left.(Type); ok {
+			left = t.Value
+		} else {
+			left = Primitive{UNKNOWN}
+		}
+
+		right := expr.Right.Type()
+		if t, ok := right.(Type); ok {
+			right = t.Value
+		} else {
+			right = Primitive{UNKNOWN}
+		}
+		return Type{makeResultType(right, left)}
+	default:
+		panic(fmt.Sprintf("operator '%v' not implemented", expr.Operator.Kind()))
 	}
-	return Primitive{UNKNOWN}
 }
 
 /******************************
  *  PARSING HELPER FUNCTIONS  *
  ******************************/
 func (p *Parser) parseBinaryExpression() Expression {
-	return parseLogicalOr(p)
+	return parseBinaryErrorType(p)
 }
 func parseBinary(p *Parser, operators []TokenKind, fallback func(p *Parser) Expression) Expression {
 	expression := fallback(p)
@@ -81,6 +98,9 @@ func parseBinary(p *Parser, operators []TokenKind, fallback func(p *Parser) Expr
 		next = p.Peek()
 	}
 	return expression
+}
+func parseBinaryErrorType(p *Parser) Expression {
+	return parseBinary(p, []TokenKind{Not}, parseLogicalOr)
 }
 func parseLogicalOr(p *Parser) Expression {
 	return parseBinary(p, []TokenKind{LogicalOr}, parseLogicalAnd)
@@ -138,6 +158,10 @@ func (b *BinaryExpression) typeCheck(p *Parser) {
 		Equal,
 		NotEqual:
 		p.typeCheckComparisonExpression(b.Left, b.Right)
+	case Not:
+		typeCheckBinaryErrorType(p, b.Left, b.Right)
+	default:
+		panic(fmt.Sprintf("operator '%v' not implemented", b.Operator.Kind()))
 	}
 }
 
@@ -194,5 +218,13 @@ func (p *Parser) typeCheckArithmeticExpression(left Expression, right Expression
 	}
 	if right != nil && !(Primitive{NUMBER}).Extends(right.Type()) {
 		p.report("The right-hand side of an arithmetic operation must be a number", right.Loc())
+	}
+}
+func typeCheckBinaryErrorType(p *Parser, left Expression, right Expression) {
+	if left.Type().Kind() != TYPE {
+		p.report("Type expected", left.Loc())
+	}
+	if right.Type().Kind() != TYPE {
+		p.report("Type expected", right.Loc())
 	}
 }

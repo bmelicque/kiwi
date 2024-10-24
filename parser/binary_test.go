@@ -22,6 +22,26 @@ func TestBinaryExpression(t *testing.T) {
 	_ = binary
 }
 
+func TestBinaryErrorType(t *testing.T) {
+	// ErrType!OkType
+	parser := MakeParser(&testTokenizer{tokens: []Token{
+		literal{kind: Name, value: "ErrType"},
+		token{kind: Not},
+		literal{kind: Name, value: "OkType"},
+	}})
+	expr := parser.parseExpression()
+
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no parsing errors, got %#v", parser.errors)
+	}
+
+	binary, ok := expr.(*BinaryExpression)
+	if !ok {
+		t.Fatalf("Expected a binary expression, got %#v", expr)
+	}
+	_ = binary
+}
+
 func TestCheckArithmeticExpression(t *testing.T) {
 	parser := MakeParser(nil)
 	expr := &BinaryExpression{
@@ -158,5 +178,31 @@ func TestCheckComparisonExpression(t *testing.T) {
 			len(operators),
 			parser.errors,
 		)
+	}
+}
+
+func TestCheckBinaryErrorType(t *testing.T) {
+	parser := MakeParser(nil)
+	expr := &BinaryExpression{
+		Left:     &Literal{literal{kind: StringKeyword}},
+		Right:    &Literal{literal{kind: NumberKeyword}},
+		Operator: token{kind: Not},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no parsing errors, got %#v", parser.errors)
+	}
+	ty, ok := expr.Type().(Type)
+	if !ok {
+		t.Fatalf("Type expected")
+	}
+	alias, ok := ty.Value.(TypeAlias)
+	if !ok || alias.Name != "Result" {
+		t.Fatalf("Result type expected")
+	}
+	okType := alias.Ref.(Sum).getMember("Ok")
+	if okType.Kind() != NUMBER {
+		t.Fatalf("Number expected")
 	}
 }
