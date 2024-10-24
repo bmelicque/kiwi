@@ -250,6 +250,12 @@ func typeCheckExplicitReturn(p *Parser, f *FunctionExpression) {
 			p.report("Error type doesn't match expected type", t.Expr.Loc())
 		}
 	}
+	throws := findThrowStatements(f.Body)
+	for _, t := range throws {
+		if t.Value != nil && !err.Extends(t.Value.Type()) {
+			p.report("Error type doesn't match expected type", t.Value.Loc())
+		}
+	}
 }
 
 // Type check all possible return points and see if they match
@@ -266,6 +272,10 @@ func typeCheckImplicitReturn(p *Parser, f *FunctionExpression) {
 			"Failable expressions are not allowed in functions without explicit returns",
 			t.Loc(),
 		)
+	}
+	throws := findThrowStatements(f.Body)
+	for _, t := range throws {
+		p.report("Cannot throw in functions without explicit returns", t.Loc())
 	}
 }
 
@@ -326,6 +336,20 @@ func findTryExpressions(body *Block) []*TryExpression {
 	body.Walk(appendIfTry, isFunctionExpression)
 	return results
 }
+
+// Find all the throw statements in a function body.
+// Don't check inside nested functions.
+func findThrowStatements(body *Block) []*Exit {
+	results := []*Exit{}
+	appendIfTry := func(node Node) {
+		if n, ok := node.(*Exit); ok && n.Operator.Kind() == ThrowKeyword {
+			results = append(results, n)
+		}
+	}
+	body.Walk(appendIfTry, isFunctionExpression)
+	return results
+}
+
 func isFunctionExpression(node Node) bool {
 	_, ok := node.(*FunctionExpression)
 	return ok

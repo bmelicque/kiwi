@@ -76,7 +76,7 @@ func (p *Parser) ParseProgram() []Node {
 
 func (p *Parser) parseStatement() Node {
 	switch p.Peek().Kind() {
-	case BreakKeyword, ContinueKeyword, ReturnKeyword:
+	case BreakKeyword, ContinueKeyword, ReturnKeyword, ThrowKeyword:
 		return p.parseExit()
 	default:
 		return p.parseAssignment()

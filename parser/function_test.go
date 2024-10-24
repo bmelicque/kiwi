@@ -136,6 +136,16 @@ func TestCheckImplicitReturn(t *testing.T) {
 func TestCheckImplicitReturnBadReturns(t *testing.T) {
 	parser := MakeParser(nil)
 	parser.scope.Add("result", Loc{}, makeResultType(Primitive{NIL}, Primitive{NUMBER}))
+	// () => {
+	//		if true {
+	//			return false
+	//		} else if true {
+	//			throw false
+	//		} else {
+	//			try result
+	//		}
+	//		42
+	// }
 	expr := &FunctionExpression{
 		Params: &ParenthesizedExpression{},
 		Body: &Block{Statements: []Node{
@@ -147,10 +157,57 @@ func TestCheckImplicitReturnBadReturns(t *testing.T) {
 						Value:    &Literal{literal{kind: BooleanLiteral, value: "false"}},
 					},
 				}},
+				Alternate: &IfExpression{
+					Condition: &Literal{literal{kind: BooleanLiteral, value: "true"}},
+					Body: &Block{Statements: []Node{
+						&Exit{
+							Operator: token{kind: ThrowKeyword},
+							Value:    &Literal{literal{kind: BooleanLiteral, value: "false"}},
+						},
+					}},
+					Alternate: &Block{Statements: []Node{
+						&TryExpression{
+							Keyword: token{kind: TryKeyword},
+							Expr:    &Identifier{Token: literal{kind: Name, value: "result"}},
+						},
+					}},
+				},
+			},
+			&Literal{literal{kind: NumberLiteral, value: "42"}},
+		}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 4 {
+		// expect 2 errors for mismatched body and return types
+		// expect 1 error for try with implicit return type
+		// expect 1 error for throw with implicit return type
+		t.Fatalf("Expected 4 errors, got %v: %#v", len(parser.errors), parser.errors)
+	}
+}
+
+func TestCheckExplicitReturn(t *testing.T) {
+	parser := MakeParser(nil)
+	expr := &FunctionExpression{
+		Params: &ParenthesizedExpression{},
+		Explicit: &BinaryExpression{
+			Left:     &Literal{token{kind: StringKeyword}},
+			Right:    &Literal{token{kind: NumberKeyword}},
+			Operator: token{kind: Bang},
+		},
+		Body: &Block{Statements: []Node{
+			&IfExpression{
+				Condition: &Literal{literal{kind: BooleanLiteral}},
+				Body: &Block{Statements: []Node{
+					&Exit{
+						Operator: token{kind: ReturnKeyword},
+						Value:    &Literal{literal{kind: NumberLiteral, value: "42"}},
+					},
+				}},
 				Alternate: &Block{Statements: []Node{
-					&TryExpression{
-						Keyword: token{kind: TryKeyword},
-						Expr:    &Identifier{Token: literal{kind: Name, value: "result"}},
+					&Exit{
+						Operator: token{kind: ThrowKeyword},
+						Value:    &Literal{literal{kind: StringLiteral, value: "\"\""}},
 					},
 				}},
 			},
@@ -159,9 +216,10 @@ func TestCheckImplicitReturnBadReturns(t *testing.T) {
 	}
 	expr.typeCheck(parser)
 
-	if len(parser.errors) != 3 {
-		// expect 2 errors for mismatched body and return types
-		// expect a 3rd error for try with implicit return type
-		t.Fatalf("Expected 3 errors, got %#v", parser.errors)
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+	if alias, ok := expr.returnType.(TypeAlias); !ok || alias.Name != "Result" {
+		t.Fatalf("Result type expected")
 	}
 }
