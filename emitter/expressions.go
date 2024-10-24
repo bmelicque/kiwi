@@ -253,3 +253,10 @@ func (e *Emitter) emitTupleExpression(t *parser.TupleExpression) {
 	}
 	e.write("]")
 }
+
+func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
+	if u.Operator.Kind() == parser.Bang && u.Type().Kind() == parser.BOOLEAN {
+		e.write("!")
+		e.emitExpression(u.Operand)
+	}
+}

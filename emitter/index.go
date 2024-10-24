@@ -121,6 +121,8 @@ func (e *Emitter) emitExpression(expr parser.Expression) {
 		e.emitTryExpression(expr)
 	case *parser.TupleExpression:
 		e.emitTupleExpression(expr)
+	case *parser.UnaryExpression:
+		e.emitUnaryExpression(expr)
 	}
 }
 
