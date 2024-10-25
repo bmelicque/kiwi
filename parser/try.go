@@ -5,14 +5,11 @@ type TryExpression struct {
 	Expr    Expression
 }
 
-func (t *TryExpression) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(t) {
-		return
+func (t *TryExpression) getChildren() []Node {
+	if t.Expr == nil {
+		return []Node{}
 	}
-	cb(t)
-	if t.Expr != nil {
-		t.Expr.Walk(cb, skip)
-	}
+	return []Node{t.Expr}
 }
 
 func (t *TryExpression) Loc() Loc {

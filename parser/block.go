@@ -9,14 +9,8 @@ type Block struct {
 	loc        Loc
 }
 
-func (b *Block) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(b) {
-		return
-	}
-	cb(b)
-	for i := range b.Statements {
-		b.Statements[i].Walk(cb, skip)
-	}
+func (b *Block) getChildren() []Node {
+	return b.Statements
 }
 
 func (b *Block) typeCheck(p *Parser) {

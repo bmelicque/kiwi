@@ -7,15 +7,6 @@ type SumTypeConstructor struct {
 	Params *ParenthesizedExpression // contains *TupleExpression
 }
 
-func (s *SumTypeConstructor) Walk(cb func(Node), skip func(Node) bool) {
-	if s.Name != nil {
-		s.Name.Walk(cb, skip)
-	}
-	if s.Params != nil {
-		s.Params.Walk(cb, skip)
-	}
-}
-
 func (s SumTypeConstructor) Loc() Loc {
 	var start, end Position
 	if s.Name != nil {
@@ -50,14 +41,17 @@ type SumType struct {
 	start   Position
 }
 
-func (s *SumType) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(s) {
-		return
-	}
-	cb(s)
+func (s *SumType) getChildren() []Node {
+	children := []Node{}
 	for i := range s.Members {
-		s.Members[i].Walk(cb, skip)
+		if s.Members[i].Name != nil {
+			children = append(children, s.Members[i].Name)
+		}
+		if s.Members[i].Params != nil {
+			children = append(children, s.Members[i].Params)
+		}
 	}
+	return children
 }
 
 func (s *SumType) Loc() Loc {

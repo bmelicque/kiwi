@@ -20,15 +20,12 @@ func (c *CatchExpression) Loc() Loc {
 	return Loc{start, end}
 }
 
-func (c *CatchExpression) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(c) {
-		return
-	}
-	cb(c)
-	c.Left.Walk(cb, skip)
+func (c *CatchExpression) getChildren() []Node {
+	children := []Node{c.Left}
 	if c.Body != nil {
-		c.Body.Walk(cb, skip)
+		children = append(children, c.Body)
 	}
+	return children
 }
 
 func (c *CatchExpression) typeCheck(p *Parser) {

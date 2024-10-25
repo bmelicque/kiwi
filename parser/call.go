@@ -9,15 +9,12 @@ type CallExpression struct {
 	typing ExpressionType
 }
 
-func (c *CallExpression) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(c) {
-		return
-	}
-	cb(c)
-	c.Callee.Walk(cb, skip)
+func (c *CallExpression) getChildren() []Node {
+	children := []Node{c.Callee}
 	if c.Args != nil {
-		c.Args.Walk(cb, skip)
+		children = append(children, c.Args)
 	}
+	return children
 }
 
 func (c *CallExpression) Loc() Loc {

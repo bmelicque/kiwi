@@ -6,14 +6,11 @@ type BracketedExpression struct {
 	loc  Loc
 }
 
-func (b *BracketedExpression) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(b) {
-		return
+func (b *BracketedExpression) getChildren() []Node {
+	if b.Expr == nil {
+		return []Node{}
 	}
-	cb(b)
-	if b.Expr != nil {
-		b.Expr.Walk(cb, skip)
-	}
+	return []Node{b.Expr}
 }
 
 func (b *BracketedExpression) typeCheck(p *Parser) {

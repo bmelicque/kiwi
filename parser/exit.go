@@ -5,14 +5,11 @@ type Exit struct {
 	Value    Expression
 }
 
-func (e *Exit) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(e) {
-		return
+func (e *Exit) getChildren() []Node {
+	if e.Value == nil {
+		return []Node{}
 	}
-	cb(e)
-	if e.Value != nil {
-		e.Value.Walk(cb, skip)
-	}
+	return []Node{e.Value}
 }
 
 func (e *Exit) typeCheck(p *Parser) {

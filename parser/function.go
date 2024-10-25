@@ -8,18 +8,15 @@ type FunctionExpression struct {
 	returnType ExpressionType
 }
 
-func (f *FunctionExpression) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(f) {
-		return
-	}
-	cb(f)
-	f.Params.Walk(cb, skip)
+func (f *FunctionExpression) getChildren() []Node {
+	children := []Node{f.Params}
 	if f.Explicit != nil {
-		f.Explicit.Walk(cb, skip)
+		children = append(children, f.Explicit)
 	}
 	if f.Body != nil {
-		f.Body.Walk(cb, skip)
+		children = append(children, f.Body)
 	}
+	return children
 }
 
 func (f *FunctionExpression) Loc() Loc {
@@ -69,15 +66,12 @@ type FunctionTypeExpression struct {
 	Expr       Expression
 }
 
-func (f *FunctionTypeExpression) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(f) {
-		return
-	}
-	cb(f)
-	f.Params.Walk(cb, skip)
+func (f *FunctionTypeExpression) getChildren() []Node {
+	children := []Node{f.Params}
 	if f.Expr != nil {
-		f.Expr.Walk(cb, skip)
+		children = append(children, f.Expr)
 	}
+	return children
 }
 
 func (f *FunctionTypeExpression) Loc() Loc {
@@ -308,12 +302,14 @@ func getExitType(e *Exit) ExpressionType {
 // Don't check inside nested functions.
 func findReturnStatements(body *Block) []*Exit {
 	results := []*Exit{}
-	appendIfReturn := func(node Node) {
-		if isReturnStatement(node) {
-			results = append(results, node.(*Exit))
+	Walk(body, func(n Node, skip func()) {
+		if isFunctionExpression(n) {
+			skip()
 		}
-	}
-	body.Walk(appendIfReturn, isFunctionExpression)
+		if isReturnStatement(n) {
+			results = append(results, n.(*Exit))
+		}
+	})
 	return results
 }
 func isReturnStatement(node Node) bool {
@@ -328,12 +324,14 @@ func isReturnStatement(node Node) bool {
 // Don't check inside nested functions.
 func findTryExpressions(body *Block) []*TryExpression {
 	results := []*TryExpression{}
-	appendIfTry := func(node Node) {
-		if n, ok := node.(*TryExpression); ok {
+	Walk(body, func(n Node, skip func()) {
+		if isFunctionExpression(n) {
+			skip()
+		}
+		if n, ok := n.(*TryExpression); ok {
 			results = append(results, n)
 		}
-	}
-	body.Walk(appendIfTry, isFunctionExpression)
+	})
 	return results
 }
 
@@ -341,12 +339,14 @@ func findTryExpressions(body *Block) []*TryExpression {
 // Don't check inside nested functions.
 func findThrowStatements(body *Block) []*Exit {
 	results := []*Exit{}
-	appendIfTry := func(node Node) {
-		if n, ok := node.(*Exit); ok && n.Operator.Kind() == ThrowKeyword {
+	Walk(body, func(n Node, skip func()) {
+		if isFunctionExpression(n) {
+			skip()
+		}
+		if n, ok := n.(*Exit); ok && n.Operator.Kind() == ThrowKeyword {
 			results = append(results, n)
 		}
-	}
-	body.Walk(appendIfTry, isFunctionExpression)
+	})
 	return results
 }
 

@@ -11,17 +11,15 @@ type BinaryExpression struct {
 	Operator Token
 }
 
-func (b *BinaryExpression) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(b) {
-		return
-	}
-	cb(b)
+func (b *BinaryExpression) getChildren() []Node {
+	children := []Node{}
 	if b.Left != nil {
-		b.Left.Walk(cb, skip)
+		children = append(children, b.Left)
 	}
 	if b.Right != nil {
-		b.Right.Walk(cb, skip)
+		children = append(children, b.Right)
 	}
+	return children
 }
 
 func (expr *BinaryExpression) Loc() Loc {

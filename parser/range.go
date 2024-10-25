@@ -6,17 +6,15 @@ type RangeExpression struct {
 	Operator Token
 }
 
-func (r *RangeExpression) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(r) {
-		return
-	}
-	cb(r)
+func (r *RangeExpression) getChildren() []Node {
+	children := make([]Node, 0, 2)
 	if r.Left != nil {
-		r.Left.Walk(cb, skip)
+		children = append(children, r.Left)
 	}
 	if r.Right != nil {
-		r.Right.Walk(cb, skip)
+		children = append(children, r.Right)
 	}
+	return children
 }
 
 func (r *RangeExpression) Loc() Loc {
