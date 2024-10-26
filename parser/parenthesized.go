@@ -40,7 +40,9 @@ func (p *ParenthesizedExpression) Type() ExpressionType {
 }
 
 func (expr *ParenthesizedExpression) typeCheck(p *Parser) {
-	expr.Expr.typeCheck(p)
+	if expr.Expr != nil {
+		expr.Expr.typeCheck(p)
+	}
 }
 
 func (p ParenthesizedExpression) Unwrap() Expression {

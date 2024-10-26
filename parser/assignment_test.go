@@ -140,6 +140,20 @@ func TestCheckVariableDeclaration(t *testing.T) {
 	}
 }
 
+func TestCheckVariableDeclarationNoNil(t *testing.T) {
+	parser := MakeParser(nil)
+	// v := ()
+	declaration := &Assignment{
+		Pattern:  &Identifier{Token: literal{kind: Name, value: "v"}},
+		Value:    &ParenthesizedExpression{},
+		Operator: token{kind: Declare},
+	}
+	declaration.typeCheck(parser)
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %v: %#v", len(parser.errors), parser.errors)
+	}
+}
+
 func TestCheckTupleDeclaration(t *testing.T) {
 	parser := MakeParser(nil)
 	declaration := &Assignment{

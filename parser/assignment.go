@@ -64,7 +64,7 @@ func (p *Parser) parseAssignment() Node {
 func typeCheckAssignment(p *Parser, a *Assignment) {
 	a.Pattern.typeCheck(p)
 	a.Value.typeCheck(p)
-	reportResultAssignment(p, a.Value)
+	reportInvalidVariableType(p, a.Value)
 
 	switch pattern := a.Pattern.(type) {
 	case *Identifier:
@@ -95,7 +95,7 @@ func typeCheckAssignment(p *Parser, a *Assignment) {
 // type check assignment where operator is ':='
 func typeCheckDeclaration(p *Parser, a *Assignment) {
 	a.Value.typeCheck(p)
-	reportResultAssignment(p, a.Value)
+	reportInvalidVariableType(p, a.Value)
 	switch pattern := a.Pattern.(type) {
 	case *Identifier:
 		declareIdentifier(p, pattern, a.Value.Type())
@@ -150,7 +150,7 @@ func typeCheckDefinition(p *Parser, a *Assignment) {
 	switch pattern := a.Pattern.(type) {
 	case *Identifier:
 		a.Value.typeCheck(p)
-		reportResultAssignment(p, a.Value)
+		reportInvalidVariableType(p, a.Value)
 		ok := true
 		if !pattern.IsType() {
 			p.report("Type identifier expected", pattern.Loc())
@@ -172,7 +172,7 @@ func typeCheckDefinition(p *Parser, a *Assignment) {
 		typeCheckMethod(p, pattern, a.Value)
 	default:
 		a.Value.typeCheck(p)
-		reportResultAssignment(p, a.Value)
+		reportInvalidVariableType(p, a.Value)
 
 		// TODO: generic type
 		// TODO: functions
@@ -242,10 +242,23 @@ func declareMethodReceiver(p *Parser, receiver Expression) *Identifier {
 	return typeIdentifier
 }
 
-func reportResultAssignment(p *Parser, value Expression) {
-	t, ok := value.Type().(TypeAlias)
-	if !ok || t.Name != "Result" {
-		return
+func reportInvalidVariableType(p *Parser, value Expression) {
+	switch t := value.Type().(type) {
+	case TypeAlias:
+		if t.Name != "Result" {
+			return
+		}
+		p.report(
+			"Cannot declare variable as Result, consider using a 'try' or 'catch' expression",
+			value.Loc(),
+		)
+	case Primitive:
+		if t.kind != NIL {
+			return
+		}
+		p.report(
+			"Cannot declare variables as nil, consider using option type",
+			value.Loc(),
+		)
 	}
-	p.report("Cannot use raw result (use 'try' or 'catch')", value.Loc())
 }
