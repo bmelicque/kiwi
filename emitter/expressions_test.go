@@ -8,7 +8,7 @@ import (
 
 func TestEmptyBlockExpression(t *testing.T) {
 	emitter := makeEmitter()
-	emitter.emit(&parser.Block{})
+	emitter.emitExpression(&parser.Block{})
 
 	text := emitter.string()
 	expected := "undefined"
@@ -19,7 +19,7 @@ func TestEmptyBlockExpression(t *testing.T) {
 
 func TestSingleLineBlockExpression(t *testing.T) {
 	emitter := makeEmitter()
-	emitter.emit(&parser.Block{Statements: []parser.Node{
+	emitter.emitExpression(&parser.Block{Statements: []parser.Node{
 		&parser.Literal{Token: testToken{kind: parser.NumberLiteral, value: "42"}},
 	}})
 
@@ -32,7 +32,7 @@ func TestSingleLineBlockExpression(t *testing.T) {
 
 func TestBlockExpression(t *testing.T) {
 	emitter := makeEmitter()
-	emitter.emit(&parser.Block{Statements: []parser.Node{
+	emitter.emitExpression(&parser.Block{Statements: []parser.Node{
 		&parser.Literal{Token: testToken{kind: parser.NumberLiteral, value: "42"}},
 		&parser.Literal{Token: testToken{kind: parser.NumberLiteral, value: "42"}},
 	}})

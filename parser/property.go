@@ -12,15 +12,12 @@ type PropertyAccessExpression struct {
 	typing   ExpressionType
 }
 
-func (p *PropertyAccessExpression) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(p) {
-		return
-	}
-	cb(p)
-	p.Expr.Walk(cb, skip)
+func (p *PropertyAccessExpression) getChildren() []Node {
+	children := []Node{p.Expr}
 	if p.Property != nil {
-		p.Property.Walk(cb, skip)
+		children = append(children, p.Property)
 	}
+	return children
 }
 
 func (p *PropertyAccessExpression) Loc() Loc {
@@ -171,13 +168,8 @@ type TraitExpression struct {
 	Def      *ParenthesizedExpression // contains *TupleExpression
 }
 
-func (t *TraitExpression) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(t) {
-		return
-	}
-	cb(t)
-	t.Receiver.Walk(cb, skip)
-	t.Def.Walk(cb, skip)
+func (t *TraitExpression) getChildren() []Node {
+	return []Node{t.Receiver, t.Def}
 }
 
 func (t *TraitExpression) Loc() Loc {

@@ -11,17 +11,15 @@ type BinaryExpression struct {
 	Operator Token
 }
 
-func (b *BinaryExpression) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(b) {
-		return
-	}
-	cb(b)
+func (b *BinaryExpression) getChildren() []Node {
+	children := []Node{}
 	if b.Left != nil {
-		b.Left.Walk(cb, skip)
+		children = append(children, b.Left)
 	}
 	if b.Right != nil {
-		b.Right.Walk(cb, skip)
+		children = append(children, b.Right)
 	}
+	return children
 }
 
 func (expr *BinaryExpression) Loc() Loc {
@@ -121,7 +119,7 @@ func parseMultiplication(p *Parser) Expression {
 	return parseBinary(p, []TokenKind{Mul, Div, Mod}, parseExponentiation)
 }
 func parseExponentiation(p *Parser) Expression {
-	expression := p.parseAccessExpression()
+	expression := p.parseCatchExpression()
 	next := p.Peek()
 	for next.Kind() == Pow {
 		operator := p.Consume()

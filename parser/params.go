@@ -6,14 +6,12 @@ type Params struct {
 	loc    Loc
 }
 
-func (p *Params) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(p) {
-		return
-	}
-	cb(p)
+func (p *Params) getChildren() []Node {
+	children := make([]Node, len(p.Params))
 	for i := range p.Params {
-		p.Params[i].Walk(cb, skip)
+		children[i] = &p.Params[i]
 	}
+	return children
 }
 
 func (p Params) Loc() Loc { return p.loc }
@@ -40,17 +38,15 @@ type Param struct {
 	HasColon   bool
 }
 
-func (p *Param) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(p) {
-		return
-	}
-	cb(p)
+func (p *Param) getChildren() []Node {
+	children := make([]Node, 0, 2)
 	if p.Identifier != nil {
-		p.Identifier.Walk(cb, skip)
+		children = append(children, p.Identifier)
 	}
 	if p.Complement != nil {
-		p.Complement.Walk(cb, skip)
+		children = append(children, p.Complement)
 	}
+	return children
 }
 
 func (p *Param) Loc() Loc {

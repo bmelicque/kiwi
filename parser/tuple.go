@@ -7,14 +7,12 @@ type TupleExpression struct {
 	typing   ExpressionType
 }
 
-func (t *TupleExpression) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(t) {
-		return
-	}
-	cb(t)
+func (t *TupleExpression) getChildren() []Node {
+	children := make([]Node, len(t.Elements))
 	for i := range t.Elements {
-		t.Elements[i].Walk(cb, skip)
+		children[i] = t.Elements[i]
 	}
+	return children
 }
 
 func (t *TupleExpression) typeCheck(p *Parser) {

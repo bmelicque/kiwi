@@ -7,14 +7,11 @@ type UnaryExpression struct {
 	Operand  Expression
 }
 
-func (u *UnaryExpression) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(u) {
-		return
+func (u *UnaryExpression) getChildren() []Node {
+	if u.Operand == nil {
+		return []Node{}
 	}
-	cb(u)
-	if u.Operand != nil {
-		u.Operand.Walk(cb, skip)
-	}
+	return []Node{u.Operand}
 }
 
 func (u *UnaryExpression) typeCheck(p *Parser) {
@@ -68,14 +65,11 @@ type ListTypeExpression struct {
 	Expr      Expression // Cannot be nil
 }
 
-func (l *ListTypeExpression) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(l) {
-		return
+func (l *ListTypeExpression) getChildren() []Node {
+	if l.Expr == nil {
+		return []Node{}
 	}
-	cb(l)
-	if l.Expr != nil {
-		l.Expr.Walk(cb, skip)
-	}
+	return []Node{l.Expr}
 }
 
 func (l *ListTypeExpression) typeCheck(p *Parser) {

@@ -3,7 +3,7 @@ package parser
 type Node interface {
 	typeCheck(*Parser)
 	Loc() Loc
-	Walk(cb func(Node), skip func(Node) bool)
+	getChildren() []Node
 }
 type Expression interface {
 	Node
@@ -22,4 +22,16 @@ func fallback(p *Parser) Expression {
 		}
 	}
 	return p.parseToken()
+}
+
+func Walk(node Node, predicate func(n Node, skip func())) {
+	var s bool
+	predicate(node, func() { s = true })
+	if s {
+		return
+	}
+	children := node.getChildren()
+	for i := range children {
+		Walk(children[i], predicate)
+	}
 }

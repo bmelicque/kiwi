@@ -9,11 +9,8 @@ type Literal struct {
 	Token
 }
 
-func (l *Literal) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(l) {
-		return
-	}
-	cb(l)
+func (l *Literal) getChildren() []Node {
+	return []Node{}
 }
 
 func (l *Literal) typeCheck(_ *Parser) {}
@@ -42,11 +39,8 @@ type Identifier struct {
 	typing ExpressionType
 }
 
-func (i *Identifier) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(i) {
-		return
-	}
-	cb(i)
+func (i *Identifier) getChildren() []Node {
+	return []Node{}
 }
 
 func (i *Identifier) IsType() bool {

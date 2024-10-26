@@ -32,17 +32,15 @@ func (a *Assignment) Loc() Loc {
 	return loc
 }
 
-func (a *Assignment) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(a) {
-		return
-	}
-	cb(a)
+func (a *Assignment) getChildren() []Node {
+	children := []Node{}
 	if a.Pattern != nil {
-		a.Pattern.Walk(cb, skip)
+		children = append(children, a.Pattern)
 	}
 	if a.Value != nil {
-		a.Value.Walk(cb, skip)
+		children = append(children, a.Value)
 	}
+	return children
 }
 
 func (p *Parser) parseAssignment() Node {

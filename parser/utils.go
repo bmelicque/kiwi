@@ -10,12 +10,12 @@ func recover(p *Parser, at TokenKind) bool {
 	start := next.Loc().Start
 	end := start
 	recovery := []TokenKind{at, EOL, EOF}
-	for ; slices.Contains(recovery, next.Kind()); next = p.Peek() {
+	for ; !slices.Contains(recovery, next.Kind()); next = p.Peek() {
 		end = p.Consume().Loc().End
 	}
 	// FIXME: token text
 	p.report(fmt.Sprintf("'%v' expected", at), Loc{Start: start, End: end})
-	return next.Kind() == LeftBrace
+	return next.Kind() == at
 }
 
 func (p *Parser) addTypeArgsToScope(args *TupleExpression, params []Generic) {

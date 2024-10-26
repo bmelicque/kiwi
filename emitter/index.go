@@ -22,7 +22,7 @@ type Emitter struct {
 	builder      strings.Builder
 	thisName     string
 	constructors map[string]map[string]parser.Expression
-	blockHoister
+	uninlinables map[parser.Node]int
 }
 
 func makeEmitter() *Emitter {
@@ -31,7 +31,7 @@ func makeEmitter() *Emitter {
 		flags:        NoFlags,
 		builder:      strings.Builder{},
 		constructors: map[string]map[string]parser.Expression{},
-		blockHoister: blockHoister{[]hoistedBlock{}},
+		uninlinables: map[parser.Node]int{},
 	}
 }
 
@@ -57,27 +57,19 @@ func (e Emitter) string() string {
 	return e.builder.String()
 }
 
-// FIXME: emit vs. emitExpression
 func (e *Emitter) emit(node parser.Node) {
-	if blocks := e.blockHoister.findStatementBlocks(&node); len(blocks) > 0 {
-		for _, block := range blocks {
-			e.write(fmt.Sprintf("let %v;\n", block.label))
-			e.indent()
-			e.emitBlock(block.block)
-			e.indent()
-		}
+	//TODO: if not node that needs extraction, look if contains one
+	if !isUninlinable(node) {
+		e.extractUninlinables(node)
 	}
 	switch node := node.(type) {
 	// Statements
 	case *parser.Assignment:
 		e.emitAssignment(node)
 	case *parser.Block:
-		label, ok := e.findBlockLabel(node)
-		if !ok {
-			e.emitBlockExpression(node)
-		} else {
-			e.write(label)
-		}
+		e.emitBlock(node)
+	case *parser.CatchExpression:
+		e.emitCatchStatement(node)
 	case *parser.ForExpression:
 		e.emitFor(node)
 	case *parser.IfExpression:
@@ -95,10 +87,19 @@ func (e *Emitter) emit(node parser.Node) {
 
 func (e *Emitter) emitExpression(expr parser.Expression) {
 	switch expr := expr.(type) {
+	case *parser.Block:
+		e.emitBlockExpression(expr)
 	case *parser.BinaryExpression:
 		e.emitBinaryExpression(expr)
 	case *parser.CallExpression:
 		e.emitCallExpression(expr)
+	case *parser.CatchExpression:
+		id, ok := e.uninlinables[expr]
+		if !ok {
+			panic("Catch expression should have been extracted!")
+		}
+		e.write(fmt.Sprintf("_tmp%v", id))
+		delete(e.uninlinables, expr)
 	case *parser.ComputedAccessExpression:
 		e.emitComputedAccessExpression(expr)
 	case *parser.FunctionExpression:
@@ -128,10 +129,6 @@ func (e *Emitter) emitExpression(expr parser.Expression) {
 
 func EmitProgram(nodes []parser.Node) string {
 	e := makeEmitter()
-	for _, node := range nodes {
-		findHoisted(node, &e.blockHoister.blocks)
-	}
-
 	for _, node := range nodes {
 		e.emit(node)
 	}

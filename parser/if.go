@@ -7,20 +7,18 @@ type IfExpression struct {
 	Body      *Block
 }
 
-func (i *IfExpression) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(i) {
-		return
-	}
-	cb(i)
+func (i *IfExpression) getChildren() []Node {
+	children := make([]Node, 0, 3)
 	if i.Condition != nil {
-		i.Condition.Walk(cb, skip)
+		children = append(children, i.Condition)
 	}
 	if i.Body != nil {
-		i.Body.Walk(cb, skip)
+		children = append(children, i.Body)
 	}
 	if i.Alternate != nil {
-		i.Alternate.Walk(cb, skip)
+		children = append(children, i.Alternate)
 	}
+	return children
 }
 
 func (i *IfExpression) typeCheck(p *Parser) {

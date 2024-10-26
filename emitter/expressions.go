@@ -1,6 +1,8 @@
 package emitter
 
 import (
+	"fmt"
+
 	"github.com/bmelicque/test-parser/parser"
 )
 
@@ -34,9 +36,9 @@ func (e *Emitter) emitBinaryExpression(expr *parser.BinaryExpression) {
 }
 
 func (e *Emitter) emitBlockExpression(b *parser.Block) {
-	label, ok := e.findBlockLabel(b)
-	if ok {
-		e.write(label)
+	if id, ok := e.uninlinables[b]; ok {
+		e.write(fmt.Sprintf("_tmp%v", id))
+		delete(e.uninlinables, b)
 		return
 	}
 

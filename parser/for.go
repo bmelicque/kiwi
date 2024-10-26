@@ -7,17 +7,15 @@ type ForExpression struct {
 	typing    ExpressionType
 }
 
-func (f *ForExpression) Walk(cb func(Node), skip func(Node) bool) {
-	if skip(f) {
-		return
-	}
-	cb(f)
+func (f *ForExpression) getChildren() []Node {
+	children := []Node{}
 	if f.Statement != nil {
-		f.Statement.Walk(cb, skip)
+		children = append(children, f.Statement)
 	}
 	if f.Body != nil {
-		f.Body.Walk(cb, skip)
+		children = append(children, f.Body)
 	}
+	return children
 }
 
 func (f *ForExpression) typeCheck(p *Parser) {
