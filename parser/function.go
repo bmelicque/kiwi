@@ -256,8 +256,9 @@ func typeCheckExplicitReturn(p *Parser, f *FunctionExpression) {
 func typeCheckImplicitReturn(p *Parser, f *FunctionExpression) {
 	f.returnType = f.Body.Type()
 
-	if !typeCheckHappyReturn(p, f.Body, f.Body.Type()) {
-		p.report("Mismatched types", f.Body.reportLoc())
+	returns := findReturnStatements(f.Body)
+	for _, r := range returns {
+		p.report("Cannot return in functions without explicit returns", r.Loc())
 	}
 
 	tries := findTryExpressions(f.Body)

@@ -111,15 +111,6 @@ func TestCheckImplicitReturn(t *testing.T) {
 	expr := &FunctionExpression{
 		Params: &ParenthesizedExpression{},
 		Body: &Block{Statements: []Node{
-			&IfExpression{
-				Condition: &Literal{literal{kind: BooleanLiteral, value: "true"}},
-				Body: &Block{Statements: []Node{
-					&Exit{
-						Operator: token{kind: ReturnKeyword},
-						Value:    &Literal{literal{kind: NumberLiteral, value: "42"}},
-					},
-				}},
-			},
 			&Literal{literal{kind: NumberLiteral, value: "42"}},
 		}},
 	}
@@ -178,11 +169,11 @@ func TestCheckImplicitReturnBadReturns(t *testing.T) {
 	}
 	expr.typeCheck(parser)
 
-	if len(parser.errors) != 4 {
-		// expect 2 errors for mismatched body and return types
+	if len(parser.errors) != 3 {
+		// expect 1 error for early return
 		// expect 1 error for try with implicit return type
 		// expect 1 error for throw with implicit return type
-		t.Fatalf("Expected 4 errors, got %v: %#v", len(parser.errors), parser.errors)
+		t.Fatalf("Expected 3 errors, got %v: %#v", len(parser.errors), parser.errors)
 	}
 }
 
