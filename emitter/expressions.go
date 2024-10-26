@@ -37,7 +37,7 @@ func (e *Emitter) emitBinaryExpression(expr *parser.BinaryExpression) {
 
 func (e *Emitter) emitBlockExpression(b *parser.Block) {
 	if id, ok := e.uninlinables[b]; ok {
-		fmt.Sprintf("_tmp%v", id)
+		e.write(fmt.Sprintf("_tmp%v", id))
 		delete(e.uninlinables, b)
 		return
 	}

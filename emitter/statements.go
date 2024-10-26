@@ -46,16 +46,28 @@ func (e *Emitter) emitBlock(b *parser.Block) {
 		return
 	}
 	e.write("\n")
-	defer func() {
-		e.indent()
-		e.write("}\n")
-	}()
-	e.depth += 1
-	defer func() { e.depth -= 1 }()
+	e.depth++
 	for _, statement := range b.Statements {
 		e.indent()
 		e.emit(statement)
+		e.write(";\n")
 	}
+	e.depth--
+	e.indent()
+	e.write("}\n")
+}
+
+func (e *Emitter) emitCatchStatement(c *parser.CatchExpression) {
+	e.write("try {\n")
+	e.depth++
+	e.indent()
+	e.emit(c.Left)
+	e.write(";\n")
+	e.depth--
+	e.write("} catch (")
+	e.emit(c.Identifier)
+	e.write(") ")
+	e.emitBlock(c.Body)
 }
 
 func (e *Emitter) emitFor(f *parser.ForExpression) {

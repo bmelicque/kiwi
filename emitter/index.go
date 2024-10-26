@@ -68,6 +68,8 @@ func (e *Emitter) emit(node parser.Node) {
 		e.emitAssignment(node)
 	case *parser.Block:
 		e.emitBlock(node)
+	case *parser.CatchExpression:
+		e.emitCatchStatement(node)
 	case *parser.ForExpression:
 		e.emitFor(node)
 	case *parser.IfExpression:
@@ -91,6 +93,13 @@ func (e *Emitter) emitExpression(expr parser.Expression) {
 		e.emitBinaryExpression(expr)
 	case *parser.CallExpression:
 		e.emitCallExpression(expr)
+	case *parser.CatchExpression:
+		id, ok := e.uninlinables[expr]
+		if !ok {
+			panic("Catch expression should have been extracted!")
+		}
+		e.write(fmt.Sprintf("_tmp%v", id))
+		delete(e.uninlinables, expr)
 	case *parser.ComputedAccessExpression:
 		e.emitComputedAccessExpression(expr)
 	case *parser.FunctionExpression:
