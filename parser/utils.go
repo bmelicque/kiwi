@@ -54,14 +54,26 @@ func (p *Parser) addTypeArgsToScope(args *TupleExpression, params []Generic) {
 	}
 }
 
-func addTypeParamsToScope(scope *Scope, params Params) {
-	for _, param := range params.Params {
-		if param.Complement == nil {
-			name := param.Identifier.Text()
-			t := Type{TypeAlias{Name: name, Ref: Generic{Name: name}}}
-			scope.Add(name, param.Loc(), t)
+func addTypeParamsToScope(scope *Scope, bracketed *BracketedExpression) {
+	tuple := bracketed.Expr.(*TupleExpression)
+	for i := range tuple.Elements {
+		addTypeParamToScope(scope, tuple.Elements[i].(*Param))
+	}
+}
+
+func addTypeParamToScope(scope *Scope, param *Param) {
+	var constraint ExpressionType
+	if param.Complement != nil {
+		if t, ok := param.Complement.Type().(Type); ok {
+			constraint = t.Value
 		}
 	}
+	name := param.Identifier.Text()
+	t := Type{TypeAlias{
+		Name: name,
+		Ref:  Generic{Name: name, Constraints: constraint},
+	}}
+	scope.Add(name, param.Loc(), t)
 }
 
 // If the given is a result, return its "Ok" type.

@@ -1,7 +1,7 @@
 package parser
 
 type FunctionExpression struct {
-	TypeParams *Params
+	TypeParams *BracketedExpression     // contains *TupleExpression of *Param
 	Params     *ParenthesizedExpression // contains *TupleExpression
 	Explicit   Expression               // Explicit return type (if any)
 	Body       *Block
@@ -32,8 +32,13 @@ func (f *FunctionExpression) Loc() Loc {
 func (f *FunctionExpression) Type() ExpressionType {
 	tp := []Generic{}
 	if f.TypeParams != nil {
-		for i, param := range f.TypeParams.Params {
-			tp[i] = Generic{Name: param.Identifier.Token.Text()}
+		tuple := f.TypeParams.Expr.(*TupleExpression)
+		for i := range tuple.Elements {
+			param := tuple.Elements[i].(*Param)
+			tp[i] = Generic{
+				Name:        param.Identifier.Token.Text(),
+				Constraints: param.Complement.Type(),
+			}
 		}
 	}
 	tuple, _ := f.Params.Type().(Tuple)
@@ -44,9 +49,7 @@ func (f *FunctionExpression) typeCheck(p *Parser) {
 	p.pushScope(NewScope(FunctionScope))
 	defer p.dropScope()
 
-	if f.TypeParams != nil {
-		addTypeParamsToScope(p.scope, *f.TypeParams)
-	}
+	typeCheckTypeParams(p, f.TypeParams)
 
 	if f.Params != nil && f.Params.Expr != nil {
 		addParamsToScope(p, f.Params.Expr.(*TupleExpression).Elements)
@@ -61,7 +64,7 @@ func (f *FunctionExpression) typeCheck(p *Parser) {
 }
 
 type FunctionTypeExpression struct {
-	TypeParams *Params
+	TypeParams *BracketedExpression
 	Params     *ParenthesizedExpression // Contains *TupleExpression
 	Expr       Expression
 }
@@ -76,7 +79,7 @@ func (f *FunctionTypeExpression) getChildren() []Node {
 
 func (f *FunctionTypeExpression) Loc() Loc {
 	var start, end Position
-	if len(f.TypeParams.Params) > 0 {
+	if f.TypeParams != nil {
 		start = f.TypeParams.loc.Start
 	} else if f.Params != nil {
 		start = f.Params.Loc().Start
@@ -95,8 +98,13 @@ func (f *FunctionTypeExpression) Loc() Loc {
 func (f *FunctionTypeExpression) Type() ExpressionType {
 	tp := []Generic{}
 	if f.TypeParams != nil {
-		for _, param := range f.TypeParams.Params {
-			tp = append(tp, Generic{Name: param.Identifier.Token.Text()})
+		tuple := f.TypeParams.Expr.(*TupleExpression)
+		for i := range tuple.Elements {
+			param := tuple.Elements[i].(*Param)
+			tp = append(tp, Generic{
+				Name:        param.Identifier.Token.Text(),
+				Constraints: param.Complement.Type(),
+			})
 		}
 	}
 	elements := f.Params.Expr.(*TupleExpression).Elements
@@ -129,13 +137,12 @@ func (f *FunctionTypeExpression) typeCheck(p *Parser) {
 	}
 }
 
-func (p *Parser) parseFunctionExpression(bracketed *BracketedExpression) Expression {
+func (p *Parser) parseFunctionExpression(typeParams *BracketedExpression) Expression {
 	p.pushScope(NewScope(FunctionScope))
 	defer p.dropScope()
 
-	var typeParams *Params
-	if bracketed != nil {
-		typeParams = getValidatedTypeParams(p, bracketed)
+	if typeParams != nil {
+		validateTypeParams(p, typeParams)
 	}
 	paren := p.parseParenthesizedExpression()
 
@@ -181,21 +188,6 @@ func (p *Parser) parseFunctionExpression(bracketed *BracketedExpression) Express
 	default:
 		return paren
 	}
-}
-
-func getValidatedTypeParams(p *Parser, bracketed *BracketedExpression) *Params {
-	tuple := makeTuple(bracketed.Expr)
-
-	params := make([]Param, len(tuple.Elements))
-	for i := range tuple.Elements {
-		identifier, ok := tuple.Elements[i].(*Identifier)
-		if !ok || !identifier.IsType() {
-			p.report("Type identifier expected", tuple.Elements[i].Loc())
-		}
-		params[i] = Param{Identifier: identifier}
-	}
-
-	return &Params{Params: params, loc: bracketed.loc}
 }
 
 // Validate all of a function params' structures
