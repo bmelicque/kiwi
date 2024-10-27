@@ -130,8 +130,7 @@ func typeCheckStructInstanciation(p *Parser, c *CallExpression) {
 	}
 	p.pushScope(NewScope(ProgramScope))
 	defer p.dropScope()
-	p.addTypeArgsToScope(nil, alias.Params)
-	c.Args.typeCheck(p)
+	typeCheckTypeArgs(p, nil, alias.Params)
 
 	args := c.Args.Expr.(*TupleExpression).Elements
 	for _, arg := range args {
@@ -214,7 +213,7 @@ func typeCheckListInstanciation(p *Parser, c *CallExpression) {
 	if alias, ok := el.(TypeAlias); ok {
 		p.pushScope(NewScope(ProgramScope))
 		defer p.dropScope()
-		p.addTypeArgsToScope(nil, alias.Params)
+		typeCheckTypeArgs(p, nil, alias.Params)
 		el, _ = el.build(p.scope, first.Type())
 	}
 

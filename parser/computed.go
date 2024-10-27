@@ -53,7 +53,7 @@ func typeCheckGenericType(p *Parser, expr *ComputedAccessExpression) {
 	defer p.dropScope()
 
 	params := append(alias.Params[:0:0], alias.Params...)
-	p.addTypeArgsToScope(makeTuple(expr.Property.Expr), params)
+	typeCheckTypeArgs(p, makeTuple(expr.Property.Expr), params)
 	ref, _ := alias.Ref.build(p.scope, nil)
 	expr.typing = Type{TypeAlias{
 		Name:   alias.Name,
@@ -68,7 +68,7 @@ func typeCheckGenericFunction(p *Parser, expr *ComputedAccessExpression) {
 
 	t := expr.Expr.Type().(Function)
 	typeParams := append(t.TypeParams[:0:0], t.TypeParams...)
-	p.addTypeArgsToScope(makeTuple(expr.Property.Expr), typeParams)
+	typeCheckTypeArgs(p, makeTuple(expr.Property.Expr), typeParams)
 	params := make([]ExpressionType, len(typeParams))
 	for i, param := range typeParams {
 		params[i], _ = param.build(p.scope, nil)

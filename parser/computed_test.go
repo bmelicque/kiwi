@@ -11,6 +11,7 @@ func TestGenericWithTypeArgs(t *testing.T) {
 			"value": Type{Generic{Name: "Type"}},
 		}},
 	}})
+	// Boxed[number]
 	expr := &ComputedAccessExpression{
 		Expr:     &Identifier{Token: literal{kind: Name, value: "Boxed"}},
 		Property: &BracketedExpression{Expr: &Literal{literal{kind: NumberKeyword}}},

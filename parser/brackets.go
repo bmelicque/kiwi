@@ -98,3 +98,50 @@ func typeCheckTypeParams(p *Parser, typeParams *BracketedExpression) {
 	}
 	addTypeParamsToScope(p.scope, typeParams)
 }
+
+// Type-check given type arguments against given expected type params.
+func typeCheckTypeArgs(p *Parser, args *TupleExpression, expected []Generic) {
+	var l int
+	if args != nil {
+		args.typeCheck(p)
+		l = len(args.Elements)
+	}
+
+	if l > len(expected) {
+		loc := args.Elements[len(expected)].Loc()
+		loc.End = args.Elements[l-1].Loc().End
+		p.report("Too many type arguments", loc)
+	}
+
+	for i := range expected {
+		if i < l {
+			typeCheckTypeArg(p, args.Elements[i], &expected[i])
+		} else {
+			addGenericToScope(p.scope, expected[i], Loc{})
+		}
+	}
+}
+
+func typeCheckTypeArg(p *Parser, arg Expression, expected *Generic) {
+	typing, ok := arg.Type().(Type)
+	if !ok {
+		p.report("Typing expected", arg.Loc())
+		return
+	}
+	if expected.Value == nil {
+		if expected.Constraints != nil && !expected.Constraints.Extends(typing) {
+			p.report("Type doesn't match", arg.Loc())
+		} else {
+			(*expected).Value = typing.Value
+		}
+	} else if !expected.Value.Extends(typing) {
+		p.report("Type doesn't match", arg.Loc())
+	}
+	addGenericToScope(p.scope, *expected, arg.Loc())
+}
+
+func addGenericToScope(scope *Scope, generic Generic, loc Loc) {
+	scope.Add(generic.Name, loc, Type{generic})
+	v, _ := scope.Find(generic.Name)
+	v.readAt(loc)
+}

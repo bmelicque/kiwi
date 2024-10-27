@@ -18,42 +18,6 @@ func recover(p *Parser, at TokenKind) bool {
 	return next.Kind() == at
 }
 
-func (p *Parser) addTypeArgsToScope(args *TupleExpression, params []Generic) {
-	var l int
-	if args != nil {
-		l = len(args.Elements)
-	}
-
-	if l > len(params) {
-		loc := args.Elements[len(params)].Loc()
-		loc.End = args.Elements[len(args.Elements)-1].Loc().End
-		p.report("Too many type arguments", loc)
-	}
-
-	for i, param := range params {
-		var loc Loc
-		var t ExpressionType
-		if i < l {
-			arg := args.Elements[i]
-			loc = arg.Loc()
-			typing, ok := arg.Type().(Type)
-			if ok {
-				t = typing.Value
-			} else {
-				p.report("Typing expected", arg.Loc())
-			}
-		}
-		if t != nil && param.Value != nil && !param.Value.Extends(t) {
-			p.report("Type doesn't match", args.Elements[i].Loc())
-		} else {
-			params[i].Value = t
-		}
-		p.scope.Add(param.Name, loc, Type{Generic{Name: param.Name, Value: t}})
-		v, _ := p.scope.Find(param.Name)
-		v.readAt(loc)
-	}
-}
-
 func addTypeParamsToScope(scope *Scope, bracketed *BracketedExpression) {
 	tuple := bracketed.Expr.(*TupleExpression)
 	for i := range tuple.Elements {
