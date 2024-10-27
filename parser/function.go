@@ -32,14 +32,7 @@ func (f *FunctionExpression) Loc() Loc {
 func (f *FunctionExpression) Type() ExpressionType {
 	tp := []Generic{}
 	if f.TypeParams != nil {
-		tuple := f.TypeParams.Expr.(*TupleExpression)
-		for i := range tuple.Elements {
-			param := tuple.Elements[i].(*Param)
-			tp[i] = Generic{
-				Name:        param.Identifier.Token.Text(),
-				Constraints: param.Complement.Type(),
-			}
-		}
+		f.TypeParams.getGenerics()
 	}
 	tuple, _ := f.Params.Type().(Tuple)
 	return Function{tp, &tuple, f.returnType}
@@ -98,14 +91,7 @@ func (f *FunctionTypeExpression) Loc() Loc {
 func (f *FunctionTypeExpression) Type() ExpressionType {
 	tp := []Generic{}
 	if f.TypeParams != nil {
-		tuple := f.TypeParams.Expr.(*TupleExpression)
-		for i := range tuple.Elements {
-			param := tuple.Elements[i].(*Param)
-			tp = append(tp, Generic{
-				Name:        param.Identifier.Token.Text(),
-				Constraints: param.Complement.Type(),
-			})
-		}
+		tp = f.TypeParams.getGenerics()
 	}
 	elements := f.Params.Expr.(*TupleExpression).Elements
 	p := Tuple{make([]ExpressionType, len(elements))}

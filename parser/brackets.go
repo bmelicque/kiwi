@@ -145,3 +145,19 @@ func addGenericToScope(scope *Scope, generic Generic, loc Loc) {
 	v, _ := scope.Find(generic.Name)
 	v.readAt(loc)
 }
+
+func (b *BracketedExpression) getGenerics() []Generic {
+	elements := b.Expr.(*TupleExpression).Elements
+	generics := make([]Generic, len(elements))
+	for i := range elements {
+		param := elements[i].(*Param)
+		generics[i] = Generic{Name: param.Identifier.Text()}
+		if param.Complement == nil {
+			continue
+		}
+		if t, ok := param.Complement.Type().(Type); ok {
+			generics[i].Constraints = t.Value
+		}
+	}
+	return generics
+}

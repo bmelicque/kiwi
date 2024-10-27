@@ -148,6 +148,31 @@ func declareTuple(p *Parser, pattern *TupleExpression, typing ExpressionType) {
 
 func typeCheckDefinition(p *Parser, a *Assignment) {
 	switch pattern := a.Pattern.(type) {
+	case *ComputedAccessExpression:
+		p.pushScope(NewScope(ProgramScope))
+		pattern.Property.Expr = makeTuple(pattern.Property.Expr)
+		validateTypeParams(p, pattern.Property)
+		typeCheckTypeParams(p, pattern.Property)
+		a.Value.typeCheck(p)
+		p.dropScope()
+
+		identifier, ok := pattern.Expr.(*Identifier)
+		if !ok || !identifier.IsType() {
+			p.report("Type identifier expected", pattern.Expr.Loc())
+			return
+		}
+		var ref ExpressionType
+		if init, ok := a.Value.Type().(Type); ok {
+			ref = init.Value
+		} else {
+			ref = Primitive{UNKNOWN}
+		}
+		t := Type{TypeAlias{
+			Name:   identifier.Text(),
+			Params: pattern.Property.getGenerics(),
+			Ref:    ref,
+		}}
+		p.scope.Add(identifier.Text(), pattern.Loc(), t)
 	case *Identifier:
 		a.Value.typeCheck(p)
 		reportInvalidVariableType(p, a.Value)
@@ -173,9 +198,6 @@ func typeCheckDefinition(p *Parser, a *Assignment) {
 	default:
 		a.Value.typeCheck(p)
 		reportInvalidVariableType(p, a.Value)
-
-		// TODO: generic type
-		// TODO: functions
 		p.report("Invalid pattern", pattern.Loc())
 	}
 }

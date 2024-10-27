@@ -261,7 +261,7 @@ func (e *Emitter) emitTypeDeclaration(declaration *parser.Assignment) {
 func isTypePattern(expr parser.Expression) bool {
 	c, ok := expr.(*parser.ComputedAccessExpression)
 	if ok {
-		expr = c
+		expr = c.Expr
 	}
 	identifier, ok := expr.(*parser.Identifier)
 	if !ok {

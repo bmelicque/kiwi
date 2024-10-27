@@ -283,6 +283,44 @@ func TestCheckObjectTypeDefinition(t *testing.T) {
 	_ = object
 }
 
+func TestCheckGenericTypeDefinition(t *testing.T) {
+	parser := MakeParser(nil)
+	declaration := &Assignment{
+		Pattern: &ComputedAccessExpression{
+			Expr: &Identifier{Token: literal{kind: Name, value: "Boxed"}},
+			Property: &BracketedExpression{
+				Expr: &Identifier{Token: literal{kind: Name, value: "Type"}},
+			},
+		},
+		Value: &ParenthesizedExpression{Expr: &Param{
+			Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
+			Complement: &Identifier{Token: literal{kind: Name, value: "Type"}},
+		}},
+		Operator: token{kind: Define},
+	}
+	declaration.typeCheck(parser)
+
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+
+	ty, ok := parser.scope.Find("Boxed")
+	if !ok {
+		t.Fatal("Expected 'Boxed' to have been added to scope")
+	}
+	typing, ok := ty.typing.(Type)
+	if !ok {
+		t.Fatal("Expected type 'Type'")
+	}
+	alias, ok := typing.Value.(TypeAlias)
+	if !ok {
+		t.Fatal("Expected an alias")
+	}
+	if len(alias.Params) != 1 {
+		t.Fatalf("Expected 1 type param, got %v", len(alias.Params))
+	}
+}
+
 func TestMethodDeclaration(t *testing.T) {
 	tokenizer := testTokenizer{tokens: []Token{
 		token{kind: LeftParenthesis},
