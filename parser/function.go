@@ -124,6 +124,9 @@ func (f *FunctionTypeExpression) Type() ExpressionType {
 }
 
 func (f *FunctionTypeExpression) typeCheck(p *Parser) {
+	if f.TypeParams != nil {
+		typeCheckTypeParams(p, f.TypeParams)
+	}
 	tuple := f.Params.Expr.(*TupleExpression)
 	for i := range tuple.Elements {
 		tuple.Elements[i].typeCheck(p)
