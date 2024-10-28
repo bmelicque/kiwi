@@ -1,6 +1,8 @@
 package parser
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestParseMapInstanciation(t *testing.T) {
 	parser := MakeParser(&testTokenizer{tokens: []Token{
@@ -28,6 +30,32 @@ func TestCheckImplicitMapInstanciation(t *testing.T) {
 				Value: &Literal{literal{kind: StringLiteral, value: "\"value\""}},
 			},
 		}}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+	alias, ok := expr.typing.(TypeAlias)
+	if !ok || alias.Name != "Map" {
+		t.Fatalf("Map expected")
+	}
+	if alias.Ref.(Map).Key.Kind() != STRING {
+		t.Fatalf("Expected string keys")
+	}
+}
+
+func TestCheckExplicitMapInstanciation(t *testing.T) {
+	parser := MakeParser(nil)
+	expr := &CallExpression{
+		Callee: &ComputedAccessExpression{
+			Expr: &Identifier{Token: literal{kind: Name, value: "Map"}},
+			Property: &BracketedExpression{Expr: &TupleExpression{Elements: []Expression{
+				&Literal{token{kind: StringKeyword}},
+				&Literal{token{kind: StringKeyword}},
+			}}},
+		},
+		Args: &ParenthesizedExpression{Expr: &TupleExpression{}},
 	}
 	expr.typeCheck(parser)
 

@@ -276,6 +276,7 @@ func getMapType(p *Parser, c *CallExpression) ExpressionType {
 			c.Loc(),
 		)
 	}
+	t.Params = append(t.Params[:0:0], t.Params...)
 	t.Params[0].Value = key
 	t.Params[1].Value = value
 	m := t.Ref.(Map)
