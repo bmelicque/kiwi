@@ -15,6 +15,7 @@ const (
 	TYPE_REF
 
 	LIST
+	MAP
 	TUPLE
 	RANGE
 	STRUCT
@@ -168,6 +169,38 @@ func (l List) build(scope *Scope, compared ExpressionType) (ExpressionType, bool
 	var ok bool
 	l.Element, ok = l.Element.build(scope, element)
 	return l, ok
+}
+
+type Map struct {
+	Key   ExpressionType
+	Value ExpressionType
+}
+
+func (m Map) Kind() ExpressionTypeKind { return MAP }
+func (m Map) Match(received ExpressionType) bool {
+	t, ok := received.(Map)
+	if !ok {
+		return false
+	}
+	return m.Key.Match(t.Key) && m.Value.Match(t.Value)
+}
+func (m Map) Extends(received ExpressionType) bool {
+	t, ok := received.(Map)
+	if !ok {
+		return false
+	}
+	return m.Key.Extends(t.Key) && m.Value.Extends(t.Value)
+}
+func (m Map) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
+	c, ok := compared.(Map)
+	if !ok {
+		key, kk := m.Key.build(scope, nil)
+		value, vk := m.Value.build(scope, nil)
+		return Map{key, value}, kk && vk
+	}
+	key, kk := m.Key.build(scope, c.Key)
+	value, vk := m.Value.build(scope, c.Value)
+	return Map{key, value}, kk && vk
 }
 
 type Tuple struct {

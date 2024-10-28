@@ -168,6 +168,13 @@ var std = Scope{
 				Ref:    List{Generic{Name: "Type"}},
 			}},
 		},
+		"Map": {
+			typing: Type{TypeAlias{
+				Name:   "Map",
+				Params: []Generic{{Name: "Key"}, {Name: "Value"}},
+				Ref:    Map{Generic{Name: "Key"}, Generic{Name: "Value"}},
+			}},
+		},
 		"Option": {
 			typing: Type{optionType},
 		},
