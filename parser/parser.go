@@ -17,6 +17,7 @@ type Parser struct {
 	allowEmptyExpr    bool
 	allowBraceParsing bool
 	allowCallExpr     bool
+	preventColon      bool // don't parse expressions like 'identifier: value'
 
 	// If true, declarations are considered as being part of an if statement.
 	// For example: 'if Some(s) := option {}'.

@@ -195,13 +195,9 @@ func validateFunctionParams(p *Parser, node *ParenthesizedExpression) {
 
 // Validate a function param's structure
 func validateFunctionParam(p *Parser, expr Expression) {
-	param, ok := expr.(*Param)
-	if !ok {
+	if _, ok := expr.(*Param); !ok {
 		p.report("Parameter expected: (name Type)", expr.Loc())
 		return
-	}
-	if param.HasColon {
-		p.report("No ':' expected between parameter name and type", expr.Loc())
 	}
 }
 
