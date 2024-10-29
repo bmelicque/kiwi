@@ -86,3 +86,46 @@ func TestGenericFunctionWithTypeArgs(t *testing.T) {
 		t.Fatalf("Param should've been set to Primitive{NUMBER}, got %#v", function.Returned)
 	}
 }
+
+func TestMapElementAccess(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("map", Loc{}, makeMapType(Primitive{NUMBER}, Primitive{STRING}))
+	// map[42]
+	expr := &ComputedAccessExpression{
+		Expr: &Identifier{Token: literal{kind: Name, value: "map"}},
+		Property: &BracketedExpression{
+			Expr: &Literal{literal{kind: NumberLiteral, value: "42"}},
+		},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+
+	alias, ok := expr.typing.(TypeAlias)
+	if !ok || alias.Name != "Option" {
+		t.Fatalf("Expected an option, got %#v", expr.typing)
+	}
+	some := alias.Ref.(Sum).getMember("Some")
+	if some.Kind() != STRING {
+		t.Fatalf("Expected option of string, got %#v", some)
+	}
+}
+
+func TestMapElementAccessBadKey(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("map", Loc{}, makeMapType(Primitive{NUMBER}, Primitive{STRING}))
+	// map["42"]
+	expr := &ComputedAccessExpression{
+		Expr: &Identifier{Token: literal{kind: Name, value: "map"}},
+		Property: &BracketedExpression{
+			Expr: &Literal{literal{kind: StringLiteral, value: "\"42\""}},
+		},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %v: %#v", len(parser.errors), parser.errors)
+	}
+}
