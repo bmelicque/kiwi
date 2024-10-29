@@ -267,9 +267,9 @@ func getMapType(p *Parser, c *CallExpression) ExpressionType {
 		key, kk = t.Params[0].build(p.scope, nil)
 	}
 	if len(args) > 0 {
-		value, vk = t.Params[0].build(p.scope, args[0].(*Entry).Value.Type())
+		value, vk = t.Params[1].build(p.scope, args[0].(*Entry).Value.Type())
 	} else {
-		value, vk = t.Params[0].build(p.scope, nil)
+		value, vk = t.Params[1].build(p.scope, nil)
 	}
 	if !kk || !vk {
 		p.report(
