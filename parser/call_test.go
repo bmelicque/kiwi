@@ -45,6 +45,19 @@ func TestCheckImplicitMapInstanciation(t *testing.T) {
 	}
 }
 
+func TestCheckMapInstanciationMissingTypeArg(t *testing.T) {
+	parser := MakeParser(nil)
+	expr := &CallExpression{
+		Callee: &Identifier{Token: literal{kind: Name, value: "Map"}},
+		Args:   &ParenthesizedExpression{Expr: &TupleExpression{Elements: []Expression{}}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %v: %#v", len(parser.errors), parser.errors)
+	}
+}
+
 func TestCheckExplicitMapInstanciation(t *testing.T) {
 	parser := MakeParser(nil)
 	expr := &CallExpression{
