@@ -231,6 +231,7 @@ func typeCheckMapInstanciation(p *Parser, c *CallExpression, t TypeAlias) {
 	args := c.Args.Expr.(*TupleExpression).Elements
 	formatMapEntries(p, args)
 	c.typing = getMapType(p, c)
+	typeCheckMapEntries(p, args, c.typing.(TypeAlias).Ref.(Map))
 }
 
 func formatMapEntries(p *Parser, received []Expression) {
@@ -284,6 +285,29 @@ func getMapType(p *Parser, c *CallExpression) ExpressionType {
 	m.Value = value
 	t.Ref = m
 	return t
+}
+func typeCheckMapEntries(p *Parser, entries []Expression, t Map) {
+	for i := range entries {
+		entry := entries[i].(*Entry)
+		if entry.Key != nil {
+			entry.Key.typeCheck(p)
+			var key ExpressionType
+			if b, ok := entry.Key.(*BracketedExpression); ok {
+				key = b.Expr.Type()
+			} else {
+				key = entry.Key.Type()
+			}
+			if !t.Key.Extends(key) {
+				p.report("Type doesn't match expected key type", entry.Key.Loc())
+			}
+		}
+		if entry.Value != nil {
+			entry.Value.typeCheck(p)
+			if !t.Value.Extends(entry.Value.Type()) {
+				p.report("Type doesn't match expected value type", entry.Value.Loc())
+			}
+		}
+	}
 }
 
 func typeCheckListInstanciation(p *Parser, c *CallExpression) {
