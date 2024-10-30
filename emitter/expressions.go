@@ -202,6 +202,10 @@ func (e *Emitter) emitCallExpression(expr *parser.CallExpression) {
 }
 
 func (e *Emitter) emitComputedAccessExpression(expr *parser.ComputedAccessExpression) {
+	if alias, ok := expr.Expr.Type().(parser.TypeAlias); ok && alias.Name == "Map" {
+		emitMapElementAccess(e, expr)
+		return
+	}
 	e.emit(expr.Expr)
 	t := expr.Expr.Type()
 	if _, ok := t.(parser.List); ok {
@@ -209,6 +213,12 @@ func (e *Emitter) emitComputedAccessExpression(expr *parser.ComputedAccessExpres
 		e.emit(expr.Property.Expr)
 		e.write("]")
 	}
+}
+func emitMapElementAccess(e *Emitter, c *parser.ComputedAccessExpression) {
+	e.emitExpression(c.Expr)
+	e.write(".get(")
+	e.emitExpression(c.Property.Expr)
+	e.write(")")
 }
 
 func (e *Emitter) emitFunctionExpression(f *parser.FunctionExpression) {
