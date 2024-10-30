@@ -70,13 +70,6 @@ func getValidatedTypeParam(p *Parser, expr Expression) *Param {
 		}
 		return &Param{Identifier: identifier}
 	}
-
-	if param.HasColon {
-		p.report(
-			"No ':' expected between identifier and constraint",
-			param.Loc(),
-		)
-	}
 	return param
 }
 

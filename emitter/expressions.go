@@ -106,6 +106,37 @@ func (e *Emitter) emitListInstance(constructor *parser.ListTypeExpression, args 
 	)
 	e.write("]")
 }
+func (e *Emitter) emitMapInstance(args *parser.TupleExpression) {
+	if len(args.Elements) == 0 {
+		e.write("new Map()")
+		return
+	}
+	e.write("new Map([")
+
+	max := len(args.Elements) - 1
+	for _, arg := range args.Elements[:max] {
+		emitMapEntry(e, arg)
+		e.write(", ")
+	}
+	emitMapEntry(e, args.Elements[max])
+
+	e.write("])")
+}
+func emitMapEntry(e *Emitter, arg parser.Expression) {
+	entry := arg.(*parser.Entry)
+	var key parser.Expression
+	if b, ok := entry.Key.(*parser.BracketedExpression); ok {
+		key = b.Expr
+	} else {
+		key = entry.Key
+	}
+
+	e.write("[")
+	e.emitExpression(key)
+	e.write(", ")
+	e.emitExpression(entry.Value)
+	e.write("]")
+}
 func (e *Emitter) emitObjectInstance(constructor *parser.Identifier, args *parser.TupleExpression) {
 	e.write("new ")
 	e.emit(constructor)
@@ -141,7 +172,11 @@ func (e *Emitter) emitInstance(constructor parser.Expression, args *parser.Tuple
 	case *parser.PropertyAccessExpression:
 		e.emitSumInstance(c, args)
 	case *parser.Identifier:
-		e.emitObjectInstance(c, args)
+		if c.Text() == "Map" {
+			e.emitMapInstance(args)
+		} else {
+			e.emitObjectInstance(c, args)
+		}
 	}
 }
 func (e *Emitter) emitInstanceExpression(expr *parser.CallExpression) {
@@ -167,6 +202,10 @@ func (e *Emitter) emitCallExpression(expr *parser.CallExpression) {
 }
 
 func (e *Emitter) emitComputedAccessExpression(expr *parser.ComputedAccessExpression) {
+	if alias, ok := expr.Expr.Type().(parser.TypeAlias); ok && alias.Name == "Map" {
+		emitMapElementAccess(e, expr)
+		return
+	}
 	e.emit(expr.Expr)
 	t := expr.Expr.Type()
 	if _, ok := t.(parser.List); ok {
@@ -174,6 +213,12 @@ func (e *Emitter) emitComputedAccessExpression(expr *parser.ComputedAccessExpres
 		e.emit(expr.Property.Expr)
 		e.write("]")
 	}
+}
+func emitMapElementAccess(e *Emitter, c *parser.ComputedAccessExpression) {
+	e.emitExpression(c.Expr)
+	e.write(".get(")
+	e.emitExpression(c.Property.Expr)
+	e.write(")")
 }
 
 func (e *Emitter) emitFunctionExpression(f *parser.FunctionExpression) {

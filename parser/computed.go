@@ -31,6 +31,8 @@ func (expr *ComputedAccessExpression) typeCheck(p *Parser) {
 	switch t := expr.Expr.Type().(type) {
 	case Type:
 		typeCheckGenericType(p, expr)
+	case TypeAlias:
+		typeCheckMapAccess(p, expr)
 	case Function:
 		typeCheckGenericFunction(p, expr)
 	case List:
@@ -39,6 +41,21 @@ func (expr *ComputedAccessExpression) typeCheck(p *Parser) {
 		}
 		expr.typing = t.Element
 	}
+}
+
+func typeCheckMapAccess(p *Parser, expr *ComputedAccessExpression) {
+	expr.Property.typeCheck(p)
+	a := expr.Expr.Type().(TypeAlias)
+	if a.Name != "Map" {
+		expr.typing = Primitive{UNKNOWN}
+		return
+	}
+	b, _ := a.Ref.build(p.scope, nil)
+	m := b.(Map)
+	if expr.Property.Expr != nil && !m.Key.Extends(expr.Property.Expr.Type()) {
+		p.report("Type doesn't match expected key type", expr.Property.loc)
+	}
+	expr.typing = makeOptionType(m.Value)
 }
 
 func typeCheckGenericType(p *Parser, expr *ComputedAccessExpression) {

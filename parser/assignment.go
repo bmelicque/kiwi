@@ -67,6 +67,19 @@ func typeCheckAssignment(p *Parser, a *Assignment) {
 	reportInvalidVariableType(p, a.Value)
 
 	switch pattern := a.Pattern.(type) {
+	case *ComputedAccessExpression:
+		alias, ok := pattern.Expr.Type().(TypeAlias)
+		if !ok || alias.Name != "Map" {
+			p.report(
+				"Invalid type, expected assignment to map element",
+				pattern.Loc(),
+			)
+			return
+		}
+		t := pattern.typing.(TypeAlias).Ref.(Sum).getMember("Some")
+		if !t.Extends(a.Value.Type()) {
+			p.report("Mismatched types", a.Loc())
+		}
 	case *Identifier:
 		if pattern.typing.Extends(a.Value.Type()) {
 			return

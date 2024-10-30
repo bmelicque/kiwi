@@ -66,3 +66,19 @@ func TestIfExpression(t *testing.T) {
 		t.Fatalf("Expected string:\n%v\ngot:\n%v", expected, text)
 	}
 }
+
+func TestMapElementAccess(t *testing.T) {
+	emitter := makeEmitter()
+	emitMapElementAccess(emitter, &parser.ComputedAccessExpression{
+		Expr: &parser.Identifier{Token: testToken{kind: parser.Name, value: "map"}},
+		Property: &parser.BracketedExpression{
+			Expr: &parser.Literal{Token: testToken{kind: parser.StringLiteral, value: "\"key\""}},
+		},
+	})
+
+	text := emitter.string()
+	expected := "map.get(\"key\")"
+	if text != expected {
+		t.Fatalf("Expected string:\n%v\ngot:\n%v", expected, text)
+	}
+}

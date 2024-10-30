@@ -131,7 +131,7 @@ func getSomeType(t Sum) ExpressionType {
 // It represents the presence or absence of some value.
 var optionType = makeOptionType(nil)
 
-// utility to create option types with different Some types
+// utility to create result types
 func makeResultType(ok ExpressionType, err ExpressionType) TypeAlias {
 	alias := TypeAlias{
 		Name: "Result",
@@ -158,6 +158,22 @@ func makeResultType(ok ExpressionType, err ExpressionType) TypeAlias {
 	return alias
 }
 
+// utility to create map types
+func makeMapType(key ExpressionType, value ExpressionType) TypeAlias {
+	alias := TypeAlias{
+		Name: "Map",
+		Params: []Generic{
+			{Name: "Key", Value: key},
+			{Name: "Value", Value: value},
+		},
+		Ref: Map{
+			Generic{Name: "Key", Value: key},
+			Generic{Name: "Value", Value: value},
+		},
+	}
+	return alias
+}
+
 // The scope containing the standard library
 var std = Scope{
 	variables: map[string]*Variable{
@@ -167,6 +183,9 @@ var std = Scope{
 				Params: []Generic{{Name: "Type"}},
 				Ref:    List{Generic{Name: "Type"}},
 			}},
+		},
+		"Map": {
+			typing: Type{makeMapType(nil, nil)},
 		},
 		"Option": {
 			typing: Type{optionType},

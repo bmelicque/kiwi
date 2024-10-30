@@ -122,6 +122,86 @@ func TestCheckAssignmentToTupleBadType(t *testing.T) {
 	}
 }
 
+func TestParseAssignmentToMap(t *testing.T) {
+	parser := MakeParser(&testTokenizer{tokens: []Token{
+		literal{kind: Name, value: "map"},
+		token{kind: LeftBracket},
+		literal{kind: StringLiteral, value: "\"key\""},
+		token{kind: RightBracket},
+		token{kind: Assign},
+		literal{kind: NumberLiteral, value: "42"},
+	}})
+	node := parser.parseAssignment()
+
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+	assignment, ok := node.(*Assignment)
+	if !ok {
+		t.Fatal("Assignment expected")
+	}
+	if _, ok := assignment.Pattern.(*ComputedAccessExpression); !ok {
+		t.Fatalf("Computed access expected")
+	}
+}
+
+func TestCheckAssignmentToMap(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("map", Loc{}, makeMapType(Primitive{NUMBER}, Primitive{NUMBER}))
+	declaration := &Assignment{
+		Pattern: &ComputedAccessExpression{
+			Expr: &Identifier{Token: literal{kind: Name, value: "map"}},
+			Property: &BracketedExpression{
+				Expr: &Literal{literal{kind: NumberLiteral, value: "42"}},
+			},
+		},
+		Value:    &Literal{literal{kind: NumberLiteral, value: "42"}},
+		Operator: token{kind: Assign},
+	}
+	declaration.typeCheck(parser)
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+}
+
+func TestCheckAssignmentToMapBadKey(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("map", Loc{}, makeMapType(Primitive{NUMBER}, Primitive{NUMBER}))
+	declaration := &Assignment{
+		Pattern: &ComputedAccessExpression{
+			Expr: &Identifier{Token: literal{kind: Name, value: "map"}},
+			Property: &BracketedExpression{
+				Expr: &Literal{literal{kind: StringLiteral, value: "\"key\""}},
+			},
+		},
+		Value:    &Literal{literal{kind: NumberLiteral, value: "42"}},
+		Operator: token{kind: Assign},
+	}
+	declaration.typeCheck(parser)
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
+	}
+}
+
+func TestCheckAssignmentToMapBadValue(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("map", Loc{}, makeMapType(Primitive{NUMBER}, Primitive{NUMBER}))
+	declaration := &Assignment{
+		Pattern: &ComputedAccessExpression{
+			Expr: &Identifier{Token: literal{kind: Name, value: "map"}},
+			Property: &BracketedExpression{
+				Expr: &Literal{literal{kind: NumberLiteral, value: "42"}},
+			},
+		},
+		Value:    &Literal{literal{kind: StringLiteral, value: "\"42\""}},
+		Operator: token{kind: Assign},
+	}
+	declaration.typeCheck(parser)
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
+	}
+}
+
 func TestCheckVariableDeclaration(t *testing.T) {
 	parser := MakeParser(nil)
 	declaration := &Assignment{

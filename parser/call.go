@@ -36,6 +36,7 @@ func parseCallExpression(p *Parser, callee Expression) *CallExpression {
 }
 
 func (c *CallExpression) typeCheck(p *Parser) {
+	c.Callee.typeCheck(p)
 	switch typing := c.Callee.Type().(type) {
 	case Function:
 		typeCheckFunctionCall(p, c)
@@ -122,6 +123,10 @@ func validateArgumentsNumber(p *Parser, args *TupleExpression, params []Expressi
 func typeCheckStructInstanciation(p *Parser, c *CallExpression) {
 	// next line ensured by calling function
 	alias := c.Callee.Type().(Type).Value.(TypeAlias)
+	if alias.Name == "Map" {
+		typeCheckMapInstanciation(p, c, alias)
+		return
+	}
 	object, ok := alias.Ref.(Object)
 	if !ok {
 		p.report("Object type expected", c.Callee.Loc())
@@ -133,18 +138,15 @@ func typeCheckStructInstanciation(p *Parser, c *CallExpression) {
 	typeCheckTypeArgs(p, nil, alias.Params)
 
 	args := c.Args.Expr.(*TupleExpression).Elements
+	formatStructEntries(p, args)
 	for _, arg := range args {
-		namedArg, ok := arg.(*Param)
-		if !ok {
-			p.report("Named argument expected", arg.Loc())
-			continue
-		}
+		entry := arg.(*Entry)
 		var name string
-		if namedArg.Identifier != nil {
-			name = namedArg.Identifier.Text()
+		if entry.Key != nil {
+			name = entry.Key.(*Identifier).Text()
 		}
 		expected := object.Members[name]
-		if !expected.Extends(namedArg.Complement.Type()) {
+		if !expected.Extends(entry.Value.Type()) {
 			p.report("Type doesn't match the expected one", arg.Loc())
 		}
 	}
@@ -154,13 +156,35 @@ func typeCheckStructInstanciation(p *Parser, c *CallExpression) {
 
 	c.typing = alias
 }
+func formatStructEntries(p *Parser, received []Expression) {
+	for i := range received {
+		received[i] = getFormattedStructEntry(p, received[i])
+	}
+}
+func getFormattedStructEntry(p *Parser, received Expression) *Entry {
+	entry, ok := received.(*Entry)
+	if !ok {
+		if param, ok := received.(*Param); ok {
+			p.report("':' expected between key and value", param.Loc())
+			return &Entry{Key: param.Identifier, Value: param.Complement}
+		} else {
+			p.report("Entry expected", received.Loc())
+			return &Entry{Value: received}
+		}
+	}
+	if _, ok := entry.Key.(*Identifier); !ok {
+		p.report("Identifier expected", entry.Key.Loc())
+		entry.Key = &Identifier{}
+	}
+	return entry
+}
 func reportExcessMembers(p *Parser, expected map[string]ExpressionType, received []Expression) {
 	for _, arg := range received {
-		namedArg, ok := arg.(*Param)
+		namedArg, ok := arg.(*Entry)
 		if !ok {
 			continue
 		}
-		name := namedArg.Identifier.Text()
+		name := namedArg.Key.(*Identifier).Text()
 		if _, ok := expected[name]; ok {
 			continue
 		}
@@ -198,6 +222,92 @@ func reportMissingMembers(
 		i++
 	}
 	p.report(fmt.Sprintf("Missing key(s) %v", msg), received.loc)
+}
+
+func typeCheckMapInstanciation(p *Parser, c *CallExpression, t TypeAlias) {
+	p.pushScope(NewScope(ProgramScope))
+	defer p.dropScope()
+	typeCheckTypeArgs(p, nil, t.Params)
+	args := c.Args.Expr.(*TupleExpression).Elements
+	formatMapEntries(p, args)
+	c.typing = getMapType(p, c)
+	typeCheckMapEntries(p, args, c.typing.(TypeAlias).Ref.(Map))
+}
+
+func formatMapEntries(p *Parser, received []Expression) {
+	for i := range received {
+		received[i] = getFormattedMapEntry(p, received[i])
+	}
+}
+func getFormattedMapEntry(p *Parser, received Expression) *Entry {
+	entry, ok := received.(*Entry)
+	if !ok {
+		if param, ok := received.(*Param); ok {
+			p.report("':' expected between key and value", param.Loc())
+			return &Entry{Key: param.Identifier, Value: param.Complement}
+		} else {
+			p.report("Entry expected", received.Loc())
+			return &Entry{Value: received}
+		}
+	}
+	if _, ok := entry.Key.(*Identifier); ok {
+		p.report("Literal or brackets expected", entry.Key.Loc())
+		entry.Key = nil
+	}
+	return entry
+}
+func getMapType(p *Parser, c *CallExpression) ExpressionType {
+	t := c.Callee.Type().(Type).Value.(TypeAlias)
+	args := c.Args.Expr.(*TupleExpression).Elements
+	var key, value ExpressionType
+	var kk, vk bool
+	if len(args) > 0 {
+		key, kk = t.Params[0].build(p.scope, args[0].(*Entry).Key.Type())
+	} else {
+		key, kk = t.Params[0].build(p.scope, nil)
+	}
+	if len(args) > 0 {
+		value, vk = t.Params[1].build(p.scope, args[0].(*Entry).Value.Type())
+	} else {
+		value, vk = t.Params[1].build(p.scope, nil)
+	}
+	if !kk || !vk {
+		p.report(
+			"Could not fully determine returned type, consider adding type arguments",
+			c.Loc(),
+		)
+	}
+	t.Params = append(t.Params[:0:0], t.Params...)
+	t.Params[0].Value = key
+	t.Params[1].Value = value
+	m := t.Ref.(Map)
+	m.Key = key
+	m.Value = value
+	t.Ref = m
+	return t
+}
+func typeCheckMapEntries(p *Parser, entries []Expression, t Map) {
+	for i := range entries {
+		entry := entries[i].(*Entry)
+		if entry.Key != nil {
+			entry.Key.typeCheck(p)
+			var key ExpressionType
+			if b, ok := entry.Key.(*BracketedExpression); ok {
+				key = b.Expr.Type()
+			} else {
+				key = entry.Key.Type()
+			}
+			if !t.Key.Extends(key) {
+				p.report("Type doesn't match expected key type", entry.Key.Loc())
+			}
+		}
+		if entry.Value != nil {
+			entry.Value.typeCheck(p)
+			if !t.Value.Extends(entry.Value.Type()) {
+				p.report("Type doesn't match expected value type", entry.Value.Loc())
+			}
+		}
+	}
 }
 
 func typeCheckListInstanciation(p *Parser, c *CallExpression) {

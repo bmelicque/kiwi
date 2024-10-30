@@ -81,7 +81,7 @@ func (s *SumType) typeCheck(p *Parser) {
 
 func (p *Parser) parseSumType() Expression {
 	if p.Peek().Kind() != BinaryOr {
-		return p.parseParam()
+		return p.parseTaggedExpression()
 	}
 
 	start := p.Peek().Loc().Start
