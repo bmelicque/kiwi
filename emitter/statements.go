@@ -12,6 +12,10 @@ const maxClassParamsLength = 66
 func (e *Emitter) emitAssignment(a *parser.Assignment) {
 	switch a.Operator.Kind() {
 	case parser.Assign:
+		if isMapElementAccess(a.Pattern) {
+			emitSetMap(e, a)
+			return
+		}
 		e.emit(a.Pattern)
 		e.write(" = ")
 		e.emit(a.Value)
@@ -37,6 +41,27 @@ func (e *Emitter) emitAssignment(a *parser.Assignment) {
 		e.write(" = ")
 		e.emit(a.Value)
 	}
+}
+
+func isMapElementAccess(pattern parser.Expression) bool {
+	c, ok := pattern.(*parser.ComputedAccessExpression)
+	if !ok {
+		return false
+	}
+	alias, ok := c.Expr.Type().(parser.TypeAlias)
+	return ok && alias.Name == "Map"
+}
+
+// Emit setting a map element, which is not a regular assignment in JS,
+// but a call to 'map.set(key, value)'.
+func emitSetMap(e *Emitter, a *parser.Assignment) {
+	pattern := a.Pattern.(*parser.ComputedAccessExpression)
+	e.emitExpression(pattern.Expr)
+	e.write(".set(")
+	e.emitExpression(pattern.Property.Expr)
+	e.write(", ")
+	e.emitExpression(a.Value)
+	e.write(")")
 }
 
 func (e *Emitter) emitBlock(b *parser.Block) {
