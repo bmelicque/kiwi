@@ -33,7 +33,7 @@ func TestGenericWithTypeArgs(t *testing.T) {
 	}
 
 	if alias.Params[0].Value.Kind() != NUMBER {
-		t.Fatalf("Type param should've been set to Primitive{NUMBER}, got %#v", alias.Params[0].Value)
+		t.Fatalf("Type param should've been set to Number{}, got %#v", alias.Params[0].Value)
 	}
 
 	object, ok := alias.Ref.(Object)
@@ -52,7 +52,7 @@ func TestGenericWithTypeArgs(t *testing.T) {
 	}
 
 	if memberType.Value.Kind() != NUMBER {
-		t.Fatalf("Member should've been set to Type{Primitive{NUMBER}}, got %#v", memberType.Value)
+		t.Fatalf("Member should've been set to Type{Number{}}, got %#v", memberType.Value)
 	}
 }
 
@@ -79,17 +79,17 @@ func TestGenericFunctionWithTypeArgs(t *testing.T) {
 	}
 
 	if function.Params.elements[0].Kind() != NUMBER {
-		t.Fatalf("Param should've been set to Primitive{NUMBER}, got %#v", function.Params.elements[0])
+		t.Fatalf("Param should've been set to Number{}, got %#v", function.Params.elements[0])
 	}
 
 	if function.Returned.Kind() != NUMBER {
-		t.Fatalf("Param should've been set to Primitive{NUMBER}, got %#v", function.Returned)
+		t.Fatalf("Param should've been set to Number{}, got %#v", function.Returned)
 	}
 }
 
 func TestMapElementAccess(t *testing.T) {
 	parser := MakeParser(nil)
-	parser.scope.Add("map", Loc{}, makeMapType(Primitive{NUMBER}, Primitive{STRING}))
+	parser.scope.Add("map", Loc{}, makeMapType(Number{}, String{}))
 	// map[42]
 	expr := &ComputedAccessExpression{
 		Expr: &Identifier{Token: literal{kind: Name, value: "map"}},
@@ -115,7 +115,7 @@ func TestMapElementAccess(t *testing.T) {
 
 func TestMapElementAccessBadKey(t *testing.T) {
 	parser := MakeParser(nil)
-	parser.scope.Add("map", Loc{}, makeMapType(Primitive{NUMBER}, Primitive{STRING}))
+	parser.scope.Add("map", Loc{}, makeMapType(Number{}, String{}))
 	// map["42"]
 	expr := &ComputedAccessExpression{
 		Expr: &Identifier{Token: literal{kind: Name, value: "map"}},

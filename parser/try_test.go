@@ -17,7 +17,7 @@ func TestParseTryExpression(t *testing.T) {
 
 func TestCheckTryExpression(t *testing.T) {
 	parser := MakeParser(nil)
-	parser.scope.Add("result", Loc{}, makeResultType(Primitive{NUMBER}, nil))
+	parser.scope.Add("result", Loc{}, makeResultType(Number{}, nil))
 	expr := &TryExpression{
 		Expr: &Identifier{Token: literal{kind: Name, value: "result"}},
 	}

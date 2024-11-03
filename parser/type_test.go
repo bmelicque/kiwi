@@ -10,7 +10,7 @@ func TestBuildGeneric(t *testing.T) {
 	scope.Add("Type", Loc{}, Type{Generic{}})
 	typing := List{Generic{Name: "Type"}}
 
-	compared := List{Primitive{NUMBER}}
+	compared := List{Number{}}
 
 	built, ok := typing.build(scope, compared)
 	if !ok {
@@ -22,8 +22,8 @@ func TestBuildGeneric(t *testing.T) {
 		t.Fatalf("Expected list type, got %v", reflect.TypeOf(list))
 	}
 
-	if _, ok = list.Element.(Primitive); !ok {
-		t.Fatalf("Expected primitive type, got %v", reflect.TypeOf(list.Element))
+	if _, ok = list.Element.(Number); !ok {
+		t.Fatalf("Expected number type, got %v", reflect.TypeOf(list.Element))
 	}
 }
 
@@ -31,8 +31,8 @@ func TestBuildTypeAlias(t *testing.T) {
 	scope := NewScope(ProgramScope)
 	typing := TypeAlias{
 		Name:   "Type",
-		Params: []Generic{{Name: "Param", Value: Primitive{NUMBER}}},
-		Ref:    Generic{Name: "Param", Value: Primitive{NUMBER}},
+		Params: []Generic{{Name: "Param", Value: Number{}}},
+		Ref:    Generic{Name: "Param", Value: Number{}},
 	}
 
 	built, ok := typing.build(scope, nil)
@@ -46,8 +46,8 @@ func TestBuildTypeAlias(t *testing.T) {
 }
 
 func TestFunctionExtends(t *testing.T) {
-	a := Function{Returned: Primitive{NUMBER}}
-	b := Function{Returned: Primitive{NUMBER}}
+	a := Function{Returned: Number{}}
+	b := Function{Returned: Number{}}
 
 	if !a.Extends(b) {
 		t.Fatalf("Should've extended!")
@@ -59,13 +59,13 @@ func TestTrait(t *testing.T) {
 		Name: "Type",
 		Ref:  Object{map[string]ExpressionType{}},
 		Methods: map[string]ExpressionType{
-			"method": Function{Returned: Primitive{NUMBER}},
+			"method": Function{Returned: Number{}},
 		},
 	}
 	trait := Trait{
 		Self: Generic{Name: "_"},
 		Members: map[string]ExpressionType{
-			"method": Function{Returned: Primitive{NUMBER}},
+			"method": Function{Returned: Number{}},
 		},
 	}
 
@@ -75,7 +75,7 @@ func TestTrait(t *testing.T) {
 }
 
 func TestGetSumTypeMember(t *testing.T) {
-	option := makeOptionType(Primitive{NUMBER})
+	option := makeOptionType(Number{})
 	some := option.Ref.(Sum).getMember("Some")
 	if some.Kind() != NUMBER {
 		t.Fatalf("Expected number, got %v", some)

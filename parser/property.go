@@ -60,19 +60,19 @@ func parsePropertyAccess(p *Parser, left Expression) Expression {
 func typeCheckTupleIndexAccess(p *Parser, expr *PropertyAccessExpression) {
 	property, ok := expr.Property.(*Literal)
 	if !ok || property.Type().Kind() != NUMBER {
-		expr.typing = Primitive{UNKNOWN}
+		expr.typing = Unknown{}
 		return
 	}
 	number, err := strconv.Atoi(property.Text())
 	if err != nil {
 		p.report("Integer expected", property.Loc())
-		expr.typing = Primitive{UNKNOWN}
+		expr.typing = Unknown{}
 		return
 	}
 	elements := expr.Expr.Type().(Tuple).elements
 	if number > len(elements)-1 || number < 0 {
 		p.report("Index out of range", property.Loc())
-		expr.typing = Primitive{UNKNOWN}
+		expr.typing = Unknown{}
 		return
 	}
 	expr.typing = elements[number]
@@ -82,13 +82,13 @@ func typeCheckTupleIndexAccess(p *Parser, expr *PropertyAccessExpression) {
 func typeCheckSumConstructorAccess(p *Parser, expr *PropertyAccessExpression) {
 	property, ok := expr.Property.(*Identifier)
 	if !ok {
-		expr.typing = Primitive{UNKNOWN}
+		expr.typing = Unknown{}
 		return
 	}
 	name := property.Token.Text()
 
 	expr.typing = getSumTypeConstructor(expr.Expr.Type().(Type), name)
-	if expr.typing == (Primitive{UNKNOWN}) {
+	if expr.typing == (Unknown{}) {
 		p.report(
 			fmt.Sprintf("Property '%v' doesn't exist on this type", name),
 			expr.Property.Loc(),
@@ -99,17 +99,17 @@ func typeCheckSumConstructorAccess(p *Parser, expr *PropertyAccessExpression) {
 func getSumTypeConstructor(t Type, name string) ExpressionType {
 	alias, ok := t.Value.(TypeAlias)
 	if !ok {
-		return Primitive{UNKNOWN}
+		return Unknown{}
 	}
 
 	sum, ok := alias.Ref.(Sum)
 	if !ok {
-		return Primitive{UNKNOWN}
+		return Unknown{}
 	}
 
 	constructor, ok := sum.Members[name]
 	if !ok {
-		return Primitive{UNKNOWN}
+		return Unknown{}
 	}
 
 	return constructor
@@ -119,7 +119,7 @@ func getSumTypeConstructor(t Type, name string) ExpressionType {
 func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 	property, ok := expr.Property.(*Identifier)
 	if expr.Property != nil && !ok {
-		expr.typing = Primitive{UNKNOWN}
+		expr.typing = Unknown{}
 		return
 	}
 	var name string
@@ -133,7 +133,7 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 			fmt.Sprintf("Property '%v' doesn't exist on this type", name),
 			expr.Property.Loc(),
 		)
-		expr.typing = Primitive{UNKNOWN}
+		expr.typing = Unknown{}
 		return
 	}
 	if method, ok := alias.Methods[name]; ok {
@@ -147,7 +147,7 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 			fmt.Sprintf("Property '%v' doesn't exist on this type", name),
 			expr.Property.Loc(),
 		)
-		expr.typing = Primitive{UNKNOWN}
+		expr.typing = Unknown{}
 		return
 	}
 
@@ -157,7 +157,7 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 			fmt.Sprintf("Property '%v' doesn't exist on this type", name),
 			expr.Property.Loc(),
 		)
-		expr.typing = Primitive{UNKNOWN}
+		expr.typing = Unknown{}
 		return
 	}
 	expr.typing = t

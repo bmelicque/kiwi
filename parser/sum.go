@@ -137,7 +137,7 @@ func getSumConstructorType(member SumTypeConstructor) Function {
 		if ok {
 			tu.elements[i] = t.Value
 		} else {
-			tu.elements[i] = Primitive{UNKNOWN}
+			tu.elements[i] = Unknown{}
 		}
 	}
 	return Function{Params: &tu}

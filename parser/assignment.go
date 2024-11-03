@@ -178,7 +178,7 @@ func typeCheckDefinition(p *Parser, a *Assignment) {
 		if init, ok := a.Value.Type().(Type); ok {
 			ref = init.Value
 		} else {
-			ref = Primitive{UNKNOWN}
+			ref = Unknown{}
 		}
 		t := Type{TypeAlias{
 			Name:   identifier.Text(),
@@ -287,10 +287,7 @@ func reportInvalidVariableType(p *Parser, value Expression) {
 			"Cannot declare variable as Result, consider using a 'try' or 'catch' expression",
 			value.Loc(),
 		)
-	case Primitive:
-		if t.kind != NIL {
-			return
-		}
+	case Nil:
 		p.report(
 			"Cannot declare variables as nil, consider using option type",
 			value.Loc(),

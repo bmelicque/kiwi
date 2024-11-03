@@ -149,7 +149,7 @@ func TestIfPattern(t *testing.T) {
 
 func TestCheckIfPattern(t *testing.T) {
 	parser := MakeParser(nil)
-	parser.scope.Add("option", Loc{}, makeOptionType(Primitive{NUMBER}))
+	parser.scope.Add("option", Loc{}, makeOptionType(Number{}))
 	// if Some(s) := option { s } else { 0 }
 	expr := &IfExpression{
 		Condition: &Assignment{

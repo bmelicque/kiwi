@@ -47,7 +47,7 @@ func (u *UnaryExpression) Type() ExpressionType {
 			t = ty.Value
 			return Type{makeResultType(t, nil)}
 		} else {
-			return Primitive{BOOLEAN}
+			return Boolean{}
 		}
 	case QuestionMark:
 		t := u.Operand.Type()
@@ -56,7 +56,7 @@ func (u *UnaryExpression) Type() ExpressionType {
 		}
 		return Type{makeOptionType(t)}
 	default:
-		return Primitive{UNKNOWN}
+		return Unknown{}
 	}
 }
 
@@ -90,7 +90,7 @@ func (l *ListTypeExpression) Loc() Loc {
 func (l *ListTypeExpression) Type() ExpressionType {
 	t, ok := l.Expr.Type().(Type)
 	if !ok {
-		return Type{List{Primitive{UNKNOWN}}}
+		return Type{List{Unknown{}}}
 	}
 	return Type{List{t.Value}}
 }

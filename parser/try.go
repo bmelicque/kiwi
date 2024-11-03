@@ -23,7 +23,7 @@ func (t *TryExpression) Loc() Loc {
 func (t *TryExpression) Type() ExpressionType {
 	alias, ok := t.Expr.Type().(TypeAlias)
 	if !ok || alias.Name != "Result" {
-		return Primitive{UNKNOWN}
+		return Unknown{}
 	}
 	return alias.Ref.(Sum).getMember("Ok")
 }

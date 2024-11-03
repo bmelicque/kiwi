@@ -71,7 +71,7 @@ func TestCheckCatchExpression(t *testing.T) {
 	parser.scope.Add(
 		"result",
 		Loc{},
-		makeResultType(Primitive{NUMBER}, Primitive{STRING}),
+		makeResultType(Number{}, String{}),
 	)
 	expr := &CatchExpression{
 		Left:       &Identifier{Token: literal{kind: Name, value: "result"}},
@@ -118,7 +118,7 @@ func TestCheckCatchExpressionBlockNotMatching(t *testing.T) {
 	parser.scope.Add(
 		"result",
 		Loc{},
-		makeResultType(Primitive{NUMBER}, Primitive{STRING}),
+		makeResultType(Number{}, String{}),
 	)
 	expr := &CatchExpression{
 		Left:       &Identifier{Token: literal{kind: Name, value: "result"}},

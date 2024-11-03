@@ -18,17 +18,17 @@ func (l *Literal) typeCheck(_ *Parser) {}
 func (l *Literal) Type() ExpressionType {
 	switch l.Kind() {
 	case NumberLiteral:
-		return Primitive{NUMBER}
+		return Number{}
 	case BooleanLiteral:
-		return Primitive{BOOLEAN}
+		return Boolean{}
 	case StringLiteral:
-		return Primitive{STRING}
+		return String{}
 	case StringKeyword:
-		return Type{Primitive{STRING}}
+		return Type{String{}}
 	case NumberKeyword:
-		return Type{Primitive{NUMBER}}
+		return Type{Number{}}
 	case BooleanKeyword:
-		return Type{Primitive{BOOLEAN}}
+		return Type{Boolean{}}
 	default:
 		panic(fmt.Sprintf("Token kind '%v' not implemented yet", l.Kind()))
 	}
@@ -53,7 +53,7 @@ func (i *Identifier) typeCheck(p *Parser) {
 		p.scope.ReadAt(name, i.Loc())
 		i.typing = variable.typing
 	} else {
-		i.typing = Primitive{UNKNOWN}
+		i.typing = Unknown{}
 	}
 }
 

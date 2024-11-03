@@ -38,7 +38,7 @@ func TestTupleIndexAccess(t *testing.T) {
 	parser.scope.Add(
 		"tuple",
 		Loc{},
-		Tuple{[]ExpressionType{Primitive{NUMBER}, Primitive{STRING}}},
+		Tuple{[]ExpressionType{Number{}, String{}}},
 	)
 	expr := parser.parseAccessExpression()
 	expr.typeCheck(parser)

@@ -99,7 +99,7 @@ func (f *FunctionTypeExpression) Type() ExpressionType {
 		t, _ := param.Type().(Type)
 		p.elements[i] = t.Value
 	}
-	var ret ExpressionType = Primitive{UNKNOWN}
+	var ret ExpressionType = Unknown{}
 	if f.Expr != nil {
 		t, ok := f.Expr.Type().(Type)
 		if ok {
@@ -208,7 +208,7 @@ func typeCheckExplicitReturn(p *Parser, f *FunctionExpression) {
 	if t, ok := explicit.(Type); ok {
 		explicit = t.Value
 	} else {
-		explicit = Primitive{UNKNOWN}
+		explicit = Unknown{}
 	}
 	f.returnType = explicit
 
@@ -271,7 +271,7 @@ func typeCheckHappyReturn(p *Parser, body *Block, expected ExpressionType) bool 
 
 func getExitType(e *Exit) ExpressionType {
 	if e.Value == nil {
-		return Primitive{NIL}
+		return Nil{}
 	}
 	return e.Value.Type()
 }
@@ -341,7 +341,7 @@ func addParamsToScope(p *Parser, tuple []Expression) {
 		}
 		if param.Complement == nil || param.Complement.Type().Kind() != TYPE {
 			p.report("Typing expected", param.Loc())
-			p.scope.Add(param.Identifier.Text(), param.Loc(), Primitive{UNKNOWN})
+			p.scope.Add(param.Identifier.Text(), param.Loc(), Unknown{})
 		} else {
 			typing, _ := param.Complement.Type().(Type)
 			p.scope.Add(param.Identifier.Text(), param.Loc(), typing.Value)

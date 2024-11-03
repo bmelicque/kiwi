@@ -33,7 +33,7 @@ func (e *Entry) Loc() Loc {
 }
 func (e *Entry) Type() ExpressionType {
 	if e.Value == nil {
-		return Primitive{UNKNOWN}
+		return Unknown{}
 	}
 	return e.Value.Type()
 }
@@ -71,11 +71,11 @@ func (p *Param) Loc() Loc {
 }
 func (p *Param) Type() ExpressionType {
 	if p.Complement == nil {
-		return Primitive{UNKNOWN}
+		return Unknown{}
 	}
 	typing, ok := p.Complement.Type().(Type)
 	if !ok {
-		return Primitive{UNKNOWN}
+		return Unknown{}
 	}
 	return typing.Value
 }

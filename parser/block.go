@@ -39,12 +39,12 @@ func (b *Block) reportLoc() Loc {
 }
 func (b *Block) Type() ExpressionType {
 	if len(b.Statements) == 0 {
-		return Primitive{NIL}
+		return Nil{}
 	}
 	last := b.Statements[len(b.Statements)-1]
 	expr, ok := last.(Expression)
 	if !ok {
-		return Primitive{NIL}
+		return Nil{}
 	}
 	return expr.Type()
 }

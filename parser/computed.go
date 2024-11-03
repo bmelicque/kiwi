@@ -47,7 +47,7 @@ func typeCheckMapAccess(p *Parser, expr *ComputedAccessExpression) {
 	expr.Property.typeCheck(p)
 	a := expr.Expr.Type().(TypeAlias)
 	if a.Name != "Map" {
-		expr.typing = Primitive{UNKNOWN}
+		expr.typing = Unknown{}
 		return
 	}
 	b, _ := a.Ref.build(p.scope, nil)
@@ -62,7 +62,7 @@ func typeCheckGenericType(p *Parser, expr *ComputedAccessExpression) {
 	alias, ok := expr.Expr.Type().(Type).Value.(TypeAlias)
 	if !ok {
 		p.report("No type arguments expected for this type", expr.Property.loc)
-		expr.typing = Primitive{UNKNOWN}
+		expr.typing = Unknown{}
 		return
 	}
 
