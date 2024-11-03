@@ -35,7 +35,7 @@ func (c *CatchExpression) typeCheck(p *Parser) {
 
 	var happy, err ExpressionType
 	alias, ok := c.Left.Type().(TypeAlias)
-	if !ok || alias.Name != "Result" {
+	if !ok || alias.Name != "!" {
 		p.report("Catch not need (lhs is not a result type)", c.Loc())
 		happy = c.Left.Type()
 		err = Unknown{}
@@ -55,7 +55,7 @@ func (c *CatchExpression) typeCheck(p *Parser) {
 
 func (c *CatchExpression) Type() ExpressionType {
 	alias, ok := c.Left.Type().(TypeAlias)
-	if !ok || alias.Name != "Result" {
+	if !ok || alias.Name != "!" {
 		return c.Left.Type()
 	}
 	return alias.Ref.(Sum).getMember("Ok")

@@ -215,7 +215,7 @@ func TestCheckExplicitReturn(t *testing.T) {
 		// expect 1 error for if expression types
 		t.Fatalf("Expected 1 error, got %#v", parser.errors)
 	}
-	if alias, ok := expr.returnType.(TypeAlias); !ok || alias.Name != "Result" {
+	if alias, ok := expr.returnType.(TypeAlias); !ok || alias.Name != "!" {
 		t.Fatalf("Result type expected")
 	}
 }

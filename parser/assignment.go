@@ -282,7 +282,7 @@ func declareMethodReceiver(p *Parser, receiver Expression) *Identifier {
 func reportInvalidVariableType(p *Parser, value Expression) {
 	switch t := value.Type().(type) {
 	case TypeAlias:
-		if t.Name != "Result" {
+		if t.Name != "!" {
 			return
 		}
 		p.report(

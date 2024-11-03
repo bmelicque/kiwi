@@ -102,7 +102,7 @@ func (s Scope) in(kind ScopeKind) bool {
 // utility to create option types with different Some types
 func makeOptionType(t ExpressionType) TypeAlias {
 	alias := TypeAlias{
-		Name:   "Option",
+		Name:   "?",
 		Params: []Generic{{Name: "Type", Value: t}},
 		Ref: Sum{map[string]Function{
 			"Some": {
@@ -134,7 +134,7 @@ var optionType = makeOptionType(nil)
 // utility to create result types
 func makeResultType(ok ExpressionType, err ExpressionType) TypeAlias {
 	alias := TypeAlias{
-		Name: "Result",
+		Name: "!",
 		Params: []Generic{
 			{Name: "Ok", Value: ok},
 			{Name: "Err", Value: err},
@@ -187,10 +187,10 @@ var std = Scope{
 		"Map": {
 			typing: Type{makeMapType(nil, nil)},
 		},
-		"Option": {
+		"?": {
 			typing: Type{optionType},
 		},
-		"Result": {
+		"!": {
 			typing: Type{makeResultType(nil, nil)},
 		},
 	},

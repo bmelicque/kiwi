@@ -20,7 +20,7 @@ func TestIf(t *testing.T) {
 		t.Fatalf("Expected a body, got %#v", node)
 	}
 	alias, ok := node.Type().(TypeAlias)
-	if !ok || alias.Name != "Option" {
+	if !ok || alias.Name != "?" {
 		t.Fatalf("Expected option type")
 	}
 }

@@ -28,7 +28,7 @@ func TestUnaryExpression(t *testing.T) {
 		t.Fatal("Expected type")
 	}
 	alias, ok := ty.Value.(TypeAlias)
-	if !ok || alias.Name != "Option" {
+	if !ok || alias.Name != "?" {
 		t.Fatal("Expected option type")
 	}
 }
@@ -50,7 +50,7 @@ func TestCheckOptionType(t *testing.T) {
 		t.Fatal("Expected type")
 	}
 	alias, ok := ty.Value.(TypeAlias)
-	if !ok || alias.Name != "Option" {
+	if !ok || alias.Name != "?" {
 		t.Fatal("Expected option type")
 	}
 	if _, ok := getSomeType(alias.Ref.(Sum)).(Number); !ok {
@@ -88,7 +88,7 @@ func TestCheckErrorType(t *testing.T) {
 		t.Fatal("Expected type")
 	}
 	alias, ok := ty.Value.(TypeAlias)
-	if !ok || alias.Name != "Result" {
+	if !ok || alias.Name != "!" {
 		t.Fatal("Expected result type")
 	}
 	if _, ok := alias.Ref.(Sum).getMember("Ok").(Number); !ok {

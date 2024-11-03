@@ -22,7 +22,7 @@ func (t *TryExpression) Loc() Loc {
 
 func (t *TryExpression) Type() ExpressionType {
 	alias, ok := t.Expr.Type().(TypeAlias)
-	if !ok || alias.Name != "Result" {
+	if !ok || alias.Name != "!" {
 		return Unknown{}
 	}
 	return alias.Ref.(Sum).getMember("Ok")
@@ -34,7 +34,7 @@ func (t *TryExpression) typeCheck(p *Parser) {
 	}
 	t.Expr.typeCheck(p)
 	alias, ok := t.Expr.Type().(TypeAlias)
-	if !ok || alias.Name != "Result" {
+	if !ok || alias.Name != "!" {
 		p.report("Result type expected", t.Expr.Loc())
 	}
 }

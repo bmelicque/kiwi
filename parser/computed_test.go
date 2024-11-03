@@ -104,7 +104,7 @@ func TestMapElementAccess(t *testing.T) {
 	}
 
 	alias, ok := expr.typing.(TypeAlias)
-	if !ok || alias.Name != "Option" {
+	if !ok || alias.Name != "?" {
 		t.Fatalf("Expected an option, got %#v", expr.typing)
 	}
 	some := alias.Ref.(Sum).getMember("Some")
