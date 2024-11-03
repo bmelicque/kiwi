@@ -20,7 +20,7 @@ func (t *TupleExpression) typeCheck(p *Parser) {
 		t.Elements[i].typeCheck(p)
 	}
 	if len(t.Elements) == 0 {
-		t.typing = Primitive{NIL}
+		t.typing = Nil{}
 		return
 	}
 	if len(t.Elements) == 1 {
@@ -45,7 +45,7 @@ func (t *TupleExpression) Type() ExpressionType { return t.typing }
 // Wrap the expression in a tuple if not one
 func makeTuple(expr Expression) *TupleExpression {
 	if expr == nil {
-		return &TupleExpression{nil, Primitive{NIL}}
+		return &TupleExpression{nil, Nil{}}
 	}
 	tuple, ok := expr.(*TupleExpression)
 	if ok {

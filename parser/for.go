@@ -34,7 +34,10 @@ func (f *ForExpression) typeCheck(p *Parser) {
 		}
 	case Expression:
 		// s.Expr == nil already reported when parsing expression
-		if s != nil && s.Type().Kind() != BOOLEAN {
+		if s == nil {
+			break
+		}
+		if _, ok := s.Type().(Boolean); !ok {
 			p.report("Boolean expected in loop condition", s.Loc())
 		}
 	}
@@ -116,19 +119,19 @@ func getLoopType(p *Parser, body *Block) ExpressionType {
 	breaks := []*Exit{}
 	findBreakStatements(body, &breaks)
 	if len(breaks) == 0 {
-		return Primitive{NIL}
+		return Nil{}
 	}
 	var t ExpressionType
 	if breaks[0].Value != nil {
 		t = breaks[0].Value.Type()
 	} else {
-		t = Primitive{NIL}
+		t = Nil{}
 	}
 	for _, b := range breaks[1:] {
-		if t == (Primitive{NIL}) && b.Value != nil {
+		if t == (Nil{}) && b.Value != nil {
 			p.report("No value expected", b.Value.Loc())
 		}
-		if t != (Primitive{NIL}) && !t.Extends(b.Value.Type()) {
+		if t != (Nil{}) && !t.Extends(b.Value.Type()) {
 			p.report("Type doesn't match the type inferred from first break", b.Value.Loc())
 		}
 	}

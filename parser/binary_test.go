@@ -123,9 +123,9 @@ func TestCheckConcatExpression(t *testing.T) {
 		t.Fatalf("Expected no parsing errors, got %#v", parser.errors)
 	}
 
-	parser.scope.Add("a", Loc{}, List{Primitive{NUMBER}})
-	parser.scope.Add("b", Loc{}, List{Primitive{NUMBER}})
-	parser.scope.Add("c", Loc{}, List{Primitive{STRING}})
+	parser.scope.Add("a", Loc{}, List{Number{}})
+	parser.scope.Add("b", Loc{}, List{Number{}})
+	parser.scope.Add("c", Loc{}, List{String{}})
 	expr = &BinaryExpression{
 		Left:     &Identifier{Token: literal{kind: Name, value: "a"}},
 		Right:    &Identifier{Token: literal{kind: Name, value: "b"}},
@@ -202,7 +202,7 @@ func TestCheckBinaryErrorType(t *testing.T) {
 		t.Fatalf("Result type expected")
 	}
 	okType := alias.Ref.(Sum).getMember("Ok")
-	if okType.Kind() != NUMBER {
+	if _, ok := okType.(Number); !ok {
 		t.Fatalf("Number expected")
 	}
 }

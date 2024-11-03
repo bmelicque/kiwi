@@ -77,7 +77,7 @@ func typeCheckFunctionCall(p *Parser, c *CallExpression) {
 			"Could not determine returned type (missing some type arguments)",
 			c.Loc(),
 		)
-		c.typing = Primitive{UNKNOWN}
+		c.typing = Unknown{}
 		return
 	}
 	c.typing = t
@@ -130,7 +130,7 @@ func typeCheckStructInstanciation(p *Parser, c *CallExpression) {
 	object, ok := alias.Ref.(Object)
 	if !ok {
 		p.report("Object type expected", c.Callee.Loc())
-		c.typing = Primitive{UNKNOWN}
+		c.typing = Unknown{}
 		return
 	}
 	p.pushScope(NewScope(ProgramScope))

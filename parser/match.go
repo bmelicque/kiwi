@@ -12,11 +12,11 @@ type MatchCase struct {
 
 func (m MatchCase) Type() ExpressionType {
 	if len(m.Statements) == 0 {
-		return Primitive{NIL}
+		return Nil{}
 	}
 	expr, ok := m.Statements[len(m.Statements)-1].(Expression)
 	if !ok {
-		return Primitive{NIL}
+		return Nil{}
 	}
 	t, _ := expr.Type().build(nil, nil)
 	return t
@@ -59,20 +59,19 @@ func (m *MatchExpression) Loc() Loc {
 }
 func (m *MatchExpression) Type() ExpressionType {
 	if len(m.Cases) == 0 {
-		return Primitive{NIL}
+		return Nil{}
 	}
 	return m.Cases[0].Type()
 }
 
-var matchableType = []ExpressionTypeKind{SUM, TRAIT}
-
-// FIXME: limit possible types for match
 func (m *MatchExpression) typeCheck(p *Parser) {
 	t := m.Value.Type()
 	if t == nil {
 		return
 	}
-	if !slices.Contains(matchableType, t.Kind()) {
+	switch t.(type) {
+	case Sum, Trait:
+	default:
 		p.report("Cannot match this type", m.Value.Loc())
 	}
 	for i := range m.Cases {

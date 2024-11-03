@@ -30,7 +30,7 @@ func (i *IfExpression) typeCheck(p *Parser) {
 	p.conditionalDeclaration = outer
 
 	if expr, ok := i.Condition.(Expression); ok {
-		if expr.Type().Kind() != BOOLEAN {
+		if _, ok := expr.Type().(Boolean); !ok {
 			p.report("Expected boolean condition", i.Condition.Loc())
 		}
 	}

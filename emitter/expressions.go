@@ -183,7 +183,7 @@ func (e *Emitter) emitInstanceExpression(expr *parser.CallExpression) {
 	e.emitInstance(expr.Callee, expr.Args.Expr.(*parser.TupleExpression))
 }
 func (e *Emitter) emitCallExpression(expr *parser.CallExpression) {
-	if expr.Callee.Type().Kind() == parser.TYPE {
+	if _, ok := expr.Callee.Type().(parser.Type); ok {
 		e.emitInstanceExpression(expr)
 		return
 	}
@@ -246,7 +246,7 @@ func (e *Emitter) emitIdentifier(i *parser.Identifier) {
 
 func (e *Emitter) emitPropertyAccessExpression(p *parser.PropertyAccessExpression) {
 	e.emit(p.Expr)
-	if p.Expr.Type().Kind() == parser.TUPLE {
+	if _, ok := p.Expr.Type().(parser.Tuple); ok {
 		e.write("[")
 		e.emit(p.Property)
 		e.write("]")
@@ -302,7 +302,7 @@ func (e *Emitter) emitTupleExpression(t *parser.TupleExpression) {
 }
 
 func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
-	if u.Operator.Kind() == parser.Bang && u.Type().Kind() == parser.BOOLEAN {
+	if _, ok := u.Type().(parser.Boolean); ok && u.Operator.Kind() == parser.Bang {
 		e.write("!")
 		e.emitExpression(u.Operand)
 	}

@@ -13,7 +13,7 @@ func TestParseLiteral(t *testing.T) {
 	if _, ok := expr.(*Literal); !ok {
 		t.Fatalf("Expected Literal, got %#v", expr)
 	}
-	if expr.Type().Kind() != BOOLEAN {
+	if _, ok := expr.Type().(Boolean); !ok {
 		t.Fatalf("Expected boolean, got %#v", expr.Type())
 	}
 }
@@ -33,13 +33,13 @@ func TestParseIdentifier(t *testing.T) {
 
 func TestCheckIdentifier(t *testing.T) {
 	parser := MakeParser(nil)
-	parser.scope.Add("myVariable", Loc{}, Primitive{BOOLEAN})
+	parser.scope.Add("myVariable", Loc{}, Boolean{})
 	expr := &Identifier{Token: literal{kind: Name, value: "myVariable"}}
 	expr.typeCheck(parser)
 	if len(parser.errors) > 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	if expr.Type().Kind() != BOOLEAN {
+	if _, ok := expr.Type().(Boolean); !ok {
 		t.Fatalf("Expected boolean, got %#v", expr.Type())
 	}
 }

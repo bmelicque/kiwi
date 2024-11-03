@@ -38,7 +38,7 @@ func TestTupleIndexAccess(t *testing.T) {
 	parser.scope.Add(
 		"tuple",
 		Loc{},
-		Tuple{[]ExpressionType{Primitive{NUMBER}, Primitive{STRING}}},
+		Tuple{[]ExpressionType{Number{}, String{}}},
 	)
 	expr := parser.parseAccessExpression()
 	expr.typeCheck(parser)
@@ -47,7 +47,7 @@ func TestTupleIndexAccess(t *testing.T) {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 
-	if expr.Type().Kind() != STRING {
-		t.Fatalf("Expected STRING, got %#v", expr.Type())
+	if _, ok := expr.Type().(String); !ok {
+		t.Fatalf("Expected string, got %#v", expr.Type())
 	}
 }

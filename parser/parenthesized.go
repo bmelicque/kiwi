@@ -19,19 +19,19 @@ func (p *ParenthesizedExpression) Loc() Loc {
 
 func (p *ParenthesizedExpression) Type() ExpressionType {
 	if p.Expr == nil {
-		return Primitive{NIL}
+		return Nil{}
 	}
 	if param, ok := p.Expr.(*Param); ok {
 		o := Object{map[string]ExpressionType{}}
 		name := param.Identifier.Text()
 		if name == "" {
-			return Primitive{NIL}
+			return Nil{}
 		}
 		t := param.Complement.Type()
 		if v, ok := t.(Type); ok {
 			t = v.Value
 		} else {
-			t = Primitive{NIL}
+			t = Nil{}
 		}
 		o.Members[name] = t
 		return Type{o}

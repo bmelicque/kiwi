@@ -62,7 +62,7 @@ func TestCheckSumType(t *testing.T) {
 	if len(parser.errors) > 0 {
 		t.Fatalf("Expected no errors, got %v: %#v", len(parser.errors), parser.errors)
 	}
-	if expr.Type().Kind() != TYPE {
-		t.Fatalf("Expected type, got %v", expr.Type().Kind())
+	if _, ok := expr.Type().(Type); !ok {
+		t.Fatalf("Expected type, got %v", expr)
 	}
 }

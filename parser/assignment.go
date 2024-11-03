@@ -178,7 +178,7 @@ func typeCheckDefinition(p *Parser, a *Assignment) {
 		if init, ok := a.Value.Type().(Type); ok {
 			ref = init.Value
 		} else {
-			ref = Primitive{UNKNOWN}
+			ref = Unknown{}
 		}
 		t := Type{TypeAlias{
 			Name:   identifier.Text(),
@@ -194,9 +194,11 @@ func typeCheckDefinition(p *Parser, a *Assignment) {
 			p.report("Type identifier expected", pattern.Loc())
 			ok = false
 		}
-		if a.Value != nil && a.Value.Type().Kind() != TYPE {
-			p.report("Type expected", a.Value.Loc())
-			ok = false
+		if a.Value != nil {
+			if _, k := a.Value.Type().(Type); !k {
+				p.report("Type expected", a.Value.Loc())
+				ok = false
+			}
 		}
 		if !ok {
 			return
@@ -228,7 +230,7 @@ func typeCheckMethod(p *Parser, expr *PropertyAccessExpression, init Expression)
 
 	init.typeCheck(p)
 
-	if init.Type().Kind() != FUNCTION {
+	if _, ok := init.Type().(Function); !ok {
 		p.report("Function expected", init.Loc())
 		return
 	}
@@ -287,10 +289,7 @@ func reportInvalidVariableType(p *Parser, value Expression) {
 			"Cannot declare variable as Result, consider using a 'try' or 'catch' expression",
 			value.Loc(),
 		)
-	case Primitive:
-		if t.kind != NIL {
-			return
-		}
+	case Nil:
 		p.report(
 			"Cannot declare variables as nil, consider using option type",
 			value.Loc(),

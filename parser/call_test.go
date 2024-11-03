@@ -40,7 +40,7 @@ func TestCheckImplicitMapInstanciation(t *testing.T) {
 	if !ok || alias.Name != "Map" {
 		t.Fatalf("Map expected")
 	}
-	if alias.Ref.(Map).Key.Kind() != STRING {
+	if _, ok := alias.Ref.(Map).Key.(String); !ok {
 		t.Fatalf("Expected string keys")
 	}
 }
@@ -79,7 +79,7 @@ func TestCheckExplicitMapInstanciation(t *testing.T) {
 	if !ok || alias.Name != "Map" {
 		t.Fatalf("Map expected")
 	}
-	if alias.Ref.(Map).Key.Kind() != STRING {
+	if _, ok := alias.Ref.(Map).Key.(String); !ok {
 		t.Fatalf("Expected string keys")
 	}
 }

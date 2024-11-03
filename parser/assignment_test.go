@@ -29,7 +29,7 @@ func TestAssignment(t *testing.T) {
 
 func TestCheckAssignmentToIdentifier(t *testing.T) {
 	parser := MakeParser(nil)
-	parser.scope.Add("value", Loc{}, Primitive{NUMBER})
+	parser.scope.Add("value", Loc{}, Number{})
 	assignment := &Assignment{
 		Pattern:  &Identifier{Token: literal{kind: Name, value: "value"}},
 		Value:    &Literal{literal{kind: NumberLiteral, value: "42"}},
@@ -43,7 +43,7 @@ func TestCheckAssignmentToIdentifier(t *testing.T) {
 
 func TestCheckAssignmentToIdentifierBadType(t *testing.T) {
 	parser := MakeParser(nil)
-	parser.scope.Add("value", Loc{}, Primitive{NUMBER})
+	parser.scope.Add("value", Loc{}, Number{})
 	assignment := &Assignment{
 		Pattern:  &Identifier{Token: literal{kind: Name, value: "value"}},
 		Value:    &Literal{literal{kind: StringLiteral, value: "\"Hi!\""}},
@@ -82,8 +82,8 @@ func TestTupleAssignment(t *testing.T) {
 
 func TestCheckAssignmentToTuple(t *testing.T) {
 	parser := MakeParser(nil)
-	parser.scope.Add("a", Loc{}, Primitive{NUMBER})
-	parser.scope.Add("b", Loc{}, Primitive{STRING})
+	parser.scope.Add("a", Loc{}, Number{})
+	parser.scope.Add("b", Loc{}, String{})
 	assignment := &Assignment{
 		Pattern: &TupleExpression{Elements: []Expression{
 			&Identifier{Token: literal{kind: Name, value: "a"}},
@@ -103,8 +103,8 @@ func TestCheckAssignmentToTuple(t *testing.T) {
 
 func TestCheckAssignmentToTupleBadType(t *testing.T) {
 	parser := MakeParser(nil)
-	parser.scope.Add("a", Loc{}, Primitive{NUMBER})
-	parser.scope.Add("b", Loc{}, Primitive{STRING})
+	parser.scope.Add("a", Loc{}, Number{})
+	parser.scope.Add("b", Loc{}, String{})
 	assignment := &Assignment{
 		Pattern: &TupleExpression{Elements: []Expression{
 			&Identifier{Token: literal{kind: Name, value: "a"}},
@@ -147,7 +147,7 @@ func TestParseAssignmentToMap(t *testing.T) {
 
 func TestCheckAssignmentToMap(t *testing.T) {
 	parser := MakeParser(nil)
-	parser.scope.Add("map", Loc{}, makeMapType(Primitive{NUMBER}, Primitive{NUMBER}))
+	parser.scope.Add("map", Loc{}, makeMapType(Number{}, Number{}))
 	declaration := &Assignment{
 		Pattern: &ComputedAccessExpression{
 			Expr: &Identifier{Token: literal{kind: Name, value: "map"}},
@@ -166,7 +166,7 @@ func TestCheckAssignmentToMap(t *testing.T) {
 
 func TestCheckAssignmentToMapBadKey(t *testing.T) {
 	parser := MakeParser(nil)
-	parser.scope.Add("map", Loc{}, makeMapType(Primitive{NUMBER}, Primitive{NUMBER}))
+	parser.scope.Add("map", Loc{}, makeMapType(Number{}, Number{}))
 	declaration := &Assignment{
 		Pattern: &ComputedAccessExpression{
 			Expr: &Identifier{Token: literal{kind: Name, value: "map"}},
@@ -185,7 +185,7 @@ func TestCheckAssignmentToMapBadKey(t *testing.T) {
 
 func TestCheckAssignmentToMapBadValue(t *testing.T) {
 	parser := MakeParser(nil)
-	parser.scope.Add("map", Loc{}, makeMapType(Primitive{NUMBER}, Primitive{NUMBER}))
+	parser.scope.Add("map", Loc{}, makeMapType(Number{}, Number{}))
 	declaration := &Assignment{
 		Pattern: &ComputedAccessExpression{
 			Expr: &Identifier{Token: literal{kind: Name, value: "map"}},
@@ -215,7 +215,10 @@ func TestCheckVariableDeclaration(t *testing.T) {
 	}
 
 	v, ok := parser.scope.Find("v")
-	if !ok || v.typing.Kind() != NUMBER {
+	if !ok {
+		t.Fatalf("Expected 'v' to have been declared as a number (got %#v)", v)
+	}
+	if _, ok := v.typing.(Number); !ok {
 		t.Fatalf("Expected 'v' to have been declared as a number (got %#v)", v)
 	}
 }
@@ -253,12 +256,18 @@ func TestCheckTupleDeclaration(t *testing.T) {
 	}
 
 	a, ok := parser.scope.Find("a")
-	if !ok || a.typing.Kind() != NUMBER {
+	if !ok {
+		t.Fatalf("Expected 'a' to have been declared as a number (got %#v)", a)
+	}
+	if _, ok := a.typing.(Number); !ok {
 		t.Fatalf("Expected 'a' to have been declared as a number (got %#v)", a)
 	}
 
 	b, ok := parser.scope.Find("b")
-	if !ok || b.typing.Kind() != STRING {
+	if !ok {
+		t.Fatalf("Expected 'b' to have been declared as a string (got %#v)", b)
+	}
+	if _, ok := b.typing.(String); !ok {
 		t.Fatalf("Expected 'b' to have been declared as a string (got %#v)", b)
 	}
 }
@@ -437,7 +446,7 @@ func TestCheckMethodDeclaration(t *testing.T) {
 	parser.scope.Add(
 		"Type",
 		Loc{},
-		Type{TypeAlias{Name: "Type", Ref: Primitive{NUMBER}}},
+		Type{TypeAlias{Name: "Type", Ref: Number{}}},
 	)
 	// (t Type).method :: () => { t }
 	node := &Assignment{

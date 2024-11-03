@@ -29,7 +29,7 @@ func (s *SumTypeConstructor) typeCheck(p *Parser) {
 	tuple := s.Params.Expr.(*TupleExpression)
 	for i := range tuple.Elements {
 		tuple.Elements[i].typeCheck(p)
-		if tuple.Elements[i].Type().Kind() != TYPE {
+		if _, ok := tuple.Elements[i].Type().(Type); !ok {
 			p.report("Type expected", tuple.Elements[i].Loc())
 		}
 	}
@@ -137,7 +137,7 @@ func getSumConstructorType(member SumTypeConstructor) Function {
 		if ok {
 			tu.elements[i] = t.Value
 		} else {
-			tu.elements[i] = Primitive{UNKNOWN}
+			tu.elements[i] = Unknown{}
 		}
 	}
 	return Function{Params: &tu}

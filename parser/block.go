@@ -24,7 +24,7 @@ func (b *Block) typeCheck(p *Parser) {
 	if !ok {
 		return
 	}
-	if expr.Type().Kind() == TYPE {
+	if _, ok := expr.Type().(Type); ok {
 		p.report("Blocks shouldn't return types", b.reportLoc())
 	}
 }
@@ -39,12 +39,12 @@ func (b *Block) reportLoc() Loc {
 }
 func (b *Block) Type() ExpressionType {
 	if len(b.Statements) == 0 {
-		return Primitive{NIL}
+		return Nil{}
 	}
 	last := b.Statements[len(b.Statements)-1]
 	expr, ok := last.(Expression)
 	if !ok {
-		return Primitive{NIL}
+		return Nil{}
 	}
 	return expr.Type()
 }

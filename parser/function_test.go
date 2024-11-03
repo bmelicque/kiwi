@@ -119,14 +119,14 @@ func TestCheckImplicitReturn(t *testing.T) {
 	if len(parser.errors) > 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	if expr.returnType.Kind() != NUMBER {
-		t.Fatalf("Expected number, got %v", expr.returnType.Kind())
+	if _, ok := expr.returnType.(Number); !ok {
+		t.Fatalf("Expected number, got %v", expr)
 	}
 }
 
 func TestCheckImplicitReturnBadReturns(t *testing.T) {
 	parser := MakeParser(nil)
-	parser.scope.Add("result", Loc{}, makeResultType(Primitive{NIL}, Primitive{NUMBER}))
+	parser.scope.Add("result", Loc{}, makeResultType(Nil{}, Number{}))
 	// () => {
 	//		if true {
 	//			return false
@@ -141,6 +141,7 @@ func TestCheckImplicitReturnBadReturns(t *testing.T) {
 		Params: &ParenthesizedExpression{},
 		Body: &Block{Statements: []Node{
 			&IfExpression{
+				Keyword:   token{kind: IfKeyword},
 				Condition: &Literal{literal{kind: BooleanLiteral, value: "true"}},
 				Body: &Block{Statements: []Node{
 					&Exit{
@@ -149,6 +150,7 @@ func TestCheckImplicitReturnBadReturns(t *testing.T) {
 					},
 				}},
 				Alternate: &IfExpression{
+					Keyword:   token{kind: IfKeyword},
 					Condition: &Literal{literal{kind: BooleanLiteral, value: "true"}},
 					Body: &Block{Statements: []Node{
 						&Exit{
@@ -169,11 +171,12 @@ func TestCheckImplicitReturnBadReturns(t *testing.T) {
 	}
 	expr.typeCheck(parser)
 
-	if len(parser.errors) != 3 {
+	if len(parser.errors) != 5 {
+		// expect 2 errors for if expression types
 		// expect 1 error for early return
 		// expect 1 error for try with implicit return type
 		// expect 1 error for throw with implicit return type
-		t.Fatalf("Expected 3 errors, got %v: %#v", len(parser.errors), parser.errors)
+		t.Fatalf("Expected 5 errors, got %v: %#v", len(parser.errors), parser.errors)
 	}
 }
 
@@ -188,6 +191,7 @@ func TestCheckExplicitReturn(t *testing.T) {
 		},
 		Body: &Block{Statements: []Node{
 			&IfExpression{
+				Keyword:   token{kind: IfKeyword},
 				Condition: &Literal{literal{kind: BooleanLiteral}},
 				Body: &Block{Statements: []Node{
 					&Exit{
@@ -207,8 +211,9 @@ func TestCheckExplicitReturn(t *testing.T) {
 	}
 	expr.typeCheck(parser)
 
-	if len(parser.errors) > 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	if len(parser.errors) != 1 {
+		// expect 1 error for if expression types
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
 	}
 	if alias, ok := expr.returnType.(TypeAlias); !ok || alias.Name != "Result" {
 		t.Fatalf("Result type expected")

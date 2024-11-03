@@ -67,7 +67,7 @@ func TestIfElse(t *testing.T) {
 	if _, ok := node.Alternate.(*Block); !ok {
 		t.Fatalf("Expected body alternate, got %#v", node.Alternate)
 	}
-	if node.Type().Kind() != BOOLEAN {
+	if _, ok := node.Type().(Boolean); !ok {
 		t.Fatalf("Expected a boolean")
 	}
 }
@@ -149,7 +149,7 @@ func TestIfPattern(t *testing.T) {
 
 func TestCheckIfPattern(t *testing.T) {
 	parser := MakeParser(nil)
-	parser.scope.Add("option", Loc{}, makeOptionType(Primitive{NUMBER}))
+	parser.scope.Add("option", Loc{}, makeOptionType(Number{}))
 	// if Some(s) := option { s } else { 0 }
 	expr := &IfExpression{
 		Condition: &Assignment{
@@ -175,7 +175,7 @@ func TestCheckIfPattern(t *testing.T) {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 
-	if expr.Type().Kind() != NUMBER {
+	if _, ok := expr.Type().(Number); !ok {
 		t.Fatalf("Expected a number, got %#v", expr.Type())
 	}
 }

@@ -38,7 +38,7 @@ func (c *CatchExpression) typeCheck(p *Parser) {
 	if !ok || alias.Name != "Result" {
 		p.report("Catch not need (lhs is not a result type)", c.Loc())
 		happy = c.Left.Type()
-		err = Primitive{UNKNOWN}
+		err = Unknown{}
 	} else {
 		happy = alias.Ref.(Sum).getMember("Ok")
 		err = alias.Ref.(Sum).getMember("Err")

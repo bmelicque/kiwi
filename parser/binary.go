@@ -47,7 +47,7 @@ func (expr *BinaryExpression) Type() ExpressionType {
 		Pow,
 		Div,
 		Mod:
-		return Primitive{NUMBER}
+		return Number{}
 	case Concat:
 		return expr.Left.Type()
 	case
@@ -59,20 +59,20 @@ func (expr *BinaryExpression) Type() ExpressionType {
 		GreaterEqual,
 		Equal,
 		NotEqual:
-		return Primitive{BOOLEAN}
+		return Boolean{}
 	case Bang:
 		left := expr.Left.Type()
 		if t, ok := left.(Type); ok {
 			left = t.Value
 		} else {
-			left = Primitive{UNKNOWN}
+			left = Unknown{}
 		}
 
 		right := expr.Right.Type()
 		if t, ok := right.(Type); ok {
 			right = t.Value
 		} else {
-			right = Primitive{UNKNOWN}
+			right = Unknown{}
 		}
 		return Type{makeResultType(right, left)}
 	default:
@@ -164,10 +164,10 @@ func (b *BinaryExpression) typeCheck(p *Parser) {
 }
 
 func (p *Parser) typeCheckLogicalExpression(left Expression, right Expression) {
-	if left != nil && !(Primitive{BOOLEAN}).Extends(left.Type()) {
+	if left != nil && !(Boolean{}).Extends(left.Type()) {
 		p.report("The left-hand side of a logical operation must be a boolean", left.Loc())
 	}
-	if right != nil && !(Primitive{BOOLEAN}).Extends(right.Type()) {
+	if right != nil && !(Boolean{}).Extends(right.Type()) {
 		p.report("The right-hand side of a logical operation must be a boolean", right.Loc())
 	}
 }
@@ -191,10 +191,10 @@ func (p *Parser) typeCheckConcatExpression(left Expression, right Expression) {
 	if right != nil {
 		rightType = right.Type()
 	}
-	if leftType != nil && !(Primitive{STRING}).Extends(leftType) && !(List{Primitive{UNKNOWN}}).Extends(leftType) {
+	if leftType != nil && !(String{}).Extends(leftType) && !(List{Unknown{}}).Extends(leftType) {
 		p.report("The left-hand side of concatenation must be a string or a list", left.Loc())
 	}
-	if rightType != nil && !(Primitive{STRING}).Extends(rightType) && !(List{Primitive{UNKNOWN}}).Extends(rightType) {
+	if rightType != nil && !(String{}).Extends(rightType) && !(List{Unknown{}}).Extends(rightType) {
 		p.report("The right-hand side of concatenation must be a string or a list", right.Loc())
 	}
 
@@ -211,18 +211,18 @@ func (p *Parser) typeCheckConcatExpression(left Expression, right Expression) {
 	}
 }
 func (p *Parser) typeCheckArithmeticExpression(left Expression, right Expression) {
-	if left != nil && !(Primitive{NUMBER}).Extends(left.Type()) {
+	if left != nil && !(Number{}).Extends(left.Type()) {
 		p.report("The left-hand side of an arithmetic operation must be a number", left.Loc())
 	}
-	if right != nil && !(Primitive{NUMBER}).Extends(right.Type()) {
+	if right != nil && !(Number{}).Extends(right.Type()) {
 		p.report("The right-hand side of an arithmetic operation must be a number", right.Loc())
 	}
 }
 func typeCheckBinaryErrorType(p *Parser, left Expression, right Expression) {
-	if left.Type().Kind() != TYPE {
+	if _, ok := left.Type().(Type); !ok {
 		p.report("Type expected", left.Loc())
 	}
-	if right.Type().Kind() != TYPE {
+	if _, ok := right.Type().(Type); !ok {
 		p.report("Type expected", right.Loc())
 	}
 }

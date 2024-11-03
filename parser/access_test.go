@@ -52,7 +52,7 @@ func TestTupleAccess(t *testing.T) {
 		literal{kind: NumberLiteral, value: "0"},
 	}}
 	parser := MakeParser(&tokenizer)
-	parser.scope.Add("tuple", Loc{}, Tuple{[]ExpressionType{Primitive{NUMBER}}})
+	parser.scope.Add("tuple", Loc{}, Tuple{[]ExpressionType{Number{}}})
 	node := parser.parseAccessExpression()
 
 	expr, ok := node.(*PropertyAccessExpression)
