@@ -136,7 +136,7 @@ func (e *Emitter) emitMatchStatement(m parser.MatchExpression) {
 	e.write("const _m = ")
 	e.emit(m.Value)
 	e.write(";\n")
-	if m.Value.Type().Kind() == parser.SUM {
+	if _, ok := m.Value.Type().(parser.Sum); ok {
 		e.write("switch (_m._tag) {\n")
 	} else {
 		e.write("switch (_m.constructor) {\n")
@@ -158,7 +158,7 @@ func (e *Emitter) emitMatchStatement(m parser.MatchExpression) {
 		if c.Pattern != nil {
 			id := c.Pattern.(*parser.Identifier)
 			e.indent()
-			if m.Value.Type().Kind() == parser.SUM {
+			if _, ok := m.Value.Type().(parser.Sum); ok {
 				e.write(fmt.Sprintf("let %v = _m._value;\n", id.Text()))
 			} else {
 				e.write(fmt.Sprintf("let %v = _m;\n", id.Text()))
@@ -259,11 +259,10 @@ func (e *Emitter) getClassParamNames(expr parser.Expression) []string {
 	return names
 }
 func (e *Emitter) emitTypeDeclaration(declaration *parser.Assignment) {
-	init := declaration.Value.Type().(parser.Type).Value.Kind()
-	switch init {
-	case parser.TRAIT:
+	switch declaration.Value.Type().(parser.Type).Value.(type) {
+	case parser.Trait:
 		return
-	case parser.SUM:
+	case parser.Sum:
 		e.addFlag(SumFlag)
 		e.write("class ")
 		e.write(getTypeIdentifier(declaration.Pattern))

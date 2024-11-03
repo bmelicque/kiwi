@@ -202,7 +202,7 @@ func TestCheckBinaryErrorType(t *testing.T) {
 		t.Fatalf("Result type expected")
 	}
 	okType := alias.Ref.(Sum).getMember("Ok")
-	if okType.Kind() != NUMBER {
+	if _, ok := okType.(Number); !ok {
 		t.Fatalf("Number expected")
 	}
 }

@@ -119,8 +119,8 @@ func TestCheckImplicitReturn(t *testing.T) {
 	if len(parser.errors) > 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	if expr.returnType.Kind() != NUMBER {
-		t.Fatalf("Expected number, got %v", expr.returnType.Kind())
+	if _, ok := expr.returnType.(Number); !ok {
+		t.Fatalf("Expected number, got %v", expr)
 	}
 }
 

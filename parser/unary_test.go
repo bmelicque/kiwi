@@ -53,7 +53,7 @@ func TestCheckOptionType(t *testing.T) {
 	if !ok || alias.Name != "Option" {
 		t.Fatal("Expected option type")
 	}
-	if getSomeType(alias.Ref.(Sum)).Kind() != NUMBER {
+	if _, ok := getSomeType(alias.Ref.(Sum)).(Number); !ok {
 		t.Fatal("Expected number option type")
 	}
 }
@@ -91,7 +91,7 @@ func TestCheckErrorType(t *testing.T) {
 	if !ok || alias.Name != "Result" {
 		t.Fatal("Expected result type")
 	}
-	if alias.Ref.(Sum).getMember("Ok").Kind() != NUMBER {
+	if _, ok := alias.Ref.(Sum).getMember("Ok").(Number); !ok {
 		t.Fatal("Expected number option type")
 	}
 }
@@ -108,7 +108,7 @@ func TestCheckLogicalNot(t *testing.T) {
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	if expr.Type().Kind() != BOOLEAN {
+	if _, ok := expr.Type().(Boolean); !ok {
 		t.Fatalf("Expected boolean")
 	}
 
@@ -161,7 +161,7 @@ func TestCheckListType(t *testing.T) {
 	if !ok {
 		t.Fatal("Expected list type")
 	}
-	if list.Element.Kind() != NUMBER {
+	if _, ok := list.Element.(Number); !ok {
 		t.Fatal("Expected number list type")
 	}
 }
@@ -186,7 +186,7 @@ func TestCheckListTypeNoValue(t *testing.T) {
 	if !ok {
 		t.Fatal("Expected list type")
 	}
-	if list.Element.Kind() != UNKNOWN {
+	if _, ok := list.Element.(Unknown); !ok {
 		t.Fatal("Expected unknown list type")
 	}
 }

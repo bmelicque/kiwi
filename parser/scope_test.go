@@ -7,7 +7,7 @@ func TestMapIdentifier(t *testing.T) {
 	expr := &Identifier{Token: literal{kind: Name, value: "Map"}}
 	expr.typeCheck(parser)
 
-	if expr.Type().Kind() != TYPE {
+	if _, ok := expr.Type().(Type); !ok {
 		t.Fatalf("Type expected")
 	}
 }

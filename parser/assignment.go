@@ -194,9 +194,11 @@ func typeCheckDefinition(p *Parser, a *Assignment) {
 			p.report("Type identifier expected", pattern.Loc())
 			ok = false
 		}
-		if a.Value != nil && a.Value.Type().Kind() != TYPE {
-			p.report("Type expected", a.Value.Loc())
-			ok = false
+		if a.Value != nil {
+			if _, k := a.Value.Type().(Type); !k {
+				p.report("Type expected", a.Value.Loc())
+				ok = false
+			}
 		}
 		if !ok {
 			return
@@ -228,7 +230,7 @@ func typeCheckMethod(p *Parser, expr *PropertyAccessExpression, init Expression)
 
 	init.typeCheck(p)
 
-	if init.Type().Kind() != FUNCTION {
+	if _, ok := init.Type().(Function); !ok {
 		p.report("Function expected", init.Loc())
 		return
 	}

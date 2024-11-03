@@ -13,7 +13,7 @@ func TestEmptyBlock(t *testing.T) {
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	if block.Type().Kind() != NIL {
+	if _, ok := block.Type().(Nil); !ok {
 		t.Fatalf("Expected nil type, got %#v", block.Type())
 	}
 }
@@ -30,7 +30,7 @@ func TestSingleLineBlock(t *testing.T) {
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	if block.Type().Kind() != STRING {
+	if _, ok := block.Type().(String); !ok {
 		t.Fatalf("Expected string type, got %#v", block.Type())
 	}
 }
@@ -58,7 +58,7 @@ func TestMultilineBlock(t *testing.T) {
 	if len(block.Statements) != 2 {
 		t.Fatalf("Expected 2 statements, got %#v", block.Statements)
 	}
-	if block.Type().Kind() != STRING {
+	if _, ok := block.Type().(String); !ok {
 		t.Fatalf("Expected string type, got %#v", block.Type())
 	}
 }

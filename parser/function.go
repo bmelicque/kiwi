@@ -116,12 +116,15 @@ func (f *FunctionTypeExpression) typeCheck(p *Parser) {
 	tuple := f.Params.Expr.(*TupleExpression)
 	for i := range tuple.Elements {
 		tuple.Elements[i].typeCheck(p)
-		if tuple.Elements[i].Type().Kind() != TYPE {
+		if _, ok := tuple.Elements[i].Type().(Type); !ok {
 			p.report("Type expected", tuple.Elements[i].Loc())
 		}
 	}
 
-	if f.Expr != nil && f.Expr.Type().Kind() != TYPE {
+	if f.Expr == nil {
+		return
+	}
+	if _, ok := f.Expr.Type().(Type); !ok {
 		p.report("Type expected", f.Expr.Loc())
 	}
 }
@@ -335,16 +338,25 @@ func isFunctionExpression(node Node) bool {
 
 func addParamsToScope(p *Parser, tuple []Expression) {
 	for _, expr := range tuple {
-		param, ok := expr.(*Param)
-		if !ok {
-			continue
-		}
-		if param.Complement == nil || param.Complement.Type().Kind() != TYPE {
-			p.report("Typing expected", param.Loc())
-			p.scope.Add(param.Identifier.Text(), param.Loc(), Unknown{})
-		} else {
-			typing, _ := param.Complement.Type().(Type)
-			p.scope.Add(param.Identifier.Text(), param.Loc(), typing.Value)
-		}
+		addParamToScope(p, expr)
 	}
+}
+
+func addParamToScope(p *Parser, expr Expression) {
+	param, ok := expr.(*Param)
+	if !ok {
+		return
+	}
+	if param.Complement == nil {
+		p.report("Typing expected", param.Loc())
+		p.scope.Add(param.Identifier.Text(), param.Loc(), Unknown{})
+		return
+	}
+	if _, ok := param.Complement.Type().(Type); !ok {
+		p.report("Typing expected", param.Loc())
+		p.scope.Add(param.Identifier.Text(), param.Loc(), Unknown{})
+		return
+	}
+	typing, _ := param.Complement.Type().(Type)
+	p.scope.Add(param.Identifier.Text(), param.Loc(), typing.Value)
 }

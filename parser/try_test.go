@@ -26,8 +26,8 @@ func TestCheckTryExpression(t *testing.T) {
 	if len(parser.errors) > 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	if expr.Type().Kind() != NUMBER {
-		t.Fatalf("Expected a number, got %v", expr.Type().Kind())
+	if _, ok := expr.Type().(Number); !ok {
+		t.Fatalf("Expected a number, got %v", expr)
 	}
 }
 

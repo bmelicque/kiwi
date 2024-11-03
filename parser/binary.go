@@ -219,10 +219,10 @@ func (p *Parser) typeCheckArithmeticExpression(left Expression, right Expression
 	}
 }
 func typeCheckBinaryErrorType(p *Parser, left Expression, right Expression) {
-	if left.Type().Kind() != TYPE {
+	if _, ok := left.Type().(Type); !ok {
 		p.report("Type expected", left.Loc())
 	}
-	if right.Type().Kind() != TYPE {
+	if _, ok := right.Type().(Type); !ok {
 		p.report("Type expected", right.Loc())
 	}
 }

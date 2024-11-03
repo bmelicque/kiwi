@@ -24,7 +24,7 @@ func (b *Block) typeCheck(p *Parser) {
 	if !ok {
 		return
 	}
-	if expr.Type().Kind() == TYPE {
+	if _, ok := expr.Type().(Type); ok {
 		p.report("Blocks shouldn't return types", b.reportLoc())
 	}
 }

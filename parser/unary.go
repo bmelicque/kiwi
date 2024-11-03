@@ -18,12 +18,13 @@ func (u *UnaryExpression) typeCheck(p *Parser) {
 	u.Operand.typeCheck(p)
 	switch u.Operator.Kind() {
 	case Bang:
-		t := u.Operand.Type().Kind()
-		if t != TYPE && t != BOOLEAN {
-			p.report("Type or boolean expected wiyh '!' operator", u.Operand.Loc())
+		switch u.Operand.Type().(type) {
+		case Type, Boolean:
+		default:
+			p.report("Type or boolean expected with '!' operator", u.Operand.Loc())
 		}
 	case QuestionMark:
-		if u.Operand.Type().Kind() != TYPE {
+		if _, ok := u.Operand.Type().(Type); !ok {
 			p.report("Type expected with question mark operator", u.Operand.Loc())
 		}
 	default:
@@ -73,8 +74,11 @@ func (l *ListTypeExpression) getChildren() []Node {
 }
 
 func (l *ListTypeExpression) typeCheck(p *Parser) {
+	if l.Expr == nil {
+		return
+	}
 	l.Expr.typeCheck(p)
-	if l.Expr != nil && l.Expr.Type().Kind() != TYPE {
+	if _, ok := l.Expr.Type().(Type); !ok {
 		p.report("Type expected", l.Loc())
 	}
 }

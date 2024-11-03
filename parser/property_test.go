@@ -47,7 +47,7 @@ func TestTupleIndexAccess(t *testing.T) {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 
-	if expr.Type().Kind() != STRING {
-		t.Fatalf("Expected STRING, got %#v", expr.Type())
+	if _, ok := expr.Type().(String); !ok {
+		t.Fatalf("Expected string, got %#v", expr.Type())
 	}
 }

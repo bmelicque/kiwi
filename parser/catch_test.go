@@ -87,7 +87,7 @@ func TestCheckCatchExpression(t *testing.T) {
 	if len(parser.errors) > 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	if expr.Type().Kind() != NUMBER {
+	if _, ok := expr.Type().(Number); !ok {
 		t.Fatalf("Expected number")
 	}
 }
@@ -108,7 +108,7 @@ func TestCheckCatchExpressionNotResult(t *testing.T) {
 	if len(parser.errors) != 1 {
 		t.Fatalf("Expected 1 error, got %v: %#v", len(parser.errors), parser.errors)
 	}
-	if expr.Type().Kind() != NUMBER {
+	if _, ok := expr.Type().(Number); !ok {
 		t.Fatalf("Expected number")
 	}
 }
@@ -133,7 +133,7 @@ func TestCheckCatchExpressionBlockNotMatching(t *testing.T) {
 	if len(parser.errors) != 1 {
 		t.Fatalf("Expected 1 error, got %v: %#v", len(parser.errors), parser.errors)
 	}
-	if expr.Body.Type().Kind() != STRING {
-		t.Fatalf("Expected string")
+	if _, ok := expr.Body.Type().(String); !ok {
+		t.Fatalf("Expected string, got %#v", expr.Type())
 	}
 }

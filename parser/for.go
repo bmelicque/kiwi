@@ -34,7 +34,10 @@ func (f *ForExpression) typeCheck(p *Parser) {
 		}
 	case Expression:
 		// s.Expr == nil already reported when parsing expression
-		if s != nil && s.Type().Kind() != BOOLEAN {
+		if s == nil {
+			break
+		}
+		if _, ok := s.Type().(Boolean); !ok {
 			p.report("Boolean expected in loop condition", s.Loc())
 		}
 	}

@@ -59,7 +59,11 @@ func parsePropertyAccess(p *Parser, left Expression) Expression {
 // check accessing a tuple's index: tuple.0
 func typeCheckTupleIndexAccess(p *Parser, expr *PropertyAccessExpression) {
 	property, ok := expr.Property.(*Literal)
-	if !ok || property.Type().Kind() != NUMBER {
+	if !ok {
+		expr.typing = Unknown{}
+		return
+	}
+	if _, ok := property.Type().(Number); !ok {
 		expr.typing = Unknown{}
 		return
 	}
@@ -200,7 +204,11 @@ func (t *TraitExpression) typeCheck(p *Parser) {
 			continue
 		}
 		typing, ok := param.Complement.Type().(Type)
-		if !ok || typing.Value == nil || typing.Value.Kind() != FUNCTION {
+		if !ok {
+			p.report("Function type expected", param.Complement.Loc())
+			continue
+		}
+		if _, ok := typing.Value.(Function); !ok {
 			p.report("Function type expected", param.Complement.Loc())
 		}
 	}

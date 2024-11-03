@@ -36,7 +36,7 @@ func (expr *ComputedAccessExpression) typeCheck(p *Parser) {
 	case Function:
 		typeCheckGenericFunction(p, expr)
 	case List:
-		if expr.Property.Expr.Type().Kind() != NUMBER {
+		if _, ok := expr.Property.Expr.Type().(Number); !ok {
 			p.report("Number expected", expr.Property.loc)
 		}
 		expr.typing = t.Element

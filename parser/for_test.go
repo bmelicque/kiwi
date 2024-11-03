@@ -36,7 +36,7 @@ func TestForExpressionType(t *testing.T) {
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	if expr.Type().Kind() != NUMBER {
+	if _, ok := expr.Type().(Number); !ok {
 		t.Fatalf("Expected number type, got %#v", expr.Type())
 	}
 }

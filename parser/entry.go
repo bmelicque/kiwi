@@ -128,7 +128,7 @@ func parseParam(p *Parser, identifier *Identifier) Expression {
 
 func (param *Param) typeCheck(p *Parser) {
 	param.Complement.typeCheck(p)
-	if param.Complement.Type().Kind() != TYPE {
+	if _, ok := param.Complement.Type().(Type); !ok {
 		p.report("Type expected", param.Complement.Loc())
 	}
 }
@@ -138,7 +138,7 @@ func (e *Entry) typeCheck(p *Parser) {
 	if b, ok := e.Key.(*BracketedExpression); ok {
 		b.typeCheck(p)
 	}
-	if e.Value.Type().Kind() == TYPE {
+	if _, ok := e.Value.Type().(Type); ok {
 		p.report("Value expected", e.Value.Loc())
 	}
 }

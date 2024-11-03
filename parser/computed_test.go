@@ -32,7 +32,7 @@ func TestGenericWithTypeArgs(t *testing.T) {
 		t.Fatalf("Expected Type{TypeAlias{}}, got %#v", typing.Value)
 	}
 
-	if alias.Params[0].Value.Kind() != NUMBER {
+	if _, ok := alias.Params[0].Value.(Number); !ok {
 		t.Fatalf("Type param should've been set to Number{}, got %#v", alias.Params[0].Value)
 	}
 
@@ -51,7 +51,7 @@ func TestGenericWithTypeArgs(t *testing.T) {
 		t.Fatalf("Member should've been a type, got %#v", member)
 	}
 
-	if memberType.Value.Kind() != NUMBER {
+	if _, ok := memberType.Value.(Number); !ok {
 		t.Fatalf("Member should've been set to Type{Number{}}, got %#v", memberType.Value)
 	}
 }
@@ -78,11 +78,11 @@ func TestGenericFunctionWithTypeArgs(t *testing.T) {
 		t.Fatalf("Expected Function type, got %#v", expr.typing)
 	}
 
-	if function.Params.elements[0].Kind() != NUMBER {
+	if _, ok := function.Params.elements[0].(Number); !ok {
 		t.Fatalf("Param should've been set to Number{}, got %#v", function.Params.elements[0])
 	}
 
-	if function.Returned.Kind() != NUMBER {
+	if _, ok := function.Returned.(Number); !ok {
 		t.Fatalf("Param should've been set to Number{}, got %#v", function.Returned)
 	}
 }
@@ -108,7 +108,7 @@ func TestMapElementAccess(t *testing.T) {
 		t.Fatalf("Expected an option, got %#v", expr.typing)
 	}
 	some := alias.Ref.(Sum).getMember("Some")
-	if some.Kind() != STRING {
+	if _, ok := some.(String); !ok {
 		t.Fatalf("Expected option of string, got %#v", some)
 	}
 }

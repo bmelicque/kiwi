@@ -40,7 +40,7 @@ func TestBuildTypeAlias(t *testing.T) {
 		t.Fatalf("Expected 'ok' to be true (no remaining generics)")
 	}
 
-	if built.(TypeAlias).Ref.Kind() != NUMBER {
+	if _, ok := built.(TypeAlias).Ref.(Number); !ok {
 		t.Fatalf("Expected number type, got %#v", built.(TypeAlias).Ref)
 	}
 }
@@ -77,7 +77,7 @@ func TestTrait(t *testing.T) {
 func TestGetSumTypeMember(t *testing.T) {
 	option := makeOptionType(Number{})
 	some := option.Ref.(Sum).getMember("Some")
-	if some.Kind() != NUMBER {
+	if _, ok := some.(Number); !ok {
 		t.Fatalf("Expected number, got %v", some)
 	}
 }

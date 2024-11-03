@@ -64,7 +64,7 @@ func TestEmptyTupleType(t *testing.T) {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 
-	if expr.Type().Kind() != NIL {
+	if _, ok := expr.Type().(Nil); !ok {
 		t.Fatalf("Expected nil type, got %#v", expr.Type())
 	}
 }
@@ -80,7 +80,7 @@ func TestSingleTupleType(t *testing.T) {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 
-	if expr.Type().Kind() != STRING {
+	if _, ok := expr.Type().(String); !ok {
 		t.Fatalf("Expected string type, got %#v", expr.Type())
 	}
 }
@@ -101,10 +101,10 @@ func TestTupleType(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected tuple type, got %#v", expr.Type())
 	}
-	if tuple.elements[0].Kind() != NUMBER {
+	if _, ok := tuple.elements[0].(Number); !ok {
 		t.Fatalf("Expected number, got %#v", tuple.elements[0])
 	}
-	if tuple.elements[1].Kind() != STRING {
+	if _, ok := tuple.elements[1].(String); !ok {
 		t.Fatalf("Expected string, got %#v", tuple.elements[1])
 	}
 }

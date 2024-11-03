@@ -64,15 +64,14 @@ func (m *MatchExpression) Type() ExpressionType {
 	return m.Cases[0].Type()
 }
 
-var matchableType = []ExpressionTypeKind{SUM, TRAIT}
-
-// FIXME: limit possible types for match
 func (m *MatchExpression) typeCheck(p *Parser) {
 	t := m.Value.Type()
 	if t == nil {
 		return
 	}
-	if !slices.Contains(matchableType, t.Kind()) {
+	switch t.(type) {
+	case Sum, Trait:
+	default:
 		p.report("Cannot match this type", m.Value.Loc())
 	}
 	for i := range m.Cases {

@@ -215,7 +215,10 @@ func TestCheckVariableDeclaration(t *testing.T) {
 	}
 
 	v, ok := parser.scope.Find("v")
-	if !ok || v.typing.Kind() != NUMBER {
+	if !ok {
+		t.Fatalf("Expected 'v' to have been declared as a number (got %#v)", v)
+	}
+	if _, ok := v.typing.(Number); !ok {
 		t.Fatalf("Expected 'v' to have been declared as a number (got %#v)", v)
 	}
 }
@@ -253,12 +256,18 @@ func TestCheckTupleDeclaration(t *testing.T) {
 	}
 
 	a, ok := parser.scope.Find("a")
-	if !ok || a.typing.Kind() != NUMBER {
+	if !ok {
+		t.Fatalf("Expected 'a' to have been declared as a number (got %#v)", a)
+	}
+	if _, ok := a.typing.(Number); !ok {
 		t.Fatalf("Expected 'a' to have been declared as a number (got %#v)", a)
 	}
 
 	b, ok := parser.scope.Find("b")
-	if !ok || b.typing.Kind() != STRING {
+	if !ok {
+		t.Fatalf("Expected 'b' to have been declared as a string (got %#v)", b)
+	}
+	if _, ok := b.typing.(String); !ok {
 		t.Fatalf("Expected 'b' to have been declared as a string (got %#v)", b)
 	}
 }

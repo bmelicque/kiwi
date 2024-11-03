@@ -1,31 +1,6 @@
 package parser
 
-type ExpressionTypeKind int
-
-const (
-	UNKNOWN ExpressionTypeKind = iota
-
-	TYPE
-
-	NUMBER
-	BOOLEAN
-	STRING
-	NIL
-
-	LIST
-	MAP
-	TUPLE
-	RANGE
-	STRUCT
-	SUM
-
-	FUNCTION
-	CONSTRUCTOR
-	TRAIT
-)
-
 type ExpressionType interface {
-	Kind() ExpressionTypeKind
 	Extends(ExpressionType) bool
 	build(*Scope, ExpressionType) (ExpressionType, bool)
 }
@@ -47,9 +22,9 @@ type Type struct {
 	Value ExpressionType
 }
 
-func (t Type) Kind() ExpressionTypeKind { return TYPE }
 func (t Type) Extends(testType ExpressionType) bool {
-	return testType.Kind() == TYPE && t.Value.Extends(testType.(Type).Value)
+	got, ok := testType.(Type)
+	return ok && t.Value.Extends(got.Value)
 }
 func (t Type) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	var value ExpressionType
@@ -62,7 +37,6 @@ func (t Type) build(scope *Scope, compared ExpressionType) (ExpressionType, bool
 
 type Unknown struct{}
 
-func (u Unknown) Kind() ExpressionTypeKind      { return UNKNOWN }
 func (u Unknown) Extends(t ExpressionType) bool { return true }
 func (u Unknown) build(scope *Scope, c ExpressionType) (ExpressionType, bool) {
 	return u, true
@@ -70,7 +44,6 @@ func (u Unknown) build(scope *Scope, c ExpressionType) (ExpressionType, bool) {
 
 type Nil struct{}
 
-func (n Nil) Kind() ExpressionTypeKind { return NIL }
 func (n Nil) Extends(t ExpressionType) bool {
 	_, ok := t.(Number)
 	return ok
@@ -81,7 +54,6 @@ func (n Nil) build(scope *Scope, c ExpressionType) (ExpressionType, bool) {
 
 type Number struct{}
 
-func (n Number) Kind() ExpressionTypeKind { return NUMBER }
 func (n Number) Extends(t ExpressionType) bool {
 	_, ok := t.(Number)
 	return ok
@@ -92,7 +64,6 @@ func (n Number) build(scope *Scope, c ExpressionType) (ExpressionType, bool) {
 
 type Boolean struct{}
 
-func (b Boolean) Kind() ExpressionTypeKind { return BOOLEAN }
 func (b Boolean) Extends(t ExpressionType) bool {
 	_, ok := t.(Boolean)
 	return ok
@@ -103,7 +74,6 @@ func (b Boolean) build(scope *Scope, c ExpressionType) (ExpressionType, bool) {
 
 type String struct{}
 
-func (s String) Kind() ExpressionTypeKind { return STRING }
 func (s String) Extends(t ExpressionType) bool {
 	_, ok := t.(String)
 	return ok
@@ -119,7 +89,6 @@ type TypeAlias struct {
 	Methods map[string]ExpressionType
 }
 
-func (t TypeAlias) Kind() ExpressionTypeKind { return t.Ref.Kind() }
 func (ta TypeAlias) Extends(t ExpressionType) bool {
 	alias, ok := t.(TypeAlias)
 	if !ok {
@@ -171,7 +140,6 @@ type List struct {
 	Element ExpressionType
 }
 
-func (l List) Kind() ExpressionTypeKind { return LIST }
 func (l List) Extends(t ExpressionType) bool {
 	if list, ok := t.(List); ok {
 		return l.Element.Extends(list.Element)
@@ -193,7 +161,6 @@ type Map struct {
 	Value ExpressionType
 }
 
-func (m Map) Kind() ExpressionTypeKind { return MAP }
 func (m Map) Extends(received ExpressionType) bool {
 	t, ok := received.(Map)
 	if !ok {
@@ -217,7 +184,6 @@ type Tuple struct {
 	elements []ExpressionType
 }
 
-func (t Tuple) Kind() ExpressionTypeKind { return TUPLE }
 func (tuple Tuple) Extends(t ExpressionType) bool {
 	switch t := t.(type) {
 	case Tuple:
@@ -260,7 +226,6 @@ type Range struct {
 	operands ExpressionType
 }
 
-func (r Range) Kind() ExpressionTypeKind { return RANGE }
 func (r Range) Extends(t ExpressionType) bool {
 	if received, ok := t.(Range); ok {
 		return r.operands.Extends(received.operands)
@@ -289,7 +254,6 @@ func (f Function) arity() int {
 	return len(f.Params.elements)
 }
 
-func (f Function) Kind() ExpressionTypeKind { return FUNCTION }
 func (f Function) Extends(t ExpressionType) bool {
 	function, ok := t.(Function)
 	if !ok {
@@ -343,7 +307,6 @@ type Object struct {
 	Members map[string]ExpressionType
 }
 
-func (o Object) Kind() ExpressionTypeKind { return STRUCT }
 func (o Object) Extends(t ExpressionType) bool {
 	structB, ok := t.(Object)
 	if !ok {
@@ -381,7 +344,6 @@ type Sum struct {
 	Members map[string]Function
 }
 
-func (s Sum) Kind() ExpressionTypeKind { return SUM }
 func (s Sum) Extends(t ExpressionType) bool {
 	// return true if exactly one member extends received type
 	found := false
@@ -428,7 +390,6 @@ type Trait struct {
 	Members map[string]ExpressionType
 }
 
-func (t Trait) Kind() ExpressionTypeKind { return TRAIT }
 func (t Trait) Extends(et ExpressionType) bool {
 	var receivedMethods map[string]ExpressionType
 	switch et := et.(type) {
@@ -458,12 +419,6 @@ type Generic struct {
 	Value       ExpressionType
 }
 
-func (g Generic) Kind() ExpressionTypeKind {
-	if g.Constraints == nil {
-		return UNKNOWN
-	}
-	return g.Constraints.Kind()
-}
 func (g Generic) Extends(t ExpressionType) bool {
 	if g.Constraints == nil {
 		return true
@@ -509,7 +464,6 @@ type Constructor struct {
 	To   ExpressionType
 }
 
-func (c Constructor) Kind() ExpressionTypeKind      { return CONSTRUCTOR }
 func (c Constructor) Extends(t ExpressionType) bool { return false }
 func (c Constructor) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	done := true
