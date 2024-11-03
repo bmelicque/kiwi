@@ -2,6 +2,7 @@ package parser
 
 type ExpressionType interface {
 	Extends(ExpressionType) bool
+	Text() string
 	build(*Scope, ExpressionType) (ExpressionType, bool)
 }
 
@@ -26,6 +27,7 @@ func (t Type) Extends(testType ExpressionType) bool {
 	got, ok := testType.(Type)
 	return ok && t.Value.Extends(got.Value)
 }
+func (t Type) Text() string { return t.Value.Text() }
 func (t Type) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	var value ExpressionType
 	if c, ok := compared.(Type); ok {
@@ -38,6 +40,7 @@ func (t Type) build(scope *Scope, compared ExpressionType) (ExpressionType, bool
 type Unknown struct{}
 
 func (u Unknown) Extends(t ExpressionType) bool { return true }
+func (u Unknown) Text() string                  { return "unknown" }
 func (u Unknown) build(scope *Scope, c ExpressionType) (ExpressionType, bool) {
 	return u, true
 }
@@ -48,6 +51,7 @@ func (n Nil) Extends(t ExpressionType) bool {
 	_, ok := t.(Number)
 	return ok
 }
+func (n Nil) Text() string { return "nil" }
 func (n Nil) build(scope *Scope, c ExpressionType) (ExpressionType, bool) {
 	return n, true
 }
@@ -58,6 +62,7 @@ func (n Number) Extends(t ExpressionType) bool {
 	_, ok := t.(Number)
 	return ok
 }
+func (n Number) Text() string { return "number" }
 func (n Number) build(scope *Scope, c ExpressionType) (ExpressionType, bool) {
 	return n, true
 }
@@ -68,6 +73,7 @@ func (b Boolean) Extends(t ExpressionType) bool {
 	_, ok := t.(Boolean)
 	return ok
 }
+func (b Boolean) Text() string { return "boolean" }
 func (b Boolean) build(scope *Scope, c ExpressionType) (ExpressionType, bool) {
 	return b, true
 }
@@ -78,6 +84,7 @@ func (s String) Extends(t ExpressionType) bool {
 	_, ok := t.(String)
 	return ok
 }
+func (s String) Text() string { return "string" }
 func (s String) build(scope *Scope, c ExpressionType) (ExpressionType, bool) {
 	return s, true
 }
@@ -104,7 +111,27 @@ func (ta TypeAlias) Extends(t ExpressionType) bool {
 	}
 	return true
 }
-
+func (ta TypeAlias) Text() string {
+	s := ta.Name
+	params := []Generic{}
+	for _, param := range ta.Params {
+		if param.Value == nil {
+			break
+		}
+		params = append(params, param)
+	}
+	if len(params) == 0 {
+		return ta.Name
+	}
+	s += "["
+	max := len(params) - 1
+	for _, param := range params[:max] {
+		s += param.Value.Text()
+		s += ", "
+	}
+	s += params[max].Value.Text()
+	return s
+}
 func (ta TypeAlias) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	s := NewScope(ProgramScope)
 	s.outer = scope
@@ -146,6 +173,7 @@ func (l List) Extends(t ExpressionType) bool {
 	}
 	return false
 }
+func (l List) Text() string { return "[]" + l.Element.Text() }
 func (l List) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	var element ExpressionType
 	if c, ok := compared.(List); ok {
@@ -168,6 +196,7 @@ func (m Map) Extends(received ExpressionType) bool {
 	}
 	return m.Key.Extends(t.Key) && m.Value.Extends(t.Value)
 }
+func (m Map) Text() string { return "Map[" + m.Key.Text() + ", " + m.Value.Text() + "]" }
 func (m Map) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	c, ok := compared.(Map)
 	if !ok {
@@ -203,6 +232,14 @@ func (tuple Tuple) Extends(t ExpressionType) bool {
 		return false
 	}
 }
+func (t Tuple) Text() string {
+	s := "("
+	max := len(t.elements) - 1
+	for _, el := range t.elements[:max] {
+		s += el.Text() + ", "
+	}
+	return s + t.elements[max].Text() + ")"
+}
 
 // FIXME: indexes
 func (t Tuple) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
@@ -232,6 +269,7 @@ func (r Range) Extends(t ExpressionType) bool {
 	}
 	return false
 }
+func (r Range) Text() string { return ".." + r.operands.Text() }
 func (r Range) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	var operands ExpressionType
 	if c, ok := compared.(Range); ok {
@@ -275,7 +313,7 @@ func (f Function) Extends(t ExpressionType) bool {
 	}
 	return f.Returned == nil || f.Returned.Extends(function.Returned)
 }
-
+func (f Function) Text() string { return f.Params.Text() + " -> " + f.Returned.Text() }
 func (f Function) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	ok := true
 	s := NewScope(ProgramScope)
@@ -328,7 +366,13 @@ func (o Object) Extends(t ExpressionType) bool {
 	}
 	return true
 }
-
+func (o Object) Text() string {
+	s := "("
+	for name, member := range o.Members {
+		s += name + ": " + member.Text() + ", "
+	}
+	return s + ")"
+}
 func (o Object) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	ok := true
 	for name, member := range o.Members {
@@ -357,6 +401,13 @@ func (s Sum) Extends(t ExpressionType) bool {
 		found = true
 	}
 	return found
+}
+func (s Sum) Text() string {
+	str := "("
+	for name, member := range s.Members {
+		str += "| " + name + member.Params.Text() + " "
+	}
+	return str + ")"
 }
 func (s Sum) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	ok := true
@@ -408,6 +459,13 @@ func (t Trait) Extends(et ExpressionType) bool {
 	}
 	return true
 }
+func (t Trait) Text() string {
+	s := "("
+	for name, member := range t.Members {
+		s += name + ": " + member.Text() + ", "
+	}
+	return s + ")"
+}
 func (t Trait) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	// FIXME:
 	return t, true
@@ -425,6 +483,7 @@ func (g Generic) Extends(t ExpressionType) bool {
 	}
 	return g.Constraints.Extends(t)
 }
+func (g Generic) Text() string { return g.Name }
 func (g Generic) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	if g.Value != nil {
 		return g.Value, true
@@ -457,27 +516,4 @@ func isGenericType(typing ExpressionType) bool {
 	}
 	_, ok = t.Value.(Generic)
 	return ok
-}
-
-type Constructor struct {
-	From ExpressionType
-	To   ExpressionType
-}
-
-func (c Constructor) Extends(t ExpressionType) bool { return false }
-func (c Constructor) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
-	done := true
-	co, ok := compared.(Constructor)
-	if ok {
-		c.From, ok = c.From.build(scope, co.From)
-		done = done && ok
-		c.To, ok = c.To.build(scope, co.To)
-		done = done && ok
-	} else {
-		c.From, ok = c.From.build(scope, nil)
-		done = done && ok
-		c.To, ok = c.To.build(scope, nil)
-		done = done && ok
-	}
-	return c, done
 }
