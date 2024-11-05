@@ -283,6 +283,7 @@ type Function struct {
 	TypeParams []Generic
 	Params     *Tuple
 	Returned   ExpressionType
+	Async      bool // true if the function can be called with 'async'
 }
 
 func (f Function) arity() int {

@@ -219,3 +219,29 @@ func TestCheckExplicitReturn(t *testing.T) {
 		t.Fatalf("Result type expected")
 	}
 }
+
+func TestCheckAsync(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("fetch", Loc{}, Function{
+		Params:   &Tuple{},
+		Returned: String{},
+		Async:    true,
+	})
+	expr := &FunctionExpression{
+		Params: &ParenthesizedExpression{},
+		Body: &Block{Statements: []Node{
+			&CallExpression{
+				Callee: &Identifier{Token: literal{kind: Name, value: "fetch"}},
+				Args:   &ParenthesizedExpression{Expr: &TupleExpression{}},
+			},
+		}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+	if !expr.canBeAsync {
+		t.Fatalf("Expected function to be async, got %#v", parser.errors)
+	}
+}
