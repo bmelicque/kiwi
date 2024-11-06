@@ -6,6 +6,11 @@ import (
 	"github.com/bmelicque/test-parser/parser"
 )
 
+func (e *Emitter) emitAwaitExpression(expr *parser.AwaitExpression) {
+	e.write("await ")
+	e.emitExpression(expr.Expr)
+}
+
 func (e *Emitter) emitBinaryExpression(expr *parser.BinaryExpression) {
 	precedence := Precedence(expr)
 	if expr.Left != nil {

@@ -87,6 +87,8 @@ func (e *Emitter) emit(node parser.Node) {
 
 func (e *Emitter) emitExpression(expr parser.Expression) {
 	switch expr := expr.(type) {
+	case *parser.AwaitExpression:
+		e.emitAwaitExpression(expr)
 	case *parser.Block:
 		e.emitBlockExpression(expr)
 	case *parser.BinaryExpression:
