@@ -87,6 +87,8 @@ func (e *Emitter) emit(node parser.Node) {
 
 func (e *Emitter) emitExpression(expr parser.Expression) {
 	switch expr := expr.(type) {
+	case *parser.AsyncExpression:
+		e.emitAsyncExpression(expr)
 	case *parser.AwaitExpression:
 		e.emitAwaitExpression(expr)
 	case *parser.Block:
@@ -94,7 +96,7 @@ func (e *Emitter) emitExpression(expr parser.Expression) {
 	case *parser.BinaryExpression:
 		e.emitBinaryExpression(expr)
 	case *parser.CallExpression:
-		e.emitCallExpression(expr)
+		e.emitCallExpression(expr, true)
 	case *parser.CatchExpression:
 		id, ok := e.uninlinables[expr]
 		if !ok {
