@@ -222,6 +222,9 @@ func emitMapElementAccess(e *Emitter, c *parser.ComputedAccessExpression) {
 }
 
 func (e *Emitter) emitFunctionExpression(f *parser.FunctionExpression) {
+	if f.Type().(parser.Function).Async {
+		e.write("async ")
+	}
 	e.write("(")
 	args := f.Params.Expr.(*parser.TupleExpression).Elements
 	max := len(args)
