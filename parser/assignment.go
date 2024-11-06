@@ -130,7 +130,7 @@ func declareIdentifier(p *Parser, identifier *Identifier, typing ExpressionType)
 	if name == "" || name == "_" {
 		return
 	}
-	if name == "Map" || name == "Promise" {
+	if name == "Map" {
 		msg := fmt.Sprintf("'%v' is a reserved name", name)
 		p.report(msg, identifier.Loc())
 		return
