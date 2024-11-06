@@ -87,3 +87,10 @@ func (a *AwaitExpression) Type() ExpressionType {
 	t, _ := alias.Params[0].Value.build(nil, nil)
 	return t
 }
+
+// Parse an AwaitExpression. Expects the next token to be 'await'.
+func (p *Parser) parseAwaitExpression() *AwaitExpression {
+	keyword := p.Consume() // AwaitKeyword
+	expression := p.parseRange()
+	return &AwaitExpression{keyword, expression}
+}

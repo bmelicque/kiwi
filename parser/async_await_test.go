@@ -16,6 +16,17 @@ func TestParseAsync(t *testing.T) {
 	}
 }
 
+func TestParseAsyncNoExpr(t *testing.T) {
+	parser := MakeParser(&testTokenizer{tokens: []Token{
+		token{kind: AsyncKeyword},
+	}})
+	parser.parseAsyncExpression()
+
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
+	}
+}
+
 func TestCheckAsyncExpression(t *testing.T) {
 	parser := MakeParser(nil)
 	parser.scope.Add("fetch", Loc{}, Function{
@@ -48,6 +59,29 @@ func TestCheckAsyncExpressionOnlyFunctionCalls(t *testing.T) {
 		Expr:    &Identifier{Token: literal{kind: Name, value: "fetch"}},
 	}
 	expr.typeCheck(parser)
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
+	}
+}
+
+func TestParseAwaitExpression(t *testing.T) {
+	parser := MakeParser(&testTokenizer{tokens: []Token{
+		token{kind: AwaitKeyword},
+		literal{kind: Name, value: "request"},
+	}})
+	parser.parseAwaitExpression()
+
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+}
+
+func TestParseAwaitExpressionNoExpr(t *testing.T) {
+	parser := MakeParser(&testTokenizer{tokens: []Token{
+		token{kind: AwaitKeyword},
+	}})
+	parser.parseAwaitExpression()
+
 	if len(parser.errors) != 1 {
 		t.Fatalf("Expected 1 error, got %#v", parser.errors)
 	}
