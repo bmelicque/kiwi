@@ -12,6 +12,10 @@ type Expression interface {
 
 func fallback(p *Parser) Expression {
 	switch p.Peek().Kind() {
+	case AsyncKeyword:
+		return p.parseAsyncExpression()
+	case AwaitKeyword:
+		return p.parseAwaitExpression()
 	case Bang, QuestionMark, LeftBracket:
 		return p.parseUnaryExpression()
 	case LeftParenthesis:

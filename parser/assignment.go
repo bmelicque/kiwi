@@ -131,7 +131,8 @@ func declareIdentifier(p *Parser, identifier *Identifier, typing ExpressionType)
 		return
 	}
 	if name == "Map" {
-		p.report("'Map' is a reserved name", identifier.Loc())
+		msg := fmt.Sprintf("'%v' is a reserved name", name)
+		p.report(msg, identifier.Loc())
 		return
 	}
 	p.scope.Add(name, identifier.Loc(), typing)

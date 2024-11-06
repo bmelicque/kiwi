@@ -6,6 +6,15 @@ import (
 	"github.com/bmelicque/test-parser/parser"
 )
 
+func (e *Emitter) emitAsyncExpression(expr *parser.AsyncExpression) {
+	e.emitCallExpression(expr.Call, false)
+}
+
+func (e *Emitter) emitAwaitExpression(expr *parser.AwaitExpression) {
+	e.write("await ")
+	e.emitExpression(expr.Expr)
+}
+
 func (e *Emitter) emitBinaryExpression(expr *parser.BinaryExpression) {
 	precedence := Precedence(expr)
 	if expr.Left != nil {
@@ -182,12 +191,15 @@ func (e *Emitter) emitInstance(constructor parser.Expression, args *parser.Tuple
 func (e *Emitter) emitInstanceExpression(expr *parser.CallExpression) {
 	e.emitInstance(expr.Callee, expr.Args.Expr.(*parser.TupleExpression))
 }
-func (e *Emitter) emitCallExpression(expr *parser.CallExpression) {
+func (e *Emitter) emitCallExpression(expr *parser.CallExpression, await bool) {
 	if _, ok := expr.Callee.Type().(parser.Type); ok {
 		e.emitInstanceExpression(expr)
 		return
 	}
 
+	if expr.Callee.Type().(parser.Function).Async && await {
+		e.write("await ")
+	}
 	e.emit(expr.Callee)
 	e.write("(")
 	defer e.write(")")
@@ -222,6 +234,9 @@ func emitMapElementAccess(e *Emitter, c *parser.ComputedAccessExpression) {
 }
 
 func (e *Emitter) emitFunctionExpression(f *parser.FunctionExpression) {
+	if f.Type().(parser.Function).Async {
+		e.write("async ")
+	}
 	e.write("(")
 	args := f.Params.Expr.(*parser.TupleExpression).Elements
 	max := len(args)

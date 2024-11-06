@@ -44,6 +44,8 @@ const (
 	TryKeyword      // try
 	ThrowKeyword    // throw
 	CatchKeyword    // catch
+	AsyncKeyword    // async
+	AwaitKeyword    // await
 
 	Add        // +
 	Concat     // ++
@@ -281,6 +283,10 @@ func makeToken(text string, loc Loc) Token {
 		return token{ThrowKeyword, loc}
 	case "catch":
 		return token{CatchKeyword, loc}
+	case "async":
+		return token{AsyncKeyword, loc}
+	case "await":
+		return token{AwaitKeyword, loc}
 	case "+":
 		return token{Add, loc}
 	case "++":

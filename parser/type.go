@@ -112,7 +112,6 @@ func (ta TypeAlias) Extends(t ExpressionType) bool {
 	return true
 }
 func (ta TypeAlias) Text() string {
-	s := ta.Name
 	params := []Generic{}
 	for _, param := range ta.Params {
 		if param.Value == nil {
@@ -123,6 +122,12 @@ func (ta TypeAlias) Text() string {
 	if len(params) == 0 {
 		return ta.Name
 	}
+	var s string
+	if ta.Name == "..." {
+		s = "async"
+	} else {
+		s = ta.Name
+	}
 	s += "["
 	max := len(params) - 1
 	for _, param := range params[:max] {
@@ -130,7 +135,7 @@ func (ta TypeAlias) Text() string {
 		s += ", "
 	}
 	s += params[max].Value.Text()
-	return s
+	return s + "]"
 }
 func (ta TypeAlias) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	s := NewScope(ProgramScope)
@@ -283,6 +288,7 @@ type Function struct {
 	TypeParams []Generic
 	Params     *Tuple
 	Returned   ExpressionType
+	Async      bool // true if the function can be called with 'async'
 }
 
 func (f Function) arity() int {

@@ -174,6 +174,17 @@ func makeMapType(key ExpressionType, value ExpressionType) TypeAlias {
 	return alias
 }
 
+// utility to create map types
+func makePromise(t ExpressionType) TypeAlias {
+	return TypeAlias{
+		Name:   "...",
+		Params: []Generic{{Name: "Type", Value: t}},
+		Ref: Object{map[string]ExpressionType{
+			"value": Generic{Name: "Type", Value: t},
+		}},
+	}
+}
+
 // The scope containing the standard library
 var std = Scope{
 	variables: map[string]*Variable{
@@ -186,6 +197,9 @@ var std = Scope{
 		},
 		"Map": {
 			typing: Type{makeMapType(nil, nil)},
+		},
+		"...": {
+			typing: Type{makePromise(nil)},
 		},
 		"?": {
 			typing: Type{optionType},

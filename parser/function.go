@@ -6,6 +6,7 @@ type FunctionExpression struct {
 	Explicit   Expression               // Explicit return type (if any)
 	Body       *Block
 	returnType ExpressionType
+	canBeAsync bool
 }
 
 func (f *FunctionExpression) getChildren() []Node {
@@ -35,7 +36,7 @@ func (f *FunctionExpression) Type() ExpressionType {
 		f.TypeParams.getGenerics()
 	}
 	tuple, _ := f.Params.Type().(Tuple)
-	return Function{tp, &tuple, f.returnType}
+	return Function{tp, &tuple, f.returnType, f.canBeAsync}
 }
 
 func (f *FunctionExpression) typeCheck(p *Parser) {
@@ -54,6 +55,8 @@ func (f *FunctionExpression) typeCheck(p *Parser) {
 	} else {
 		typeCheckImplicitReturn(p, f)
 	}
+
+	f.canBeAsync = containsAsync(f)
 }
 
 type FunctionTypeExpression struct {
@@ -106,7 +109,7 @@ func (f *FunctionTypeExpression) Type() ExpressionType {
 			ret = t.Value
 		}
 	}
-	return Type{Function{tp, &p, ret}}
+	return Type{Function{TypeParams: tp, Params: &p, Returned: ret}}
 }
 
 func (f *FunctionTypeExpression) typeCheck(p *Parser) {
@@ -359,4 +362,26 @@ func addParamToScope(p *Parser, expr Expression) {
 	}
 	typing, _ := param.Complement.Type().(Type)
 	p.scope.Add(param.Identifier.Text(), param.Loc(), typing.Value)
+}
+
+func containsAsync(f *FunctionExpression) bool {
+	var async bool
+	Walk(f.Body, func(n Node, skip func()) {
+		if async || isFunctionExpression(n) {
+			skip()
+		}
+		expr, ok := n.(Expression)
+		if !ok {
+			return
+		}
+		f, ok := expr.Type().(Function)
+		if !ok {
+			return
+		}
+		if f.Async {
+			async = true
+			skip()
+		}
+	})
+	return async
 }
