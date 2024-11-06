@@ -52,3 +52,35 @@ func TestCheckAsyncExpressionOnlyFunctionCalls(t *testing.T) {
 		t.Fatalf("Expected 1 error, got %#v", parser.errors)
 	}
 }
+
+func TestCheckAwaitExpression(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("req", Loc{}, makePromise(Number{}))
+	expr := &AwaitExpression{
+		Keyword: token{kind: AsyncKeyword},
+		Expr:    &Identifier{Token: literal{kind: Name, value: "req"}},
+	}
+	expr.typeCheck(parser)
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+	if _, ok := expr.Type().(Number); !ok {
+		t.Fatalf("Expected number type, got %v", expr.Type().Text())
+	}
+}
+
+func TestCheckAwaitExpressionNotPromise(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("req", Loc{}, Number{})
+	expr := &AwaitExpression{
+		Keyword: token{kind: AsyncKeyword},
+		Expr:    &Identifier{Token: literal{kind: Name, value: "req"}},
+	}
+	expr.typeCheck(parser)
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
+	}
+	if _, ok := expr.Type().(Unknown); !ok {
+		t.Fatalf("Expected unknown type, got %v", expr.Type().Text())
+	}
+}
