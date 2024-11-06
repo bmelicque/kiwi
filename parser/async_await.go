@@ -2,35 +2,30 @@ package parser
 
 type AsyncExpression struct {
 	Keyword Token
-	Expr    Expression
+	Call    *CallExpression
 }
 
 func (a *AsyncExpression) Loc() Loc {
 	loc := a.Keyword.Loc()
-	if a.Expr != nil {
-		loc.End = a.Expr.Loc().End
+	if a.Call != nil {
+		loc.End = a.Call.Loc().End
 	}
 	return loc
 }
 func (a *AsyncExpression) getChildren() []Node {
-	return a.Expr.getChildren()
+	return a.Call.getChildren()
 }
 func (a *AsyncExpression) typeCheck(p *Parser) {
-	if a.Expr == nil {
+	if a.Call == nil {
 		return
 	}
-	a.Expr.typeCheck(p)
-	call, ok := a.Expr.(*CallExpression)
+	a.Call.typeCheck(p)
+	if a.Call.Callee == nil {
+		return
+	}
+	f, ok := a.Call.Callee.Type().(Function)
 	if !ok {
-		p.report("Call expression expected", a.Expr.Loc())
-		return
-	}
-	if call.Callee == nil {
-		return
-	}
-	f, ok := call.Callee.Type().(Function)
-	if !ok {
-		p.report("Function expected", a.Expr.Loc())
+		p.report("Function expected", a.Call.Loc())
 		return
 	}
 	if !f.Async {
@@ -38,17 +33,21 @@ func (a *AsyncExpression) typeCheck(p *Parser) {
 	}
 }
 func (a *AsyncExpression) Type() ExpressionType {
-	if a.Expr == nil {
+	if a.Call == nil {
 		return Unknown{}
 	}
-	return makePromise(a.Expr.Type())
+	return makePromise(a.Call.Type())
 }
 
 // Parse an async expression. Expects the next token to be 'async'.
 func (p *Parser) parseAsyncExpression() *AsyncExpression {
 	keyword := p.Consume() // AsyncKeyword
 	expression := p.parseRange()
-	return &AsyncExpression{keyword, expression}
+	call, ok := expression.(*CallExpression)
+	if expression != nil && !ok {
+		p.report("Call expression expected", expression.Loc())
+	}
+	return &AsyncExpression{keyword, call}
 }
 
 type AwaitExpression struct {
