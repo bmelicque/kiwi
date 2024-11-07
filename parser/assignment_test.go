@@ -372,6 +372,35 @@ func TestCheckObjectTypeDefinition(t *testing.T) {
 	_ = object
 }
 
+func TestCheckFunctionDefinition(t *testing.T) {
+	parser := MakeParser(nil)
+	declaration := &Assignment{
+		Pattern: &Identifier{Token: literal{kind: Name, value: "function"}},
+		Value: &FunctionExpression{
+			Params: &ParenthesizedExpression{Expr: &TupleExpression{}},
+			Body: &Block{Statements: []Node{
+				&Literal{literal{kind: NumberLiteral, value: "42"}},
+			}},
+		},
+		Operator: token{kind: Define},
+	}
+	declaration.typeCheck(parser)
+
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+
+	ty, ok := parser.scope.Find("function")
+	if !ok {
+		t.Fatal("Expected 'function' to have been added to scope")
+	}
+	function, ok := ty.typing.(Function)
+	if !ok {
+		t.Fatalf("Expected a function, got %v", ty.typing.Text())
+	}
+	_ = function
+}
+
 func TestCheckGenericTypeDefinition(t *testing.T) {
 	parser := MakeParser(nil)
 	declaration := &Assignment{

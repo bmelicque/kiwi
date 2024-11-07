@@ -192,27 +192,16 @@ func typeCheckDefinition(p *Parser, a *Assignment) {
 		}}
 		p.scope.Add(identifier.Text(), pattern.Loc(), t)
 	case *Identifier:
-		a.Value.typeCheck(p)
-		reportInvalidVariableType(p, a.Value)
-		ok := true
-		if !pattern.IsType() {
-			p.report("Type identifier expected", pattern.Loc())
-			ok = false
-		}
-		if a.Value != nil {
-			if _, k := a.Value.Type().(Type); !k {
-				p.report("Type expected", a.Value.Loc())
-				ok = false
-			}
-		}
-		if !ok {
+		if a.Value == nil {
 			return
 		}
-		t := Type{TypeAlias{
-			Name: pattern.Text(),
-			Ref:  a.Value.Type().(Type).Value,
-		}}
-		declareIdentifier(p, pattern, t)
+		a.Value.typeCheck(p)
+		reportInvalidVariableType(p, a.Value)
+		if pattern.IsType() {
+			typeCheckTypeDefintion(p, a)
+		} else {
+			typeCheckFunctionDefintion(p, a)
+		}
 	case *PropertyAccessExpression:
 		typeCheckMethod(p, pattern, a.Value)
 	default:
@@ -220,6 +209,28 @@ func typeCheckDefinition(p *Parser, a *Assignment) {
 		reportInvalidVariableType(p, a.Value)
 		p.report("Invalid pattern", pattern.Loc())
 	}
+}
+
+func typeCheckTypeDefintion(p *Parser, a *Assignment) {
+	identifier := a.Pattern.(*Identifier)
+	if _, ok := a.Value.Type().(Type); !ok {
+		p.report("Type expected", a.Value.Loc())
+		return
+	}
+	t := Type{TypeAlias{
+		Name: identifier.Text(),
+		Ref:  a.Value.Type().(Type).Value,
+	}}
+	declareIdentifier(p, identifier, t)
+}
+func typeCheckFunctionDefintion(p *Parser, a *Assignment) {
+	identifier := a.Pattern.(*Identifier)
+	t, ok := a.Value.Type().(Function)
+	if !ok {
+		p.report("Function expected", a.Value.Loc())
+		return
+	}
+	declareIdentifier(p, identifier, t)
 }
 
 func typeCheckMethod(p *Parser, expr *PropertyAccessExpression, init Expression) {
