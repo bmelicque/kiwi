@@ -36,10 +36,19 @@ func (expr *ComputedAccessExpression) typeCheck(p *Parser) {
 	case Function:
 		typeCheckGenericFunction(p, expr)
 	case List:
-		if _, ok := expr.Property.Expr.Type().(Number); !ok {
-			p.report("Number expected", expr.Property.loc)
+		if _, ok := expr.Property.Expr.(*RangeExpression); ok {
+			expr.typing = t
+			return
 		}
-		expr.typing = t.Element
+		if _, ok := expr.Property.Expr.Type().(Number); ok {
+			expr.typing = makeOptionType(t.Element)
+			return
+		}
+		p.report("Number or range expected", expr.Property.loc)
+		expr.typing = Unknown{}
+	default:
+		p.report("Invalid type for computed access", expr.Property.loc)
+		expr.typing = Unknown{}
 	}
 }
 

@@ -219,8 +219,26 @@ func (e *Emitter) emitComputedAccessExpression(expr *parser.ComputedAccessExpres
 		return
 	}
 	e.emit(expr.Expr)
-	t := expr.Expr.Type()
-	if _, ok := t.(parser.List); ok {
+
+	if _, ok := expr.Expr.Type().(parser.List); !ok {
+		return
+	}
+	switch prop := expr.Property.Expr.(type) {
+	case *parser.RangeExpression:
+		e.write(".slice(")
+		if prop.Left != nil {
+			e.emitExpression(prop.Left)
+		} else {
+			e.write("0")
+		}
+		if prop.Right == nil {
+			e.write(")")
+			return
+		}
+		e.write(", ")
+		e.emitExpression(prop.Right)
+		e.write(")")
+	default:
 		e.write("[")
 		e.emit(expr.Property.Expr)
 		e.write("]")
