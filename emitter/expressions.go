@@ -237,6 +237,9 @@ func (e *Emitter) emitComputedAccessExpression(expr *parser.ComputedAccessExpres
 		}
 		e.write(", ")
 		e.emitExpression(prop.Right)
+		if prop.Operator.Kind() == parser.InclusiveRange {
+			e.write("+1")
+		}
 		e.write(")")
 	default:
 		e.write("[")
