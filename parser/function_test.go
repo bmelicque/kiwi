@@ -48,7 +48,7 @@ func TestFunctionExpressionWithoutArgs(t *testing.T) {
 }
 
 func TestFunctionExpressionWithArgs(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("(n number) => { n }"))
+	parser, err := MakeParser(strings.NewReader("(n number) => number { n }"))
 	if err != nil {
 		t.Fatal(err)
 	}
