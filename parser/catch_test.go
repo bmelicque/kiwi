@@ -57,10 +57,7 @@ func TestParseCatchExpressionBadTokens(t *testing.T) {
 }
 
 func TestCheckCatchExpression(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	parser.scope.Add(
 		"result",
 		Loc{},
@@ -86,10 +83,7 @@ func TestCheckCatchExpression(t *testing.T) {
 }
 
 func TestCheckCatchExpressionNotResult(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	expr := &CatchExpression{
 		Left:       &Literal{literal{kind: NumberLiteral, value: "42"}},
 		Keyword:    token{kind: CatchKeyword},
@@ -110,10 +104,7 @@ func TestCheckCatchExpressionNotResult(t *testing.T) {
 }
 
 func TestCheckCatchExpressionBlockNotMatching(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	parser.scope.Add(
 		"result",
 		Loc{},

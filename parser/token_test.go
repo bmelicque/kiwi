@@ -37,10 +37,7 @@ func TestParseIdentifier(t *testing.T) {
 }
 
 func TestCheckIdentifier(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("myVariable", Loc{}, Boolean{})
 	expr := &Identifier{Token: literal{kind: Name, value: "myVariable"}}
 	expr.typeCheck(parser)

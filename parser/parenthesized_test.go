@@ -44,10 +44,7 @@ func TestObjectDescriptionSingleLine(t *testing.T) {
 }
 
 func TestCheckObjectDescriptionSingleLine(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	expr := &ParenthesizedExpression{Expr: &Param{
 		Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
 		Complement: &Literal{token{kind: NumberKeyword}},

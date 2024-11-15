@@ -6,10 +6,7 @@ import (
 )
 
 func TestSumTypeConstructor1(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	expr := PropertyAccessExpression{
 		Expr:     &Identifier{Token: literal{kind: Name, value: "?"}},
 		Property: &Identifier{Token: literal{kind: Name, value: "Some"}},

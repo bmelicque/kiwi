@@ -40,10 +40,7 @@ func TestSumTypeLength(t *testing.T) {
 }
 
 func TestCheckSumType(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	expr := &SumType{Members: []SumTypeConstructor{
 		{
 			Name: &Identifier{Token: literal{kind: Name, value: "A"}},

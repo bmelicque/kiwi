@@ -42,10 +42,7 @@ func TestBinaryErrorType(t *testing.T) {
 }
 
 func TestCheckArithmeticExpression(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	expr := &BinaryExpression{
 		Left:  &Literal{literal{kind: NumberLiteral}},
 		Right: &Literal{literal{kind: NumberLiteral}},
@@ -79,10 +76,7 @@ func TestCheckArithmeticExpression(t *testing.T) {
 }
 
 func TestCheckLogicalExpression(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	expr := &BinaryExpression{
 		Left:  &Literal{literal{kind: BooleanLiteral}},
 		Right: &Literal{literal{kind: BooleanLiteral}},
@@ -116,10 +110,7 @@ func TestCheckLogicalExpression(t *testing.T) {
 }
 
 func TestCheckConcatExpression(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	expr := &BinaryExpression{
 		Left:     &Literal{literal{kind: StringLiteral}},
 		Right:    &Literal{literal{kind: StringLiteral}},
@@ -156,10 +147,7 @@ func TestCheckConcatExpression(t *testing.T) {
 }
 
 func TestCheckComparisonExpression(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	expr := &BinaryExpression{
 		Left:  &Literal{literal{kind: BooleanLiteral}},
 		Right: &Literal{literal{kind: BooleanLiteral}},
@@ -193,10 +181,7 @@ func TestCheckComparisonExpression(t *testing.T) {
 }
 
 func TestCheckBinaryErrorType(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	expr := &BinaryExpression{
 		Left:     &Literal{literal{kind: StringKeyword}},
 		Right:    &Literal{literal{kind: NumberKeyword}},

@@ -19,10 +19,7 @@ func TestParseTryExpression(t *testing.T) {
 }
 
 func TestCheckTryExpression(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("result", Loc{}, makeResultType(Number{}, nil))
 	expr := &TryExpression{
 		Expr: &Identifier{Token: literal{kind: Name, value: "result"}},
@@ -38,10 +35,7 @@ func TestCheckTryExpression(t *testing.T) {
 }
 
 func TestCheckTryExpressionBadType(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	expr := &TryExpression{
 		Expr: &Literal{literal{kind: NumberLiteral, value: "42"}},
 	}

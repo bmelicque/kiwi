@@ -22,10 +22,7 @@ func TestIf(t *testing.T) {
 }
 
 func TestIfWithNonBoolean(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	expr := IfExpression{
 		Condition: &Literal{Token: literal{kind: NumberLiteral, value: "42"}},
 		Body:      &Block{},
@@ -64,10 +61,7 @@ func TestIfElse(t *testing.T) {
 
 func TestIfElseWithTypeMismatch(t *testing.T) {
 	// if false { 42 } else { false }
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	expr := IfExpression{
 		Keyword:   token{kind: IfKeyword},
 		Condition: &Literal{literal{kind: BooleanLiteral, value: "false"}},
@@ -126,10 +120,7 @@ func TestIfPattern(t *testing.T) {
 }
 
 func TestCheckIfPattern(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("option", Loc{}, makeOptionType(Number{}))
 	// if Some(s) := option { s } else { 0 }
 	expr := &IfExpression{

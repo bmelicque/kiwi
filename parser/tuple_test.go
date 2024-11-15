@@ -49,10 +49,7 @@ func TestTypedTuple(t *testing.T) {
 }
 
 func TestEmptyTupleType(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	expr := &TupleExpression{}
 	expr.typeCheck(parser)
 
@@ -66,10 +63,7 @@ func TestEmptyTupleType(t *testing.T) {
 }
 
 func TestSingleTupleType(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	expr := &TupleExpression{Elements: []Expression{
 		&Literal{Token: literal{kind: StringLiteral, value: "\"Hi!\""}},
 	}}
@@ -85,10 +79,7 @@ func TestSingleTupleType(t *testing.T) {
 }
 
 func TestTupleType(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	expr := &TupleExpression{Elements: []Expression{
 		&Literal{Token: literal{kind: NumberLiteral, value: "42"}},
 		&Literal{Token: literal{kind: StringLiteral, value: "\"Hi!\""}},

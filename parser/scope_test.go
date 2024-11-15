@@ -1,15 +1,11 @@
 package parser
 
 import (
-	"strings"
 	"testing"
 )
 
 func TestMapIdentifier(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	expr := &Identifier{Token: literal{kind: Name, value: "Map"}}
 	expr.typeCheck(parser)
 

@@ -42,10 +42,7 @@ func TestParseAsyncNotCall(t *testing.T) {
 }
 
 func TestCheckAsyncExpression(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("fetch", Loc{}, Function{
 		Params:   &Tuple{},
 		Returned: String{},
@@ -89,10 +86,7 @@ func TestParseAwaitExpressionNoExpr(t *testing.T) {
 }
 
 func TestCheckAwaitExpression(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("req", Loc{}, makePromise(Number{}))
 	expr := &AwaitExpression{
 		Keyword: token{kind: AsyncKeyword},
@@ -108,10 +102,7 @@ func TestCheckAwaitExpression(t *testing.T) {
 }
 
 func TestCheckAwaitExpressionNotPromise(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader(""))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("req", Loc{}, Number{})
 	expr := &AwaitExpression{
 		Keyword: token{kind: AsyncKeyword},
