@@ -1,18 +1,15 @@
 package parser
 
 import (
+	"strings"
 	"testing"
 )
 
 func TestParseMapInstanciation(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "Map"},
-		token{kind: LeftParenthesis},
-		literal{kind: StringLiteral, value: "\"key\""},
-		token{kind: Colon},
-		literal{kind: StringLiteral, value: "\"value\""},
-		token{kind: RightParenthesis},
-	}})
+	parser, err := MakeParser(strings.NewReader("Map(\"key\": \"value\")"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseAccessExpression()
 
 	if len(parser.errors) > 0 {
@@ -21,7 +18,10 @@ func TestParseMapInstanciation(t *testing.T) {
 }
 
 func TestCheckImplicitMapInstanciation(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &CallExpression{
 		Callee: &Identifier{Token: literal{kind: Name, value: "Map"}},
 		Args: &ParenthesizedExpression{Expr: &TupleExpression{Elements: []Expression{
@@ -46,7 +46,10 @@ func TestCheckImplicitMapInstanciation(t *testing.T) {
 }
 
 func TestCheckMapInstanciationMissingTypeArg(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &CallExpression{
 		Callee: &Identifier{Token: literal{kind: Name, value: "Map"}},
 		Args:   &ParenthesizedExpression{Expr: &TupleExpression{Elements: []Expression{}}},
@@ -59,7 +62,10 @@ func TestCheckMapInstanciationMissingTypeArg(t *testing.T) {
 }
 
 func TestCheckExplicitMapInstanciation(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &CallExpression{
 		Callee: &ComputedAccessExpression{
 			Expr: &Identifier{Token: literal{kind: Name, value: "Map"}},
@@ -85,7 +91,10 @@ func TestCheckExplicitMapInstanciation(t *testing.T) {
 }
 
 func TestCheckMapEntries(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &CallExpression{
 		Callee: &ComputedAccessExpression{
 			Expr: &Identifier{Token: literal{kind: Name, value: "Map"}},
@@ -115,7 +124,10 @@ func TestCheckMapEntries(t *testing.T) {
 }
 
 func TestCheckMapEntriesBadTypes(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &CallExpression{
 		Callee: &ComputedAccessExpression{
 			Expr: &Identifier{Token: literal{kind: Name, value: "Map"}},

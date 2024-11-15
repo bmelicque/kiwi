@@ -1,18 +1,16 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestSumType(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: BinaryOr},
-		literal{kind: Name, value: "Some"},
-		token{kind: LeftParenthesis},
-		literal{kind: Name, value: "Type"},
-		token{kind: RightParenthesis},
-		token{kind: BinaryOr},
-		literal{kind: Name, value: "None"},
-	}}
-	parser := MakeParser(&tokenizer)
+	str := "| Some(Type) | None"
+	parser, err := MakeParser(strings.NewReader(str))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseSumType()
 
 	if len(parser.errors) > 0 {
@@ -30,11 +28,10 @@ func TestSumType(t *testing.T) {
 }
 
 func TestSumTypeLength(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: BinaryOr},
-		literal{kind: Name, value: "Alone"},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("| Alone"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseSumType()
 
 	if len(parser.errors) != 1 {
@@ -43,7 +40,10 @@ func TestSumTypeLength(t *testing.T) {
 }
 
 func TestCheckSumType(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &SumType{Members: []SumTypeConstructor{
 		{
 			Name: &Identifier{Token: literal{kind: Name, value: "A"}},

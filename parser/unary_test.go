@@ -1,13 +1,15 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestUnaryExpression(t *testing.T) {
-	// ?number
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: QuestionMark},
-		token{kind: NumberKeyword},
-	}})
+	parser, err := MakeParser(strings.NewReader("?number"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := parser.parseUnaryExpression()
 
 	if len(parser.errors) != 0 {
@@ -35,7 +37,10 @@ func TestUnaryExpression(t *testing.T) {
 
 func TestCheckOptionType(t *testing.T) {
 	// ?number
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &UnaryExpression{
 		Operator: token{kind: QuestionMark},
 		Operand:  &Literal{Token: token{kind: NumberKeyword}},
@@ -59,10 +64,10 @@ func TestCheckOptionType(t *testing.T) {
 }
 
 func TestNoOptionValue(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: QuestionMark},
-		literal{kind: NumberLiteral, value: "42"},
-	}})
+	parser, err := MakeParser(strings.NewReader("?42"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := parser.parseUnaryExpression()
 	expr.typeCheck(parser)
 
@@ -73,7 +78,10 @@ func TestNoOptionValue(t *testing.T) {
 
 func TestCheckErrorType(t *testing.T) {
 	// !number
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &UnaryExpression{
 		Operator: token{kind: Bang},
 		Operand:  &Literal{Token: token{kind: NumberKeyword}},
@@ -98,7 +106,10 @@ func TestCheckErrorType(t *testing.T) {
 
 func TestCheckLogicalNot(t *testing.T) {
 	// !true
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &UnaryExpression{
 		Operator: token{kind: Bang},
 		Operand:  &Literal{literal{kind: BooleanLiteral, value: "true"}},
@@ -121,12 +132,10 @@ func TestCheckLogicalNot(t *testing.T) {
 }
 
 func TestListTypeExpression(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LeftBracket},
-		token{kind: RightBracket},
-		token{kind: NumberKeyword},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("[]number"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := ParseExpression(parser)
 
 	if len(parser.errors) != 0 {
@@ -144,7 +153,10 @@ func TestListTypeExpression(t *testing.T) {
 
 func TestCheckListType(t *testing.T) {
 	// []number
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &ListTypeExpression{
 		Expr: &Literal{Token: token{kind: NumberKeyword}},
 	}
@@ -168,7 +180,10 @@ func TestCheckListType(t *testing.T) {
 
 func TestCheckListTypeNoValue(t *testing.T) {
 	// []42
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &ListTypeExpression{
 		Bracketed: &BracketedExpression{},
 		Expr:      &Literal{Token: literal{kind: NumberLiteral, value: "42"}},
@@ -192,14 +207,10 @@ func TestCheckListTypeNoValue(t *testing.T) {
 }
 
 func TestNestedListTypeExpression(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LeftBracket},
-		token{kind: RightBracket},
-		token{kind: LeftBracket},
-		token{kind: RightBracket},
-		token{kind: NumberKeyword},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("[][]number"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := ParseExpression(parser)
 
 	if len(parser.errors) != 0 {
@@ -219,12 +230,10 @@ func TestNestedListTypeExpression(t *testing.T) {
 }
 
 func TestListTypeExpressionWithBracketed(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: LeftBracket},
-		token{kind: NumberKeyword},
-		token{kind: RightBracket},
-		token{kind: NumberKeyword},
-	}})
+	parser, err := MakeParser(strings.NewReader("[number]number"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseExpression()
 
 	if len(parser.errors) != 1 {

@@ -1,13 +1,15 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestEmptyBlock(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LeftBrace},
-		token{kind: RightBrace},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("{}"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	block := parser.parseBlock()
 
 	if len(parser.errors) != 0 {
@@ -19,12 +21,10 @@ func TestEmptyBlock(t *testing.T) {
 }
 
 func TestSingleLineBlock(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LeftBrace},
-		literal{kind: StringLiteral, value: "Hello, world!"},
-		token{kind: RightBrace},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("{ \"Hello, world!\" }"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	block := parser.parseBlock()
 
 	if len(parser.errors) != 0 {
@@ -36,20 +36,14 @@ func TestSingleLineBlock(t *testing.T) {
 }
 
 func TestMultilineBlock(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LeftBrace},
-		token{kind: EOL},
-
-		literal{kind: StringLiteral, value: "Hello, world!"},
-		token{kind: EOL},
-
-		literal{kind: StringLiteral, value: "Hello, world!"},
-		token{kind: EOL},
-
-		token{kind: RightBrace},
-		token{kind: EOL},
-	}}
-	parser := MakeParser(&tokenizer)
+	str := "{\n"
+	str += "    \"Hello, world!\"\n"
+	str += "    \"Hello, world!\"\n"
+	str += "}"
+	parser, err := MakeParser(strings.NewReader(str))
+	if err != nil {
+		t.Fatal(err)
+	}
 	block := parser.parseBlock()
 
 	if len(parser.errors) != 0 {
@@ -64,21 +58,14 @@ func TestMultilineBlock(t *testing.T) {
 }
 
 func TestUnreachableCode(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LeftBrace},
-		token{kind: EOL},
-
-		token{kind: ReturnKeyword},
-		literal{kind: StringLiteral, value: "Hello, world!"},
-		token{kind: EOL},
-
-		literal{kind: StringLiteral, value: "Hello, world!"},
-		token{kind: EOL},
-
-		token{kind: RightBrace},
-		token{kind: EOL},
-	}}
-	parser := MakeParser(&tokenizer)
+	str := "{\n"
+	str += "    return \"Hello, world!\"\n"
+	str += "    \"Hello, world!\"\n"
+	str += "}"
+	parser, err := MakeParser(strings.NewReader(str))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.pushScope(NewScope(FunctionScope))
 	parser.parseBlock()
 

@@ -1,14 +1,15 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestBinaryExpression(t *testing.T) {
-	// 2 ** 3
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		literal{kind: NumberLiteral, value: "2"},
-		token{kind: Pow},
-		literal{kind: NumberLiteral, value: "3"},
-	}})
+	parser, err := MakeParser(strings.NewReader("2 ** 3"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := parser.parseBinaryExpression()
 
 	if len(parser.errors) > 0 {
@@ -23,12 +24,10 @@ func TestBinaryExpression(t *testing.T) {
 }
 
 func TestBinaryErrorType(t *testing.T) {
-	// ErrType!OkType
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "ErrType"},
-		token{kind: Bang},
-		literal{kind: Name, value: "OkType"},
-	}})
+	parser, err := MakeParser(strings.NewReader("ErrType!OkType"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := parser.parseExpression()
 
 	if len(parser.errors) > 0 {
@@ -43,7 +42,10 @@ func TestBinaryErrorType(t *testing.T) {
 }
 
 func TestCheckArithmeticExpression(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &BinaryExpression{
 		Left:  &Literal{literal{kind: NumberLiteral}},
 		Right: &Literal{literal{kind: NumberLiteral}},
@@ -77,7 +79,10 @@ func TestCheckArithmeticExpression(t *testing.T) {
 }
 
 func TestCheckLogicalExpression(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &BinaryExpression{
 		Left:  &Literal{literal{kind: BooleanLiteral}},
 		Right: &Literal{literal{kind: BooleanLiteral}},
@@ -111,7 +116,10 @@ func TestCheckLogicalExpression(t *testing.T) {
 }
 
 func TestCheckConcatExpression(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &BinaryExpression{
 		Left:     &Literal{literal{kind: StringLiteral}},
 		Right:    &Literal{literal{kind: StringLiteral}},
@@ -148,7 +156,10 @@ func TestCheckConcatExpression(t *testing.T) {
 }
 
 func TestCheckComparisonExpression(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &BinaryExpression{
 		Left:  &Literal{literal{kind: BooleanLiteral}},
 		Right: &Literal{literal{kind: BooleanLiteral}},
@@ -182,7 +193,10 @@ func TestCheckComparisonExpression(t *testing.T) {
 }
 
 func TestCheckBinaryErrorType(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &BinaryExpression{
 		Left:     &Literal{literal{kind: StringKeyword}},
 		Right:    &Literal{literal{kind: NumberKeyword}},

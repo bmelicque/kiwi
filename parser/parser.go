@@ -1,5 +1,7 @@
 package parser
 
+import "io"
+
 type ParserError struct {
 	Message string
 	Loc     Loc
@@ -10,7 +12,7 @@ func (e ParserError) Error() string {
 }
 
 type Parser struct {
-	Tokenizer
+	tokenizer
 	errors            []ParserError
 	scope             *Scope
 	multiline         bool
@@ -32,13 +34,14 @@ func (p Parser) GetReport() []ParserError {
 	return p.errors
 }
 
-func MakeParser(tokenizer Tokenizer) *Parser {
+func MakeParser(reader io.Reader) (*Parser, error) {
+	tokenizer, err := NewTokenizer(reader)
 	return &Parser{
-		Tokenizer:         tokenizer,
+		tokenizer:         *tokenizer,
 		scope:             &std,
 		allowBraceParsing: true,
 		allowCallExpr:     true,
-	}
+	}, err
 }
 
 func (p *Parser) pushScope(scope *Scope) {

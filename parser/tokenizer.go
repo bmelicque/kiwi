@@ -2,8 +2,7 @@ package parser
 
 import (
 	"bufio"
-	"log"
-	"os"
+	"io"
 	"regexp"
 )
 
@@ -210,7 +209,6 @@ func split(data []byte, atEOF bool) (advance int, token []byte, err error) {
 }
 
 type tokenizer struct {
-	file    *os.File
 	scanner *bufio.Scanner
 	cursor  Position
 	token   Token
@@ -218,26 +216,15 @@ type tokenizer struct {
 }
 
 type Tokenizer interface {
-	Dispose()
 	Peek() Token
 	Consume() Token
 	DiscardLineBreaks()
 }
 
-func NewTokenizer(path string) (*tokenizer, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-
-	scanner := bufio.NewScanner(bufio.NewReader(file))
+func NewTokenizer(reader io.Reader) (*tokenizer, error) {
+	scanner := bufio.NewScanner(reader)
 	scanner.Split(split)
-	return &tokenizer{file, scanner, Position{1, 1}, nil, false}, nil
-}
-
-func (t *tokenizer) Dispose() {
-	t.file.Close()
+	return &tokenizer{scanner, Position{1, 1}, nil, false}, nil
 }
 
 func (t *tokenizer) updateCursor(token string) {

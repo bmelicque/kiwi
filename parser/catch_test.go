@@ -1,16 +1,15 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestParseCatchExpression(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "result"},
-		token{kind: CatchKeyword},
-		literal{kind: Name, value: "err"},
-		token{kind: LeftBrace},
-		literal{kind: BooleanLiteral, value: "true"},
-		token{kind: RightBrace},
-	}})
+	parser, err := MakeParser(strings.NewReader("result catch err { true }"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := parser.parseCatchExpression()
 
 	if len(parser.errors) > 0 {
@@ -22,12 +21,10 @@ func TestParseCatchExpression(t *testing.T) {
 }
 
 func TestParseCatchExpressionNoIdentifier(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "result"},
-		token{kind: CatchKeyword},
-		token{kind: LeftBrace},
-		token{kind: RightBrace},
-	}})
+	parser, err := MakeParser(strings.NewReader("result catch {}"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseCatchExpression()
 
 	if len(parser.errors) != 1 {
@@ -36,13 +33,10 @@ func TestParseCatchExpressionNoIdentifier(t *testing.T) {
 }
 
 func TestParseCatchExpressionBadIdentifier(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "result"},
-		token{kind: CatchKeyword},
-		token{kind: NumberKeyword},
-		token{kind: LeftBrace},
-		token{kind: RightBrace},
-	}})
+	parser, err := MakeParser(strings.NewReader("result catch number {}"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseCatchExpression()
 
 	if len(parser.errors) != 1 {
@@ -51,14 +45,10 @@ func TestParseCatchExpressionBadIdentifier(t *testing.T) {
 }
 
 func TestParseCatchExpressionBadTokens(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "result"},
-		token{kind: CatchKeyword},
-		literal{kind: Name, value: "err"},
-		literal{kind: Name, value: "err"},
-		token{kind: LeftBrace},
-		token{kind: RightBrace},
-	}})
+	parser, err := MakeParser(strings.NewReader("result catch err err {}"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseCatchExpression()
 
 	if len(parser.errors) != 1 {
@@ -67,7 +57,10 @@ func TestParseCatchExpressionBadTokens(t *testing.T) {
 }
 
 func TestCheckCatchExpression(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.scope.Add(
 		"result",
 		Loc{},
@@ -93,7 +86,10 @@ func TestCheckCatchExpression(t *testing.T) {
 }
 
 func TestCheckCatchExpressionNotResult(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &CatchExpression{
 		Left:       &Literal{literal{kind: NumberLiteral, value: "42"}},
 		Keyword:    token{kind: CatchKeyword},
@@ -114,7 +110,10 @@ func TestCheckCatchExpressionNotResult(t *testing.T) {
 }
 
 func TestCheckCatchExpressionBlockNotMatching(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.scope.Add(
 		"result",
 		Loc{},

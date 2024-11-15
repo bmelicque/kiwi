@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
@@ -21,14 +22,18 @@ const (
 )
 
 func main() {
-	t, err := parser.NewTokenizer("test.txt")
+	file, err := os.Open("test.txt")
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	p, err := parser.MakeParser(bufio.NewReader(file))
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	defer t.Dispose()
 
-	p := parser.MakeParser(t)
 	parsed := p.ParseProgram()
 	program := make([]parser.Node, len(parsed))
 	parserErrors := p.GetReport()

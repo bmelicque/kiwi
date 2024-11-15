@@ -1,16 +1,15 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestTuple(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: NumberLiteral, value: "1"},
-		token{kind: Comma},
-		literal{kind: NumberLiteral, value: "2"},
-		token{kind: Comma},
-		literal{kind: NumberLiteral, value: "3"},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("1, 2, 3"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseTupleExpression()
 
 	if len(parser.errors) > 0 {
@@ -28,17 +27,11 @@ func TestTuple(t *testing.T) {
 }
 
 func TestTypedTuple(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "a"},
-		token{kind: NumberKeyword},
-		token{kind: Comma},
-		literal{kind: Name, value: "b"},
-		token{kind: NumberKeyword},
-		token{kind: Comma},
-		literal{kind: Name, value: "c"},
-		token{kind: NumberKeyword},
-	}}
-	parser := MakeParser(&tokenizer)
+	str := "a number, b number, c number"
+	parser, err := MakeParser(strings.NewReader(str))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseTupleExpression()
 
 	if len(parser.errors) > 0 {
@@ -56,7 +49,10 @@ func TestTypedTuple(t *testing.T) {
 }
 
 func TestEmptyTupleType(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &TupleExpression{}
 	expr.typeCheck(parser)
 
@@ -70,7 +66,10 @@ func TestEmptyTupleType(t *testing.T) {
 }
 
 func TestSingleTupleType(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &TupleExpression{Elements: []Expression{
 		&Literal{Token: literal{kind: StringLiteral, value: "\"Hi!\""}},
 	}}
@@ -86,7 +85,10 @@ func TestSingleTupleType(t *testing.T) {
 }
 
 func TestTupleType(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &TupleExpression{Elements: []Expression{
 		&Literal{Token: literal{kind: NumberLiteral, value: "42"}},
 		&Literal{Token: literal{kind: StringLiteral, value: "\"Hi!\""}},

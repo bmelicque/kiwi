@@ -1,14 +1,15 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestParseAsync(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: AsyncKeyword},
-		literal{kind: Name, value: "fetch"},
-		token{kind: LeftParenthesis},
-		token{kind: RightParenthesis},
-	}})
+	parser, err := MakeParser(strings.NewReader("async fetch()"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseAsyncExpression()
 
 	if len(parser.errors) > 0 {
@@ -17,9 +18,10 @@ func TestParseAsync(t *testing.T) {
 }
 
 func TestParseAsyncNoExpr(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: AsyncKeyword},
-	}})
+	parser, err := MakeParser(strings.NewReader("async"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseAsyncExpression()
 
 	if len(parser.errors) != 1 {
@@ -28,10 +30,10 @@ func TestParseAsyncNoExpr(t *testing.T) {
 }
 
 func TestParseAsyncNotCall(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: AsyncKeyword},
-		literal{kind: Name, value: "fetch"},
-	}})
+	parser, err := MakeParser(strings.NewReader("async fetch"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseAsyncExpression()
 
 	if len(parser.errors) != 1 {
@@ -40,7 +42,10 @@ func TestParseAsyncNotCall(t *testing.T) {
 }
 
 func TestCheckAsyncExpression(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.scope.Add("fetch", Loc{}, Function{
 		Params:   &Tuple{},
 		Returned: String{},
@@ -60,10 +65,10 @@ func TestCheckAsyncExpression(t *testing.T) {
 }
 
 func TestParseAwaitExpression(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: AwaitKeyword},
-		literal{kind: Name, value: "request"},
-	}})
+	parser, err := MakeParser(strings.NewReader("await request"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseAwaitExpression()
 
 	if len(parser.errors) > 0 {
@@ -72,9 +77,10 @@ func TestParseAwaitExpression(t *testing.T) {
 }
 
 func TestParseAwaitExpressionNoExpr(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: AwaitKeyword},
-	}})
+	parser, err := MakeParser(strings.NewReader("await"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseAwaitExpression()
 
 	if len(parser.errors) != 1 {
@@ -83,7 +89,10 @@ func TestParseAwaitExpressionNoExpr(t *testing.T) {
 }
 
 func TestCheckAwaitExpression(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.scope.Add("req", Loc{}, makePromise(Number{}))
 	expr := &AwaitExpression{
 		Keyword: token{kind: AsyncKeyword},
@@ -99,7 +108,10 @@ func TestCheckAwaitExpression(t *testing.T) {
 }
 
 func TestCheckAwaitExpressionNotPromise(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.scope.Add("req", Loc{}, Number{})
 	expr := &AwaitExpression{
 		Keyword: token{kind: AsyncKeyword},

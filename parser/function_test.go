@@ -1,16 +1,15 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestFunctionType(t *testing.T) {
-	// (number) -> number
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: LeftParenthesis},
-		token{kind: NumberKeyword},
-		token{kind: RightParenthesis},
-		token{kind: SlimArrow},
-		token{kind: NumberKeyword},
-	}})
+	parser, err := MakeParser(strings.NewReader("(number) -> number"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseFunctionExpression(nil)
 
 	function, ok := node.(*FunctionTypeExpression)
@@ -24,16 +23,10 @@ func TestFunctionType(t *testing.T) {
 }
 
 func TestFunctionExpressionWithoutArgs(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: LeftParenthesis},
-		token{kind: RightParenthesis},
-		token{kind: FatArrow},
-		token{kind: NumberKeyword},
-		token{kind: LeftBrace},
-		token{kind: ReturnKeyword},
-		literal{kind: NumberLiteral, value: "42"},
-		token{kind: RightBrace},
-	}})
+	parser, err := MakeParser(strings.NewReader("() => number { 42 }"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseFunctionExpression(nil)
 
 	function, ok := node.(*FunctionExpression)
@@ -55,18 +48,10 @@ func TestFunctionExpressionWithoutArgs(t *testing.T) {
 }
 
 func TestFunctionExpressionWithArgs(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: LeftParenthesis},
-		literal{kind: Name, value: "n"},
-		token{kind: NumberKeyword},
-		token{kind: RightParenthesis},
-		token{kind: FatArrow},
-		token{kind: NumberKeyword},
-		token{kind: LeftBrace},
-		token{kind: ReturnKeyword},
-		literal{kind: Name, value: "n"},
-		token{kind: RightBrace},
-	}})
+	parser, err := MakeParser(strings.NewReader("(n number) => { n }"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseFunctionExpression(nil)
 
 	function, ok := node.(*FunctionExpression)
@@ -87,16 +72,10 @@ func TestFunctionExpressionWithArgs(t *testing.T) {
 }
 
 func TestFunctionWithTypeArgs(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: LeftBracket},
-		literal{kind: Name, value: "Type"},
-		token{kind: RightBracket},
-		token{kind: LeftParenthesis},
-		token{kind: RightParenthesis},
-		token{kind: FatArrow},
-		token{kind: LeftBrace},
-		token{kind: RightBrace},
-	}})
+	parser, err := MakeParser(strings.NewReader("[Type]() => {}"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseExpression()
 
 	_, ok := node.(*FunctionExpression)
@@ -107,7 +86,10 @@ func TestFunctionWithTypeArgs(t *testing.T) {
 }
 
 func TestCheckImplicitReturn(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &FunctionExpression{
 		Params: &ParenthesizedExpression{},
 		Body: &Block{Statements: []Node{
@@ -125,7 +107,10 @@ func TestCheckImplicitReturn(t *testing.T) {
 }
 
 func TestCheckImplicitReturnBadReturns(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.scope.Add("result", Loc{}, makeResultType(Nil{}, Number{}))
 	// () => {
 	//		if true {
@@ -181,7 +166,10 @@ func TestCheckImplicitReturnBadReturns(t *testing.T) {
 }
 
 func TestCheckExplicitReturn(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := &FunctionExpression{
 		Params: &ParenthesizedExpression{},
 		Explicit: &BinaryExpression{
@@ -221,7 +209,10 @@ func TestCheckExplicitReturn(t *testing.T) {
 }
 
 func TestCheckAsync(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.scope.Add("fetch", Loc{}, Function{
 		Params:   &Tuple{},
 		Returned: String{},

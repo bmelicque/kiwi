@@ -1,20 +1,16 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestIf(t *testing.T) {
-	// if n == 2 { return 1 }
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: IfKeyword},
-		literal{kind: Name, value: "n"},
-		token{kind: Equal},
-		literal{kind: NumberLiteral, value: "2"},
-		token{kind: LeftBrace},
-		token{kind: ReturnKeyword},
-		literal{kind: NumberLiteral, value: "1"},
-		token{kind: RightBrace},
-	}}
-	parser := MakeParser(&tokenizer)
+	str := "if n == 2 { return 1 }"
+	parser, err := MakeParser(strings.NewReader(str))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseIfExpression()
 	if node.Body == nil {
 		t.Fatalf("Expected a body, got %#v", node)
@@ -26,8 +22,10 @@ func TestIf(t *testing.T) {
 }
 
 func TestIfWithNonBoolean(t *testing.T) {
-	// if 42 { }
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := IfExpression{
 		Condition: &Literal{Token: literal{kind: NumberLiteral, value: "42"}},
 		Body:      &Block{},
@@ -39,19 +37,11 @@ func TestIfWithNonBoolean(t *testing.T) {
 }
 
 func TestIfElse(t *testing.T) {
-	// if false { true } else { false }
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: IfKeyword},
-		literal{kind: BooleanLiteral, value: "false"},
-		token{kind: LeftBrace},
-		literal{kind: BooleanLiteral, value: "true"},
-		token{kind: RightBrace},
-		token{kind: ElseKeyword},
-		token{kind: LeftBrace},
-		literal{kind: BooleanLiteral, value: "false"},
-		token{kind: RightBrace},
-	}}
-	parser := MakeParser(&tokenizer)
+	str := "if false { true } else { true }"
+	parser, err := MakeParser(strings.NewReader(str))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseIfExpression()
 
 	if len(parser.errors) != 0 {
@@ -74,7 +64,10 @@ func TestIfElse(t *testing.T) {
 
 func TestIfElseWithTypeMismatch(t *testing.T) {
 	// if false { 42 } else { false }
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := IfExpression{
 		Keyword:   token{kind: IfKeyword},
 		Condition: &Literal{literal{kind: BooleanLiteral, value: "false"}},
@@ -93,19 +86,11 @@ func TestIfElseWithTypeMismatch(t *testing.T) {
 }
 
 func TestIfElseIf(t *testing.T) {
-	// if false {} else if true {}
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: IfKeyword},
-		literal{kind: BooleanLiteral, value: "false"},
-		token{kind: LeftBrace},
-		token{kind: RightBrace},
-		token{kind: ElseKeyword},
-		token{kind: IfKeyword},
-		literal{kind: BooleanLiteral, value: "true"},
-		token{kind: LeftBrace},
-		token{kind: RightBrace},
-	}}
-	parser := MakeParser(&tokenizer)
+	str := "if false {} else if true {} "
+	parser, err := MakeParser(strings.NewReader(str))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseIfExpression()
 
 	if len(parser.errors) != 0 {
@@ -124,18 +109,11 @@ func TestIfElseIf(t *testing.T) {
 }
 
 func TestIfPattern(t *testing.T) {
-	// if Some(s) := option {}
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: IfKeyword},
-		literal{kind: Name, value: "Some"},
-		token{kind: LeftParenthesis},
-		literal{kind: Name, value: "s"},
-		token{kind: RightParenthesis},
-		token{kind: Declare},
-		literal{kind: Name, value: "option"},
-		token{kind: LeftBrace},
-		token{kind: RightBrace},
-	}})
+	str := "if Some(s) := option {}"
+	parser, err := MakeParser(strings.NewReader(str))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := parser.parseIfExpression()
 
 	if len(parser.errors) != 0 {
@@ -148,7 +126,10 @@ func TestIfPattern(t *testing.T) {
 }
 
 func TestCheckIfPattern(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, err := MakeParser(strings.NewReader(""))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.scope.Add("option", Loc{}, makeOptionType(Number{}))
 	// if Some(s) := option { s } else { 0 }
 	expr := &IfExpression{
