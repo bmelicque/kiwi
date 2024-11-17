@@ -1,9 +1,11 @@
 package parser
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestGenericWithTypeArgs(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("Boxed", Loc{}, Type{TypeAlias{
 		Name:   "Boxed",
 		Params: []Generic{{Name: "Type"}},
@@ -57,7 +59,7 @@ func TestGenericWithTypeArgs(t *testing.T) {
 }
 
 func TestGenericFunctionWithTypeArgs(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("function", Loc{}, Function{
 		TypeParams: []Generic{{Name: "Type"}},
 		Params:     &Tuple{[]ExpressionType{Generic{Name: "Type"}}},
@@ -88,7 +90,7 @@ func TestGenericFunctionWithTypeArgs(t *testing.T) {
 }
 
 func TestMapElementAccess(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("map", Loc{}, makeMapType(Number{}, String{}))
 	// map[42]
 	expr := &ComputedAccessExpression{
@@ -114,7 +116,7 @@ func TestMapElementAccess(t *testing.T) {
 }
 
 func TestMapElementAccessBadKey(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("map", Loc{}, makeMapType(Number{}, String{}))
 	// map["42"]
 	expr := &ComputedAccessExpression{
@@ -131,7 +133,7 @@ func TestMapElementAccessBadKey(t *testing.T) {
 }
 
 func TestCheckListElementAccess(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("list", Loc{}, List{String{}})
 	// list[42]
 	expr := &ComputedAccessExpression{
@@ -157,7 +159,7 @@ func TestCheckListElementAccess(t *testing.T) {
 }
 
 func TestCheckListSlice(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("list", Loc{}, List{String{}})
 	// list[1..]
 	expr := &ComputedAccessExpression{
@@ -185,7 +187,7 @@ func TestCheckListSlice(t *testing.T) {
 }
 
 func TestCheckListBadIndexType(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("list", Loc{}, List{String{}})
 	// list["42"]
 	expr := &ComputedAccessExpression{

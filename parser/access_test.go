@@ -1,15 +1,15 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestComputedPropertyAccess(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "n"},
-		token{kind: LeftBracket},
-		literal{kind: Name, value: "p"},
-		token{kind: RightBracket},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("n[p]"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseAccessExpression()
 
 	expr, ok := node.(*ComputedAccessExpression)
@@ -25,12 +25,10 @@ func TestComputedPropertyAccess(t *testing.T) {
 }
 
 func TestPropertyAccess(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "n"},
-		token{kind: Dot},
-		literal{kind: Name, value: "p"},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("n.p"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseAccessExpression()
 
 	expr, ok := node.(*PropertyAccessExpression)
@@ -46,12 +44,10 @@ func TestPropertyAccess(t *testing.T) {
 }
 
 func TestTupleAccess(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "tuple"},
-		token{kind: Dot},
-		literal{kind: NumberLiteral, value: "0"},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("tuple.0"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.scope.Add("tuple", Loc{}, Tuple{[]ExpressionType{Number{}}})
 	node := parser.parseAccessExpression()
 
@@ -68,15 +64,10 @@ func TestTupleAccess(t *testing.T) {
 }
 
 func TestMethodAccess(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LeftParenthesis},
-		literal{kind: Name, value: "t"},
-		literal{kind: Name, value: "Type"},
-		token{kind: RightParenthesis},
-		token{kind: Dot},
-		literal{kind: Name, value: "method"},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("(t Type).method"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseAccessExpression()
 
 	expr, ok := node.(*PropertyAccessExpression)
@@ -94,22 +85,10 @@ func TestMethodAccess(t *testing.T) {
 }
 
 func TestTraitDefinition(t *testing.T) {
-	// (Self).(method() -> Self)
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LeftParenthesis},
-		literal{kind: Name, value: "Self"},
-		token{kind: RightParenthesis},
-		token{kind: Dot},
-		token{kind: LeftParenthesis},
-		literal{kind: Name, value: "method"},
-		token{kind: LeftParenthesis},
-		token{kind: RightParenthesis},
-		token{kind: SlimArrow},
-		literal{kind: Name, value: "Self"},
-		token{kind: RightParenthesis},
-	}}
-
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("(Self).(method() -> Self)"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseAccessExpression()
 
 	if len(parser.errors) > 0 {
@@ -123,13 +102,10 @@ func TestTraitDefinition(t *testing.T) {
 }
 
 func TestFunctionCall(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "f"},
-		token{kind: LeftParenthesis},
-		literal{kind: NumberLiteral, value: "42"},
-		token{kind: RightParenthesis},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("f(42)"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseAccessExpression()
 
 	expr, ok := node.(*CallExpression)
@@ -142,16 +118,10 @@ func TestFunctionCall(t *testing.T) {
 }
 
 func TestFunctionCallWithTypeArgs(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "f"},
-		token{kind: LeftBracket},
-		token{kind: NumberKeyword},
-		token{kind: RightBracket},
-		token{kind: LeftParenthesis},
-		literal{kind: NumberLiteral, value: "42"},
-		token{kind: RightParenthesis},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("f[number](42)"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseAccessExpression()
 
 	expr, ok := node.(*CallExpression)
@@ -166,15 +136,10 @@ func TestFunctionCallWithTypeArgs(t *testing.T) {
 }
 
 func TestObjectExpression(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "Type"},
-		token{kind: LeftParenthesis},
-		literal{kind: Name, value: "value"},
-		token{kind: Colon},
-		literal{kind: NumberLiteral, value: "42"},
-		token{kind: RightParenthesis},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("Type(value: 42)"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := ParseExpression(parser)
 
 	_, ok := node.(*CallExpression)
@@ -187,18 +152,11 @@ func TestObjectExpression(t *testing.T) {
 }
 
 func TestListInstanciation(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LeftBracket},
-		token{kind: RightBracket},
-		token{kind: NumberKeyword},
-		token{kind: LeftParenthesis},
-		literal{kind: NumberLiteral, value: "1"},
-		token{kind: Comma},
-		literal{kind: NumberLiteral, value: "2"},
-		token{kind: RightParenthesis},
-	}}
-	parser := MakeParser(&tokenizer)
-	node := ParseExpression(parser)
+	parser, err := MakeParser(strings.NewReader("[]number(1, 2)"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	node := parser.parseExpression()
 
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)

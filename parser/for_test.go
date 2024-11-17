@@ -1,17 +1,15 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestForExpression(t *testing.T) {
-	// for true { 42 }
-	tok := testTokenizer{tokens: []Token{
-		token{kind: ForKeyword},
-		literal{kind: BooleanLiteral, value: "true"},
-		token{kind: LeftBrace},
-		literal{kind: NumberLiteral, value: "42"},
-		token{kind: RightBrace},
-	}}
-	parser := MakeParser(&tok)
+	parser, err := MakeParser(strings.NewReader("for true { 42 }"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseForExpression()
 
 	if len(parser.errors) != 0 {
@@ -20,16 +18,10 @@ func TestForExpression(t *testing.T) {
 }
 
 func TestForExpressionType(t *testing.T) {
-	// for true { break 42 }
-	tok := testTokenizer{tokens: []Token{
-		token{kind: ForKeyword},
-		literal{kind: BooleanLiteral, value: "true"},
-		token{kind: LeftBrace},
-		token{kind: BreakKeyword},
-		literal{kind: NumberLiteral, value: "42"},
-		token{kind: RightBrace},
-	}}
-	parser := MakeParser(&tok)
+	parser, err := MakeParser(strings.NewReader("for true { break 42 }"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := parser.parseForExpression()
 	expr.typeCheck(parser)
 

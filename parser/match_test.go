@@ -1,29 +1,19 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestMatch(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: MatchKeyword},
-		literal{kind: Name, value: "option"},
-		token{kind: LeftBrace},
-		token{kind: EOL},
-
-		token{kind: CaseKeyword},
-		literal{kind: Name, value: "Some"},
-		token{kind: LeftParenthesis},
-		literal{kind: Name, value: "s"},
-		token{kind: RightParenthesis},
-		token{kind: Colon},
-		token{kind: EOL},
-
-		token{kind: ReturnKeyword},
-		literal{kind: Name, value: "s"},
-		token{kind: EOL},
-
-		token{kind: RightBrace},
-	}}
-	parser := MakeParser(&tokenizer)
+	str := "match option {\n"
+	str += "case Some(s):\n"
+	str += "    return s\n"
+	str += "}"
+	parser, err := MakeParser(strings.NewReader(str))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseMatchExpression()
 	statement, ok := node.(*MatchExpression)
 	if !ok {

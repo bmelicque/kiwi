@@ -1,13 +1,15 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestBreak(t *testing.T) {
-	tok := testTokenizer{tokens: []Token{
-		token{kind: BreakKeyword},
-		literal{kind: BooleanLiteral, value: "true"},
-	}}
-	parser := MakeParser(&tok)
+	parser, err := MakeParser(strings.NewReader("break true"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.pushScope(NewScope(LoopScope))
 	exit := parser.parseExit()
 
@@ -20,11 +22,10 @@ func TestBreak(t *testing.T) {
 }
 
 func TestBreakOutsideLoop(t *testing.T) {
-	tok := testTokenizer{tokens: []Token{
-		token{kind: BreakKeyword},
-		literal{kind: BooleanLiteral, value: "true"},
-	}}
-	parser := MakeParser(&tok)
+	parser, err := MakeParser(strings.NewReader("break true"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseExit()
 
 	if len(parser.errors) != 1 {
@@ -33,10 +34,10 @@ func TestBreakOutsideLoop(t *testing.T) {
 }
 
 func TestContinue(t *testing.T) {
-	tok := testTokenizer{tokens: []Token{
-		token{kind: ContinueKeyword},
-	}}
-	parser := MakeParser(&tok)
+	parser, err := MakeParser(strings.NewReader("continue"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.pushScope(NewScope(LoopScope))
 	exit := parser.parseExit()
 
@@ -49,10 +50,10 @@ func TestContinue(t *testing.T) {
 }
 
 func TestContinueOutsideLoop(t *testing.T) {
-	tok := testTokenizer{tokens: []Token{
-		token{kind: ContinueKeyword},
-	}}
-	parser := MakeParser(&tok)
+	parser, err := MakeParser(strings.NewReader("continue"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseExit()
 
 	if len(parser.errors) != 1 {
@@ -61,11 +62,10 @@ func TestContinueOutsideLoop(t *testing.T) {
 }
 
 func TestReturn(t *testing.T) {
-	tok := testTokenizer{tokens: []Token{
-		token{kind: ReturnKeyword},
-		literal{kind: BooleanLiteral, value: "true"},
-	}}
-	parser := MakeParser(&tok)
+	parser, err := MakeParser(strings.NewReader("return true"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.pushScope(NewScope(FunctionScope))
 	exit := parser.parseExit()
 
@@ -78,11 +78,10 @@ func TestReturn(t *testing.T) {
 }
 
 func TestReturnOutsideFunction(t *testing.T) {
-	tok := testTokenizer{tokens: []Token{
-		token{kind: ReturnKeyword},
-		literal{kind: BooleanLiteral, value: "true"},
-	}}
-	parser := MakeParser(&tok)
+	parser, err := MakeParser(strings.NewReader("return true"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseExit()
 
 	if len(parser.errors) != 1 {
@@ -91,11 +90,10 @@ func TestReturnOutsideFunction(t *testing.T) {
 }
 
 func TestThrow(t *testing.T) {
-	tok := testTokenizer{tokens: []Token{
-		token{kind: ThrowKeyword},
-		literal{kind: BooleanLiteral, value: "true"},
-	}}
-	parser := MakeParser(&tok)
+	parser, err := MakeParser(strings.NewReader("throw true"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.pushScope(NewScope(FunctionScope))
 	exit := parser.parseExit()
 
@@ -108,11 +106,10 @@ func TestThrow(t *testing.T) {
 }
 
 func TestThrowOutsideFunction(t *testing.T) {
-	tok := testTokenizer{tokens: []Token{
-		token{kind: ReturnKeyword},
-		literal{kind: BooleanLiteral, value: "true"},
-	}}
-	parser := MakeParser(&tok)
+	parser, err := MakeParser(strings.NewReader("throw true"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseExit()
 
 	if len(parser.errors) != 1 {

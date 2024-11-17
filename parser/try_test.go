@@ -1,12 +1,15 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestParseTryExpression(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		token{kind: TryKeyword},
-		literal{kind: Name, value: "result"},
-	}})
+	parser, err := MakeParser(strings.NewReader("try result"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := parser.parseTryExpression()
 
 	if len(parser.errors) > 0 {
@@ -16,7 +19,7 @@ func TestParseTryExpression(t *testing.T) {
 }
 
 func TestCheckTryExpression(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("result", Loc{}, makeResultType(Number{}, nil))
 	expr := &TryExpression{
 		Expr: &Identifier{Token: literal{kind: Name, value: "result"}},
@@ -32,7 +35,7 @@ func TestCheckTryExpression(t *testing.T) {
 }
 
 func TestCheckTryExpressionBadType(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	expr := &TryExpression{
 		Expr: &Literal{literal{kind: NumberLiteral, value: "42"}},
 	}

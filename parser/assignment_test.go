@@ -1,14 +1,15 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestAssignment(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "n"},
-		token{kind: Assign},
-		literal{kind: NumberLiteral, value: "42"},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("n = 42"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseAssignment()
 
 	if len(parser.errors) != 0 {
@@ -28,7 +29,7 @@ func TestAssignment(t *testing.T) {
 }
 
 func TestCheckAssignmentToIdentifier(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("value", Loc{}, Number{})
 	assignment := &Assignment{
 		Pattern:  &Identifier{Token: literal{kind: Name, value: "value"}},
@@ -42,7 +43,7 @@ func TestCheckAssignmentToIdentifier(t *testing.T) {
 }
 
 func TestCheckAssignmentToIdentifierBadType(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("value", Loc{}, Number{})
 	assignment := &Assignment{
 		Pattern:  &Identifier{Token: literal{kind: Name, value: "value"}},
@@ -56,16 +57,10 @@ func TestCheckAssignmentToIdentifierBadType(t *testing.T) {
 }
 
 func TestTupleAssignment(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "n"},
-		token{kind: Comma},
-		literal{kind: Name, value: "m"},
-		token{kind: Assign},
-		literal{kind: NumberLiteral, value: "1"},
-		token{kind: Comma},
-		literal{kind: NumberLiteral, value: "2"},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("n, m = 1, 2"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseAssignment()
 
 	expr, ok := node.(*Assignment)
@@ -81,7 +76,7 @@ func TestTupleAssignment(t *testing.T) {
 }
 
 func TestCheckAssignmentToTuple(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("a", Loc{}, Number{})
 	parser.scope.Add("b", Loc{}, String{})
 	assignment := &Assignment{
@@ -102,7 +97,7 @@ func TestCheckAssignmentToTuple(t *testing.T) {
 }
 
 func TestCheckAssignmentToTupleBadType(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("a", Loc{}, Number{})
 	parser.scope.Add("b", Loc{}, String{})
 	assignment := &Assignment{
@@ -123,14 +118,10 @@ func TestCheckAssignmentToTupleBadType(t *testing.T) {
 }
 
 func TestParseAssignmentToMap(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "map"},
-		token{kind: LeftBracket},
-		literal{kind: StringLiteral, value: "\"key\""},
-		token{kind: RightBracket},
-		token{kind: Assign},
-		literal{kind: NumberLiteral, value: "42"},
-	}})
+	parser, err := MakeParser(strings.NewReader("map[\"key\"] = 42"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseAssignment()
 
 	if len(parser.errors) > 0 {
@@ -146,7 +137,7 @@ func TestParseAssignmentToMap(t *testing.T) {
 }
 
 func TestCheckAssignmentToMap(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("map", Loc{}, makeMapType(Number{}, Number{}))
 	declaration := &Assignment{
 		Pattern: &ComputedAccessExpression{
@@ -165,7 +156,7 @@ func TestCheckAssignmentToMap(t *testing.T) {
 }
 
 func TestCheckAssignmentToMapBadKey(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("map", Loc{}, makeMapType(Number{}, Number{}))
 	declaration := &Assignment{
 		Pattern: &ComputedAccessExpression{
@@ -184,7 +175,7 @@ func TestCheckAssignmentToMapBadKey(t *testing.T) {
 }
 
 func TestCheckAssignmentToMapBadValue(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("map", Loc{}, makeMapType(Number{}, Number{}))
 	declaration := &Assignment{
 		Pattern: &ComputedAccessExpression{
@@ -203,7 +194,7 @@ func TestCheckAssignmentToMapBadValue(t *testing.T) {
 }
 
 func TestCheckVariableDeclaration(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	declaration := &Assignment{
 		Pattern:  &Identifier{Token: literal{kind: Name, value: "v"}},
 		Value:    &Literal{literal{kind: NumberLiteral, value: "42"}},
@@ -224,7 +215,7 @@ func TestCheckVariableDeclaration(t *testing.T) {
 }
 
 func TestCheckVariableDeclarationNoNil(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	// v := ()
 	declaration := &Assignment{
 		Pattern:  &Identifier{Token: literal{kind: Name, value: "v"}},
@@ -238,7 +229,7 @@ func TestCheckVariableDeclarationNoNil(t *testing.T) {
 }
 
 func TestCheckTupleDeclaration(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	declaration := &Assignment{
 		Pattern: &TupleExpression{Elements: []Expression{
 			&Identifier{Token: literal{kind: Name, value: "a"}},
@@ -273,7 +264,7 @@ func TestCheckTupleDeclaration(t *testing.T) {
 }
 
 func TestCheckTupleDeclarationBadInit(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	declaration := &Assignment{
 		Pattern: &TupleExpression{Elements: []Expression{
 			&Identifier{Token: literal{kind: Name, value: "a"}},
@@ -289,7 +280,7 @@ func TestCheckTupleDeclarationBadInit(t *testing.T) {
 }
 
 func TestCheckTupleDeclarationTooMany(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	declaration := &Assignment{
 		Pattern: &TupleExpression{Elements: []Expression{
 			&Identifier{Token: literal{kind: Name, value: "a"}},
@@ -309,20 +300,13 @@ func TestCheckTupleDeclarationTooMany(t *testing.T) {
 }
 
 func TestObjectTypeDefinition(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "Type"},
-		token{kind: Define},
-		token{kind: LeftParenthesis},
-		token{kind: EOL},
-
-		literal{kind: Name, value: "n"},
-		token{kind: NumberKeyword},
-		token{kind: Comma},
-		token{kind: EOL},
-
-		token{kind: RightParenthesis},
-	}}
-	parser := MakeParser(&tokenizer)
+	str := "Type :: (\n"
+	str += "    n number,\n"
+	str += ")"
+	parser, err := MakeParser(strings.NewReader(str))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseAssignment()
 
 	expr, ok := node.(*Assignment)
@@ -338,7 +322,7 @@ func TestObjectTypeDefinition(t *testing.T) {
 }
 
 func TestCheckObjectTypeDefinition(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	declaration := &Assignment{
 		Pattern: &Identifier{Token: literal{kind: Name, value: "Type"}},
 		Value: &ParenthesizedExpression{Expr: &Param{
@@ -373,7 +357,7 @@ func TestCheckObjectTypeDefinition(t *testing.T) {
 }
 
 func TestCheckFunctionDefinition(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	declaration := &Assignment{
 		Pattern: &Identifier{Token: literal{kind: Name, value: "function"}},
 		Value: &FunctionExpression{
@@ -402,7 +386,7 @@ func TestCheckFunctionDefinition(t *testing.T) {
 }
 
 func TestCheckGenericTypeDefinition(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	declaration := &Assignment{
 		Pattern: &ComputedAccessExpression{
 			Expr: &Identifier{Token: literal{kind: Name, value: "Boxed"}},
@@ -440,22 +424,11 @@ func TestCheckGenericTypeDefinition(t *testing.T) {
 }
 
 func TestMethodDeclaration(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LeftParenthesis},
-		literal{kind: Name, value: "t"},
-		literal{kind: Name, value: "Type"},
-		token{kind: RightParenthesis},
-		token{kind: Dot},
-		literal{kind: Name, value: "method"},
-		token{kind: Define},
-		token{kind: LeftParenthesis},
-		token{kind: RightParenthesis},
-		token{kind: FatArrow},
-		token{kind: LeftBrace},
-		literal{kind: Name, value: "t"},
-		token{kind: RightBrace},
-	}}
-	parser := MakeParser(&tokenizer)
+	str := "(t Type).method :: () => { t }"
+	parser, err := MakeParser(strings.NewReader(str))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseAssignment()
 
 	expr, ok := node.(*Assignment)
@@ -471,7 +444,7 @@ func TestMethodDeclaration(t *testing.T) {
 }
 
 func TestCheckMethodDeclaration(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	parser.scope.Add(
 		"Type",
 		Loc{},

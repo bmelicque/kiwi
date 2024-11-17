@@ -1,11 +1,15 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestParseLiteral(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		literal{kind: BooleanLiteral, value: "true"},
-	}})
+	parser, err := MakeParser(strings.NewReader("true"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := parser.parseToken()
 	if len(parser.errors) > 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
@@ -19,9 +23,10 @@ func TestParseLiteral(t *testing.T) {
 }
 
 func TestParseIdentifier(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "myVariable"},
-	}})
+	parser, err := MakeParser(strings.NewReader("myVariable"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := parser.parseToken()
 	if len(parser.errors) > 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
@@ -32,7 +37,7 @@ func TestParseIdentifier(t *testing.T) {
 }
 
 func TestCheckIdentifier(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	parser.scope.Add("myVariable", Loc{}, Boolean{})
 	expr := &Identifier{Token: literal{kind: Name, value: "myVariable"}}
 	expr.typeCheck(parser)
@@ -45,9 +50,10 @@ func TestCheckIdentifier(t *testing.T) {
 }
 
 func TestParseCatchall(t *testing.T) {
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "_"},
-	}})
+	parser, err := MakeParser(strings.NewReader("_"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	expr := parser.parseToken()
 	if len(parser.errors) > 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)

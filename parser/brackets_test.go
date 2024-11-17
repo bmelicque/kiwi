@@ -1,13 +1,15 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestEmptyBrackets(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LeftBracket},
-		token{kind: RightBracket},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("[]"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseBracketedExpression()
 
 	if len(parser.errors) != 0 {
@@ -16,12 +18,10 @@ func TestEmptyBrackets(t *testing.T) {
 }
 
 func TestSimpleBracket(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LeftBracket},
-		literal{kind: Name, value: "Type"},
-		token{kind: RightBracket},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("[Type]"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseBracketedExpression()
 
 	if len(parser.errors) != 0 {
@@ -30,14 +30,10 @@ func TestSimpleBracket(t *testing.T) {
 }
 
 func TestBracketedTuple(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LeftBracket},
-		literal{kind: Name, value: "Type"},
-		token{kind: Comma},
-		literal{kind: Name, value: "Type"},
-		token{kind: RightBracket},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("[Type, Type]"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseBracketedExpression()
 
 	if len(parser.errors) != 0 {

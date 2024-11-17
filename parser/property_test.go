@@ -1,9 +1,12 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestSumTypeConstructor1(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	expr := PropertyAccessExpression{
 		Expr:     &Identifier{Token: literal{kind: Name, value: "?"}},
 		Property: &Identifier{Token: literal{kind: Name, value: "Some"}},
@@ -29,12 +32,10 @@ func TestSumTypeConstructor1(t *testing.T) {
 }
 
 func TestTupleIndexAccess(t *testing.T) {
-	// tuple.1
-	parser := MakeParser(&testTokenizer{tokens: []Token{
-		literal{kind: Name, value: "tuple"},
-		token{kind: Dot},
-		literal{kind: NumberLiteral, value: "1"},
-	}})
+	parser, err := MakeParser(strings.NewReader("tuple.1"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.scope.Add(
 		"tuple",
 		Loc{},

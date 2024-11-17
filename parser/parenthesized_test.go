@@ -1,14 +1,15 @@
 package parser
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestParenthesized(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LeftParenthesis},
-		literal{kind: NumberLiteral, value: "42"},
-		token{kind: RightParenthesis},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("(42)"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	paren := parser.parseParenthesizedExpression()
 	if _, ok := paren.Expr.(*Literal); !ok {
 		t.Fatalf("Expected literal between parentheses, got %v", paren.Expr)
@@ -16,14 +17,10 @@ func TestParenthesized(t *testing.T) {
 }
 
 func TestParenthesizedTuple(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LeftParenthesis},
-		literal{kind: NumberLiteral, value: "1"},
-		token{kind: Comma},
-		literal{kind: NumberLiteral, value: "2"},
-		token{kind: RightParenthesis},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("(1, 2)"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	paren := parser.parseParenthesizedExpression()
 	if _, ok := paren.Expr.(*TupleExpression); !ok {
 		t.Fatalf("Expected TupleExpression between parentheses, got %#v", paren.Expr)
@@ -31,13 +28,10 @@ func TestParenthesizedTuple(t *testing.T) {
 }
 
 func TestObjectDescriptionSingleLine(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LeftParenthesis},
-		literal{kind: Name, value: "n"},
-		token{kind: NumberKeyword},
-		token{kind: RightParenthesis},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("(n number)"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseParenthesizedExpression()
 
 	if len(parser.errors) != 0 {
@@ -50,7 +44,7 @@ func TestObjectDescriptionSingleLine(t *testing.T) {
 }
 
 func TestCheckObjectDescriptionSingleLine(t *testing.T) {
-	parser := MakeParser(nil)
+	parser, _ := MakeParser(nil)
 	expr := &ParenthesizedExpression{Expr: &Param{
 		Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
 		Complement: &Literal{token{kind: NumberKeyword}},
@@ -73,23 +67,14 @@ func TestCheckObjectDescriptionSingleLine(t *testing.T) {
 }
 
 func TestObjectDescription(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LeftParenthesis},
-		token{kind: EOL},
-
-		literal{kind: Name, value: "n"},
-		token{kind: NumberKeyword},
-		token{kind: Comma},
-		token{kind: EOL},
-
-		literal{kind: Name, value: "s"},
-		token{kind: StringKeyword},
-		token{kind: Comma},
-		token{kind: EOL},
-
-		token{kind: RightParenthesis},
-	}}
-	parser := MakeParser(&tokenizer)
+	str := "(\n"
+	str += "    n number,\n"
+	str += "    s string,\n"
+	str += ")"
+	parser, err := MakeParser(strings.NewReader(str))
+	if err != nil {
+		t.Fatal(err)
+	}
 	node := parser.parseParenthesizedExpression()
 
 	if len(parser.errors) != 0 {
@@ -106,14 +91,10 @@ func TestObjectDescription(t *testing.T) {
 }
 
 func TestObjectDescriptionNoColon(t *testing.T) {
-	tokenizer := testTokenizer{tokens: []Token{
-		token{kind: LeftParenthesis},
-		literal{kind: Name, value: "n"},
-		token{kind: Colon},
-		token{kind: NumberKeyword},
-		token{kind: RightParenthesis},
-	}}
-	parser := MakeParser(&tokenizer)
+	parser, err := MakeParser(strings.NewReader("(n: number)"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	parser.parseParenthesizedExpression()
 
 	if len(parser.errors) != 0 {
