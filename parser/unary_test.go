@@ -127,7 +127,7 @@ func TestListTypeExpression(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	node := ParseExpression(parser)
+	node := parser.parseExpression()
 
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
@@ -196,7 +196,7 @@ func TestNestedListTypeExpression(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	node := ParseExpression(parser)
+	node := parser.parseExpression()
 
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)

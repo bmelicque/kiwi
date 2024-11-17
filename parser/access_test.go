@@ -140,7 +140,7 @@ func TestObjectExpression(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	node := ParseExpression(parser)
+	node := parser.parseExpression()
 
 	_, ok := node.(*CallExpression)
 	if !ok {

@@ -27,7 +27,7 @@ func (p *Parser) parseBracketedExpression() *BracketedExpression {
 
 	outer := p.allowEmptyExpr
 	p.allowEmptyExpr = true
-	expr := ParseExpression(p)
+	expr := p.parseExpression()
 	p.allowEmptyExpr = outer
 
 	next := p.Peek()
