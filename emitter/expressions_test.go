@@ -95,7 +95,26 @@ func TestEmitReference(t *testing.T) {
 
 	emitter := makeEmitter()
 	emitter.emit(ast[1])
+	received := emitter.string()
 	if emitter.string() != expected {
-		t.Fatalf("%#v", emitter.string())
+		t.Fatalf("expected '%v', got '%v'", expected, received)
+	}
+}
+
+func TestEmitDeref(t *testing.T) {
+	source := "value := 0\n"
+	source += "ref := &value\n"
+	source += "*ref"
+
+	expected := "ref()"
+
+	parser, _ := parser.MakeParser(strings.NewReader(source))
+	ast := parser.ParseProgram()
+
+	emitter := makeEmitter()
+	emitter.emit(ast[2])
+	received := emitter.string()
+	if emitter.string() != expected {
+		t.Fatalf("expected '%v', got '%v'", expected, received)
 	}
 }

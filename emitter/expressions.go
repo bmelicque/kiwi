@@ -338,5 +338,8 @@ func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
 		e.write(" = _) : ")
 		e.emit(u.Operand)
 		e.write(" }")
+	case parser.Mul:
+		e.emit(u.Operand)
+		e.write("()")
 	}
 }
