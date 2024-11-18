@@ -328,11 +328,15 @@ func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
 		e.write("await ")
 		e.emitExpression(u.Operand)
 	case parser.Bang:
-		if _, ok := u.Type().(parser.Boolean); ok {
-			e.write("!")
-			e.emitExpression(u.Operand)
-		}
+		e.write("!")
+		e.emitExpression(u.Operand)
 	case parser.TryKeyword:
 		e.emitExpression(u.Operand)
+	case parser.BinaryAnd:
+		e.write("function (_) { return arguments.length ? void (")
+		e.emit(u.Operand)
+		e.write(" = _) : ")
+		e.emit(u.Operand)
+		e.write(" }")
 	}
 }
