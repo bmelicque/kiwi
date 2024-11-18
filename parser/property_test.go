@@ -5,6 +5,56 @@ import (
 	"testing"
 )
 
+func TestCheckPropertyAccess(t *testing.T) {
+	parser, _ := MakeParser(nil)
+	alias := TypeAlias{
+		Name: "BoxedNumber",
+		Ref: Object{Members: map[string]ExpressionType{
+			"value": Number{},
+		}},
+	}
+	parser.scope.Add("BoxedNumber", Loc{}, Type{alias})
+	parser.scope.Add("box", Loc{}, alias)
+	expr := PropertyAccessExpression{
+		Expr:     &Identifier{Token: literal{kind: Name, value: "box"}},
+		Property: &Identifier{Token: literal{kind: Name, value: "value"}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+
+	if _, ok := expr.Type().(Number); !ok {
+		t.Fatalf("Expected number, got %v", expr.Type().Text())
+	}
+}
+
+func TestCheckPropertyAccessThroughRef(t *testing.T) {
+	parser, _ := MakeParser(nil)
+	alias := TypeAlias{
+		Name: "BoxedNumber",
+		Ref: Object{Members: map[string]ExpressionType{
+			"value": Number{},
+		}},
+	}
+	parser.scope.Add("BoxedNumber", Loc{}, Type{alias})
+	parser.scope.Add("ref", Loc{}, Ref{alias})
+	expr := PropertyAccessExpression{
+		Expr:     &Identifier{Token: literal{kind: Name, value: "ref"}},
+		Property: &Identifier{Token: literal{kind: Name, value: "value"}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+
+	if _, ok := expr.Type().(Number); !ok {
+		t.Fatalf("Expected number, got %v", expr.Type().Text())
+	}
+}
+
 func TestSumTypeConstructor1(t *testing.T) {
 	parser, _ := MakeParser(nil)
 	expr := PropertyAccessExpression{

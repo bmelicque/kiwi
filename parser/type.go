@@ -188,6 +188,12 @@ func (r Ref) build(scope *Scope, compared ExpressionType) (ExpressionType, bool)
 	r.To, ok = r.To.build(scope, ref.To)
 	return r, ok
 }
+func deref(t ExpressionType) ExpressionType {
+	if ref, ok := t.(Ref); ok {
+		return ref.To
+	}
+	return t
+}
 
 type List struct {
 	Element ExpressionType
