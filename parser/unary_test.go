@@ -234,6 +234,38 @@ func TestCheckLogicalNot(t *testing.T) {
 	}
 }
 
+func TestParseReference(t *testing.T) {
+	parser, err := MakeParser(strings.NewReader("&value"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	node := parser.parseExpression()
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
+	}
+
+	if u, ok := node.(*UnaryExpression); !ok || u.Operator.Kind() != BinaryAnd {
+		t.Fatalf("Expected '&' unary, got %#v", node)
+	}
+}
+
+func TestParseDereference(t *testing.T) {
+	parser, err := MakeParser(strings.NewReader("*ref"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	node := parser.parseExpression()
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
+	}
+
+	if u, ok := node.(*UnaryExpression); !ok || u.Operator.Kind() != Mul {
+		t.Fatalf("Expected '*' unary, got %#v", node)
+	}
+}
+
 func TestListTypeExpression(t *testing.T) {
 	parser, err := MakeParser(strings.NewReader("[]number"))
 	if err != nil {

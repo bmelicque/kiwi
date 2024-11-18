@@ -148,7 +148,7 @@ func (l *ListTypeExpression) Type() ExpressionType {
 
 func (p *Parser) parseUnaryExpression() Expression {
 	switch p.Peek().Kind() {
-	case AsyncKeyword, AwaitKeyword, Bang, QuestionMark, TryKeyword:
+	case AsyncKeyword, AwaitKeyword, Bang, BinaryAnd, Mul, QuestionMark, TryKeyword:
 		token := p.Consume()
 		expr := parseInnerUnary(p)
 		if token.Kind() == AsyncKeyword {
