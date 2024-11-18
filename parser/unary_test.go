@@ -298,6 +298,33 @@ func TestParseDereference(t *testing.T) {
 	}
 }
 
+func TestCheckDereference(t *testing.T) {
+	parser, _ := MakeParser(nil)
+	// *ref
+	parser.scope.Add("ref", Loc{}, Ref{Number{}})
+	expr := &UnaryExpression{
+		Operator: token{kind: Mul},
+		Operand:  &Identifier{Token: literal{kind: Name, value: "ref"}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+	if _, ok := expr.Type().(Number); !ok {
+		t.Fatalf("Expected number, got %v", expr.Type().Text())
+	}
+
+	expr.Operand = &Literal{literal{kind: NumberLiteral, value: "42"}}
+	expr.typeCheck(parser)
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %v: %#v", len(parser.errors), parser.errors)
+	}
+	if _, ok := expr.Type().(Unknown); !ok {
+		t.Fatalf("Expected unknown, got %v", expr.Type().Text())
+	}
+}
+
 func TestListTypeExpression(t *testing.T) {
 	parser, err := MakeParser(strings.NewReader("[]number"))
 	if err != nil {
