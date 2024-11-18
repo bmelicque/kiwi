@@ -33,6 +33,7 @@ func (u *UnaryExpression) typeCheck(p *Parser) {
 		default:
 			p.report("Type or boolean expected with '!' operator", u.Operand.Loc())
 		}
+	case BinaryAnd:
 	case QuestionMark:
 		if _, ok := u.Operand.Type().(Type); !ok {
 			p.report("Type expected with question mark operator", u.Operand.Loc())
@@ -90,6 +91,13 @@ func (u *UnaryExpression) Type() ExpressionType {
 			return Type{makeResultType(t, nil)}
 		} else {
 			return Boolean{}
+		}
+	case BinaryAnd:
+		switch t := u.Operand.Type().(type) {
+		case Type:
+			return Type{Ref{t.Value}}
+		default:
+			return Ref{t}
 		}
 	case QuestionMark:
 		t := u.Operand.Type()

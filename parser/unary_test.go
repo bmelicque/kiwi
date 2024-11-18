@@ -250,6 +250,38 @@ func TestParseReference(t *testing.T) {
 	}
 }
 
+func TestCheckReference(t *testing.T) {
+	parser, _ := MakeParser(nil)
+	// &number
+	expr := &UnaryExpression{
+		Operator: token{kind: BinaryAnd},
+		Operand:  &Literal{token{kind: NumberKeyword}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+	if _, ok := expr.Type().(Type); !ok {
+		t.Fatalf("Expected type, got %v", expr.Type().Text())
+	}
+
+	// &value
+	parser.scope.Add("value", Loc{}, Number{})
+	expr = &UnaryExpression{
+		Operator: token{kind: BinaryAnd},
+		Operand:  &Identifier{Token: literal{kind: Name, value: "value"}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+	if _, ok := expr.Type().(Ref); !ok {
+		t.Fatalf("Expected ref, got %v", expr.Type().Text())
+	}
+}
+
 func TestParseDereference(t *testing.T) {
 	parser, err := MakeParser(strings.NewReader("*ref"))
 	if err != nil {
