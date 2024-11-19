@@ -11,14 +11,14 @@ func (p *Parser) typeCheckPattern(pattern Expression, matched ExpressionType) {
 }
 
 func validateTraitPattern(p *Parser, pattern Expression, trait Trait) {
-	call, ok := pattern.(*CallExpression)
+	instance, ok := pattern.(*InstanceExpression)
 	if !ok {
-		p.report("Invalid pattern, expected 'Type(identifier)'", pattern.Loc())
+		p.report("Invalid pattern, expected 'Type{identifier}'", pattern.Loc())
 		return
 	}
-	callee, ok := call.Callee.(*Identifier)
+	callee, ok := instance.Typing.(*Identifier)
 	if !ok || !callee.IsType() {
-		p.report("Type identifier expected", call.Callee.Loc())
+		p.report("Type identifier expected", instance.Typing.Loc())
 		return
 	}
 	v, ok := p.scope.Find(callee.Text())
@@ -36,9 +36,9 @@ func validateTraitPattern(p *Parser, pattern Expression, trait Trait) {
 		return
 	}
 
-	elements := call.Args.Expr.(*TupleExpression).Elements
+	elements := instance.Args.Expr.(*TupleExpression).Elements
 	if len(elements) != 1 {
-		p.report("Only 1 argument expected", call.Args.loc)
+		p.report("Only 1 argument expected", instance.Args.loc)
 		return
 	}
 	identifier, ok := elements[0].(*Identifier)
