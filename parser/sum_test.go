@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func TestSumType(t *testing.T) {
-	str := "| Some(Type) | None"
+func TestParseSumType(t *testing.T) {
+	str := "| Some{Type} | None"
 	parser, err := MakeParser(strings.NewReader(str))
 	if err != nil {
 		t.Fatal(err)
@@ -44,7 +44,7 @@ func TestCheckSumType(t *testing.T) {
 	expr := &SumType{Members: []SumTypeConstructor{
 		{
 			Name: &Identifier{Token: literal{kind: Name, value: "A"}},
-			Params: &ParenthesizedExpression{
+			Params: &BracedExpression{
 				Expr: &TupleExpression{Elements: []Expression{
 					&Literal{token{kind: NumberKeyword}},
 				}},
