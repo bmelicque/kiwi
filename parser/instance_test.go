@@ -21,13 +21,12 @@ func TestCheckImplicitMapInstanciation(t *testing.T) {
 	parser, _ := MakeParser(nil)
 	expr := &InstanceExpression{
 		Typing: &Identifier{Token: literal{kind: Name, value: "Map"}},
-		Args: &Block{Statements: []Node{
-			&TupleExpression{Elements: []Expression{
-				&Entry{
-					Key:   &Literal{literal{kind: StringLiteral, value: "\"key\""}},
-					Value: &Literal{literal{kind: StringLiteral, value: "\"value\""}},
-				},
-			}},
+		Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
+			&Entry{
+				Key:   &Literal{literal{kind: StringLiteral, value: "\"key\""}},
+				Value: &Literal{literal{kind: StringLiteral, value: "\"value\""}},
+			},
+		},
 		}},
 	}
 	expr.typeCheck(parser)
@@ -48,9 +47,7 @@ func TestCheckMapInstanciationMissingTypeArg(t *testing.T) {
 	parser, _ := MakeParser(nil)
 	expr := &InstanceExpression{
 		Typing: &Identifier{Token: literal{kind: Name, value: "Map"}},
-		Args: &Block{Statements: []Node{
-			&TupleExpression{Elements: []Expression{}},
-		}},
+		Args:   &BracedExpression{Expr: makeTuple(nil)},
 	}
 	expr.typeCheck(parser)
 
@@ -69,9 +66,7 @@ func TestCheckExplicitMapInstanciation(t *testing.T) {
 				&Literal{token{kind: StringKeyword}},
 			}}},
 		},
-		Args: &Block{Statements: []Node{
-			&TupleExpression{Elements: []Expression{}},
-		}},
+		Args: &BracedExpression{Expr: makeTuple(nil)},
 	}
 	expr.typeCheck(parser)
 
@@ -97,18 +92,16 @@ func TestCheckMapEntries(t *testing.T) {
 				&Literal{token{kind: StringKeyword}},
 			}}},
 		},
-		Args: &Block{Statements: []Node{
-			&TupleExpression{Elements: []Expression{
-				&Entry{
-					Key:   &Literal{literal{kind: StringLiteral, value: "\"a\""}},
-					Value: &Literal{literal{kind: StringLiteral, value: "\"value\""}},
-				},
-				&Entry{
-					Key:   &Literal{literal{kind: StringLiteral, value: "\"b\""}},
-					Value: &Literal{literal{kind: StringLiteral, value: "\"value\""}},
-				},
-			}},
-		}},
+		Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
+			&Entry{
+				Key:   &Literal{literal{kind: StringLiteral, value: "\"a\""}},
+				Value: &Literal{literal{kind: StringLiteral, value: "\"value\""}},
+			},
+			&Entry{
+				Key:   &Literal{literal{kind: StringLiteral, value: "\"b\""}},
+				Value: &Literal{literal{kind: StringLiteral, value: "\"value\""}},
+			},
+		}}},
 	}
 	expr.typeCheck(parser)
 
@@ -127,18 +120,16 @@ func TestCheckMapEntriesBadTypes(t *testing.T) {
 				&Literal{token{kind: StringKeyword}},
 			}}},
 		},
-		Args: &Block{Statements: []Node{
-			&TupleExpression{Elements: []Expression{
-				&Entry{
-					Key:   &Literal{literal{kind: NumberLiteral, value: "1"}},
-					Value: &Literal{literal{kind: StringLiteral, value: "\"value\""}},
-				},
-				&Entry{
-					Key:   &Literal{literal{kind: StringLiteral, value: "\"a\""}},
-					Value: &Literal{literal{kind: NumberLiteral, value: "42"}},
-				},
-			}},
-		}},
+		Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
+			&Entry{
+				Key:   &Literal{literal{kind: NumberLiteral, value: "1"}},
+				Value: &Literal{literal{kind: StringLiteral, value: "\"value\""}},
+			},
+			&Entry{
+				Key:   &Literal{literal{kind: StringLiteral, value: "\"a\""}},
+				Value: &Literal{literal{kind: NumberLiteral, value: "42"}},
+			},
+		}}},
 	}
 	expr.typeCheck(parser)
 

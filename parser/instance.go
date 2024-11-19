@@ -4,7 +4,7 @@ import "fmt"
 
 type InstanceExpression struct {
 	Typing Expression
-	Args   *Block
+	Args   *BracedExpression
 	typing ExpressionType
 }
 
@@ -54,7 +54,7 @@ func typeCheckStructInstanciation(p *Parser, i *InstanceExpression) {
 	defer p.dropScope()
 	typeCheckTypeArgs(p, nil, alias.Params)
 
-	args := getInstanceArgs(i.Args)
+	args := i.Args.Expr.(*TupleExpression).Elements
 	formatStructEntries(p, args)
 	for _, arg := range args {
 		entry := arg.(*Entry)
@@ -116,13 +116,13 @@ func reportExcessMembers(p *Parser, expected map[string]ExpressionType, received
 func reportMissingMembers(
 	p *Parser,
 	expected map[string]ExpressionType,
-	received *Block,
+	received *BracedExpression,
 ) {
 	membersSet := map[string]bool{}
 	for name := range expected {
 		membersSet[name] = true
 	}
-	for _, member := range getInstanceArgs(received) {
+	for _, member := range received.Expr.(*TupleExpression).Elements {
 		if named, ok := member.(*Param); ok {
 			delete(membersSet, named.Identifier.Text())
 		}
@@ -143,23 +143,11 @@ func reportMissingMembers(
 	p.report(fmt.Sprintf("Missing key(s) %v", msg), received.loc)
 }
 
-func getInstanceArgs(block *Block) []Expression {
-	if len(block.Statements) == 0 {
-		return []Expression{}
-	}
-	node := block.Statements[len(block.Statements)-1]
-	expr, ok := node.(Expression)
-	if !ok {
-		return []Expression{}
-	}
-	return makeTuple(expr).Elements
-}
-
 func typeCheckMapInstanciation(p *Parser, i *InstanceExpression, t TypeAlias) {
 	p.pushScope(NewScope(ProgramScope))
 	defer p.dropScope()
 	typeCheckTypeArgs(p, nil, t.Params)
-	args := getInstanceArgs(i.Args)
+	args := i.Args.Expr.(*TupleExpression).Elements
 	formatMapEntries(p, args)
 	i.typing = getMapType(p, i)
 	typeCheckMapEntries(p, args, i.typing.(TypeAlias).Ref.(Map))
@@ -189,7 +177,7 @@ func getFormattedMapEntry(p *Parser, received Expression) *Entry {
 }
 func getMapType(p *Parser, i *InstanceExpression) ExpressionType {
 	t := i.Typing.Type().(Type).Value.(TypeAlias)
-	args := getInstanceArgs(i.Args)
+	args := i.Args.Expr.(*TupleExpression).Elements
 	var key, value ExpressionType
 	var kk, vk bool
 	if len(args) > 0 {
@@ -245,7 +233,7 @@ func typeCheckListInstanciation(p *Parser, i *InstanceExpression) {
 	// next line ensured by calling function
 	typing := i.Typing.Type().(Type).Value.(List)
 	i.typing = typing
-	elements := getInstanceArgs(i.Args)
+	elements := i.Args.Expr.(*TupleExpression).Elements
 	if len(elements) == 0 {
 		return
 	}
@@ -279,10 +267,8 @@ func (p *Parser) parseInstanceExpression() Expression {
 	if p.Peek().Kind() != LeftBrace {
 		return expr
 	}
-	args := p.parseBlock()
-	if len(args.Statements) > 1 {
-		p.report("Too many statements", args.loc)
-	}
+	args := p.parseBracedExpression()
+	args.Expr = makeTuple(args.Expr)
 	return &InstanceExpression{
 		Typing: expr,
 		Args:   args,
