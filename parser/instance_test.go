@@ -6,11 +6,11 @@ import (
 )
 
 func TestParseMapInstanciation(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("Map(\"key\": \"value\")"))
+	parser, err := MakeParser(strings.NewReader("Map{\"key\": \"value\"}"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	parser.parseAccessExpression()
+	parser.parseInstanceExpression()
 
 	if len(parser.errors) > 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)

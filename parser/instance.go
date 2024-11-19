@@ -273,3 +273,18 @@ func (i *InstanceExpression) Loc() Loc {
 		End:   i.Args.loc.End,
 	}
 }
+
+func (p *Parser) parseInstanceExpression() Expression {
+	expr := p.parseUnaryExpression()
+	if p.Peek().Kind() != LeftBrace {
+		return expr
+	}
+	args := p.parseBlock()
+	if len(args.Statements) > 1 {
+		p.report("Too many statements", args.loc)
+	}
+	return &InstanceExpression{
+		Typing: expr,
+		Args:   args,
+	}
+}
