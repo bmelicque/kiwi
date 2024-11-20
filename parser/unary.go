@@ -20,6 +20,11 @@ func (u *UnaryExpression) typeCheck(p *Parser) {
 	}
 	u.Operand.typeCheck(p)
 	switch u.Operator.Kind() {
+	case AwaitKeyword:
+		alias, ok := u.Operand.Type().(TypeAlias)
+		if !ok || alias.Name != "..." {
+			p.report("Promise expected", u.Operand.Loc())
+		}
 	case Bang:
 		switch u.Operand.Type().(type) {
 		case Type, Boolean:
@@ -49,7 +54,17 @@ func (u *UnaryExpression) Loc() Loc {
 }
 
 func (u *UnaryExpression) Type() ExpressionType {
+	if u.Operand == nil {
+		return Unknown{}
+	}
 	switch u.Operator.Kind() {
+	case AwaitKeyword:
+		alias, ok := u.Operand.Type().(TypeAlias)
+		if !ok || alias.Name != "..." {
+			return Unknown{}
+		}
+		t, _ := alias.Params[0].Value.build(nil, nil)
+		return t
 	case Bang:
 		t := u.Operand.Type()
 		if ty, ok := t.(Type); ok {
@@ -115,7 +130,7 @@ func (l *ListTypeExpression) Type() ExpressionType {
 
 func (p *Parser) parseUnaryExpression() Expression {
 	switch p.Peek().Kind() {
-	case Bang, QuestionMark, TryKeyword:
+	case AwaitKeyword, Bang, QuestionMark, TryKeyword:
 		token := p.Consume()
 		expr := parseInnerUnary(p)
 		return &UnaryExpression{token, expr}

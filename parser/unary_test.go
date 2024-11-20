@@ -5,6 +5,62 @@ import (
 	"testing"
 )
 
+func TestParseAwaitExpression(t *testing.T) {
+	parser, err := MakeParser(strings.NewReader("await request"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parser.parseUnaryExpression()
+
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+}
+
+func TestParseAwaitExpressionNoExpr(t *testing.T) {
+	parser, err := MakeParser(strings.NewReader("await"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parser.parseUnaryExpression()
+
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
+	}
+}
+
+func TestCheckAwaitExpression(t *testing.T) {
+	parser, _ := MakeParser(nil)
+	parser.scope.Add("req", Loc{}, makePromise(Number{}))
+	expr := &UnaryExpression{
+		Operator: token{kind: AwaitKeyword},
+		Operand:  &Identifier{Token: literal{kind: Name, value: "req"}},
+	}
+	expr.typeCheck(parser)
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+	if _, ok := expr.Type().(Number); !ok {
+		t.Fatalf("Expected number type, got %v", expr.Type().Text())
+	}
+}
+
+func TestCheckAwaitExpressionNotPromise(t *testing.T) {
+	parser, _ := MakeParser(nil)
+	parser.scope.Add("req", Loc{}, Number{})
+	expr := &UnaryExpression{
+		Operator: token{kind: AwaitKeyword},
+		Operand:  &Identifier{Token: literal{kind: Name, value: "req"}},
+	}
+	expr.typeCheck(parser)
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
+	}
+	if _, ok := expr.Type().(Unknown); !ok {
+		t.Fatalf("Expected unknown type, got %v", expr.Type().Text())
+	}
+}
+
 func TestUnaryExpression(t *testing.T) {
 	parser, err := MakeParser(strings.NewReader("?number"))
 	if err != nil {

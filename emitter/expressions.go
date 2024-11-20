@@ -10,11 +10,6 @@ func (e *Emitter) emitAsyncExpression(expr *parser.AsyncExpression) {
 	e.emitCallExpression(expr.Call, false)
 }
 
-func (e *Emitter) emitAwaitExpression(expr *parser.AwaitExpression) {
-	e.write("await ")
-	e.emitExpression(expr.Expr)
-}
-
 func (e *Emitter) emitBinaryExpression(expr *parser.BinaryExpression) {
 	precedence := Precedence(expr)
 	if expr.Left != nil {
@@ -335,6 +330,9 @@ func (e *Emitter) emitTupleExpression(t *parser.TupleExpression) {
 
 func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
 	switch u.Operator.Kind() {
+	case parser.AwaitKeyword:
+		e.write("await ")
+		e.emitExpression(u.Operand)
 	case parser.Bang:
 		if _, ok := u.Type().(parser.Boolean); ok {
 			e.write("!")
