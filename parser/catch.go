@@ -62,7 +62,12 @@ func (c *CatchExpression) Type() ExpressionType {
 }
 
 func (p *Parser) parseCatchExpression() Expression {
-	expr := p.parseAccessExpression()
+	var expr Expression
+	if p.allowBraceParsing {
+		expr = p.parseInstanceExpression()
+	} else {
+		expr = p.parseUnaryExpression()
+	}
 	if p.Peek().Kind() != CatchKeyword {
 		return expr
 	}

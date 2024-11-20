@@ -152,7 +152,7 @@ func TestObjectExpression(t *testing.T) {
 }
 
 func TestListInstanciation(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("[]number(1, 2)"))
+	parser, err := MakeParser(strings.NewReader("[]number{1, 2}"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -162,13 +162,13 @@ func TestListInstanciation(t *testing.T) {
 		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
 	}
 
-	object, ok := node.(*CallExpression)
+	object, ok := node.(*InstanceExpression)
 	if !ok {
-		t.Fatalf("Expected ObjectExpression, got %#v", node)
+		t.Fatalf("Expected InstanceExpression, got %#v", node)
 	}
 
-	_, ok = object.Callee.(*ListTypeExpression)
+	_, ok = object.Typing.(*ListTypeExpression)
 	if !ok {
-		t.Fatalf("Expected a list type, got %#v", object.Callee)
+		t.Fatalf("Expected a list type, got %#v", object.Typing)
 	}
 }
