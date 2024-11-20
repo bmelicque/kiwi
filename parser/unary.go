@@ -173,6 +173,9 @@ func (p *Parser) parseUnaryExpression() Expression {
 		if token.Kind() == AsyncKeyword {
 			validateAsyncOperand(p, expr)
 		}
+		if token.Kind() == BinaryAnd && !isReferencable(expr) {
+			p.report("Cannot reference such an expression", expr.Loc())
+		}
 		return &UnaryExpression{token, expr}
 	case LeftBracket:
 		return parseListTypeExpression(p)

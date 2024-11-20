@@ -250,6 +250,18 @@ func TestParseReference(t *testing.T) {
 	}
 }
 
+func TestParseReferenceBadOperand(t *testing.T) {
+	parser, err := MakeParser(strings.NewReader("&value()"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parser.parseExpression()
+
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 errors, got %+v: %#v", len(parser.errors), parser.errors)
+	}
+}
+
 func TestCheckReference(t *testing.T) {
 	parser, _ := MakeParser(nil)
 	// &number
