@@ -108,6 +108,8 @@ func (e *Emitter) emitExpression(expr parser.Expression) {
 		e.emitIdentifier(expr)
 	case *parser.IfExpression:
 		e.emitIfExpression(expr)
+	case *parser.InstanceExpression:
+		e.emitInstanceExpression(expr)
 	case *parser.Literal:
 		e.write(expr.Token.Text())
 	case *parser.ParenthesizedExpression:

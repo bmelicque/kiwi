@@ -179,15 +179,11 @@ func (e *Emitter) emitInstance(constructor parser.Expression, args *parser.Tuple
 		}
 	}
 }
-func (e *Emitter) emitInstanceExpression(expr *parser.CallExpression) {
-	e.emitInstance(expr.Callee, expr.Args.Expr.(*parser.TupleExpression))
+func (e *Emitter) emitInstanceExpression(expr *parser.InstanceExpression) {
+	e.emitInstance(expr.Typing, expr.Args.Expr.(*parser.TupleExpression))
 }
-func (e *Emitter) emitCallExpression(expr *parser.CallExpression, await bool) {
-	if _, ok := expr.Callee.Type().(parser.Type); ok {
-		e.emitInstanceExpression(expr)
-		return
-	}
 
+func (e *Emitter) emitCallExpression(expr *parser.CallExpression, await bool) {
 	if expr.Callee.Type().(parser.Function).Async && await {
 		e.write("await ")
 	}
