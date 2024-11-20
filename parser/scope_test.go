@@ -5,7 +5,7 @@ import (
 )
 
 func TestMapIdentifier(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &Identifier{Token: literal{kind: Name, value: "Map"}}
 	expr.typeCheck(parser)
 

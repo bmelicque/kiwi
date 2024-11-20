@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
@@ -28,29 +27,21 @@ func main() {
 	}
 	defer file.Close()
 
-	p, err := parser.MakeParser(bufio.NewReader(file))
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	parsed := p.ParseProgram()
-	program := make([]parser.Node, len(parsed))
-	parserErrors := p.GetReport()
-	if len(parserErrors) == 0 {
+	ast, errors := parser.Parse(file)
+	if len(errors) == 0 {
 		f, err := os.Create("out.js")
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer f.Close()
 
-		_, err = f.WriteString(emitter.EmitProgram(program))
+		_, err = f.WriteString(emitter.EmitProgram(ast))
 		if err != nil {
 			log.Fatal(err)
 		}
 		f.Sync()
 	} else {
-		for _, err := range parserErrors {
+		for _, err := range errors {
 			fmt.Printf("Error at line %v, col. %v: %v\n", err.Loc.Start.Line, err.Loc.Start.Col, err.Message)
 		}
 	}

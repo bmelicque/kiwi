@@ -6,7 +6,7 @@ import (
 )
 
 func TestCheckPropertyAccess(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	alias := TypeAlias{
 		Name: "BoxedNumber",
 		Ref: Object{Members: map[string]ExpressionType{
@@ -31,7 +31,7 @@ func TestCheckPropertyAccess(t *testing.T) {
 }
 
 func TestCheckPropertyAccessThroughRef(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	alias := TypeAlias{
 		Name: "BoxedNumber",
 		Ref: Object{Members: map[string]ExpressionType{
@@ -56,7 +56,7 @@ func TestCheckPropertyAccessThroughRef(t *testing.T) {
 }
 
 func TestSumTypeConstructor1(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := PropertyAccessExpression{
 		Expr:     &Identifier{Token: literal{kind: Name, value: "?"}},
 		Property: &Identifier{Token: literal{kind: Name, value: "Some"}},
@@ -82,10 +82,7 @@ func TestSumTypeConstructor1(t *testing.T) {
 }
 
 func TestTupleIndexAccess(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("tuple.1"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("tuple.1"))
 	parser.scope.Add(
 		"tuple",
 		Loc{},

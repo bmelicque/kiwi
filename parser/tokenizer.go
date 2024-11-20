@@ -221,10 +221,10 @@ type Tokenizer interface {
 	DiscardLineBreaks()
 }
 
-func NewTokenizer(reader io.Reader) (*tokenizer, error) {
+func NewTokenizer(reader io.Reader) *tokenizer {
 	scanner := bufio.NewScanner(reader)
 	scanner.Split(split)
-	return &tokenizer{scanner, Position{1, 1}, nil, false}, nil
+	return &tokenizer{scanner, Position{1, 1}, nil, false}
 }
 
 func (t *tokenizer) updateCursor(token string) {

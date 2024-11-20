@@ -6,10 +6,7 @@ import (
 )
 
 func TestParseAsyncExpression(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("async fetch()"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("async fetch()"))
 	parser.parseUnaryExpression()
 
 	if len(parser.errors) > 0 {
@@ -18,10 +15,7 @@ func TestParseAsyncExpression(t *testing.T) {
 }
 
 func TestParseAsyncNoExpr(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("async"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("async"))
 	parser.parseUnaryExpression()
 
 	if len(parser.errors) != 1 {
@@ -30,10 +24,7 @@ func TestParseAsyncNoExpr(t *testing.T) {
 }
 
 func TestParseAsyncNotCall(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("async fetch"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("async fetch"))
 	parser.parseUnaryExpression()
 
 	if len(parser.errors) != 1 {
@@ -42,7 +33,7 @@ func TestParseAsyncNotCall(t *testing.T) {
 }
 
 func TestCheckAsyncExpression(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	parser.scope.Add("fetch", Loc{}, Function{
 		Params:   &Tuple{},
 		Returned: String{},
@@ -62,10 +53,7 @@ func TestCheckAsyncExpression(t *testing.T) {
 }
 
 func TestParseAwaitExpression(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("await request"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("await request"))
 	parser.parseUnaryExpression()
 
 	if len(parser.errors) > 0 {
@@ -74,10 +62,7 @@ func TestParseAwaitExpression(t *testing.T) {
 }
 
 func TestParseAwaitExpressionNoExpr(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("await"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("await"))
 	parser.parseUnaryExpression()
 
 	if len(parser.errors) != 1 {
@@ -86,7 +71,7 @@ func TestParseAwaitExpressionNoExpr(t *testing.T) {
 }
 
 func TestCheckAwaitExpression(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	parser.scope.Add("req", Loc{}, makePromise(Number{}))
 	expr := &UnaryExpression{
 		Operator: token{kind: AwaitKeyword},
@@ -102,7 +87,7 @@ func TestCheckAwaitExpression(t *testing.T) {
 }
 
 func TestCheckAwaitExpressionNotPromise(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	parser.scope.Add("req", Loc{}, Number{})
 	expr := &UnaryExpression{
 		Operator: token{kind: AwaitKeyword},
@@ -118,10 +103,7 @@ func TestCheckAwaitExpressionNotPromise(t *testing.T) {
 }
 
 func TestUnaryExpression(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("?number"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("?number"))
 	expr := parser.parseUnaryExpression()
 
 	if len(parser.errors) != 0 {
@@ -149,7 +131,7 @@ func TestUnaryExpression(t *testing.T) {
 
 func TestCheckOptionType(t *testing.T) {
 	// ?number
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &UnaryExpression{
 		Operator: token{kind: QuestionMark},
 		Operand:  &Literal{Token: token{kind: NumberKeyword}},
@@ -173,10 +155,7 @@ func TestCheckOptionType(t *testing.T) {
 }
 
 func TestNoOptionValue(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("?42"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("?42"))
 	expr := parser.parseUnaryExpression()
 	expr.typeCheck(parser)
 
@@ -187,7 +166,7 @@ func TestNoOptionValue(t *testing.T) {
 
 func TestCheckErrorType(t *testing.T) {
 	// !number
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &UnaryExpression{
 		Operator: token{kind: Bang},
 		Operand:  &Literal{Token: token{kind: NumberKeyword}},
@@ -212,7 +191,7 @@ func TestCheckErrorType(t *testing.T) {
 
 func TestCheckLogicalNot(t *testing.T) {
 	// !true
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &UnaryExpression{
 		Operator: token{kind: Bang},
 		Operand:  &Literal{literal{kind: BooleanLiteral, value: "true"}},
@@ -235,10 +214,7 @@ func TestCheckLogicalNot(t *testing.T) {
 }
 
 func TestParseReference(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("&value"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("&value"))
 	node := parser.parseExpression()
 
 	if len(parser.errors) != 0 {
@@ -251,10 +227,7 @@ func TestParseReference(t *testing.T) {
 }
 
 func TestParseReferenceBadOperand(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("&value()"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("&value()"))
 	parser.parseExpression()
 
 	if len(parser.errors) != 1 {
@@ -263,7 +236,7 @@ func TestParseReferenceBadOperand(t *testing.T) {
 }
 
 func TestCheckReference(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	// &number
 	expr := &UnaryExpression{
 		Operator: token{kind: BinaryAnd},
@@ -295,10 +268,7 @@ func TestCheckReference(t *testing.T) {
 }
 
 func TestParseDereference(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("*ref"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("*ref"))
 	node := parser.parseExpression()
 
 	if len(parser.errors) != 0 {
@@ -311,7 +281,7 @@ func TestParseDereference(t *testing.T) {
 }
 
 func TestCheckDereference(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	// *ref
 	parser.scope.Add("ref", Loc{}, Ref{Number{}})
 	expr := &UnaryExpression{
@@ -338,10 +308,7 @@ func TestCheckDereference(t *testing.T) {
 }
 
 func TestListTypeExpression(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("[]number"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("[]number"))
 	node := parser.parseExpression()
 
 	if len(parser.errors) != 0 {
@@ -359,7 +326,7 @@ func TestListTypeExpression(t *testing.T) {
 
 func TestCheckListType(t *testing.T) {
 	// []number
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &ListTypeExpression{
 		Expr: &Literal{Token: token{kind: NumberKeyword}},
 	}
@@ -383,7 +350,7 @@ func TestCheckListType(t *testing.T) {
 
 func TestCheckListTypeNoValue(t *testing.T) {
 	// []42
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &ListTypeExpression{
 		Bracketed: &BracketedExpression{},
 		Expr:      &Literal{Token: literal{kind: NumberLiteral, value: "42"}},
@@ -407,10 +374,7 @@ func TestCheckListTypeNoValue(t *testing.T) {
 }
 
 func TestNestedListTypeExpression(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("[][]number"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("[][]number"))
 	node := parser.parseExpression()
 
 	if len(parser.errors) != 0 {
@@ -430,10 +394,7 @@ func TestNestedListTypeExpression(t *testing.T) {
 }
 
 func TestListTypeExpressionWithBracketed(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("[number]number"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("[number]number"))
 	parser.parseExpression()
 
 	if len(parser.errors) != 1 {
@@ -442,10 +403,7 @@ func TestListTypeExpressionWithBracketed(t *testing.T) {
 }
 
 func TestParseTryExpression(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("try result"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("try result"))
 	expr := parser.parseExpression()
 
 	if len(parser.errors) > 0 {
@@ -455,7 +413,7 @@ func TestParseTryExpression(t *testing.T) {
 }
 
 func TestCheckTryExpression(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	parser.scope.Add("result", Loc{}, makeResultType(Number{}, nil))
 	expr := &UnaryExpression{
 		Operator: token{kind: TryKeyword},
@@ -472,7 +430,7 @@ func TestCheckTryExpression(t *testing.T) {
 }
 
 func TestCheckTryExpressionBadType(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &UnaryExpression{
 		Operator: token{kind: TryKeyword},
 		Operand:  &Literal{literal{kind: NumberLiteral, value: "42"}},

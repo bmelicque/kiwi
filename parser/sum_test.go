@@ -7,10 +7,7 @@ import (
 
 func TestParseSumType(t *testing.T) {
 	str := "| Some{Type} | None"
-	parser, err := MakeParser(strings.NewReader(str))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader(str))
 	node := parser.parseSumType()
 
 	if len(parser.errors) > 0 {
@@ -28,10 +25,7 @@ func TestParseSumType(t *testing.T) {
 }
 
 func TestSumTypeLength(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("| Alone"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("| Alone"))
 	parser.parseSumType()
 
 	if len(parser.errors) != 1 {
@@ -40,7 +34,7 @@ func TestSumTypeLength(t *testing.T) {
 }
 
 func TestCheckSumType(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &SumType{Members: []SumTypeConstructor{
 		{
 			Name: &Identifier{Token: literal{kind: Name, value: "A"}},

@@ -30,18 +30,15 @@ type Parser struct {
 func (p *Parser) report(message string, loc Loc) {
 	p.errors = append(p.errors, ParserError{message, loc})
 }
-func (p Parser) GetReport() []ParserError {
-	return p.errors
-}
 
-func MakeParser(reader io.Reader) (*Parser, error) {
-	tokenizer, err := NewTokenizer(reader)
+func MakeParser(reader io.Reader) *Parser {
+	tokenizer := NewTokenizer(reader)
 	return &Parser{
 		tokenizer:         *tokenizer,
 		scope:             &std,
 		allowBraceParsing: true,
 		allowCallExpr:     true,
-	}, err
+	}
 }
 
 func (p *Parser) pushScope(scope *Scope) {
@@ -56,26 +53,6 @@ func (p *Parser) dropScope() {
 		}
 	}
 	p.scope = p.scope.outer
-}
-
-func (p *Parser) ParseProgram() []Node {
-	statements := []Node{}
-
-	for p.Peek().Kind() != EOF {
-		statements = append(statements, p.parseStatement())
-		next := p.Peek().Kind()
-		if next == EOL {
-			p.DiscardLineBreaks()
-		} else if next != EOF {
-			p.report("End of line expected", p.Peek().Loc())
-		}
-	}
-
-	for i := range statements {
-		statements[i].typeCheck(p)
-	}
-
-	return statements
 }
 
 func (p *Parser) parseStatement() Node {

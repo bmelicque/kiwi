@@ -90,8 +90,7 @@ func TestEmitReference(t *testing.T) {
 
 	expected := "function (_) { return arguments.length ? void (value = _) : value }"
 
-	parser, _ := parser.MakeParser(strings.NewReader(source))
-	ast := parser.ParseProgram()
+	ast, _ := parser.Parse(strings.NewReader(source))
 
 	emitter := makeEmitter()
 	emitter.emit(ast[1])
@@ -108,8 +107,7 @@ func TestEmitDeref(t *testing.T) {
 
 	expected := "ref()"
 
-	parser, _ := parser.MakeParser(strings.NewReader(source))
-	ast := parser.ParseProgram()
+	ast, _ := parser.Parse(strings.NewReader(source))
 
 	emitter := makeEmitter()
 	emitter.emit(ast[2])

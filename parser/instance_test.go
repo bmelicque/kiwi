@@ -6,10 +6,7 @@ import (
 )
 
 func TestParseMapInstanciation(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("Map{\"key\": \"value\"}"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("Map{\"key\": \"value\"}"))
 	parser.parseInstanceExpression()
 
 	if len(parser.errors) > 0 {
@@ -18,7 +15,7 @@ func TestParseMapInstanciation(t *testing.T) {
 }
 
 func TestCheckImplicitMapInstanciation(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &InstanceExpression{
 		Typing: &Identifier{Token: literal{kind: Name, value: "Map"}},
 		Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
@@ -44,7 +41,7 @@ func TestCheckImplicitMapInstanciation(t *testing.T) {
 }
 
 func TestCheckMapInstanciationMissingTypeArg(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &InstanceExpression{
 		Typing: &Identifier{Token: literal{kind: Name, value: "Map"}},
 		Args:   &BracedExpression{Expr: makeTuple(nil)},
@@ -57,7 +54,7 @@ func TestCheckMapInstanciationMissingTypeArg(t *testing.T) {
 }
 
 func TestCheckExplicitMapInstanciation(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &InstanceExpression{
 		Typing: &ComputedAccessExpression{
 			Expr: &Identifier{Token: literal{kind: Name, value: "Map"}},
@@ -83,7 +80,7 @@ func TestCheckExplicitMapInstanciation(t *testing.T) {
 }
 
 func TestCheckMapEntries(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &InstanceExpression{
 		Typing: &ComputedAccessExpression{
 			Expr: &Identifier{Token: literal{kind: Name, value: "Map"}},
@@ -111,7 +108,7 @@ func TestCheckMapEntries(t *testing.T) {
 }
 
 func TestCheckMapEntriesBadTypes(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &InstanceExpression{
 		Typing: &ComputedAccessExpression{
 			Expr: &Identifier{Token: literal{kind: Name, value: "Map"}},

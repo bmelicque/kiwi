@@ -6,10 +6,7 @@ import (
 )
 
 func TestForExpression(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("for true { 42 }"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("for true { 42 }"))
 	parser.parseForExpression()
 
 	if len(parser.errors) != 0 {
@@ -18,10 +15,7 @@ func TestForExpression(t *testing.T) {
 }
 
 func TestForExpressionType(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("for true { break 42 }"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("for true { break 42 }"))
 	expr := parser.parseForExpression()
 	expr.typeCheck(parser)
 

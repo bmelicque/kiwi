@@ -7,10 +7,7 @@ import (
 
 func TestIf(t *testing.T) {
 	str := "if n == 2 { return 1 }"
-	parser, err := MakeParser(strings.NewReader(str))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader(str))
 	node := parser.parseIfExpression()
 	if node.Body == nil {
 		t.Fatalf("Expected a body, got %#v", node)
@@ -22,7 +19,7 @@ func TestIf(t *testing.T) {
 }
 
 func TestIfWithNonBoolean(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := IfExpression{
 		Condition: &Literal{Token: literal{kind: NumberLiteral, value: "42"}},
 		Body:      &Block{},
@@ -35,10 +32,7 @@ func TestIfWithNonBoolean(t *testing.T) {
 
 func TestIfElse(t *testing.T) {
 	str := "if false { true } else { true }"
-	parser, err := MakeParser(strings.NewReader(str))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader(str))
 	node := parser.parseIfExpression()
 
 	if len(parser.errors) != 0 {
@@ -61,7 +55,7 @@ func TestIfElse(t *testing.T) {
 
 func TestIfElseWithTypeMismatch(t *testing.T) {
 	// if false { 42 } else { false }
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := IfExpression{
 		Keyword:   token{kind: IfKeyword},
 		Condition: &Literal{literal{kind: BooleanLiteral, value: "false"}},
@@ -81,10 +75,7 @@ func TestIfElseWithTypeMismatch(t *testing.T) {
 
 func TestIfElseIf(t *testing.T) {
 	str := "if false {} else if true {} "
-	parser, err := MakeParser(strings.NewReader(str))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader(str))
 	node := parser.parseIfExpression()
 
 	if len(parser.errors) != 0 {
@@ -104,10 +95,7 @@ func TestIfElseIf(t *testing.T) {
 
 func TestIfPattern(t *testing.T) {
 	str := "if Some(s) := option {}"
-	parser, err := MakeParser(strings.NewReader(str))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader(str))
 	expr := parser.parseIfExpression()
 
 	if len(parser.errors) != 0 {
@@ -120,7 +108,7 @@ func TestIfPattern(t *testing.T) {
 }
 
 func TestCheckIfPattern(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	parser.scope.Add("option", Loc{}, makeOptionType(Number{}))
 	// if Some(s) := option { s } else { 0 }
 	expr := &IfExpression{

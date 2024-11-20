@@ -6,10 +6,7 @@ import (
 )
 
 func TestFunctionType(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("(number) -> number"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("(number) -> number"))
 	node := parser.parseFunctionExpression(nil)
 
 	function, ok := node.(*FunctionTypeExpression)
@@ -23,10 +20,7 @@ func TestFunctionType(t *testing.T) {
 }
 
 func TestFunctionExpressionWithoutArgs(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("() => number { 42 }"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("() => number { 42 }"))
 	node := parser.parseFunctionExpression(nil)
 
 	function, ok := node.(*FunctionExpression)
@@ -48,10 +42,7 @@ func TestFunctionExpressionWithoutArgs(t *testing.T) {
 }
 
 func TestFunctionExpressionWithArgs(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("(n number) => number { n }"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("(n number) => number { n }"))
 	node := parser.parseFunctionExpression(nil)
 
 	function, ok := node.(*FunctionExpression)
@@ -72,10 +63,7 @@ func TestFunctionExpressionWithArgs(t *testing.T) {
 }
 
 func TestFunctionWithTypeArgs(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("[Type]() => {}"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("[Type]() => {}"))
 	node := parser.parseExpression()
 
 	_, ok := node.(*FunctionExpression)
@@ -86,7 +74,7 @@ func TestFunctionWithTypeArgs(t *testing.T) {
 }
 
 func TestCheckImplicitReturn(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &FunctionExpression{
 		Params: &ParenthesizedExpression{},
 		Body: &Block{Statements: []Node{
@@ -104,7 +92,7 @@ func TestCheckImplicitReturn(t *testing.T) {
 }
 
 func TestCheckImplicitReturnBadReturns(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	parser.scope.Add("result", Loc{}, makeResultType(Nil{}, Number{}))
 	// () => {
 	//		if true {
@@ -160,7 +148,7 @@ func TestCheckImplicitReturnBadReturns(t *testing.T) {
 }
 
 func TestCheckExplicitReturn(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &FunctionExpression{
 		Params: &ParenthesizedExpression{},
 		Explicit: &BinaryExpression{
@@ -200,7 +188,7 @@ func TestCheckExplicitReturn(t *testing.T) {
 }
 
 func TestCheckAsync(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	parser.scope.Add("fetch", Loc{}, Function{
 		Params:   &Tuple{},
 		Returned: String{},

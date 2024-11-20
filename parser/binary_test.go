@@ -6,10 +6,7 @@ import (
 )
 
 func TestBinaryExpression(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("2 ** 3"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("2 ** 3"))
 	expr := parser.parseBinaryExpression()
 
 	if len(parser.errors) > 0 {
@@ -24,10 +21,7 @@ func TestBinaryExpression(t *testing.T) {
 }
 
 func TestBinaryErrorType(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("ErrType!OkType"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("ErrType!OkType"))
 	expr := parser.parseExpression()
 
 	if len(parser.errors) > 0 {
@@ -42,7 +36,7 @@ func TestBinaryErrorType(t *testing.T) {
 }
 
 func TestCheckArithmeticExpression(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &BinaryExpression{
 		Left:  &Literal{literal{kind: NumberLiteral}},
 		Right: &Literal{literal{kind: NumberLiteral}},
@@ -76,7 +70,7 @@ func TestCheckArithmeticExpression(t *testing.T) {
 }
 
 func TestCheckLogicalExpression(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &BinaryExpression{
 		Left:  &Literal{literal{kind: BooleanLiteral}},
 		Right: &Literal{literal{kind: BooleanLiteral}},
@@ -110,7 +104,7 @@ func TestCheckLogicalExpression(t *testing.T) {
 }
 
 func TestCheckConcatExpression(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &BinaryExpression{
 		Left:     &Literal{literal{kind: StringLiteral}},
 		Right:    &Literal{literal{kind: StringLiteral}},
@@ -147,7 +141,7 @@ func TestCheckConcatExpression(t *testing.T) {
 }
 
 func TestCheckComparisonExpression(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &BinaryExpression{
 		Left:  &Literal{literal{kind: BooleanLiteral}},
 		Right: &Literal{literal{kind: BooleanLiteral}},
@@ -181,7 +175,7 @@ func TestCheckComparisonExpression(t *testing.T) {
 }
 
 func TestCheckBinaryErrorType(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &BinaryExpression{
 		Left:     &Literal{literal{kind: StringKeyword}},
 		Right:    &Literal{literal{kind: NumberKeyword}},

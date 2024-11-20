@@ -6,10 +6,7 @@ import (
 )
 
 func TestBreak(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("break true"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("break true"))
 	parser.pushScope(NewScope(LoopScope))
 	exit := parser.parseExit()
 
@@ -22,10 +19,7 @@ func TestBreak(t *testing.T) {
 }
 
 func TestBreakOutsideLoop(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("break true"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("break true"))
 	parser.parseExit()
 
 	if len(parser.errors) != 1 {
@@ -34,10 +28,7 @@ func TestBreakOutsideLoop(t *testing.T) {
 }
 
 func TestContinue(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("continue"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("continue"))
 	parser.pushScope(NewScope(LoopScope))
 	exit := parser.parseExit()
 
@@ -50,10 +41,7 @@ func TestContinue(t *testing.T) {
 }
 
 func TestContinueOutsideLoop(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("continue"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("continue"))
 	parser.parseExit()
 
 	if len(parser.errors) != 1 {
@@ -62,10 +50,7 @@ func TestContinueOutsideLoop(t *testing.T) {
 }
 
 func TestReturn(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("return true"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("return true"))
 	parser.pushScope(NewScope(FunctionScope))
 	exit := parser.parseExit()
 
@@ -78,10 +63,7 @@ func TestReturn(t *testing.T) {
 }
 
 func TestReturnOutsideFunction(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("return true"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("return true"))
 	parser.parseExit()
 
 	if len(parser.errors) != 1 {
@@ -90,10 +72,7 @@ func TestReturnOutsideFunction(t *testing.T) {
 }
 
 func TestThrow(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("throw true"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("throw true"))
 	parser.pushScope(NewScope(FunctionScope))
 	exit := parser.parseExit()
 
@@ -106,10 +85,7 @@ func TestThrow(t *testing.T) {
 }
 
 func TestThrowOutsideFunction(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("throw true"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("throw true"))
 	parser.parseExit()
 
 	if len(parser.errors) != 1 {
