@@ -15,6 +15,9 @@ func (u *UnaryExpression) getChildren() []Node {
 }
 
 func (u *UnaryExpression) typeCheck(p *Parser) {
+	if u.Operand == nil {
+		return
+	}
 	u.Operand.typeCheck(p)
 	switch u.Operator.Kind() {
 	case Bang:
@@ -26,6 +29,11 @@ func (u *UnaryExpression) typeCheck(p *Parser) {
 	case QuestionMark:
 		if _, ok := u.Operand.Type().(Type); !ok {
 			p.report("Type expected with question mark operator", u.Operand.Loc())
+		}
+	case TryKeyword:
+		alias, ok := u.Operand.Type().(TypeAlias)
+		if !ok || alias.Name != "!" {
+			p.report("Result type expected", u.Operand.Loc())
 		}
 	default:
 		panic(fmt.Sprintf("Operator '%v' not implemented!", u.Operator.Kind()))
@@ -56,6 +64,12 @@ func (u *UnaryExpression) Type() ExpressionType {
 			t = ty.Value
 		}
 		return Type{makeOptionType(t)}
+	case TryKeyword:
+		alias, ok := u.Operand.Type().(TypeAlias)
+		if !ok || alias.Name != "!" {
+			return Unknown{}
+		}
+		return alias.Ref.(Sum).getMember("Ok")
 	default:
 		return Unknown{}
 	}
@@ -101,7 +115,7 @@ func (l *ListTypeExpression) Type() ExpressionType {
 
 func (p *Parser) parseUnaryExpression() Expression {
 	switch p.Peek().Kind() {
-	case Bang, QuestionMark:
+	case Bang, QuestionMark, TryKeyword:
 		token := p.Consume()
 		expr := parseInnerUnary(p)
 		return &UnaryExpression{token, expr}

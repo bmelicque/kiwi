@@ -95,8 +95,6 @@ func (p *Parser) parseExpression() Expression {
 		return p.parseIfExpression()
 	case MatchKeyword:
 		return p.parseMatchExpression()
-	case TryKeyword:
-		return p.parseTryExpression()
 	default:
 		return p.parseTupleExpression()
 	}

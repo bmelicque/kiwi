@@ -138,9 +138,9 @@ func TestCheckImplicitReturnBadReturns(t *testing.T) {
 						},
 					}},
 					Alternate: &Block{Statements: []Node{
-						&TryExpression{
-							Keyword: token{kind: TryKeyword},
-							Expr:    &Identifier{Token: literal{kind: Name, value: "result"}},
+						&UnaryExpression{
+							Operator: token{kind: TryKeyword},
+							Operand:  &Identifier{Token: literal{kind: Name, value: "result"}},
 						},
 					}},
 				},

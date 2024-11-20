@@ -122,8 +122,6 @@ func (e *Emitter) emitExpression(expr parser.Expression) {
 		e.emitPropertyAccessExpression(expr)
 	case *parser.RangeExpression:
 		e.emitRangeExpression(expr)
-	case *parser.TryExpression:
-		e.emitTryExpression(expr)
 	case *parser.TupleExpression:
 		e.emitTupleExpression(expr)
 	case *parser.UnaryExpression:

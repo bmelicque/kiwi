@@ -317,10 +317,6 @@ func (e *Emitter) emitRangeExpression(r *parser.RangeExpression) {
 	e.write(")")
 }
 
-func (e *Emitter) emitTryExpression(t *parser.TryExpression) {
-	e.emitExpression(t.Expr)
-}
-
 func (e *Emitter) emitTupleExpression(t *parser.TupleExpression) {
 	if len(t.Elements) == 1 {
 		e.emit(t.Elements[0])
@@ -338,8 +334,13 @@ func (e *Emitter) emitTupleExpression(t *parser.TupleExpression) {
 }
 
 func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
-	if _, ok := u.Type().(parser.Boolean); ok && u.Operator.Kind() == parser.Bang {
-		e.write("!")
+	switch u.Operator.Kind() {
+	case parser.Bang:
+		if _, ok := u.Type().(parser.Boolean); ok {
+			e.write("!")
+			e.emitExpression(u.Operand)
+		}
+	case parser.TryKeyword:
 		e.emitExpression(u.Operand)
 	}
 }
