@@ -6,10 +6,6 @@ import (
 	"github.com/bmelicque/test-parser/parser"
 )
 
-func (e *Emitter) emitAsyncExpression(expr *parser.AsyncExpression) {
-	e.emitCallExpression(expr.Call, false)
-}
-
 func (e *Emitter) emitBinaryExpression(expr *parser.BinaryExpression) {
 	precedence := Precedence(expr)
 	if expr.Left != nil {
@@ -330,6 +326,8 @@ func (e *Emitter) emitTupleExpression(t *parser.TupleExpression) {
 
 func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
 	switch u.Operator.Kind() {
+	case parser.AsyncKeyword:
+		e.emitCallExpression(u.Operand.(*parser.CallExpression), false)
 	case parser.AwaitKeyword:
 		e.write("await ")
 		e.emitExpression(u.Operand)

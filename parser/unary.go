@@ -20,6 +20,8 @@ func (u *UnaryExpression) typeCheck(p *Parser) {
 	}
 	u.Operand.typeCheck(p)
 	switch u.Operator.Kind() {
+	case AsyncKeyword:
+		typeCheckAsyncExpression(p, u)
 	case AwaitKeyword:
 		alias, ok := u.Operand.Type().(TypeAlias)
 		if !ok || alias.Name != "..." {
@@ -44,6 +46,20 @@ func (u *UnaryExpression) typeCheck(p *Parser) {
 		panic(fmt.Sprintf("Operator '%v' not implemented!", u.Operator.Kind()))
 	}
 }
+func typeCheckAsyncExpression(p *Parser, u *UnaryExpression) {
+	call, ok := u.Operand.(*CallExpression)
+	if !ok || call.Callee == nil {
+		return
+	}
+	f, ok := call.Callee.Type().(Function)
+	if !ok {
+		p.report("Function expected", call.Loc())
+		return
+	}
+	if !f.Async {
+		p.report("'async' keyword has no effect in this expression", u.Loc())
+	}
+}
 
 func (u *UnaryExpression) Loc() Loc {
 	loc := u.Operator.Loc()
@@ -58,6 +74,8 @@ func (u *UnaryExpression) Type() ExpressionType {
 		return Unknown{}
 	}
 	switch u.Operator.Kind() {
+	case AsyncKeyword:
+		return makePromise(u.Operand.Type())
 	case AwaitKeyword:
 		alias, ok := u.Operand.Type().(TypeAlias)
 		if !ok || alias.Name != "..." {
@@ -130,9 +148,12 @@ func (l *ListTypeExpression) Type() ExpressionType {
 
 func (p *Parser) parseUnaryExpression() Expression {
 	switch p.Peek().Kind() {
-	case AwaitKeyword, Bang, QuestionMark, TryKeyword:
+	case AsyncKeyword, AwaitKeyword, Bang, QuestionMark, TryKeyword:
 		token := p.Consume()
 		expr := parseInnerUnary(p)
+		if token.Kind() == AsyncKeyword {
+			validateAsyncOperand(p, expr)
+		}
 		return &UnaryExpression{token, expr}
 	case LeftBracket:
 		return parseListTypeExpression(p)
@@ -141,14 +162,20 @@ func (p *Parser) parseUnaryExpression() Expression {
 	}
 }
 
+func validateAsyncOperand(p *Parser, operand Expression) {
+	if operand == nil {
+		return
+	}
+	if _, ok := operand.(*CallExpression); !ok {
+		p.report("Call expression expected", operand.Loc())
+	}
+}
+
 func parseInnerUnary(p *Parser) Expression {
 	memBrace := p.allowBraceParsing
-	memCall := p.allowCallExpr
 	p.allowBraceParsing = false
-	p.allowCallExpr = false
 	expr := p.parseUnaryExpression()
 	p.allowBraceParsing = memBrace
-	p.allowCallExpr = memCall
 	return expr
 }
 
