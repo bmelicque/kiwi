@@ -4,15 +4,13 @@ import (
 	"slices"
 )
 
-var operators = []TokenKind{LeftBracket, LeftParenthesis, Dot, LeftBrace}
+var operators = []TokenKind{LeftBracket, LeftParenthesis, Dot}
 
 func (p *Parser) parseAccessExpression() Expression {
 	expression := fallback(p)
 	for slices.Contains(operators, p.Peek().Kind()) {
 		next := p.Peek().Kind()
-		isForbidden := next == LeftBrace && !p.allowBraceParsing ||
-			next == LeftParenthesis && !p.allowCallExpr
-		if isForbidden {
+		if next == LeftParenthesis && !p.allowCallExpr {
 			return expression
 		}
 		expression = parseOneAccess(p, expression)

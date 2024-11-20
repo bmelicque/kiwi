@@ -87,10 +87,6 @@ func (e *Emitter) emit(node parser.Node) {
 
 func (e *Emitter) emitExpression(expr parser.Expression) {
 	switch expr := expr.(type) {
-	case *parser.AsyncExpression:
-		e.emitAsyncExpression(expr)
-	case *parser.AwaitExpression:
-		e.emitAwaitExpression(expr)
 	case *parser.Block:
 		e.emitBlockExpression(expr)
 	case *parser.BinaryExpression:
@@ -112,6 +108,8 @@ func (e *Emitter) emitExpression(expr parser.Expression) {
 		e.emitIdentifier(expr)
 	case *parser.IfExpression:
 		e.emitIfExpression(expr)
+	case *parser.InstanceExpression:
+		e.emitInstanceExpression(expr)
 	case *parser.Literal:
 		e.write(expr.Token.Text())
 	case *parser.ParenthesizedExpression:
@@ -122,8 +120,6 @@ func (e *Emitter) emitExpression(expr parser.Expression) {
 		e.emitPropertyAccessExpression(expr)
 	case *parser.RangeExpression:
 		e.emitRangeExpression(expr)
-	case *parser.TryExpression:
-		e.emitTryExpression(expr)
 	case *parser.TupleExpression:
 		e.emitTupleExpression(expr)
 	case *parser.UnaryExpression:

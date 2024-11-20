@@ -223,8 +223,8 @@ func typeCheckExplicitReturn(p *Parser, f *FunctionExpression) {
 	err := getErrorType(explicit)
 	tries := findTryExpressions(f.Body)
 	for _, t := range tries {
-		if !err.Extends(getErrorType(t.Expr.Type())) {
-			p.report("Error type doesn't match expected type", t.Expr.Loc())
+		if !err.Extends(getErrorType(t.Operand.Type())) {
+			p.report("Error type doesn't match expected type", t.Operand.Loc())
 		}
 	}
 	throws := findThrowStatements(f.Body)
@@ -306,13 +306,13 @@ func isReturnStatement(node Node) bool {
 
 // Find all the try expressions in a function body.
 // Don't check inside nested functions.
-func findTryExpressions(body *Block) []*TryExpression {
-	results := []*TryExpression{}
+func findTryExpressions(body *Block) []*UnaryExpression {
+	results := []*UnaryExpression{}
 	Walk(body, func(n Node, skip func()) {
 		if isFunctionExpression(n) {
 			skip()
 		}
-		if n, ok := n.(*TryExpression); ok {
+		if n, ok := n.(*UnaryExpression); ok && n.Operator.Kind() == TryKeyword {
 			results = append(results, n)
 		}
 	})

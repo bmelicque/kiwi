@@ -6,11 +6,11 @@ import (
 )
 
 func TestParseMapInstanciation(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("Map(\"key\": \"value\")"))
+	parser, err := MakeParser(strings.NewReader("Map{\"key\": \"value\"}"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	parser.parseAccessExpression()
+	parser.parseInstanceExpression()
 
 	if len(parser.errors) > 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
@@ -19,34 +19,35 @@ func TestParseMapInstanciation(t *testing.T) {
 
 func TestCheckImplicitMapInstanciation(t *testing.T) {
 	parser, _ := MakeParser(nil)
-	expr := &CallExpression{
-		Callee: &Identifier{Token: literal{kind: Name, value: "Map"}},
-		Args: &ParenthesizedExpression{Expr: &TupleExpression{Elements: []Expression{
+	expr := &InstanceExpression{
+		Typing: &Identifier{Token: literal{kind: Name, value: "Map"}},
+		Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
 			&Entry{
 				Key:   &Literal{literal{kind: StringLiteral, value: "\"key\""}},
 				Value: &Literal{literal{kind: StringLiteral, value: "\"value\""}},
 			},
-		}}},
+		},
+		}},
 	}
 	expr.typeCheck(parser)
 
 	if len(parser.errors) > 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	alias, ok := expr.typing.(TypeAlias)
+	alias, ok := expr.Type().(TypeAlias)
 	if !ok || alias.Name != "Map" {
 		t.Fatalf("Map expected")
 	}
 	if _, ok := alias.Ref.(Map).Key.(String); !ok {
-		t.Fatalf("Expected string keys")
+		t.Fatalf("Expected string keys, got %v", alias.Ref.(Map).Key.Text())
 	}
 }
 
 func TestCheckMapInstanciationMissingTypeArg(t *testing.T) {
 	parser, _ := MakeParser(nil)
-	expr := &CallExpression{
-		Callee: &Identifier{Token: literal{kind: Name, value: "Map"}},
-		Args:   &ParenthesizedExpression{Expr: &TupleExpression{Elements: []Expression{}}},
+	expr := &InstanceExpression{
+		Typing: &Identifier{Token: literal{kind: Name, value: "Map"}},
+		Args:   &BracedExpression{Expr: makeTuple(nil)},
 	}
 	expr.typeCheck(parser)
 
@@ -57,22 +58,22 @@ func TestCheckMapInstanciationMissingTypeArg(t *testing.T) {
 
 func TestCheckExplicitMapInstanciation(t *testing.T) {
 	parser, _ := MakeParser(nil)
-	expr := &CallExpression{
-		Callee: &ComputedAccessExpression{
+	expr := &InstanceExpression{
+		Typing: &ComputedAccessExpression{
 			Expr: &Identifier{Token: literal{kind: Name, value: "Map"}},
 			Property: &BracketedExpression{Expr: &TupleExpression{Elements: []Expression{
 				&Literal{token{kind: StringKeyword}},
 				&Literal{token{kind: StringKeyword}},
 			}}},
 		},
-		Args: &ParenthesizedExpression{Expr: &TupleExpression{}},
+		Args: &BracedExpression{Expr: makeTuple(nil)},
 	}
 	expr.typeCheck(parser)
 
 	if len(parser.errors) > 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	alias, ok := expr.typing.(TypeAlias)
+	alias, ok := expr.Type().(TypeAlias)
 	if !ok || alias.Name != "Map" {
 		t.Fatalf("Map expected")
 	}
@@ -83,23 +84,21 @@ func TestCheckExplicitMapInstanciation(t *testing.T) {
 
 func TestCheckMapEntries(t *testing.T) {
 	parser, _ := MakeParser(nil)
-	expr := &CallExpression{
-		Callee: &ComputedAccessExpression{
+	expr := &InstanceExpression{
+		Typing: &ComputedAccessExpression{
 			Expr: &Identifier{Token: literal{kind: Name, value: "Map"}},
 			Property: &BracketedExpression{Expr: &TupleExpression{Elements: []Expression{
 				&Literal{token{kind: StringKeyword}},
 				&Literal{token{kind: StringKeyword}},
 			}}},
 		},
-		Args: &ParenthesizedExpression{Expr: &TupleExpression{Elements: []Expression{
+		Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
 			&Entry{
 				Key:   &Literal{literal{kind: StringLiteral, value: "\"a\""}},
 				Value: &Literal{literal{kind: StringLiteral, value: "\"value\""}},
 			},
 			&Entry{
-				Key: &BracketedExpression{
-					Expr: &Literal{literal{kind: StringLiteral, value: "\"b\""}},
-				},
+				Key:   &Literal{literal{kind: StringLiteral, value: "\"b\""}},
 				Value: &Literal{literal{kind: StringLiteral, value: "\"value\""}},
 			},
 		}}},
@@ -113,15 +112,15 @@ func TestCheckMapEntries(t *testing.T) {
 
 func TestCheckMapEntriesBadTypes(t *testing.T) {
 	parser, _ := MakeParser(nil)
-	expr := &CallExpression{
-		Callee: &ComputedAccessExpression{
+	expr := &InstanceExpression{
+		Typing: &ComputedAccessExpression{
 			Expr: &Identifier{Token: literal{kind: Name, value: "Map"}},
 			Property: &BracketedExpression{Expr: &TupleExpression{Elements: []Expression{
 				&Literal{token{kind: StringKeyword}},
 				&Literal{token{kind: StringKeyword}},
 			}}},
 		},
-		Args: &ParenthesizedExpression{Expr: &TupleExpression{Elements: []Expression{
+		Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
 			&Entry{
 				Key:   &Literal{literal{kind: NumberLiteral, value: "1"}},
 				Value: &Literal{literal{kind: StringLiteral, value: "\"value\""}},

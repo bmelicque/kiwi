@@ -4,7 +4,7 @@ import "slices"
 
 type SumTypeConstructor struct {
 	Name   *Identifier
-	Params *ParenthesizedExpression // contains *TupleExpression
+	Params *BracedExpression // contains *TupleExpression
 }
 
 func (s SumTypeConstructor) Loc() Loc {
@@ -105,9 +105,9 @@ func (p *Parser) parseSumType() Expression {
 
 func parseSumTypeConstructor(p *Parser) SumTypeConstructor {
 	identifier := parseSumTypeConstructorName(p)
-	var params *ParenthesizedExpression
-	if p.Peek().Kind() == LeftParenthesis {
-		params = p.parseParenthesizedExpression()
+	var params *BracedExpression
+	if p.Peek().Kind() == LeftBrace {
+		params = p.parseBracedExpression()
 		params.Expr = makeTuple(params.Expr)
 	}
 	return SumTypeConstructor{identifier, params}

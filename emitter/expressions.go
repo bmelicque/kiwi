@@ -6,15 +6,6 @@ import (
 	"github.com/bmelicque/test-parser/parser"
 )
 
-func (e *Emitter) emitAsyncExpression(expr *parser.AsyncExpression) {
-	e.emitCallExpression(expr.Call, false)
-}
-
-func (e *Emitter) emitAwaitExpression(expr *parser.AwaitExpression) {
-	e.write("await ")
-	e.emitExpression(expr.Expr)
-}
-
 func (e *Emitter) emitBinaryExpression(expr *parser.BinaryExpression) {
 	precedence := Precedence(expr)
 	if expr.Left != nil {
@@ -188,15 +179,11 @@ func (e *Emitter) emitInstance(constructor parser.Expression, args *parser.Tuple
 		}
 	}
 }
-func (e *Emitter) emitInstanceExpression(expr *parser.CallExpression) {
-	e.emitInstance(expr.Callee, expr.Args.Expr.(*parser.TupleExpression))
+func (e *Emitter) emitInstanceExpression(expr *parser.InstanceExpression) {
+	e.emitInstance(expr.Typing, expr.Args.Expr.(*parser.TupleExpression))
 }
-func (e *Emitter) emitCallExpression(expr *parser.CallExpression, await bool) {
-	if _, ok := expr.Callee.Type().(parser.Type); ok {
-		e.emitInstanceExpression(expr)
-		return
-	}
 
+func (e *Emitter) emitCallExpression(expr *parser.CallExpression, await bool) {
 	if expr.Callee.Type().(parser.Function).Async && await {
 		e.write("await ")
 	}
@@ -317,10 +304,6 @@ func (e *Emitter) emitRangeExpression(r *parser.RangeExpression) {
 	e.write(")")
 }
 
-func (e *Emitter) emitTryExpression(t *parser.TryExpression) {
-	e.emitExpression(t.Expr)
-}
-
 func (e *Emitter) emitTupleExpression(t *parser.TupleExpression) {
 	if len(t.Elements) == 1 {
 		e.emit(t.Elements[0])
@@ -338,8 +321,18 @@ func (e *Emitter) emitTupleExpression(t *parser.TupleExpression) {
 }
 
 func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
-	if _, ok := u.Type().(parser.Boolean); ok && u.Operator.Kind() == parser.Bang {
-		e.write("!")
+	switch u.Operator.Kind() {
+	case parser.AsyncKeyword:
+		e.emitCallExpression(u.Operand.(*parser.CallExpression), false)
+	case parser.AwaitKeyword:
+		e.write("await ")
+		e.emitExpression(u.Operand)
+	case parser.Bang:
+		if _, ok := u.Type().(parser.Boolean); ok {
+			e.write("!")
+			e.emitExpression(u.Operand)
+		}
+	case parser.TryKeyword:
 		e.emitExpression(u.Operand)
 	}
 }
