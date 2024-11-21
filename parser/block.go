@@ -6,6 +6,7 @@ import (
 
 type Block struct {
 	Statements []Node
+	scope      *Scope
 	loc        Loc
 }
 
@@ -74,7 +75,7 @@ func (p *Parser) parseBlock() *Block {
 	}
 	end := p.Consume().Loc().End
 
-	return &Block{statements, Loc{start, end}}
+	return &Block{statements, p.scope, Loc{start, end}}
 }
 
 func reportUnreachableCode(p *Parser, statements []Node) {
@@ -95,4 +96,8 @@ func reportUnreachableCode(p *Parser, statements []Node) {
 	if foundUnreachable {
 		p.report("Detected unreachable code", unreachable)
 	}
+}
+
+func (b *Block) Scope() *Scope {
+	return b.scope
 }
