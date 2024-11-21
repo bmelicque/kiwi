@@ -6,10 +6,7 @@ import (
 )
 
 func TestParenthesized(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("(42)"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("(42)"))
 	paren := parser.parseParenthesizedExpression()
 	if _, ok := paren.Expr.(*Literal); !ok {
 		t.Fatalf("Expected literal between parentheses, got %v", paren.Expr)
@@ -17,10 +14,7 @@ func TestParenthesized(t *testing.T) {
 }
 
 func TestParenthesizedTuple(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("(1, 2)"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("(1, 2)"))
 	paren := parser.parseParenthesizedExpression()
 	if _, ok := paren.Expr.(*TupleExpression); !ok {
 		t.Fatalf("Expected TupleExpression between parentheses, got %#v", paren.Expr)
@@ -28,10 +22,7 @@ func TestParenthesizedTuple(t *testing.T) {
 }
 
 func TestObjectDescriptionSingleLine(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("(n number)"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("(n number)"))
 	node := parser.parseParenthesizedExpression()
 
 	if len(parser.errors) != 0 {
@@ -44,7 +35,7 @@ func TestObjectDescriptionSingleLine(t *testing.T) {
 }
 
 func TestCheckObjectDescriptionSingleLine(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &ParenthesizedExpression{Expr: &Param{
 		Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
 		Complement: &Literal{token{kind: NumberKeyword}},
@@ -71,10 +62,7 @@ func TestObjectDescription(t *testing.T) {
 	str += "    n number,\n"
 	str += "    s string,\n"
 	str += ")"
-	parser, err := MakeParser(strings.NewReader(str))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader(str))
 	node := parser.parseParenthesizedExpression()
 
 	if len(parser.errors) != 0 {
@@ -91,10 +79,7 @@ func TestObjectDescription(t *testing.T) {
 }
 
 func TestObjectDescriptionNoColon(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("(n: number)"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("(n: number)"))
 	parser.parseParenthesizedExpression()
 
 	if len(parser.errors) != 0 {

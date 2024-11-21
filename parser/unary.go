@@ -33,6 +33,12 @@ func (u *UnaryExpression) typeCheck(p *Parser) {
 		default:
 			p.report("Type or boolean expected with '!' operator", u.Operand.Loc())
 		}
+	case BinaryAnd:
+	case Mul:
+		if _, ok := u.Operand.Type().(Ref); !ok {
+			p.report("Reference expected", u.Operand.Loc())
+			return
+		}
 	case QuestionMark:
 		if _, ok := u.Operand.Type().(Type); !ok {
 			p.report("Type expected with question mark operator", u.Operand.Loc())
@@ -91,6 +97,19 @@ func (u *UnaryExpression) Type() ExpressionType {
 		} else {
 			return Boolean{}
 		}
+	case BinaryAnd:
+		switch t := u.Operand.Type().(type) {
+		case Type:
+			return Type{Ref{t.Value}}
+		default:
+			return Ref{t}
+		}
+	case Mul:
+		ref, ok := u.Operand.Type().(Ref)
+		if !ok {
+			return Unknown{}
+		}
+		return ref.To
 	case QuestionMark:
 		t := u.Operand.Type()
 		if ty, ok := t.(Type); ok {
@@ -148,11 +167,14 @@ func (l *ListTypeExpression) Type() ExpressionType {
 
 func (p *Parser) parseUnaryExpression() Expression {
 	switch p.Peek().Kind() {
-	case AsyncKeyword, AwaitKeyword, Bang, QuestionMark, TryKeyword:
+	case AsyncKeyword, AwaitKeyword, Bang, BinaryAnd, Mul, QuestionMark, TryKeyword:
 		token := p.Consume()
 		expr := parseInnerUnary(p)
 		if token.Kind() == AsyncKeyword {
 			validateAsyncOperand(p, expr)
+		}
+		if token.Kind() == BinaryAnd && !isReferencable(expr) {
+			p.report("Cannot reference such an expression", expr.Loc())
 		}
 		return &UnaryExpression{token, expr}
 	case LeftBracket:

@@ -30,7 +30,7 @@ func (p *PropertyAccessExpression) Type() ExpressionType { return p.typing }
 
 func (expr *PropertyAccessExpression) typeCheck(p *Parser) {
 	expr.Expr.typeCheck(p)
-	switch expr.Expr.Type().(type) {
+	switch deref(expr.Expr.Type()).(type) {
 	case Tuple:
 		typeCheckTupleIndexAccess(p, expr)
 	case Type:
@@ -73,7 +73,7 @@ func typeCheckTupleIndexAccess(p *Parser, expr *PropertyAccessExpression) {
 		expr.typing = Unknown{}
 		return
 	}
-	elements := expr.Expr.Type().(Tuple).elements
+	elements := deref(expr.Expr.Type()).(Tuple).elements
 	if number > len(elements)-1 || number < 0 {
 		p.report("Index out of range", property.Loc())
 		expr.typing = Unknown{}
@@ -131,7 +131,7 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 		name = property.Token.Text()
 	}
 
-	alias, ok := expr.Expr.Type().(TypeAlias)
+	alias, ok := deref(expr.Expr.Type()).(TypeAlias)
 	if !ok {
 		p.report(
 			fmt.Sprintf("Property '%v' doesn't exist on this type", name),

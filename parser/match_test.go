@@ -10,10 +10,7 @@ func TestMatch(t *testing.T) {
 	str += "case Some(s):\n"
 	str += "    return s\n"
 	str += "}"
-	parser, err := MakeParser(strings.NewReader(str))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader(str))
 	node := parser.parseMatchExpression()
 	statement, ok := node.(*MatchExpression)
 	if !ok {

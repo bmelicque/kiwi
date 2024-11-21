@@ -1,6 +1,7 @@
 package emitter
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/bmelicque/test-parser/parser"
@@ -80,5 +81,38 @@ func TestMapElementAccess(t *testing.T) {
 	expected := "map.get(\"key\")"
 	if text != expected {
 		t.Fatalf("Expected string:\n%v\ngot:\n%v", expected, text)
+	}
+}
+
+func TestEmitReference(t *testing.T) {
+	source := "value := 0\n"
+	source += "&value"
+
+	expected := "function (_) { return arguments.length ? void (value = _) : value }"
+
+	ast, _ := parser.Parse(strings.NewReader(source))
+
+	emitter := makeEmitter()
+	emitter.emit(ast[1])
+	received := emitter.string()
+	if emitter.string() != expected {
+		t.Fatalf("expected '%v', got '%v'", expected, received)
+	}
+}
+
+func TestEmitDeref(t *testing.T) {
+	source := "value := 0\n"
+	source += "ref := &value\n"
+	source += "*ref"
+
+	expected := "ref()"
+
+	ast, _ := parser.Parse(strings.NewReader(source))
+
+	emitter := makeEmitter()
+	emitter.emit(ast[2])
+	received := emitter.string()
+	if emitter.string() != expected {
+		t.Fatalf("expected '%v', got '%v'", expected, received)
 	}
 }

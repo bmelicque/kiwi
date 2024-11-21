@@ -6,10 +6,7 @@ import (
 )
 
 func TestEmptyBlock(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("{}"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("{}"))
 	block := parser.parseBlock()
 
 	if len(parser.errors) != 0 {
@@ -21,10 +18,7 @@ func TestEmptyBlock(t *testing.T) {
 }
 
 func TestSingleLineBlock(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("{ \"Hello, world!\" }"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("{ \"Hello, world!\" }"))
 	block := parser.parseBlock()
 
 	if len(parser.errors) != 0 {
@@ -40,10 +34,7 @@ func TestMultilineBlock(t *testing.T) {
 	str += "    \"Hello, world!\"\n"
 	str += "    \"Hello, world!\"\n"
 	str += "}"
-	parser, err := MakeParser(strings.NewReader(str))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader(str))
 	block := parser.parseBlock()
 
 	if len(parser.errors) != 0 {
@@ -62,10 +53,7 @@ func TestUnreachableCode(t *testing.T) {
 	str += "    return \"Hello, world!\"\n"
 	str += "    \"Hello, world!\"\n"
 	str += "}"
-	parser, err := MakeParser(strings.NewReader(str))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader(str))
 	parser.pushScope(NewScope(FunctionScope))
 	parser.parseBlock()
 

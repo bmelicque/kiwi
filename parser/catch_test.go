@@ -6,10 +6,7 @@ import (
 )
 
 func TestParseCatchExpression(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("result catch err { true }"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("result catch err { true }"))
 	expr := parser.parseCatchExpression()
 
 	if len(parser.errors) > 0 {
@@ -21,10 +18,7 @@ func TestParseCatchExpression(t *testing.T) {
 }
 
 func TestParseCatchExpressionNoIdentifier(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("result catch {}"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("result catch {}"))
 	parser.parseCatchExpression()
 
 	if len(parser.errors) != 1 {
@@ -33,10 +27,7 @@ func TestParseCatchExpressionNoIdentifier(t *testing.T) {
 }
 
 func TestParseCatchExpressionBadIdentifier(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("result catch number {}"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("result catch number {}"))
 	parser.parseCatchExpression()
 
 	if len(parser.errors) != 1 {
@@ -45,10 +36,7 @@ func TestParseCatchExpressionBadIdentifier(t *testing.T) {
 }
 
 func TestParseCatchExpressionBadTokens(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("result catch err err {}"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("result catch err err {}"))
 	parser.parseCatchExpression()
 
 	if len(parser.errors) != 1 {
@@ -57,7 +45,7 @@ func TestParseCatchExpressionBadTokens(t *testing.T) {
 }
 
 func TestCheckCatchExpression(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	parser.scope.Add(
 		"result",
 		Loc{},
@@ -83,7 +71,7 @@ func TestCheckCatchExpression(t *testing.T) {
 }
 
 func TestCheckCatchExpressionNotResult(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	expr := &CatchExpression{
 		Left:       &Literal{literal{kind: NumberLiteral, value: "42"}},
 		Keyword:    token{kind: CatchKeyword},
@@ -104,7 +92,7 @@ func TestCheckCatchExpressionNotResult(t *testing.T) {
 }
 
 func TestCheckCatchExpressionBlockNotMatching(t *testing.T) {
-	parser, _ := MakeParser(nil)
+	parser := MakeParser(nil)
 	parser.scope.Add(
 		"result",
 		Loc{},

@@ -6,10 +6,7 @@ import (
 )
 
 func TestEmptyBrackets(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("[]"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("[]"))
 	parser.parseBracketedExpression()
 
 	if len(parser.errors) != 0 {
@@ -18,10 +15,7 @@ func TestEmptyBrackets(t *testing.T) {
 }
 
 func TestSimpleBracket(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("[Type]"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("[Type]"))
 	parser.parseBracketedExpression()
 
 	if len(parser.errors) != 0 {
@@ -30,10 +24,7 @@ func TestSimpleBracket(t *testing.T) {
 }
 
 func TestBracketedTuple(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("[Type, Type]"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("[Type, Type]"))
 	parser.parseBracketedExpression()
 
 	if len(parser.errors) != 0 {

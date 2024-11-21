@@ -168,6 +168,33 @@ func (ta TypeAlias) implements(trait Trait) bool {
 	return true
 }
 
+type Ref struct {
+	To ExpressionType
+}
+
+func (r Ref) Extends(t ExpressionType) bool {
+	ref, ok := t.(Ref)
+	if !ok {
+		return false
+	}
+	return r.To.Extends(ref.To)
+}
+func (r Ref) Text() string { return "@" + r.To.Text() }
+func (r Ref) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
+	ref, ok := compared.(Ref)
+	if !ok {
+		return r, false
+	}
+	r.To, ok = r.To.build(scope, ref.To)
+	return r, ok
+}
+func deref(t ExpressionType) ExpressionType {
+	if ref, ok := t.(Ref); ok {
+		return ref.To
+	}
+	return t
+}
+
 type List struct {
 	Element ExpressionType
 }

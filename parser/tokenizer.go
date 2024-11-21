@@ -179,7 +179,7 @@ var number = regexp.MustCompile(`^\d+`)
 var str = regexp.MustCompile(`^".+?[^\\]"`)
 var doubleQuoteString = regexp.MustCompile(`^"(.*?)[^\\]"`)
 var word = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9]*`)
-var operator = regexp.MustCompile(`^(\+\+?|->?|\*\*?|/|%|::|:=|\.\.=?|=>|<=?|>=?|={1,2}|!=?|\|{1,2})|\?`)
+var operator = regexp.MustCompile(`^(\+\+?|->?|\*\*?|/|%|::|:=|\.\.=?|=>|<=?|>=?|={1,2}|!=?|\|{1,2})|\?|&`)
 var punctuation = regexp.MustCompile(`^(\[|\]|,|:|\(|\)|\{|\}|_|\.)`)
 
 func split(data []byte, atEOF bool) (advance int, token []byte, err error) {
@@ -221,10 +221,10 @@ type Tokenizer interface {
 	DiscardLineBreaks()
 }
 
-func NewTokenizer(reader io.Reader) (*tokenizer, error) {
+func NewTokenizer(reader io.Reader) *tokenizer {
 	scanner := bufio.NewScanner(reader)
 	scanner.Split(split)
-	return &tokenizer{scanner, Position{1, 1}, nil, false}, nil
+	return &tokenizer{scanner, Position{1, 1}, nil, false}
 }
 
 func (t *tokenizer) updateCursor(token string) {

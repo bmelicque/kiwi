@@ -9,6 +9,19 @@ import (
 
 const maxClassParamsLength = 66
 
+func emitAssign(e *Emitter, pattern parser.Expression, value parser.Expression) {
+	e.emit(pattern)
+	e.write(" = ")
+	switch value.Type().(type) {
+	case parser.Nil, parser.Number, parser.Boolean, parser.String, parser.Function:
+		e.emit(value)
+	default:
+		e.write("structuredClone(")
+		e.emit(value)
+		e.write(")")
+	}
+	e.write(";\n")
+}
 func (e *Emitter) emitAssignment(a *parser.Assignment) {
 	switch a.Operator.Kind() {
 	case parser.Assign:
@@ -16,16 +29,10 @@ func (e *Emitter) emitAssignment(a *parser.Assignment) {
 			emitSetMap(e, a)
 			return
 		}
-		e.emit(a.Pattern)
-		e.write(" = ")
-		e.emit(a.Value)
-		e.write(";\n")
+		emitAssign(e, a.Pattern, a.Value)
 	case parser.Declare:
 		e.write("let ")
-		e.emit(a.Pattern)
-		e.write(" = ")
-		e.emit(a.Value)
-		e.write(";\n")
+		emitAssign(e, a.Pattern, a.Value)
 	case parser.Define:
 		if isTypePattern(a.Pattern) {
 			e.emitTypeDeclaration(a)

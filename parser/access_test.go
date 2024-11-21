@@ -6,10 +6,7 @@ import (
 )
 
 func TestComputedPropertyAccess(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("n[p]"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("n[p]"))
 	node := parser.parseAccessExpression()
 
 	expr, ok := node.(*ComputedAccessExpression)
@@ -25,10 +22,7 @@ func TestComputedPropertyAccess(t *testing.T) {
 }
 
 func TestPropertyAccess(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("n.p"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("n.p"))
 	node := parser.parseAccessExpression()
 
 	expr, ok := node.(*PropertyAccessExpression)
@@ -44,10 +38,7 @@ func TestPropertyAccess(t *testing.T) {
 }
 
 func TestTupleAccess(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("tuple.0"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("tuple.0"))
 	parser.scope.Add("tuple", Loc{}, Tuple{[]ExpressionType{Number{}}})
 	node := parser.parseAccessExpression()
 
@@ -64,10 +55,7 @@ func TestTupleAccess(t *testing.T) {
 }
 
 func TestMethodAccess(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("(t Type).method"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("(t Type).method"))
 	node := parser.parseAccessExpression()
 
 	expr, ok := node.(*PropertyAccessExpression)
@@ -85,10 +73,7 @@ func TestMethodAccess(t *testing.T) {
 }
 
 func TestTraitDefinition(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("(Self).(method() -> Self)"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("(Self).(method() -> Self)"))
 	node := parser.parseAccessExpression()
 
 	if len(parser.errors) > 0 {
@@ -102,10 +87,7 @@ func TestTraitDefinition(t *testing.T) {
 }
 
 func TestFunctionCall(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("f(42)"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("f(42)"))
 	node := parser.parseAccessExpression()
 
 	expr, ok := node.(*CallExpression)
@@ -118,10 +100,7 @@ func TestFunctionCall(t *testing.T) {
 }
 
 func TestFunctionCallWithTypeArgs(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("f[number](42)"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("f[number](42)"))
 	node := parser.parseAccessExpression()
 
 	expr, ok := node.(*CallExpression)
@@ -136,10 +115,7 @@ func TestFunctionCallWithTypeArgs(t *testing.T) {
 }
 
 func TestObjectExpression(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("Type(value: 42)"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("Type(value: 42)"))
 	node := parser.parseExpression()
 
 	_, ok := node.(*CallExpression)
@@ -152,10 +128,7 @@ func TestObjectExpression(t *testing.T) {
 }
 
 func TestListInstanciation(t *testing.T) {
-	parser, err := MakeParser(strings.NewReader("[]number{1, 2}"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	parser := MakeParser(strings.NewReader("[]number{1, 2}"))
 	node := parser.parseExpression()
 
 	if len(parser.errors) != 0 {
