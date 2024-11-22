@@ -3,14 +3,14 @@ package parser
 type Variable struct {
 	declaredAt Loc
 	typing     ExpressionType
-	writes     []Loc
+	writes     []Node
 	reads      []Loc
 }
 
-func (v *Variable) readAt(loc Loc)  { v.reads = append(v.reads, loc) }
-func (v *Variable) writeAt(loc Loc) { v.writes = append(v.writes, loc) }
+func (v *Variable) readAt(l Loc)   { v.reads = append(v.reads, l) }
+func (v *Variable) writeAt(n Node) { v.writes = append(v.writes, n) }
 
-type ScopeKind int8
+type ScopeKind uint8
 
 const (
 	ProgramScope ScopeKind = iota
@@ -71,22 +71,6 @@ func (s *Scope) AddMethod(name string, self TypeAlias, signature Function) {
 	}
 	self.registerMethod(name, signature)
 	t.typing = Type{self}
-}
-
-func (s *Scope) WriteAt(name string, loc Loc) {
-	variable, ok := s.Find(name)
-	// TODO: panic on error
-	if ok {
-		variable.writeAt(loc)
-	}
-}
-
-func (s *Scope) ReadAt(name string, loc Loc) {
-	variable, ok := s.Find(name)
-	// TODO: panic on error
-	if ok {
-		variable.readAt(loc)
-	}
 }
 
 func (s Scope) in(kind ScopeKind) bool {

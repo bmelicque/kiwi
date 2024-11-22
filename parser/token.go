@@ -50,7 +50,11 @@ func (i *Identifier) IsType() bool {
 func (i *Identifier) typeCheck(p *Parser) {
 	name := i.Text()
 	if variable, ok := p.scope.Find(name); ok {
-		p.scope.ReadAt(name, i.Loc())
+		if p.writing != nil {
+			variable.writeAt(p.writing)
+		} else {
+			variable.readAt(i.Loc())
+		}
 		i.typing = variable.typing
 	} else {
 		i.typing = Unknown{}

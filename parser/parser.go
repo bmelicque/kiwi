@@ -15,6 +15,7 @@ type Parser struct {
 	tokenizer
 	errors            []ParserError
 	scope             *Scope
+	writing           Node
 	multiline         bool
 	allowEmptyExpr    bool
 	allowBraceParsing bool

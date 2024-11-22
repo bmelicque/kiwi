@@ -62,7 +62,10 @@ func (p *Parser) parseAssignment() Node {
 
 // type check assignment where operator is '='
 func typeCheckAssignment(p *Parser, a *Assignment) {
+	outer := p.writing
+	p.writing = a
 	a.Pattern.typeCheck(p)
+	p.writing = outer
 	a.Value.typeCheck(p)
 	reportInvalidVariableType(p, a.Value)
 
