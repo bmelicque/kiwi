@@ -15,6 +15,7 @@ func (b *Block) getChildren() []Node {
 }
 
 func (b *Block) typeCheck(p *Parser) {
+	b.scope = p.scope
 	for i := range b.Statements {
 		b.Statements[i].typeCheck(p)
 	}

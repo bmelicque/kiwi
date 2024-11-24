@@ -35,7 +35,13 @@ func (f *FunctionExpression) Type() ExpressionType {
 	if f.TypeParams != nil {
 		f.TypeParams.getGenerics()
 	}
-	tuple, _ := f.Params.Type().(Tuple)
+	t := f.Params.Type()
+	var tuple Tuple
+	if tu, ok := t.(Tuple); ok {
+		tuple = tu
+	} else {
+		tuple = Tuple{[]ExpressionType{t}}
+	}
 	return Function{tp, &tuple, f.returnType, f.canBeAsync}
 }
 

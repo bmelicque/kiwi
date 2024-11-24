@@ -255,7 +255,10 @@ func (e *Emitter) emitFunctionBody(b *parser.Block, params *parser.TupleExpressi
 			continue
 		}
 		name := param.(*parser.Param).Identifier.Text()
-		v, _ := b.Scope().Find(name)
+		v, ok := b.Scope().Find(name)
+		if !ok {
+			panic("variable should be found in current scope...")
+		}
 		if isMutated(v) {
 			e.indent()
 			e.write(fmt.Sprintf("%v = structuredClone(%v);\n", name, name))
