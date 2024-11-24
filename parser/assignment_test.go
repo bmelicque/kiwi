@@ -200,7 +200,7 @@ func TestCheckVariableDeclaration(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected 'v' to have been declared as a number (got %#v)", v)
 	}
-	if _, ok := v.typing.(Number); !ok {
+	if _, ok := v.Typing.(Number); !ok {
 		t.Fatalf("Expected 'v' to have been declared as a number (got %#v)", v)
 	}
 }
@@ -241,7 +241,7 @@ func TestCheckTupleDeclaration(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected 'a' to have been declared as a number (got %#v)", a)
 	}
-	if _, ok := a.typing.(Number); !ok {
+	if _, ok := a.Typing.(Number); !ok {
 		t.Fatalf("Expected 'a' to have been declared as a number (got %#v)", a)
 	}
 
@@ -249,7 +249,7 @@ func TestCheckTupleDeclaration(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected 'b' to have been declared as a string (got %#v)", b)
 	}
-	if _, ok := b.typing.(String); !ok {
+	if _, ok := b.Typing.(String); !ok {
 		t.Fatalf("Expected 'b' to have been declared as a string (got %#v)", b)
 	}
 }
@@ -329,7 +329,7 @@ func TestCheckObjectTypeDefinition(t *testing.T) {
 	if !ok {
 		t.Fatal("Expected 'Type' to have been added to scope")
 	}
-	typing, ok := ty.typing.(Type)
+	typing, ok := ty.Typing.(Type)
 	if !ok {
 		t.Fatal("Expected type 'Type'")
 	}
@@ -366,9 +366,9 @@ func TestCheckFunctionDefinition(t *testing.T) {
 	if !ok {
 		t.Fatal("Expected 'function' to have been added to scope")
 	}
-	function, ok := ty.typing.(Function)
+	function, ok := ty.Typing.(Function)
 	if !ok {
-		t.Fatalf("Expected a function, got %v", ty.typing.Text())
+		t.Fatalf("Expected a function, got %v", ty.Typing.Text())
 	}
 	_ = function
 }
@@ -398,7 +398,7 @@ func TestCheckGenericTypeDefinition(t *testing.T) {
 	if !ok {
 		t.Fatal("Expected 'Boxed' to have been added to scope")
 	}
-	typing, ok := ty.typing.(Type)
+	typing, ok := ty.Typing.(Type)
 	if !ok {
 		t.Fatal("Expected type 'Type'")
 	}
@@ -459,7 +459,7 @@ func TestCheckMethodDeclaration(t *testing.T) {
 	}
 
 	v, _ := parser.scope.Find("Type")
-	alias := v.typing.(Type).Value.(TypeAlias)
+	alias := v.Typing.(Type).Value.(TypeAlias)
 	method, ok := alias.Methods["method"]
 	if !ok {
 		t.Fatal("Expected method to have been declared")

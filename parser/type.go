@@ -242,35 +242,35 @@ func (m Map) build(scope *Scope, compared ExpressionType) (ExpressionType, bool)
 }
 
 type Tuple struct {
-	elements []ExpressionType
+	Elements []ExpressionType
 }
 
 func (tuple Tuple) Extends(t ExpressionType) bool {
 	switch t := t.(type) {
 	case Tuple:
-		if len(t.elements) != len(tuple.elements) {
+		if len(t.Elements) != len(tuple.Elements) {
 			return false
 		}
-		for i := 0; i < len(t.elements); i += 1 {
-			if tuple.elements[i] != nil && !tuple.elements[i].Extends(t.elements[i]) {
+		for i := 0; i < len(t.Elements); i += 1 {
+			if tuple.Elements[i] != nil && !tuple.Elements[i].Extends(t.Elements[i]) {
 				return false
 			}
 		}
 		return true
 	default:
-		if len(tuple.elements) == 1 {
-			return tuple.elements[0].Extends(t)
+		if len(tuple.Elements) == 1 {
+			return tuple.Elements[0].Extends(t)
 		}
 		return false
 	}
 }
 func (t Tuple) Text() string {
 	s := "("
-	max := len(t.elements) - 1
-	for _, el := range t.elements[:max] {
+	max := len(t.Elements) - 1
+	for _, el := range t.Elements[:max] {
 		s += el.Text() + ", "
 	}
-	return s + t.elements[max].Text() + ")"
+	return s + t.Elements[max].Text() + ")"
 }
 
 // FIXME: indexes
@@ -278,14 +278,14 @@ func (t Tuple) build(scope *Scope, compared ExpressionType) (ExpressionType, boo
 	ok := true
 	c, k := compared.(Tuple)
 	if compared == nil || !k {
-		for i, el := range t.elements {
-			t.elements[i], k = el.build(scope, nil)
+		for i, el := range t.Elements {
+			t.Elements[i], k = el.build(scope, nil)
 			ok = ok && k
 		}
 		return t, ok
 	}
-	for i, el := range t.elements {
-		t.elements[i], k = el.build(scope, c.elements[i])
+	for i, el := range t.Elements {
+		t.Elements[i], k = el.build(scope, c.Elements[i])
 		ok = ok && k
 	}
 	return t, ok
@@ -322,7 +322,7 @@ func (f Function) arity() int {
 	if f.Params == nil {
 		return 0
 	}
-	return len(f.Params.elements)
+	return len(f.Params.Elements)
 }
 
 func (f Function) Extends(t ExpressionType) bool {
@@ -336,8 +336,8 @@ func (f Function) Extends(t ExpressionType) bool {
 	if f.arity() == 0 {
 		return true
 	}
-	for i, param := range f.Params.elements {
-		if !param.Extends(function.Params.elements[i]) {
+	for i, param := range f.Params.Elements {
+		if !param.Extends(function.Params.Elements[i]) {
 			return false
 		}
 	}
@@ -355,15 +355,15 @@ func (f Function) build(scope *Scope, compared ExpressionType) (ExpressionType, 
 		s.Add(param.Name, Loc{}, param)
 	}
 	c, k := compared.(Function)
-	f.Params = &Tuple{make([]ExpressionType, len(f.Params.elements))}
-	for i, param := range f.Params.elements {
+	f.Params = &Tuple{make([]ExpressionType, len(f.Params.Elements))}
+	for i, param := range f.Params.Elements {
 		var el ExpressionType
-		if len(c.Params.elements) > i {
-			el = c.Params.elements[i]
+		if len(c.Params.Elements) > i {
+			el = c.Params.Elements[i]
 		}
 		p, k := param.build(s, el)
 		ok = ok && k
-		f.Params.elements[i] = p
+		f.Params.Elements[i] = p
 	}
 	var r ExpressionType
 	if k {
@@ -458,13 +458,13 @@ func (s Sum) getMember(name string) ExpressionType {
 	if !ok {
 		return Unknown{}
 	}
-	if len(member.Params.elements) == 1 {
-		ret, _ := member.Params.elements[0].build(nil, nil)
+	if len(member.Params.Elements) == 1 {
+		ret, _ := member.Params.Elements[0].build(nil, nil)
 		return ret
 	}
-	tuple := Tuple{make([]ExpressionType, len(member.Params.elements))}
-	for i := range member.Params.elements {
-		tuple.elements[i], _ = member.Params.elements[i].build(nil, nil)
+	tuple := Tuple{make([]ExpressionType, len(member.Params.Elements))}
+	for i := range member.Params.Elements {
+		tuple.Elements[i], _ = member.Params.Elements[i].build(nil, nil)
 	}
 	return tuple
 }
@@ -529,17 +529,17 @@ func (g Generic) build(scope *Scope, compared ExpressionType) (ExpressionType, b
 		return Unknown{}, false
 	}
 	variable.readAt(Loc{})
-	ok = isGenericType(variable.typing)
+	ok = isGenericType(variable.Typing)
 	if !ok {
-		return variable.typing, true
+		return variable.Typing, true
 	}
-	t := variable.typing.(Type)
+	t := variable.Typing.(Type)
 	generic := t.Value.(Generic)
 	if generic.Value == nil {
 		generic.Value = compared
 	}
 	t.Value = generic
-	variable.typing = t
+	variable.Typing = t
 	return generic.Value, generic.Value != nil
 }
 func isGenericType(typing ExpressionType) bool {

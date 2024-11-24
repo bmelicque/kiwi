@@ -135,9 +135,9 @@ func getSumConstructorType(member SumTypeConstructor) Function {
 	for i := range tuple.Elements {
 		t, ok := tuple.Elements[i].Type().(Type)
 		if ok {
-			tu.elements[i] = t.Value
+			tu.Elements[i] = t.Value
 		} else {
-			tu.elements[i] = Unknown{}
+			tu.Elements[i] = Unknown{}
 		}
 	}
 	return Function{Params: &tu}

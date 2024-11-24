@@ -29,7 +29,7 @@ func validateTraitPattern(p *Parser, pattern Expression, trait Trait) {
 		)
 		return
 	}
-	alias, ok := v.typing.(TypeAlias)
+	alias, ok := v.Typing.(TypeAlias)
 	if !ok || alias.implements(trait) {
 		msg := fmt.Sprintf("Type '%v' doesn't implement this trait", callee.Text())
 		p.report(msg, callee.Loc())

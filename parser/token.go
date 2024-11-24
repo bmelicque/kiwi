@@ -55,7 +55,7 @@ func (i *Identifier) typeCheck(p *Parser) {
 		} else {
 			variable.readAt(i.Loc())
 		}
-		i.typing = variable.typing
+		i.typing = variable.Typing
 	} else {
 		i.typing = Unknown{}
 	}

@@ -54,7 +54,7 @@ func typeCheckFunctionCall(p *Parser, c *CallExpression) {
 		p.scope.Add(param.Name, Loc{}, Type{param})
 	}
 
-	params := function.Params.elements
+	params := function.Params.Elements
 	typeCheckFunctionArguments(p, c.Args.Expr.(*TupleExpression), params)
 	validateArgumentsNumber(p, c.Args.Expr.(*TupleExpression), params)
 	t, ok := function.Returned.build(p.scope, nil)

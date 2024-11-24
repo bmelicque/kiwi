@@ -241,7 +241,7 @@ func emitMapElementAccess(e *Emitter, c *parser.ComputedAccessExpression) {
 	e.write(")")
 }
 
-func (e *Emitter) emitFunctionBody(b *parser.Block) {
+func (e *Emitter) emitFunctionBody(b *parser.Block, params *parser.TupleExpression) {
 	e.write("{")
 	if len(b.Statements) == 0 {
 		e.write("}")
@@ -249,6 +249,18 @@ func (e *Emitter) emitFunctionBody(b *parser.Block) {
 	}
 	e.write("\n")
 	e.depth++
+
+	for _, param := range params.Elements {
+		if _, ok := param.Type().(parser.Ref); ok {
+			continue
+		}
+		name := param.(*parser.Param).Identifier.Text()
+		v, _ := b.Scope().Find(name)
+		if isMutated(v) {
+			e.indent()
+			e.write(fmt.Sprintf("%v = structuredClone(%v);\n", name, name))
+		}
+	}
 	max := len(b.Statements) - 1
 	for _, statement := range b.Statements[:max] {
 		e.indent()
@@ -278,7 +290,9 @@ func (e *Emitter) emitFunctionExpression(f *parser.FunctionExpression) {
 	}
 	e.emit(args[max].(*parser.Param).Identifier)
 	e.write(") => ")
-	e.emitFunctionBody(f.Body)
+
+	params := f.Params.Expr.(*parser.TupleExpression)
+	e.emitFunctionBody(f.Body, params)
 }
 
 func (e *Emitter) emitIdentifier(i *parser.Identifier) {

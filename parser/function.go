@@ -100,7 +100,7 @@ func (f *FunctionTypeExpression) Type() ExpressionType {
 	p := Tuple{make([]ExpressionType, len(elements))}
 	for i, param := range elements {
 		t, _ := param.Type().(Type)
-		p.elements[i] = t.Value
+		p.Elements[i] = t.Value
 	}
 	var ret ExpressionType = Unknown{}
 	if f.Expr != nil {

@@ -2,13 +2,15 @@ package parser
 
 type Variable struct {
 	declaredAt Loc
-	typing     ExpressionType
+	Typing     ExpressionType
 	writes     []Node
 	reads      []Loc
 }
 
 func (v *Variable) readAt(l Loc)   { v.reads = append(v.reads, l) }
 func (v *Variable) writeAt(n Node) { v.writes = append(v.writes, n) }
+
+func (v *Variable) Writes() []Node { return v.writes }
 
 type ScopeKind uint8
 
@@ -60,7 +62,7 @@ func (s *Scope) Add(name string, declaredAt Loc, typing ExpressionType) {
 	}
 	s.variables[name] = &Variable{
 		declaredAt: declaredAt,
-		typing:     typing,
+		Typing:     typing,
 	}
 }
 
@@ -70,7 +72,7 @@ func (s *Scope) AddMethod(name string, self TypeAlias, signature Function) {
 		return
 	}
 	self.registerMethod(name, signature)
-	t.typing = Type{self}
+	t.Typing = Type{self}
 }
 
 func (s Scope) in(kind ScopeKind) bool {
@@ -108,7 +110,7 @@ func makeOptionType(t ExpressionType) TypeAlias {
 // extracts the Some type from an Option
 func getSomeType(t Sum) ExpressionType {
 	some := t.Members["Some"]
-	return some.Params.elements[0].(Generic).Value
+	return some.Params.Elements[0].(Generic).Value
 }
 
 // The vanilla option type.
@@ -173,23 +175,23 @@ func makePromise(t ExpressionType) TypeAlias {
 var std = Scope{
 	variables: map[string]*Variable{
 		"List": {
-			typing: Type{TypeAlias{
+			Typing: Type{TypeAlias{
 				Name:   "List",
 				Params: []Generic{{Name: "Type"}},
 				Ref:    List{Generic{Name: "Type"}},
 			}},
 		},
 		"Map": {
-			typing: Type{makeMapType(nil, nil)},
+			Typing: Type{makeMapType(nil, nil)},
 		},
 		"...": {
-			typing: Type{makePromise(nil)},
+			Typing: Type{makePromise(nil)},
 		},
 		"?": {
-			typing: Type{optionType},
+			Typing: Type{optionType},
 		},
 		"!": {
-			typing: Type{makeResultType(nil, nil)},
+			Typing: Type{makeResultType(nil, nil)},
 		},
 	},
 }

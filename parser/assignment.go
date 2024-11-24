@@ -151,11 +151,11 @@ func declareTuple(p *Parser, pattern *TupleExpression, typing ExpressionType) {
 		return
 	}
 	l := len(pattern.Elements)
-	if l > len(tuple.elements) {
-		start := pattern.Elements[len(tuple.elements)-1].Loc().Start
+	if l > len(tuple.Elements) {
+		start := pattern.Elements[len(tuple.Elements)-1].Loc().Start
 		end := pattern.Elements[l-1].Loc().End
 		p.report("Too many elements", Loc{start, end})
-		l = len(tuple.elements)
+		l = len(tuple.Elements)
 	}
 	for i := 0; i < l; i++ {
 		identifier, ok := pattern.Elements[i].(*Identifier)
@@ -163,7 +163,7 @@ func declareTuple(p *Parser, pattern *TupleExpression, typing ExpressionType) {
 			p.report("Identifier expected", pattern.Elements[i].Loc())
 			continue
 		}
-		declareIdentifier(p, identifier, tuple.elements[i])
+		declareIdentifier(p, identifier, tuple.Elements[i])
 	}
 }
 

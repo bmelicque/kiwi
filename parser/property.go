@@ -73,7 +73,7 @@ func typeCheckTupleIndexAccess(p *Parser, expr *PropertyAccessExpression) {
 		expr.typing = Unknown{}
 		return
 	}
-	elements := deref(expr.Expr.Type()).(Tuple).elements
+	elements := deref(expr.Expr.Type()).(Tuple).Elements
 	if number > len(elements)-1 || number < 0 {
 		p.report("Index out of range", property.Loc())
 		expr.typing = Unknown{}

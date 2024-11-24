@@ -80,8 +80,8 @@ func TestGenericFunctionWithTypeArgs(t *testing.T) {
 		t.Fatalf("Expected Function type, got %#v", expr.typing)
 	}
 
-	if _, ok := function.Params.elements[0].(Number); !ok {
-		t.Fatalf("Param should've been set to Number{}, got %#v", function.Params.elements[0])
+	if _, ok := function.Params.Elements[0].(Number); !ok {
+		t.Fatalf("Param should've been set to Number{}, got %#v", function.Params.Elements[0])
 	}
 
 	if _, ok := function.Returned.(Number); !ok {

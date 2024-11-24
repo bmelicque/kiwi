@@ -88,10 +88,10 @@ func TestTupleType(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected tuple type, got %#v", expr.Type())
 	}
-	if _, ok := tuple.elements[0].(Number); !ok {
-		t.Fatalf("Expected number, got %#v", tuple.elements[0])
+	if _, ok := tuple.Elements[0].(Number); !ok {
+		t.Fatalf("Expected number, got %#v", tuple.Elements[0])
 	}
-	if _, ok := tuple.elements[1].(String); !ok {
-		t.Fatalf("Expected string, got %#v", tuple.elements[1])
+	if _, ok := tuple.Elements[1].(String); !ok {
+		t.Fatalf("Expected string, got %#v", tuple.Elements[1])
 	}
 }
