@@ -34,6 +34,14 @@ func (u *UnaryExpression) typeCheck(p *Parser) {
 			p.report("Type or boolean expected with '!' operator", u.Operand.Loc())
 		}
 	case BinaryAnd:
+		identifier := getReferencedIdentifier(u.Operand)
+		if identifier == nil {
+			return
+		}
+		v, ok := p.scope.Find(identifier.Text())
+		if ok {
+			v.writeAt(u)
+		}
 	case Mul:
 		if _, ok := u.Operand.Type().(Ref); !ok {
 			p.report("Reference expected", u.Operand.Loc())
