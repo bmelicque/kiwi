@@ -268,7 +268,6 @@ func (e *Emitter) emitFunctionBody(b *parser.Block, params *parser.TupleExpressi
 	for _, statement := range b.Statements[:max] {
 		e.indent()
 		e.emit(statement)
-		e.write(";\n")
 	}
 	e.indent()
 	e.write("return ")

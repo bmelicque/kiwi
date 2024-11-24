@@ -82,7 +82,9 @@ func (e *Emitter) emitBlock(b *parser.Block) {
 	for _, statement := range b.Statements {
 		e.indent()
 		e.emit(statement)
-		e.write(";\n")
+		if _, ok := statement.(parser.Expression); ok {
+			e.write(";\n")
+		}
 	}
 	e.depth--
 	e.indent()

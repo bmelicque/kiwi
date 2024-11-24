@@ -132,6 +132,7 @@ func EmitProgram(nodes []parser.Node) string {
 	for _, node := range nodes {
 		e.emit(node)
 	}
+	e.write("\n")
 	if e.hasFlag(RangeFlag) {
 		e.write("function* _range(start, end) {\n    while (start < end) yield start++;\n}\n")
 	}
