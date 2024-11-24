@@ -241,13 +241,36 @@ func emitMapElementAccess(e *Emitter, c *parser.ComputedAccessExpression) {
 	e.write(")")
 }
 
+func (e *Emitter) emitFunctionBody(b *parser.Block) {
+	e.write("{")
+	if len(b.Statements) == 0 {
+		e.write("}")
+		return
+	}
+	e.write("\n")
+	e.depth++
+	max := len(b.Statements) - 1
+	for _, statement := range b.Statements[:max] {
+		e.indent()
+		e.emit(statement)
+		e.write(";\n")
+	}
+	e.indent()
+	e.write("return ")
+	e.emit(b.Statements[max])
+	e.write(";\n")
+	e.depth--
+	e.indent()
+	e.write("}\n")
+}
+
 func (e *Emitter) emitFunctionExpression(f *parser.FunctionExpression) {
 	if f.Type().(parser.Function).Async {
 		e.write("async ")
 	}
 	e.write("(")
 	args := f.Params.Expr.(*parser.TupleExpression).Elements
-	max := len(args)
+	max := len(args) - 1
 	for i := range args[:max] {
 		param := args[i].(*parser.Param)
 		e.emit(param.Identifier)
@@ -255,7 +278,7 @@ func (e *Emitter) emitFunctionExpression(f *parser.FunctionExpression) {
 	}
 	e.emit(args[max].(*parser.Param).Identifier)
 	e.write(") => ")
-	e.emit(f.Body)
+	e.emitFunctionBody(f.Body)
 }
 
 func (e *Emitter) emitIdentifier(i *parser.Identifier) {

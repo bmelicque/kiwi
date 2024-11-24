@@ -68,6 +68,23 @@ func TestIfExpression(t *testing.T) {
 	}
 }
 
+func TestEmitFunctionExpression(t *testing.T) {
+	source := "triple :: (n number) => { 3 * n }"
+
+	expected := "const triple = (n) => {\n"
+	expected += "    return 3 * n;\n"
+	expected += "}\n"
+
+	ast, _ := parser.Parse(strings.NewReader(source))
+
+	emitter := makeEmitter()
+	emitter.emit(ast[0])
+	received := emitter.string()
+	if emitter.string() != expected {
+		t.Fatalf("expected '%v', got '%v'", expected, received)
+	}
+}
+
 func TestMapElementAccess(t *testing.T) {
 	emitter := makeEmitter()
 	emitMapElementAccess(emitter, &parser.ComputedAccessExpression{
