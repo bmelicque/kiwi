@@ -13,6 +13,7 @@ type EmitterFlag int
 const (
 	NoFlags   EmitterFlag = 0
 	RangeFlag EmitterFlag = 1 << iota
+	SliceFlag
 	SumFlag
 )
 
@@ -136,6 +137,9 @@ func EmitProgram(nodes []parser.Node) string {
 	if e.hasFlag(RangeFlag) {
 		e.write("function* _range(start, end) {\n    while (start < end) yield start++;\n}\n")
 	}
+	if e.hasFlag(SliceFlag) {
+		e.emitSliceConstructor()
+	}
 	if e.hasFlag(SumFlag) {
 		e.write("class _Sum {\n")
 		e.write("    constructor(_tag, _value) {\n")
@@ -144,4 +148,16 @@ func EmitProgram(nodes []parser.Node) string {
 		e.write("    }\n}\n")
 	}
 	return e.string()
+}
+
+func (e *Emitter) emitSliceConstructor() {
+	e.write(`function __slice(getter, start = 0, end = getter().length) {
+	return function (index, value) {
+		return arguments.length == 0
+			? getter().slice(start, end)
+			: arguments.length == 1
+			? getter()[start + index]
+			: void (getter()[start + index] = value);
+	};
+}`)
 }
