@@ -117,6 +117,38 @@ func TestEmitReference(t *testing.T) {
 	}
 }
 
+func TestEmitArrayRef(t *testing.T) {
+	source := "array := []number{0, 1, 2}\n"
+	source += "&array\n"
+
+	expected := "__slice(() => array)"
+
+	ast, _ := parser.Parse(strings.NewReader(source))
+
+	emitter := makeEmitter()
+	emitter.emit(ast[1])
+	received := emitter.string()
+	if emitter.string() != expected {
+		t.Fatalf("expected '%v', got '%v'", expected, received)
+	}
+}
+
+func TestEmitSlice(t *testing.T) {
+	source := "array := []number{0, 1, 2}\n"
+	source += "&array[1..]\n"
+
+	expected := "__slice(() => array, 1)"
+
+	ast, _ := parser.Parse(strings.NewReader(source))
+
+	emitter := makeEmitter()
+	emitter.emit(ast[1])
+	received := emitter.string()
+	if emitter.string() != expected {
+		t.Fatalf("expected '%v', got '%v'", expected, received)
+	}
+}
+
 func TestEmitDeref(t *testing.T) {
 	source := "value := 0\n"
 	source += "ref := &value\n"
