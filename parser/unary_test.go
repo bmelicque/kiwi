@@ -226,6 +226,19 @@ func TestParseReference(t *testing.T) {
 	}
 }
 
+func TestParseSlice(t *testing.T) {
+	parser := MakeParser(strings.NewReader("&array[1..2]"))
+	node := parser.parseExpression()
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
+	}
+
+	if u, ok := node.(*UnaryExpression); !ok || u.Operator.Kind() != BinaryAnd {
+		t.Fatalf("Expected '&' unary, got %#v", node)
+	}
+}
+
 func TestParseReferenceBadOperand(t *testing.T) {
 	parser := MakeParser(strings.NewReader("&value()"))
 	parser.parseExpression()
@@ -256,6 +269,27 @@ func TestCheckReference(t *testing.T) {
 	expr = &UnaryExpression{
 		Operator: token{kind: BinaryAnd},
 		Operand:  &Identifier{Token: literal{kind: Name, value: "value"}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+	if _, ok := expr.Type().(Ref); !ok {
+		t.Fatalf("Expected ref, got %v", expr.Type().Text())
+	}
+
+	// &array[1..]
+	parser.scope.Add("array", Loc{}, List{Number{}})
+	expr = &UnaryExpression{
+		Operator: token{kind: BinaryAnd},
+		Operand: &ComputedAccessExpression{
+			Expr: &Identifier{Token: literal{kind: Name, value: "array"}},
+			Property: &BracketedExpression{Expr: &RangeExpression{
+				Left:     &Literal{literal{kind: NumberLiteral}},
+				Operator: &token{kind: ExclusiveRange},
+			}},
+		},
 	}
 	expr.typeCheck(parser)
 
@@ -321,6 +355,19 @@ func TestListTypeExpression(t *testing.T) {
 	}
 	if list.Expr == nil {
 		t.Fatalf("Expected a Type")
+	}
+}
+
+func TestListTypeInstance(t *testing.T) {
+	parser := MakeParser(strings.NewReader("[]number{0, 1, 2}"))
+	node := parser.parseExpression()
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
+	}
+
+	if _, ok := node.(*InstanceExpression); !ok {
+		t.Fatalf("Expected InstanceExpression, got %#v", node)
 	}
 }
 
