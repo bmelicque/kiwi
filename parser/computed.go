@@ -46,6 +46,19 @@ func (expr *ComputedAccessExpression) typeCheck(p *Parser) {
 		}
 		p.report("Number or range expected", expr.Property.loc)
 		expr.typing = Unknown{}
+	case Ref:
+		list, ok := t.To.(List)
+		if !ok {
+			p.report("Invalid type for computed access", expr.Expr.Loc())
+			expr.typing = Unknown{}
+			return
+		}
+		if _, ok := expr.Property.Expr.Type().(Number); !ok {
+			p.report("Number expected", expr.Property.loc)
+			expr.typing = Unknown{}
+			return
+		}
+		expr.typing = makeOptionType(list.Element)
 	default:
 		p.report("Invalid type for computed access", expr.Property.loc)
 		expr.typing = Unknown{}

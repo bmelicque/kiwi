@@ -29,6 +29,10 @@ func (e *Emitter) emitAssignment(a *parser.Assignment) {
 			emitSetMap(e, a)
 			return
 		}
+		if isSliceElement(a.Pattern) {
+			emitSetSlice(e, a)
+			return
+		}
 		emitAssign(e, a.Pattern, a.Value)
 	case parser.Declare:
 		e.write("let ")
@@ -65,6 +69,30 @@ func emitSetMap(e *Emitter, a *parser.Assignment) {
 	pattern := a.Pattern.(*parser.ComputedAccessExpression)
 	e.emitExpression(pattern.Expr)
 	e.write(".set(")
+	e.emitExpression(pattern.Property.Expr)
+	e.write(", ")
+	e.emitExpression(a.Value)
+	e.write(")")
+}
+
+func isSliceElement(pattern parser.Expression) bool {
+	c, ok := pattern.(*parser.ComputedAccessExpression)
+	if !ok {
+		return false
+	}
+	ref, ok := c.Expr.Type().(parser.Ref)
+	if !ok {
+		return false
+	}
+	_, ok = ref.To.(parser.List)
+	return ok
+}
+
+// Emit setting a slice element, which implies a function call instead of brackets
+func emitSetSlice(e *Emitter, a *parser.Assignment) {
+	pattern := a.Pattern.(*parser.ComputedAccessExpression)
+	e.emitExpression(pattern.Expr)
+	e.write("(")
 	e.emitExpression(pattern.Property.Expr)
 	e.write(", ")
 	e.emitExpression(a.Value)

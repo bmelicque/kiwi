@@ -1,6 +1,8 @@
 package emitter
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/bmelicque/test-parser/parser"
@@ -46,6 +48,25 @@ func TestMapAssignment(t *testing.T) {
 	expected := "map.set(\"key\", 42)"
 	if text != expected {
 		t.Fatalf("Expected string:\n%v\ngot:\n%v", expected, text)
+	}
+}
+
+func TestSliceAssignment(t *testing.T) {
+	source := "array := []number{}\n"
+	source += "slice := &array\n"
+	source += "slice[0] = 42"
+
+	expected := "slice(0, 42)"
+
+	ast, err := parser.Parse(strings.NewReader(source))
+
+	fmt.Printf("%#v\n", err)
+
+	emitter := makeEmitter()
+	emitter.emit(ast[2])
+	received := emitter.string()
+	if emitter.string() != expected {
+		t.Fatalf("expected '%v', got '%v'", expected, received)
 	}
 }
 

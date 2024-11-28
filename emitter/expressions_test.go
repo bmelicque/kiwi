@@ -101,11 +101,60 @@ func TestMapElementAccess(t *testing.T) {
 	}
 }
 
+func TestEmitSliceAccess(t *testing.T) {
+	source := "array := []number{}\n"
+	source += "slice := &array\n"
+	source += "slice[0]"
+
+	expected := "slice(0)"
+
+	ast, _ := parser.Parse(strings.NewReader(source))
+
+	emitter := makeEmitter()
+	emitter.emit(ast[2])
+	received := emitter.string()
+	if emitter.string() != expected {
+		t.Fatalf("expected '%v', got '%v'", expected, received)
+	}
+}
+
 func TestEmitReference(t *testing.T) {
 	source := "value := 0\n"
 	source += "&value"
 
 	expected := "function (_) { return arguments.length ? void (value = _) : value }"
+
+	ast, _ := parser.Parse(strings.NewReader(source))
+
+	emitter := makeEmitter()
+	emitter.emit(ast[1])
+	received := emitter.string()
+	if emitter.string() != expected {
+		t.Fatalf("expected '%v', got '%v'", expected, received)
+	}
+}
+
+func TestEmitArrayRef(t *testing.T) {
+	source := "array := []number{0, 1, 2}\n"
+	source += "&array\n"
+
+	expected := "__slice(() => array)"
+
+	ast, _ := parser.Parse(strings.NewReader(source))
+
+	emitter := makeEmitter()
+	emitter.emit(ast[1])
+	received := emitter.string()
+	if emitter.string() != expected {
+		t.Fatalf("expected '%v', got '%v'", expected, received)
+	}
+}
+
+func TestEmitSlice(t *testing.T) {
+	source := "array := []number{0, 1, 2}\n"
+	source += "&array[1..]\n"
+
+	expected := "__slice(() => array, 1)"
 
 	ast, _ := parser.Parse(strings.NewReader(source))
 

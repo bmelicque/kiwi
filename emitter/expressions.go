@@ -200,16 +200,7 @@ func (e *Emitter) emitCallExpression(expr *parser.CallExpression, await bool) {
 	e.emit(args[max])
 }
 
-func (e *Emitter) emitComputedAccessExpression(expr *parser.ComputedAccessExpression) {
-	if alias, ok := expr.Expr.Type().(parser.TypeAlias); ok && alias.Name == "Map" {
-		emitMapElementAccess(e, expr)
-		return
-	}
-	e.emit(expr.Expr)
-
-	if _, ok := expr.Expr.Type().(parser.List); !ok {
-		return
-	}
+func (e *Emitter) emitListAccess(expr *parser.ComputedAccessExpression) {
 	switch prop := expr.Property.Expr.(type) {
 	case *parser.RangeExpression:
 		e.write(".slice(")
@@ -232,6 +223,28 @@ func (e *Emitter) emitComputedAccessExpression(expr *parser.ComputedAccessExpres
 		e.write("[")
 		e.emit(expr.Property.Expr)
 		e.write("]")
+	}
+}
+func (e *Emitter) emitComputedAccessExpression(expr *parser.ComputedAccessExpression) {
+	switch left := expr.Expr.Type().(type) {
+	case parser.TypeAlias:
+		if left.Name == "Map" {
+			emitMapElementAccess(e, expr)
+		} else {
+			e.emit(expr.Expr)
+		}
+	case parser.Ref:
+		if _, ok := left.To.(parser.List); !ok {
+			panic("unexpected typing (expected &[]any)")
+		}
+		e.emitExpression(expr.Expr)
+		e.write("(")
+		e.emitExpression(expr.Property.Expr)
+		e.write(")")
+	case parser.List:
+		e.emitListAccess(expr)
+	default:
+		e.emit(expr.Expr)
 	}
 }
 func emitMapElementAccess(e *Emitter, c *parser.ComputedAccessExpression) {
@@ -359,6 +372,36 @@ func (e *Emitter) emitTupleExpression(t *parser.TupleExpression) {
 	e.write("]")
 }
 
+func (e *Emitter) emitReference(expr parser.Expression) {
+	e.write("function (_) { return arguments.length ? void (")
+	e.emit(expr)
+	e.write(" = _) : ")
+	e.emit(expr)
+	e.write(" }")
+}
+func (e *Emitter) emitSlice(expr parser.Expression) {
+	var r *parser.RangeExpression
+	if computed, ok := expr.(*parser.ComputedAccessExpression); ok {
+		expr = computed.Expr
+		r = computed.Property.Expr.(*parser.RangeExpression)
+	}
+	e.addFlag(SliceFlag)
+	e.write("__slice(() => ")
+	e.emit(expr)
+	if r != nil {
+		e.write(", ")
+		if r.Left != nil {
+			e.emit(r.Left)
+		} else {
+			e.write("0")
+		}
+		if r.Right != nil {
+			e.write(", ")
+			e.emit(r.Right)
+		}
+	}
+	e.write(")")
+}
 func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
 	switch u.Operator.Kind() {
 	case parser.AsyncKeyword:
@@ -372,11 +415,11 @@ func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
 	case parser.TryKeyword:
 		e.emitExpression(u.Operand)
 	case parser.BinaryAnd:
-		e.write("function (_) { return arguments.length ? void (")
-		e.emit(u.Operand)
-		e.write(" = _) : ")
-		e.emit(u.Operand)
-		e.write(" }")
+		if _, ok := u.Operand.Type().(parser.List); ok {
+			e.emitSlice(u.Operand)
+		} else {
+			e.emitReference(u.Operand)
+		}
 	case parser.Mul:
 		e.emit(u.Operand)
 		e.write("()")
