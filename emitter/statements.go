@@ -26,23 +26,6 @@ func (e *Emitter) emitFor(f *parser.ForExpression) {
 	e.emitBlockStatement(f.Body)
 }
 
-func (e *Emitter) emitIfStatement(i *parser.IfExpression) {
-	e.write("if (")
-	e.emit(i.Condition)
-	e.write(") ")
-	e.emitBlockStatement(i.Body)
-	if i.Alternate == nil {
-		return
-	}
-	e.write(" else ")
-	switch alternate := i.Alternate.(type) {
-	case *parser.Block:
-		e.emitBlockStatement(alternate)
-	case *parser.IfExpression:
-		e.emitIfStatement(alternate)
-	}
-}
-
 func (e *Emitter) emitMatchStatement(m parser.MatchExpression) {
 	// TODO: break outer loop
 	// TODO: declare _m only if calling something

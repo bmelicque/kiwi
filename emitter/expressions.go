@@ -6,23 +6,6 @@ import (
 	"github.com/bmelicque/test-parser/parser"
 )
 
-func (e *Emitter) emitIfExpression(i *parser.IfExpression) {
-	e.emit(i.Condition)
-	e.write(" ? ")
-	e.emitBlockExpression(i.Body)
-	e.write(" : ")
-	if i.Alternate == nil {
-		e.write("undefined")
-		return
-	}
-	switch alternate := i.Alternate.(type) {
-	case *parser.Block:
-		e.emitBlockExpression(alternate)
-	case *parser.IfExpression:
-		e.emitIfExpression(alternate)
-	}
-}
-
 func (e *Emitter) emitCallExpression(expr *parser.CallExpression, await bool) {
 	if expr.Callee.Type().(parser.Function).Async && await {
 		e.write("await ")

@@ -6,29 +6,6 @@ import (
 	"github.com/bmelicque/test-parser/parser"
 )
 
-func TestIfExpression(t *testing.T) {
-	emitter := makeEmitter()
-	emitter.emitExpression(&parser.IfExpression{
-		Condition: &parser.Literal{
-			Token: testToken{kind: parser.BooleanLiteral, value: "false"},
-		},
-		Body: &parser.Block{Statements: []parser.Node{}},
-		Alternate: &parser.IfExpression{
-			Condition: &parser.Literal{
-				Token: testToken{kind: parser.BooleanLiteral, value: "false"},
-			},
-			Body:      &parser.Block{Statements: []parser.Node{}},
-			Alternate: &parser.Block{},
-		},
-	})
-
-	text := emitter.string()
-	expected := "false ? undefined : false ? undefined : undefined"
-	if text != expected {
-		t.Fatalf("Expected string:\n%v\ngot:\n%v", expected, text)
-	}
-}
-
 func TestEmitFunctionExpression(t *testing.T) {
 	source := "triple :: (n number) => { 3 * n }"
 
