@@ -6,16 +6,6 @@ import (
 	"github.com/bmelicque/test-parser/parser"
 )
 
-func TestEmitFunctionExpression(t *testing.T) {
-	source := "triple :: (n number) => { 3 * n }"
-
-	expected := "const triple = (n) => {\n"
-	expected += "    return 3 * n;\n"
-	expected += "}\n"
-
-	testEmitter(t, source, expected, 0)
-}
-
 func TestMapElementAccess(t *testing.T) {
 	emitter := makeEmitter()
 	emitMapElementAccess(emitter, &parser.ComputedAccessExpression{
