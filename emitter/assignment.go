@@ -7,6 +7,8 @@ import (
 	"github.com/bmelicque/test-parser/parser"
 )
 
+const maxClassParamsLength = 66
+
 func emitAssign(e *Emitter, pattern parser.Expression, value parser.Expression) {
 	e.emit(pattern)
 	e.write(" = ")

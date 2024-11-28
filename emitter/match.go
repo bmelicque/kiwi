@@ -6,11 +6,7 @@ import (
 	"github.com/bmelicque/test-parser/parser"
 )
 
-const maxClassParamsLength = 66
-
 func (e *Emitter) emitMatchStatement(m parser.MatchExpression) {
-	// TODO: break outer loop
-	// TODO: declare _m only if calling something
 	e.write("const _m = ")
 	e.emit(m.Value)
 	e.write(";\n")
@@ -54,22 +50,4 @@ func (e *Emitter) emitMatchStatement(m parser.MatchExpression) {
 	}
 	e.indent()
 	e.write("}\n")
-}
-
-func (e *Emitter) emitExit(r *parser.Exit) {
-	switch r.Operator.Kind() {
-	case parser.BreakKeyword:
-		e.write("break")
-	case parser.ContinueKeyword:
-		e.write("continue")
-	case parser.ReturnKeyword:
-		e.write("return")
-	case parser.ThrowKeyword:
-		e.write("throw")
-	}
-	if r.Value != nil {
-		e.write(" ")
-		e.emit(r.Value)
-	}
-	e.write(";\n")
 }
