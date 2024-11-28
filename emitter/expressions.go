@@ -200,16 +200,7 @@ func (e *Emitter) emitCallExpression(expr *parser.CallExpression, await bool) {
 	e.emit(args[max])
 }
 
-func (e *Emitter) emitComputedAccessExpression(expr *parser.ComputedAccessExpression) {
-	if alias, ok := expr.Expr.Type().(parser.TypeAlias); ok && alias.Name == "Map" {
-		emitMapElementAccess(e, expr)
-		return
-	}
-	e.emit(expr.Expr)
-
-	if _, ok := expr.Expr.Type().(parser.List); !ok {
-		return
-	}
+func (e *Emitter) emitListAccess(expr *parser.ComputedAccessExpression) {
 	switch prop := expr.Property.Expr.(type) {
 	case *parser.RangeExpression:
 		e.write(".slice(")
@@ -232,6 +223,28 @@ func (e *Emitter) emitComputedAccessExpression(expr *parser.ComputedAccessExpres
 		e.write("[")
 		e.emit(expr.Property.Expr)
 		e.write("]")
+	}
+}
+func (e *Emitter) emitComputedAccessExpression(expr *parser.ComputedAccessExpression) {
+	switch left := expr.Expr.Type().(type) {
+	case parser.TypeAlias:
+		if left.Name == "Map" {
+			emitMapElementAccess(e, expr)
+		} else {
+			e.emit(expr.Expr)
+		}
+	case parser.Ref:
+		if _, ok := left.To.(parser.List); !ok {
+			panic("unexpected typing (expected &[]any)")
+		}
+		e.emitExpression(expr.Expr)
+		e.write("(")
+		e.emitExpression(expr.Property.Expr)
+		e.write(")")
+	case parser.List:
+		e.emitListAccess(expr)
+	default:
+		e.emit(expr.Expr)
 	}
 }
 func emitMapElementAccess(e *Emitter, c *parser.ComputedAccessExpression) {

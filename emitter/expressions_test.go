@@ -101,6 +101,23 @@ func TestMapElementAccess(t *testing.T) {
 	}
 }
 
+func TestEmitSliceAccess(t *testing.T) {
+	source := "array := []number{}\n"
+	source += "slice := &array\n"
+	source += "slice[0]"
+
+	expected := "slice(0)"
+
+	ast, _ := parser.Parse(strings.NewReader(source))
+
+	emitter := makeEmitter()
+	emitter.emit(ast[2])
+	received := emitter.string()
+	if emitter.string() != expected {
+		t.Fatalf("expected '%v', got '%v'", expected, received)
+	}
+}
+
 func TestEmitReference(t *testing.T) {
 	source := "value := 0\n"
 	source += "&value"
