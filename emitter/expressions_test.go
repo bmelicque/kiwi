@@ -1,7 +1,6 @@
 package emitter
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/bmelicque/test-parser/parser"
@@ -75,14 +74,7 @@ func TestEmitFunctionExpression(t *testing.T) {
 	expected += "    return 3 * n;\n"
 	expected += "}\n"
 
-	ast, _ := parser.Parse(strings.NewReader(source))
-
-	emitter := makeEmitter()
-	emitter.emit(ast[0])
-	received := emitter.string()
-	if emitter.string() != expected {
-		t.Fatalf("expected '%v', got '%v'", expected, received)
-	}
+	testEmitter(t, source, expected, 0)
 }
 
 func TestMapElementAccess(t *testing.T) {
@@ -108,14 +100,7 @@ func TestEmitSliceAccess(t *testing.T) {
 
 	expected := "slice(0)"
 
-	ast, _ := parser.Parse(strings.NewReader(source))
-
-	emitter := makeEmitter()
-	emitter.emit(ast[2])
-	received := emitter.string()
-	if emitter.string() != expected {
-		t.Fatalf("expected '%v', got '%v'", expected, received)
-	}
+	testEmitter(t, source, expected, 2)
 }
 
 func TestEmitReference(t *testing.T) {
@@ -124,14 +109,7 @@ func TestEmitReference(t *testing.T) {
 
 	expected := "function (_) { return arguments.length ? void (value = _) : value }"
 
-	ast, _ := parser.Parse(strings.NewReader(source))
-
-	emitter := makeEmitter()
-	emitter.emit(ast[1])
-	received := emitter.string()
-	if emitter.string() != expected {
-		t.Fatalf("expected '%v', got '%v'", expected, received)
-	}
+	testEmitter(t, source, expected, 1)
 }
 
 func TestEmitArrayRef(t *testing.T) {
@@ -140,14 +118,7 @@ func TestEmitArrayRef(t *testing.T) {
 
 	expected := "__slice(() => array)"
 
-	ast, _ := parser.Parse(strings.NewReader(source))
-
-	emitter := makeEmitter()
-	emitter.emit(ast[1])
-	received := emitter.string()
-	if emitter.string() != expected {
-		t.Fatalf("expected '%v', got '%v'", expected, received)
-	}
+	testEmitter(t, source, expected, 1)
 }
 
 func TestEmitSlice(t *testing.T) {
@@ -156,14 +127,7 @@ func TestEmitSlice(t *testing.T) {
 
 	expected := "__slice(() => array, 1)"
 
-	ast, _ := parser.Parse(strings.NewReader(source))
-
-	emitter := makeEmitter()
-	emitter.emit(ast[1])
-	received := emitter.string()
-	if emitter.string() != expected {
-		t.Fatalf("expected '%v', got '%v'", expected, received)
-	}
+	testEmitter(t, source, expected, 1)
 }
 
 func TestEmitDeref(t *testing.T) {
@@ -173,12 +137,5 @@ func TestEmitDeref(t *testing.T) {
 
 	expected := "ref()"
 
-	ast, _ := parser.Parse(strings.NewReader(source))
-
-	emitter := makeEmitter()
-	emitter.emit(ast[2])
-	received := emitter.string()
-	if emitter.string() != expected {
-		t.Fatalf("expected '%v', got '%v'", expected, received)
-	}
+	testEmitter(t, source, expected, 2)
 }

@@ -1,8 +1,6 @@
 package emitter
 
 import (
-	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/bmelicque/test-parser/parser"
@@ -58,16 +56,7 @@ func TestSliceAssignment(t *testing.T) {
 
 	expected := "slice(0, 42)"
 
-	ast, err := parser.Parse(strings.NewReader(source))
-
-	fmt.Printf("%#v\n", err)
-
-	emitter := makeEmitter()
-	emitter.emit(ast[2])
-	received := emitter.string()
-	if emitter.string() != expected {
-		t.Fatalf("expected '%v', got '%v'", expected, received)
-	}
+	testEmitter(t, source, expected, 2)
 }
 
 func TestIfStatement(t *testing.T) {
