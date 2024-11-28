@@ -99,167 +99,6 @@ func emitSetSlice(e *Emitter, a *parser.Assignment) {
 	e.write(")")
 }
 
-func (e *Emitter) emitBlock(b *parser.Block) {
-	e.write("{")
-	if len(b.Statements) == 0 {
-		e.write("}")
-		return
-	}
-	e.write("\n")
-	e.depth++
-	for _, statement := range b.Statements {
-		e.indent()
-		e.emit(statement)
-		if _, ok := statement.(parser.Expression); ok {
-			e.write(";\n")
-		}
-	}
-	e.depth--
-	e.indent()
-	e.write("}\n")
-}
-
-func (e *Emitter) emitCatchStatement(c *parser.CatchExpression) {
-	e.write("try {\n")
-	e.depth++
-	e.indent()
-	e.emit(c.Left)
-	e.write(";\n")
-	e.depth--
-	e.write("} catch (")
-	e.emit(c.Identifier)
-	e.write(") ")
-	e.emitBlock(c.Body)
-}
-
-func (e *Emitter) emitFor(f *parser.ForExpression) {
-	a, ok := f.Statement.(*parser.Assignment)
-	if !ok {
-		e.write("while (")
-		e.emit(f.Statement)
-		e.write(") ")
-		e.emitBlock(f.Body)
-	}
-
-	e.write("for (let ")
-	// FIXME: tuples...
-	e.emit(a.Pattern)
-	e.write(" of ")
-	e.emit(a.Value)
-	e.write(") ")
-	e.emitBlock(f.Body)
-}
-
-func (e *Emitter) emitIfStatement(i *parser.IfExpression) {
-	e.write("if (")
-	e.emit(i.Condition)
-	e.write(") ")
-	e.emitBlock(i.Body)
-	if i.Alternate == nil {
-		return
-	}
-	e.write(" else ")
-	switch alternate := i.Alternate.(type) {
-	case *parser.Block:
-		e.emitBlock(alternate)
-	case *parser.IfExpression:
-		e.emitIfStatement(alternate)
-	}
-}
-
-func (e *Emitter) emitMatchStatement(m parser.MatchExpression) {
-	// TODO: break outer loop
-	// TODO: declare _m only if calling something
-	e.write("const _m = ")
-	e.emit(m.Value)
-	e.write(";\n")
-	if _, ok := m.Value.Type().(parser.Sum); ok {
-		e.write("switch (_m._tag) {\n")
-	} else {
-		e.write("switch (_m.constructor) {\n")
-	}
-	for _, c := range m.Cases {
-		e.indent()
-		if c.IsCatchall() {
-			e.write("default:")
-		} else if call, ok := c.Pattern.(*parser.CallExpression); ok {
-			e.write("case ")
-			e.emit(call.Callee)
-			e.write(": {\n")
-		} else if id, ok := c.Pattern.(*parser.Identifier); ok {
-			e.write("case ")
-			e.emit(id)
-			e.write(": {\n")
-		}
-		e.depth++
-		if c.Pattern != nil {
-			id := c.Pattern.(*parser.Identifier)
-			e.indent()
-			if _, ok := m.Value.Type().(parser.Sum); ok {
-				e.write(fmt.Sprintf("let %v = _m._value;\n", id.Text()))
-			} else {
-				e.write(fmt.Sprintf("let %v = _m;\n", id.Text()))
-			}
-		}
-		for _, s := range c.Statements {
-			e.indent()
-			e.emit(s)
-		}
-		e.indent()
-		e.write("break;\n")
-		e.indent()
-		e.write("}\n")
-		e.depth--
-	}
-	e.indent()
-	e.write("}\n")
-}
-
-func (e *Emitter) emitMethodDeclaration(a *parser.Assignment) {
-	pattern := a.Pattern.(*parser.PropertyAccessExpression)
-	receiver := pattern.Expr.(*parser.ParenthesizedExpression).Expr.(*parser.Param)
-
-	e.emit(receiver.Complement)
-	e.write(".prototype.")
-	e.emit(pattern.Property)
-	e.write(" = function ")
-
-	e.thisName = receiver.Identifier.Text()
-	defer func() { e.thisName = "" }()
-
-	init := a.Value.(*parser.FunctionExpression)
-	e.write("(")
-	params := init.Params.Expr.(*parser.TupleExpression).Elements
-	max := len(params)
-	for i := range params[:max] {
-		param := params[i].(*parser.Param)
-		e.emit(param.Identifier)
-		e.write(", ")
-	}
-	e.emit(params[max].(*parser.Param).Identifier)
-	e.write(") ")
-	e.emitBlock(init.Body)
-	e.write("\n")
-}
-
-func (e *Emitter) emitExit(r *parser.Exit) {
-	switch r.Operator.Kind() {
-	case parser.BreakKeyword:
-		e.write("break")
-	case parser.ContinueKeyword:
-		e.write("continue")
-	case parser.ReturnKeyword:
-		e.write("return")
-	case parser.ThrowKeyword:
-		e.write("throw")
-	}
-	if r.Value != nil {
-		e.write(" ")
-		e.emit(r.Value)
-	}
-	e.write(";\n")
-}
-
 func (e *Emitter) getClassParamNames(expr parser.Expression) []string {
 	params, ok := expr.(*parser.TupleExpression)
 	if !ok {
@@ -317,6 +156,33 @@ func (e *Emitter) emitTypeDeclaration(declaration *parser.Assignment) {
 			e.write(fmt.Sprintf("        this.%v = %v;\n", name, name))
 		}
 	}
+}
+
+func (e *Emitter) emitMethodDeclaration(a *parser.Assignment) {
+	pattern := a.Pattern.(*parser.PropertyAccessExpression)
+	receiver := pattern.Expr.(*parser.ParenthesizedExpression).Expr.(*parser.Param)
+
+	e.emit(receiver.Complement)
+	e.write(".prototype.")
+	e.emit(pattern.Property)
+	e.write(" = function ")
+
+	e.thisName = receiver.Identifier.Text()
+	defer func() { e.thisName = "" }()
+
+	init := a.Value.(*parser.FunctionExpression)
+	e.write("(")
+	params := init.Params.Expr.(*parser.TupleExpression).Elements
+	max := len(params)
+	for i := range params[:max] {
+		param := params[i].(*parser.Param)
+		e.emit(param.Identifier)
+		e.write(", ")
+	}
+	e.emit(params[max].(*parser.Param).Identifier)
+	e.write(") ")
+	e.emitBlockStatement(init.Body)
+	e.write("\n")
 }
 
 func isTypePattern(expr parser.Expression) bool {
