@@ -99,26 +99,6 @@ func emitSetSlice(e *Emitter, a *parser.Assignment) {
 	e.write(")")
 }
 
-func (e *Emitter) emitBlock(b *parser.Block) {
-	e.write("{")
-	if len(b.Statements) == 0 {
-		e.write("}")
-		return
-	}
-	e.write("\n")
-	e.depth++
-	for _, statement := range b.Statements {
-		e.indent()
-		e.emit(statement)
-		if _, ok := statement.(parser.Expression); ok {
-			e.write(";\n")
-		}
-	}
-	e.depth--
-	e.indent()
-	e.write("}\n")
-}
-
 func (e *Emitter) emitCatchStatement(c *parser.CatchExpression) {
 	e.write("try {\n")
 	e.depth++
@@ -129,7 +109,7 @@ func (e *Emitter) emitCatchStatement(c *parser.CatchExpression) {
 	e.write("} catch (")
 	e.emit(c.Identifier)
 	e.write(") ")
-	e.emitBlock(c.Body)
+	e.emitBlockStatement(c.Body)
 }
 
 func (e *Emitter) emitFor(f *parser.ForExpression) {
@@ -138,7 +118,7 @@ func (e *Emitter) emitFor(f *parser.ForExpression) {
 		e.write("while (")
 		e.emit(f.Statement)
 		e.write(") ")
-		e.emitBlock(f.Body)
+		e.emitBlockStatement(f.Body)
 	}
 
 	e.write("for (let ")
@@ -147,21 +127,21 @@ func (e *Emitter) emitFor(f *parser.ForExpression) {
 	e.write(" of ")
 	e.emit(a.Value)
 	e.write(") ")
-	e.emitBlock(f.Body)
+	e.emitBlockStatement(f.Body)
 }
 
 func (e *Emitter) emitIfStatement(i *parser.IfExpression) {
 	e.write("if (")
 	e.emit(i.Condition)
 	e.write(") ")
-	e.emitBlock(i.Body)
+	e.emitBlockStatement(i.Body)
 	if i.Alternate == nil {
 		return
 	}
 	e.write(" else ")
 	switch alternate := i.Alternate.(type) {
 	case *parser.Block:
-		e.emitBlock(alternate)
+		e.emitBlockStatement(alternate)
 	case *parser.IfExpression:
 		e.emitIfStatement(alternate)
 	}
@@ -238,7 +218,7 @@ func (e *Emitter) emitMethodDeclaration(a *parser.Assignment) {
 	}
 	e.emit(params[max].(*parser.Param).Identifier)
 	e.write(") ")
-	e.emitBlock(init.Body)
+	e.emitBlockStatement(init.Body)
 	e.write("\n")
 }
 

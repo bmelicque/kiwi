@@ -68,7 +68,7 @@ func (e *Emitter) emit(node parser.Node) {
 	case *parser.Assignment:
 		e.emitAssignment(node)
 	case *parser.Block:
-		e.emitBlock(node)
+		e.emitBlockStatement(node)
 	case *parser.CatchExpression:
 		e.emitCatchStatement(node)
 	case *parser.ForExpression:
