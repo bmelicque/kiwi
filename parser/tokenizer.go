@@ -37,6 +37,7 @@ const (
 	MatchKeyword    // match
 	CaseKeyword     // case
 	ForKeyword      // for
+	InKeyword       // in
 	BreakKeyword    // break
 	ContinueKeyword // continue
 	ReturnKeyword   // return
@@ -258,6 +259,8 @@ func makeToken(text string, loc Loc) Token {
 		return token{CaseKeyword, loc}
 	case "for":
 		return token{ForKeyword, loc}
+	case "in":
+		return token{InKeyword, loc}
 	case "break":
 		return token{BreakKeyword, loc}
 	case "continue":
