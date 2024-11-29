@@ -110,7 +110,7 @@ func parseInExpression(p *Parser) Expression {
 
 func validateInExpression(p *Parser, expr *BinaryExpression) {
 	switch left := expr.Left.(type) {
-	case *Identifier:
+	case nil, *Identifier:
 	case *TupleExpression:
 		expr.Left = getValidatedForInTuple(p, left)
 	default:
