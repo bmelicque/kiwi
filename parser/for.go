@@ -185,6 +185,8 @@ func getIteratedElementType(t ExpressionType) ExpressionType {
 		if l, ok := t.To.(List); ok {
 			return Ref{l.Element}
 		}
+	case Range:
+		return t.operands
 	}
 	return Unknown{}
 }
