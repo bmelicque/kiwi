@@ -116,8 +116,7 @@ func getValidatedRangeTuplePattern(p *Parser, tuple *TupleExpression) (*Identifi
 }
 
 func getLoopType(p *Parser, body *Block) ExpressionType {
-	breaks := []*Exit{}
-	findBreakStatements(body, &breaks)
+	breaks := findBreakStatements(body)
 	if len(breaks) == 0 {
 		return Nil{}
 	}
@@ -138,23 +137,20 @@ func getLoopType(p *Parser, body *Block) ExpressionType {
 	return t
 }
 
-func findBreakStatements(node Node, results *[]*Exit) {
-	if node == nil {
-		return
-	}
-	if n, ok := node.(*Exit); ok {
-		if n.Operator.Kind() == BreakKeyword {
-			*results = append(*results, n)
+func findBreakStatements(body *Block) []*Exit {
+	results := []*Exit{}
+	Walk(body, func(n Node, skip func()) {
+		if isFunctionExpression(n) || isForExpression(n) {
+			skip()
 		}
-		return
-	}
-	switch node := node.(type) {
-	case *Block:
-		for _, statement := range node.Statements {
-			findBreakStatements(statement, results)
+		if n, ok := n.(*Exit); ok && n.Operator.Kind() == BreakKeyword {
+			results = append(results, n)
 		}
-	case *IfExpression:
-		findBreakStatements(node.Body, results)
-		findBreakStatements(node.Alternate, results)
-	}
+	})
+	return results
+}
+
+func isForExpression(n Node) bool {
+	_, ok := n.(*ForExpression)
+	return ok
 }
