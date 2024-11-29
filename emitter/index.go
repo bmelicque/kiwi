@@ -135,7 +135,7 @@ func EmitProgram(nodes []parser.Node) string {
 	}
 	e.write("\n")
 	if e.hasFlag(RangeFlag) {
-		e.write("function* _range(start, end) {\n    while (start < end) yield start++;\n}\n")
+		e.write("function* __range(start, end) {\n    while (start < end) yield start++;\n}\n")
 	}
 	if e.hasFlag(SliceFlag) {
 		e.emitSliceConstructor()

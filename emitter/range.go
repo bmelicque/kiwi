@@ -5,7 +5,7 @@ import "github.com/bmelicque/test-parser/parser"
 func (e *Emitter) emitRangeExpression(r *parser.RangeExpression) {
 	e.addFlag(RangeFlag)
 
-	e.write("_range(")
+	e.write("__range(")
 
 	if r.Left != nil {
 		e.emit(r.Left)
