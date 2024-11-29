@@ -1,16 +1,16 @@
 package parser
 
 type ForExpression struct {
-	Keyword   Token
-	Statement Node // Expression (boolean) | Assignment from range
-	Body      *Block
-	typing    ExpressionType
+	Keyword Token
+	Expr    Expression // Expression (boolean)
+	Body    *Block
+	typing  ExpressionType
 }
 
 func (f *ForExpression) getChildren() []Node {
 	children := []Node{}
-	if f.Statement != nil {
-		children = append(children, f.Statement)
+	if f.Expr != nil {
+		children = append(children, f.Expr)
 	}
 	if f.Body != nil {
 		children = append(children, f.Body)
@@ -19,38 +19,53 @@ func (f *ForExpression) getChildren() []Node {
 }
 
 func (f *ForExpression) typeCheck(p *Parser) {
-	switch s := f.Statement.(type) {
-	case *Assignment:
-		r := getLoopRangeType(s.Value)
-		if r == nil {
-			p.report("Range expected", s.Value.Loc())
-		}
-		switch pattern := s.Pattern.(type) {
-		case *Identifier:
-			p.scope.Add(pattern.Text(), pattern.Loc(), r)
-		case *TupleExpression:
-			// TODO: FIXME:
-			// index, value := getValidatedRangeTuplePattern(p, pattern)
-		}
-	case Expression:
-		// s.Expr == nil already reported when parsing expression
-		if s == nil {
-			break
-		}
-		if _, ok := s.Type().(Boolean); !ok {
-			p.report("Boolean expected in loop condition", s.Loc())
-		}
+	p.pushScope(NewScope(LoopScope))
+	defer p.dropScope()
+
+	binary, ok := f.Expr.(*BinaryExpression)
+	if ok && binary.Operator.Kind() == InKeyword {
+		typeCheckForInExpression(p, binary)
+	} else {
+		typeCheckForExpression(p, f.Expr)
 	}
 	f.Body.typeCheck(p)
 	f.typing = getLoopType(p, f.Body)
+}
+func typeCheckForInExpression(p *Parser, expr *BinaryExpression) {
+	el := getIteratedElementType(expr.Right.Type())
+	if el == (Unknown{}) {
+		p.report("Invalid type, list or slice expected", expr.Right.Loc())
+		return
+	}
+	switch pattern := expr.Left.(type) {
+	case *Identifier:
+		p.scope.Add(pattern.Text(), pattern.Loc(), el)
+	case *TupleExpression:
+		element := pattern.Elements[0].(*Identifier)
+		if element != nil {
+			p.scope.Add(element.Text(), element.Loc(), el)
+		}
+		index := pattern.Elements[1].(*Identifier)
+		if index != nil {
+			p.scope.Add(index.Text(), index.Loc(), Number{})
+		}
+	}
+}
+func typeCheckForExpression(p *Parser, expr Expression) {
+	if expr == nil {
+		return
+	}
+	if _, ok := expr.Type().(Boolean); !ok {
+		p.report("Boolean expected in loop condition", expr.Loc())
+	}
 }
 
 func (f *ForExpression) Loc() Loc {
 	loc := f.Keyword.Loc()
 	if f.Body != nil {
 		loc.End = f.Body.Loc().End
-	} else if f.Statement != nil {
-		loc.End = f.Statement.Loc().End
+	} else if f.Expr != nil {
+		loc.End = f.Expr.Loc().End
 	}
 	return loc
 }
@@ -61,46 +76,45 @@ func (p *Parser) parseForExpression() *ForExpression {
 	defer p.dropScope()
 
 	keyword := p.Consume()
-
-	outer := p.allowBraceParsing
-	p.allowBraceParsing = false
-	statement := p.parseAssignment()
-	p.allowBraceParsing = outer
-	validateForCondition(p, statement)
-
+	expr := parseInExpression(p)
 	body := p.parseBlock()
 
-	return &ForExpression{keyword, statement, body, nil}
+	return &ForExpression{keyword, expr, body, nil}
 }
 
-func validateForCondition(p *Parser, s Node) {
-	switch s := s.(type) {
-	case *Assignment:
-		switch pattern := s.Pattern.(type) {
-		case *Identifier, *TupleExpression:
-		default:
-			p.report("Invalid pattern", pattern.Loc())
-		}
-	case Expression:
+func parseInExpression(p *Parser) Expression {
+	outer := p.allowBraceParsing
+	p.allowBraceParsing = false
+	defer func() { p.allowBraceParsing = outer }()
+	expr := p.parseExpression()
+
+	if p.Peek().Kind() != InKeyword {
+		return expr
+	}
+	operator := p.Consume()
+	right := p.parseExpression()
+	in := &BinaryExpression{
+		Left:     expr,
+		Right:    right,
+		Operator: operator,
+	}
+	validateInExpression(p, in)
+	return in
+}
+
+func validateInExpression(p *Parser, expr *BinaryExpression) {
+	switch left := expr.Left.(type) {
+	case *Identifier:
+	case *TupleExpression:
+		expr.Left = getValidatedForInTuple(p, left)
 	default:
-		p.report("Assignment from range or condition expected", s.Loc())
+		p.report("Invalid pattern", expr.Left.Loc())
+		expr.Left = nil
 	}
 }
 
-func getLoopRangeType(expr Expression) ExpressionType {
-	if expr == nil {
-		return nil
-	}
-	r, ok := expr.Type().(Range)
-	if !ok {
-		return nil
-	}
-	return r.operands
-}
-
-func getValidatedRangeTuplePattern(p *Parser, tuple *TupleExpression) (*Identifier, *Identifier) {
-	// Parsing ensures that length is >= 2
-	if len(tuple.Elements) != 2 {
+func getValidatedForInTuple(p *Parser, tuple *TupleExpression) *TupleExpression {
+	if len(tuple.Elements) > 2 {
 		p.report("Only 2 elements expected", tuple.Loc())
 	}
 
@@ -108,11 +122,11 @@ func getValidatedRangeTuplePattern(p *Parser, tuple *TupleExpression) (*Identifi
 	if !ok {
 		p.report("Identifier expected", tuple.Elements[0].Loc())
 	}
-	value, ok := tuple.Elements[0].(*Identifier)
+	value, ok := tuple.Elements[1].(*Identifier)
 	if !ok {
 		p.report("Identifier expected", tuple.Elements[1].Loc())
 	}
-	return index, value
+	return &TupleExpression{Elements: []Expression{index, value}}
 }
 
 func getLoopType(p *Parser, body *Block) ExpressionType {
@@ -153,4 +167,18 @@ func findBreakStatements(body *Block) []*Exit {
 func isForExpression(n Node) bool {
 	_, ok := n.(*ForExpression)
 	return ok
+}
+
+// t might be a List or a Ref to a List.
+// Return the type iterated on in a loop
+func getIteratedElementType(t ExpressionType) ExpressionType {
+	switch t := t.(type) {
+	case List:
+		return t.Element
+	case Ref:
+		if l, ok := t.To.(List); ok {
+			return Ref{l.Element}
+		}
+	}
+	return Unknown{}
 }
