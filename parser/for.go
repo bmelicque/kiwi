@@ -32,10 +32,10 @@ func (f *ForExpression) typeCheck(p *Parser) {
 	f.typing = getLoopType(p, f.Body)
 }
 func typeCheckForInExpression(p *Parser, expr *BinaryExpression) {
+	expr.Right.typeCheck(p)
 	el := getIteratedElementType(expr.Right.Type())
 	if el == (Unknown{}) {
 		p.report("Invalid type, list or slice expected", expr.Right.Loc())
-		return
 	}
 	switch pattern := expr.Left.(type) {
 	case *Identifier:
