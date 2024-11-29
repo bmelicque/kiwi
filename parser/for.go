@@ -32,10 +32,14 @@ func (f *ForExpression) typeCheck(p *Parser) {
 	f.typing = getLoopType(p, f.Body)
 }
 func typeCheckForInExpression(p *Parser, expr *BinaryExpression) {
-	expr.Right.typeCheck(p)
-	el := getIteratedElementType(expr.Right.Type())
-	if el == (Unknown{}) {
-		p.report("Invalid type, list or slice expected", expr.Right.Loc())
+	var el ExpressionType = Unknown{}
+	if expr.Right != nil {
+		expr.Right.typeCheck(p)
+		checkExplicitRange(p, expr.Right)
+		el = getIteratedElementType(expr.Right.Type())
+		if el == (Unknown{}) {
+			p.report("Invalid type, list or slice expected", expr.Right.Loc())
+		}
 	}
 	switch pattern := expr.Left.(type) {
 	case *Identifier:
@@ -49,6 +53,16 @@ func typeCheckForInExpression(p *Parser, expr *BinaryExpression) {
 		if index != nil {
 			p.scope.Add(index.Text(), index.Loc(), Number{})
 		}
+	}
+}
+func checkExplicitRange(p *Parser, expr Expression) {
+	_, ok := expr.Type().(Range)
+	if !ok {
+		return
+	}
+	_, ok = Unwrap(expr).(*RangeExpression)
+	if !ok {
+		p.report("Literal range expression expected", expr.Loc())
 	}
 }
 func typeCheckForExpression(p *Parser, expr Expression) {
