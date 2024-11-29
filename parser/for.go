@@ -83,15 +83,21 @@ func (p *Parser) parseForExpression() *ForExpression {
 }
 
 func parseInExpression(p *Parser) Expression {
-	outer := p.allowBraceParsing
+	brace := p.allowBraceParsing
+	empty := p.allowEmptyExpr
 	p.allowBraceParsing = false
-	defer func() { p.allowBraceParsing = outer }()
+	p.allowEmptyExpr = true
+	defer func() { p.allowBraceParsing = brace }()
 	expr := p.parseExpression()
+	p.allowEmptyExpr = empty
 
 	if p.Peek().Kind() != InKeyword {
 		return expr
 	}
 	operator := p.Consume()
+	if expr == nil {
+		p.report("Expression expected", operator.Loc())
+	}
 	right := p.parseExpression()
 	in := &BinaryExpression{
 		Left:     expr,
