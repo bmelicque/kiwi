@@ -3,19 +3,151 @@ package emitter
 import "github.com/bmelicque/test-parser/parser"
 
 func (e *Emitter) emitFor(f *parser.ForExpression) {
-	a, ok := f.Statement.(*parser.Assignment)
-	if !ok {
-		e.write("while (")
-		e.emit(f.Statement)
-		e.write(") ")
+	if f.Expr == nil {
+		e.write("while (true) ")
 		e.emitBlockStatement(f.Body)
+		return
 	}
 
+	binary, ok := f.Expr.(*parser.BinaryExpression)
+	if !ok || binary.Operator.Kind() != parser.InKeyword {
+		e.write("while (")
+		e.emit(f.Expr)
+		e.write(") ")
+		e.emitBlockStatement(f.Body)
+		return
+	}
+	_, isTuple := binary.Left.(*parser.TupleExpression)
+	// TODO: switch over type
+	switch binary.Right.Type().(type) {
+	case parser.Range:
+		if isTuple {
+			emitForRangeTuple(e, f)
+		} else {
+			emitForRange(e, f)
+		}
+	case parser.List:
+		if isTuple {
+			emitForListTuple(e, f)
+		} else {
+			emitForList(e, f)
+		}
+	case parser.Ref:
+		if isTuple {
+			emitForSliceTuple(e, f)
+		} else {
+			emitForList(e, f)
+		}
+	default:
+		panic("unexpected type in for loop!")
+	}
+
+}
+
+func emitForRange(e *Emitter, f *parser.ForExpression) {
+	binary := f.Expr.(*parser.BinaryExpression)
+	r := binary.Right.(*parser.RangeExpression)
+	identifier := binary.Left.(*parser.Identifier)
+
 	e.write("for (let ")
-	// FIXME: tuples...
-	e.emit(a.Pattern)
+	e.emitIdentifier(identifier)
+	e.write(" = ")
+	e.emitExpression(r.Left)
+	e.write("; ")
+	e.emitExpression(identifier)
+	if r.Operator.Kind() == parser.InclusiveRange {
+		e.write(" <= ")
+	} else {
+		e.write(" < ")
+	}
+	e.emitExpression(r.Right)
+	e.write("; ")
+	e.emitExpression(identifier)
+	e.write("++) ")
+	e.emitBlockStatement(f.Body)
+}
+
+func emitForRangeTuple(e *Emitter, f *parser.ForExpression) {
+	binary := f.Expr.(*parser.BinaryExpression)
+	r := binary.Right.(*parser.RangeExpression)
+	tuple := binary.Left.(*parser.TupleExpression)
+
+	e.write("for (let ")
+	e.emitExpression(tuple.Elements[0])
+	e.write(" = ")
+	e.emitExpression(r.Left)
+	e.write(", ")
+	e.emitExpression(tuple.Elements[1])
+	e.write(" = 0; ")
+	e.emitExpression(tuple.Elements[0])
+	if r.Operator.Kind() == parser.InclusiveRange {
+		e.write(" <= ")
+	} else {
+		e.write(" < ")
+	}
+	e.emitExpression(r.Right)
+	e.write("; ")
+	e.emitExpression(tuple.Elements[0])
+	e.write("++, ")
+	e.emitExpression(tuple.Elements[1])
+	e.write("++) ")
+	e.emitBlockStatement(f.Body)
+}
+
+func emitForList(e *Emitter, f *parser.ForExpression) {
+	binary := f.Expr.(*parser.BinaryExpression)
+	identifier := binary.Left.(*parser.Identifier)
+
+	e.write("for (let ")
+	e.emitIdentifier(identifier)
 	e.write(" of ")
-	e.emit(a.Value)
+	e.emitExpression(binary.Right)
 	e.write(") ")
+	e.emitBlockStatement(f.Body)
+}
+
+func emitForListTuple(e *Emitter, f *parser.ForExpression) {
+	binary := f.Expr.(*parser.BinaryExpression)
+	tuple := binary.Left.(*parser.TupleExpression)
+
+	e.write("const __list = ")
+	e.emitExpression(binary.Right)
+	e.write(";\n")
+
+	e.indent()
+	e.write("for (let ")
+	e.emitExpression(tuple.Elements[0])
+	e.write(" = __list[0], ")
+	e.emitExpression(tuple.Elements[1])
+	e.write(" = 0; ")
+	e.emitExpression(tuple.Elements[1])
+	e.write(" < __list.length; ")
+	e.emitExpression(tuple.Elements[0])
+	e.write(" = __list[++")
+	e.emitExpression(tuple.Elements[1])
+	e.write("]) ")
+	e.emitBlockStatement(f.Body)
+}
+
+func emitForSliceTuple(e *Emitter, f *parser.ForExpression) {
+	binary := f.Expr.(*parser.BinaryExpression)
+	tuple := binary.Left.(*parser.TupleExpression)
+
+	e.write("const __s = ")
+	e.emitExpression(binary.Right)
+	e.write(";\n")
+
+	e.indent()
+	e.write("for (let ")
+	e.emitExpression(tuple.Elements[0])
+	e.write(" = __s.ref(0), ")
+	e.emitExpression(tuple.Elements[1])
+	e.write(" = 0; ")
+	e.emitExpression(tuple.Elements[1])
+	e.write(" < __s.length; ")
+	e.emitExpression(tuple.Elements[0])
+	e.write(" = __s.ref(++")
+	e.emitExpression(tuple.Elements[1])
+	e.write(")) ")
 	e.emitBlockStatement(f.Body)
 }

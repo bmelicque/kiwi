@@ -18,7 +18,10 @@ func (t testToken) Text() string           { return t.value }
 func (t testToken) Loc() parser.Loc        { return t.loc }
 
 func testEmitter(t *testing.T, source string, expected string, line int) {
-	ast, _ := parser.Parse(strings.NewReader(source))
+	ast, err := parser.Parse(strings.NewReader(source))
+	if len(err) > 0 {
+		t.Fatalf("Got unexpected parser errors:\n%#v\n", err)
+	}
 	emitter := makeEmitter()
 	emitter.emit(ast[line])
 	received := emitter.string()

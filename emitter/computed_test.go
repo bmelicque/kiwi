@@ -8,7 +8,7 @@ import (
 
 func TestMapElementAccess(t *testing.T) {
 	emitter := makeEmitter()
-	emitMapElementAccess(emitter, &parser.ComputedAccessExpression{
+	emitGetElement(emitter, &parser.ComputedAccessExpression{
 		Expr: &parser.Identifier{Token: testToken{kind: parser.Name, value: "map"}},
 		Property: &parser.BracketedExpression{
 			Expr: &parser.Literal{Token: testToken{kind: parser.StringLiteral, value: "\"key\""}},
@@ -27,7 +27,7 @@ func TestEmitSliceAccess(t *testing.T) {
 	source += "slice := &array\n"
 	source += "slice[0]"
 
-	expected := "slice(0)"
+	expected := "slice.get(0)"
 
 	testEmitter(t, source, expected, 2)
 }
