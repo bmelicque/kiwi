@@ -13,11 +13,11 @@ func TestEmitReference(t *testing.T) {
 	testEmitter(t, source, expected, 1)
 }
 
-func TestEmitArrayRef(t *testing.T) {
+func TestEmitListRef(t *testing.T) {
 	source := "array := []number{0, 1, 2}\n"
 	source += "&array\n"
 
-	expected := "__slice(() => array)"
+	expected := "new __Slice(() => array)"
 
 	testEmitter(t, source, expected, 1)
 }
@@ -26,7 +26,7 @@ func TestEmitSlice(t *testing.T) {
 	source := "array := []number{0, 1, 2}\n"
 	source += "&array[1..]\n"
 
-	expected := "__slice(() => array, 1)"
+	expected := "new __Slice(() => array, 1)"
 
 	testEmitter(t, source, expected, 1)
 }

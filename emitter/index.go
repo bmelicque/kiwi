@@ -151,13 +151,33 @@ func EmitProgram(nodes []parser.Node) string {
 }
 
 func (e *Emitter) emitSliceConstructor() {
-	e.write(`function __slice(getter, start = 0, end = getter().length) {
-	return function (index, value) {
-		return arguments.length == 0
-			? getter().slice(start, end)
-			: arguments.length == 1
-			? getter()[start + index]
-			: void (getter()[start + index] = value);
-	};
+	e.write(`class __Slice {
+	constructor(getter, start = 0, end = getter().length) {
+		this._ = getter;
+		this.start = start;
+		this.end = end;
+		this.length = end - this.start;
+	}
+
+	get(index) {
+		return index < this.length ? this._()[this.start + index] : undefined;
+	}
+
+	set(index, value) {
+		if (index >= this.length) throw new OutOfRangeError();
+		this._()[this.start + index] = value;
+	}
+
+	clone() {
+		return this._().slice(this.start, this.end);
+	}
+
+	ref(index) {
+		if (index >= this.length) throw new OutOfRangeError();
+		return function (value) {
+			if (arguments.length === 0) return this._()[this.start + index];
+			this._()[this.start + index] = value;
+		};
+	}
 }`)
 }

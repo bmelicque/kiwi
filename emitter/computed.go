@@ -31,7 +31,7 @@ func (e *Emitter) emitComputedAccessExpression(expr *parser.ComputedAccessExpres
 	switch left := expr.Expr.Type().(type) {
 	case parser.TypeAlias:
 		if left.Name == "Map" {
-			emitMapElementAccess(e, expr)
+			emitGetElement(e, expr)
 		} else {
 			e.emit(expr.Expr)
 		}
@@ -39,17 +39,14 @@ func (e *Emitter) emitComputedAccessExpression(expr *parser.ComputedAccessExpres
 		if _, ok := left.To.(parser.List); !ok {
 			panic("unexpected typing (expected &[]any)")
 		}
-		e.emitExpression(expr.Expr)
-		e.write("(")
-		e.emitExpression(expr.Property.Expr)
-		e.write(")")
+		emitGetElement(e, expr)
 	case parser.List:
 		e.emitListAccess(expr)
 	default:
 		e.emit(expr.Expr)
 	}
 }
-func emitMapElementAccess(e *Emitter, c *parser.ComputedAccessExpression) {
+func emitGetElement(e *Emitter, c *parser.ComputedAccessExpression) {
 	e.emitExpression(c.Expr)
 	e.write(".get(")
 	e.emitExpression(c.Property.Expr)

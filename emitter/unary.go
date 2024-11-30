@@ -22,7 +22,11 @@ func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
 		}
 	case parser.Mul:
 		e.emit(u.Operand)
-		e.write("()")
+		if _, ok := u.Operand.Type().(parser.Ref).To.(parser.List); ok {
+			e.write(".clone()")
+		} else {
+			e.write("()")
+		}
 	}
 }
 
@@ -41,7 +45,7 @@ func (e *Emitter) emitSlice(expr parser.Expression) {
 		r = computed.Property.Expr.(*parser.RangeExpression)
 	}
 	e.addFlag(SliceFlag)
-	e.write("__slice(() => ")
+	e.write("new __Slice(() => ")
 	e.emit(expr)
 	if r != nil {
 		e.write(", ")

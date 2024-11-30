@@ -9,7 +9,7 @@ import (
 func TestMapAssignment(t *testing.T) {
 	emitter := makeEmitter()
 	// map[key] = value
-	emitSetMap(emitter, &parser.Assignment{
+	emitSetElement(emitter, &parser.Assignment{
 		Pattern: &parser.ComputedAccessExpression{
 			Expr: &parser.Identifier{Token: testToken{kind: parser.Name, value: "map"}},
 			Property: &parser.BracketedExpression{
@@ -32,7 +32,7 @@ func TestSliceAssignment(t *testing.T) {
 	source += "slice := &array\n"
 	source += "slice[0] = 42"
 
-	expected := "slice(0, 42)"
+	expected := "slice.set(0, 42)"
 
 	testEmitter(t, source, expected, 2)
 }
