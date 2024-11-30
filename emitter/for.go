@@ -17,21 +17,31 @@ func (e *Emitter) emitFor(f *parser.ForExpression) {
 		e.emitBlockStatement(f.Body)
 		return
 	}
-	if _, ok := binary.Right.(*parser.RangeExpression); ok {
-		if _, ok := binary.Left.(*parser.TupleExpression); ok {
+	_, isTuple := binary.Left.(*parser.TupleExpression)
+	// TODO: switch over type
+	switch binary.Right.Type().(type) {
+	case parser.Range:
+		if isTuple {
 			emitForRangeTuple(e, f)
 		} else {
 			emitForRange(e, f)
 		}
-		return
+	case parser.List:
+		if isTuple {
+			emitForListTuple(e, f)
+		} else {
+			emitForList(e, f)
+		}
+	default:
+		e.write("for (let ")
+		// FIXME: tuples...
+		e.emit(binary.Left)
+		e.write(" of ")
+		e.emit(binary.Right)
+		e.write(") ")
+		e.emitBlockStatement(f.Body)
 	}
-	e.write("for (let ")
-	// FIXME: tuples...
-	e.emit(binary.Left)
-	e.write(" of ")
-	e.emit(binary.Right)
-	e.write(") ")
-	e.emitBlockStatement(f.Body)
+
 }
 
 func emitForRange(e *Emitter, f *parser.ForExpression) {
@@ -81,5 +91,40 @@ func emitForRangeTuple(e *Emitter, f *parser.ForExpression) {
 	e.write("++, ")
 	e.emitExpression(tuple.Elements[1])
 	e.write("++) ")
+	e.emitBlockStatement(f.Body)
+}
+
+func emitForList(e *Emitter, f *parser.ForExpression) {
+	binary := f.Expr.(*parser.BinaryExpression)
+	identifier := binary.Left.(*parser.Identifier)
+
+	e.write("for (let ")
+	e.emitIdentifier(identifier)
+	e.write(" of ")
+	e.emitExpression(binary.Right)
+	e.write(") ")
+	e.emitBlockStatement(f.Body)
+}
+
+func emitForListTuple(e *Emitter, f *parser.ForExpression) {
+	binary := f.Expr.(*parser.BinaryExpression)
+	tuple := binary.Left.(*parser.TupleExpression)
+
+	e.write("const __list = ")
+	e.emitExpression(binary.Right)
+	e.write(";\n")
+
+	e.indent()
+	e.write("for (let ")
+	e.emitExpression(tuple.Elements[0])
+	e.write(" = __list[0], ")
+	e.emitExpression(tuple.Elements[1])
+	e.write(" = 0; ")
+	e.emitExpression(tuple.Elements[1])
+	e.write(" < __list.length; ")
+	e.emitExpression(tuple.Elements[0])
+	e.write(" = __list[++")
+	e.emitExpression(tuple.Elements[1])
+	e.write("]) ")
 	e.emitBlockStatement(f.Body)
 }

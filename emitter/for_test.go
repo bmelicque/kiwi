@@ -29,3 +29,24 @@ func TestEmitForInRangeTuple(t *testing.T) {
 	expected += "}\n"
 	testEmitter(t, source, expected, 0)
 }
+
+func TestEmitForInList(t *testing.T) {
+	source := "list := []number{1, 2, 3}\n"
+	source += "for x in list { x }"
+
+	expected := "for (let x of list) {\n"
+	expected += "    x;\n"
+	expected += "}\n"
+	testEmitter(t, source, expected, 1)
+}
+
+func TestEmitForInListTuple(t *testing.T) {
+	source := "list := []number{1, 2, 3}\n"
+	source += "for x, i in list { x + i }"
+
+	expected := "const __list = list;\n"
+	expected += "for (let x = __list[0], i = 0; i < __list.length; x = __list[++i]) {\n"
+	expected += "    x + i;\n"
+	expected += "}\n"
+	testEmitter(t, source, expected, 1)
+}
