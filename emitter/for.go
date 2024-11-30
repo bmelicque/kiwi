@@ -32,14 +32,14 @@ func (e *Emitter) emitFor(f *parser.ForExpression) {
 		} else {
 			emitForList(e, f)
 		}
+	case parser.Ref:
+		if isTuple {
+			emitForSliceTuple(e, f)
+		} else {
+			emitForList(e, f)
+		}
 	default:
-		e.write("for (let ")
-		// FIXME: tuples...
-		e.emit(binary.Left)
-		e.write(" of ")
-		e.emit(binary.Right)
-		e.write(") ")
-		e.emitBlockStatement(f.Body)
+		panic("unexpected type in for loop!")
 	}
 
 }
@@ -126,5 +126,28 @@ func emitForListTuple(e *Emitter, f *parser.ForExpression) {
 	e.write(" = __list[++")
 	e.emitExpression(tuple.Elements[1])
 	e.write("]) ")
+	e.emitBlockStatement(f.Body)
+}
+
+func emitForSliceTuple(e *Emitter, f *parser.ForExpression) {
+	binary := f.Expr.(*parser.BinaryExpression)
+	tuple := binary.Left.(*parser.TupleExpression)
+
+	e.write("const __s = ")
+	e.emitExpression(binary.Right)
+	e.write(";\n")
+
+	e.indent()
+	e.write("for (let ")
+	e.emitExpression(tuple.Elements[0])
+	e.write(" = __s.ref(0), ")
+	e.emitExpression(tuple.Elements[1])
+	e.write(" = 0; ")
+	e.emitExpression(tuple.Elements[1])
+	e.write(" < __s.length; ")
+	e.emitExpression(tuple.Elements[0])
+	e.write(" = __s.ref(++")
+	e.emitExpression(tuple.Elements[1])
+	e.write(")) ")
 	e.emitBlockStatement(f.Body)
 }

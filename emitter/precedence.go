@@ -25,6 +25,8 @@ func Precedence(expr parser.Expression) uint8 {
 		case parser.Pow:
 			return 14
 		}
+	case *parser.UnaryExpression:
+		return 15
 	case *parser.CallExpression, *parser.PropertyAccessExpression:
 		return 18
 	case *parser.Identifier, *parser.Literal, *parser.ParenthesizedExpression:

@@ -179,5 +179,10 @@ func (e *Emitter) emitSliceConstructor() {
 			this._()[this.start + index] = value;
 		};
 	}
+
+	*[Symbol.iterator]() {
+		let i = 0;
+		while (i++ < this.length) yield this.ref(i);
+	}
 }`)
 }
