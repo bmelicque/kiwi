@@ -57,6 +57,11 @@ func (p *Parser) parseAssignment() Node {
 		return expr
 	}
 	init := p.parseExpression()
+	if c, ok := expr.(*ComputedAccessExpression); ok && operator.Kind() == Define {
+		c.Property.Expr = makeTuple(c.Property.Expr)
+		validateTypeParams(p, c.Property)
+		expr = c
+	}
 	if b, ok := init.(*Block); ok && operator.Kind() == Define {
 		validateStruct(p, b)
 		init = b
@@ -190,30 +195,7 @@ func declareTuple(p *Parser, pattern *TupleExpression, typing ExpressionType) {
 func typeCheckDefinition(p *Parser, a *Assignment) {
 	switch pattern := a.Pattern.(type) {
 	case *ComputedAccessExpression:
-		p.pushScope(NewScope(ProgramScope))
-		pattern.Property.Expr = makeTuple(pattern.Property.Expr)
-		validateTypeParams(p, pattern.Property)
-		typeCheckTypeParams(p, pattern.Property)
-		a.Value.typeCheck(p)
-		p.dropScope()
-
-		identifier, ok := pattern.Expr.(*Identifier)
-		if !ok || !identifier.IsType() {
-			p.report("Type identifier expected", pattern.Expr.Loc())
-			return
-		}
-		var ref ExpressionType
-		if init, ok := a.Value.Type().(Type); ok {
-			ref = init.Value
-		} else {
-			ref = Unknown{}
-		}
-		t := Type{TypeAlias{
-			Name:   identifier.Text(),
-			Params: pattern.Property.getGenerics(),
-			Ref:    ref,
-		}}
-		p.scope.Add(identifier.Text(), pattern.Loc(), t)
+		typeCheckGenericTypeDefinition(p, a)
 	case *Identifier:
 		if a.Value == nil {
 			return
@@ -221,9 +203,9 @@ func typeCheckDefinition(p *Parser, a *Assignment) {
 		a.Value.typeCheck(p)
 		reportInvalidVariableType(p, a.Value)
 		if pattern.IsType() {
-			typeCheckTypeDefintion(p, a)
+			typeCheckTypeDefinition(p, a)
 		} else {
-			typeCheckFunctionDefintion(p, a)
+			typeCheckFunctionDefinition(p, a)
 		}
 	case *PropertyAccessExpression:
 		typeCheckMethod(p, pattern, a.Value)
@@ -234,19 +216,49 @@ func typeCheckDefinition(p *Parser, a *Assignment) {
 	}
 }
 
-func typeCheckTypeDefintion(p *Parser, a *Assignment) {
-	identifier := a.Pattern.(*Identifier)
-	if _, ok := a.Value.Type().(Type); !ok {
-		p.report("Type expected", a.Value.Loc())
+func typeCheckGenericTypeDefinition(p *Parser, a *Assignment) {
+	pattern := a.Pattern.(*ComputedAccessExpression)
+
+	p.pushScope(NewScope(ProgramScope))
+	typeCheckTypeParams(p, pattern.Property)
+	a.Value.typeCheck(p)
+	p.dropScope()
+
+	identifier, ok := pattern.Expr.(*Identifier)
+	if !ok || !identifier.IsType() {
+		p.report("Type identifier expected", pattern.Expr.Loc())
 		return
 	}
 	t := Type{TypeAlias{
+		Name:   identifier.Text(),
+		Params: pattern.Property.getGenerics(),
+		Ref:    getInitType(p, a.Value),
+	}}
+	p.scope.Add(identifier.Text(), pattern.Loc(), t)
+}
+
+func typeCheckTypeDefinition(p *Parser, a *Assignment) {
+	identifier := a.Pattern.(*Identifier)
+	t := Type{TypeAlias{
 		Name: identifier.Text(),
-		Ref:  a.Value.Type().(Type).Value,
+		Ref:  getInitType(p, a.Value),
 	}}
 	declareIdentifier(p, identifier, t)
 }
-func typeCheckFunctionDefintion(p *Parser, a *Assignment) {
+
+func getInitType(p *Parser, expr Expression) ExpressionType {
+	if expr == nil {
+		return Unknown{}
+	}
+	t, ok := expr.Type().(Type)
+	if !ok {
+		p.report("Type expected", expr.Loc())
+		return Unknown{}
+	}
+	return t.Value
+}
+
+func typeCheckFunctionDefinition(p *Parser, a *Assignment) {
 	identifier := a.Pattern.(*Identifier)
 	t, ok := a.Value.Type().(Function)
 	if !ok {
