@@ -36,3 +36,13 @@ func TestSliceAssignment(t *testing.T) {
 
 	testEmitter(t, source, expected, 2)
 }
+
+func TestObjectDefintion(t *testing.T) {
+	source := "BoxedNumber :: { value number }"
+	expected := "class BoxedNumber {\n"
+	expected += "    constructor(value) {\n"
+	expected += "        this.value = value;\n"
+	expected += "    }\n"
+	expected += "}\n"
+	testEmitter(t, source, expected, 0)
+}

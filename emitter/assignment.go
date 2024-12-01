@@ -84,17 +84,10 @@ func isSliceElement(pattern parser.Expression) bool {
 	return ok
 }
 
-func (e *Emitter) getClassParamNames(expr parser.Expression) []string {
-	params, ok := expr.(*parser.TupleExpression)
-	if !ok {
-		param := expr.(*parser.Param)
-		return []string{getSanitizedName(param.Identifier.Text())}
-
-	}
-
-	names := make([]string, len(params.Elements))
+func (e *Emitter) getClassParamNames(b *parser.Block) []string {
+	names := make([]string, len(b.Statements))
 	length := 0
-	for i, member := range params.Elements {
+	for i, member := range b.Statements {
 		param := member.(*parser.Param)
 		name := getSanitizedName(param.Identifier.Text())
 		names[i] = name
@@ -120,6 +113,18 @@ func (e *Emitter) getClassParamNames(expr parser.Expression) []string {
 	return names
 }
 func (e *Emitter) emitTypeDeclaration(declaration *parser.Assignment) {
+	if b, ok := declaration.Value.(*parser.Block); ok {
+		e.write("class ")
+		e.write(getTypeIdentifier(declaration.Pattern))
+		e.write(" {\n    constructor(")
+		names := e.getClassParamNames(b)
+		e.write(") {\n")
+		for _, name := range names {
+			e.write(fmt.Sprintf("        this.%v = %v;\n", name, name))
+		}
+		e.write("    }\n}\n")
+		return
+	}
 	switch declaration.Value.Type().(parser.Type).Value.(type) {
 	case parser.Trait:
 		return
@@ -129,17 +134,6 @@ func (e *Emitter) emitTypeDeclaration(declaration *parser.Assignment) {
 		e.write(getTypeIdentifier(declaration.Pattern))
 		e.write(" extends _Sum {}\n")
 		return
-	default:
-		e.write("class ")
-		e.write(getTypeIdentifier(declaration.Pattern))
-		e.write(" {\n    constructor(")
-		defer e.write("    }\n}\n")
-		object := declaration.Value.(*parser.ParenthesizedExpression)
-		names := e.getClassParamNames(object.Expr)
-		e.write(") {\n")
-		for _, name := range names {
-			e.write(fmt.Sprintf("        this.%v = %v;\n", name, name))
-		}
 	}
 }
 

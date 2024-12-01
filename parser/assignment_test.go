@@ -305,8 +305,12 @@ func TestObjectTypeDefinition(t *testing.T) {
 	if _, ok := expr.Pattern.(*Identifier); !ok {
 		t.Fatalf("Expected identifier 'Type'")
 	}
-	if _, ok := expr.Value.(*Block); !ok {
+	b, ok := expr.Value.(*Block)
+	if !ok {
 		t.Fatalf("Expected block, got:\n %#v", expr.Value)
+	}
+	if _, ok := b.Statements[0].(*Param); !ok {
+		t.Fatalf("Expected param, got:\n %#v", b.Statements[0])
 	}
 }
 
