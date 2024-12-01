@@ -63,19 +63,31 @@ func (p *Parser) parseAssignment() Node {
 		expr = c
 	}
 	if b, ok := init.(*Block); ok && operator.Kind() == Define {
-		validateStruct(p, b)
+		validateObject(p, b)
 		init = b
 	}
 	return &Assignment{expr, init, operator}
 }
 
-func validateStruct(p *Parser, b *Block) {
-	for i, s := range b.Statements {
-		param, ok := s.(*Param)
-		b.Statements[i] = param
-		if !ok {
-			p.report("Field expected", s.Loc())
+func validateObject(p *Parser, b *Block) {
+	for i := range b.Statements {
+		b.Statements[i] = getValidatedObjectField(p, b.Statements[i])
+	}
+}
+
+func getValidatedObjectField(p *Parser, node Node) Node {
+	switch node := node.(type) {
+	case *Param:
+		return node
+	case *Entry:
+		if _, ok := node.Key.(*Identifier); !ok {
+			p.report("Identifier expected", node.Key.Loc())
+			return nil
 		}
+		return node
+	default:
+		p.report("Field expected", node.Loc())
+		return nil
 	}
 }
 
