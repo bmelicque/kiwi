@@ -287,6 +287,8 @@ func getObjectDefinedType(p *Parser, b *Block) ExpressionType {
 			}
 			if isOptionType(t) {
 				o.Optionals = append(o.Optionals, key)
+			} else if len(o.Defaults)+len(o.Optionals) > 0 {
+				p.report("Cannot define mandatory field after optional fields", s.Loc())
 			}
 			o.Members[key] = t.Value
 		case *Entry:

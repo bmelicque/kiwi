@@ -379,6 +379,29 @@ func TestCheckObjectTypeDefinition(t *testing.T) {
 	_ = object
 }
 
+func TestCheckObjectTypeDefinitionBadOrder(t *testing.T) {
+	parser := MakeParser(nil)
+	declaration := &Assignment{
+		Pattern: &Identifier{Token: literal{kind: Name, value: "Type"}},
+		Value: &Block{Statements: []Node{
+			&Entry{
+				Key:   &Identifier{Token: literal{kind: Name, value: "default"}},
+				Value: &Literal{literal{kind: NumberLiteral, value: "0"}},
+			},
+			&Param{
+				Identifier: &Identifier{Token: literal{kind: Name, value: "key"}},
+				Complement: &Literal{token{kind: NumberKeyword}},
+			},
+		}},
+		Operator: token{kind: Define},
+	}
+	declaration.typeCheck(parser)
+
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
+	}
+}
+
 func TestCheckFunctionDefinition(t *testing.T) {
 	parser := MakeParser(nil)
 	declaration := &Assignment{
