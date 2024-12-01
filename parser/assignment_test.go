@@ -298,6 +298,10 @@ func TestObjectTypeDefinition(t *testing.T) {
 	parser := MakeParser(strings.NewReader(str))
 	node := parser.parseAssignment()
 
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no parsing errors, got:\n%#v", parser.errors)
+	}
+
 	expr, ok := node.(*Assignment)
 	if !ok {
 		t.Fatalf("Expected Assignment, got %#v", node)
@@ -314,16 +318,53 @@ func TestObjectTypeDefinition(t *testing.T) {
 	}
 }
 
+func TestObjectTypeDefinitionWithDefaults(t *testing.T) {
+	str := "Type :: {\n"
+	str += "    n number\n"
+	str += "    d: 0\n"
+	str += "}"
+	parser := MakeParser(strings.NewReader(str))
+	parser.parseAssignment()
+
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no parsing errors, got:\n%#v", parser.errors)
+	}
+}
+
+func TestObjectTypeDefinitionWithDuplicates(t *testing.T) {
+	str := "Type :: {\n"
+	str += "    n number\n"
+	str += "    n string\n"
+	str += "}"
+	parser := MakeParser(strings.NewReader(str))
+	parser.parseAssignment()
+
+	if len(parser.errors) != 2 {
+		t.Fatalf("Expected 2 parsing errors, got:\n%#v", parser.errors)
+	}
+}
+
 func TestCheckObjectTypeDefinition(t *testing.T) {
 	parser := MakeParser(nil)
 	declaration := &Assignment{
 		Pattern: &Identifier{Token: literal{kind: Name, value: "Type"}},
 		Value: &Block{Statements: []Node{
 			&Param{
-				Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
+				Identifier: &Identifier{Token: literal{kind: Name, value: "key"}},
 				Complement: &Literal{token{kind: NumberKeyword}},
-			}},
-		},
+			},
+			&Param{
+				Identifier: &Identifier{Token: literal{kind: Name, value: "optional"}},
+				Complement: &UnaryExpression{
+					Operator: token{kind: QuestionMark},
+					Operand:  &Literal{token{kind: NumberKeyword}},
+				},
+			},
+			&Entry{
+				Key:   &Identifier{Token: literal{kind: Name, value: "default"}},
+				Value: &Literal{literal{kind: NumberLiteral, value: "0"}},
+			},
+		}},
 		Operator: token{kind: Define},
 	}
 	declaration.typeCheck(parser)
@@ -349,6 +390,29 @@ func TestCheckObjectTypeDefinition(t *testing.T) {
 		t.Fatal("Expected an object")
 	}
 	_ = object
+}
+
+func TestCheckObjectTypeDefinitionBadOrder(t *testing.T) {
+	parser := MakeParser(nil)
+	declaration := &Assignment{
+		Pattern: &Identifier{Token: literal{kind: Name, value: "Type"}},
+		Value: &Block{Statements: []Node{
+			&Entry{
+				Key:   &Identifier{Token: literal{kind: Name, value: "default"}},
+				Value: &Literal{literal{kind: NumberLiteral, value: "0"}},
+			},
+			&Param{
+				Identifier: &Identifier{Token: literal{kind: Name, value: "key"}},
+				Complement: &Literal{token{kind: NumberKeyword}},
+			},
+		}},
+		Operator: token{kind: Define},
+	}
+	declaration.typeCheck(parser)
+
+	if len(parser.errors) != 1 {
+		t.Fatalf("Expected 1 error, got %#v", parser.errors)
+	}
 }
 
 func TestCheckFunctionDefinition(t *testing.T) {

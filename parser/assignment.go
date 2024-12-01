@@ -63,19 +63,57 @@ func (p *Parser) parseAssignment() Node {
 		expr = c
 	}
 	if b, ok := init.(*Block); ok && operator.Kind() == Define {
-		validateStruct(p, b)
+		validateObject(p, b)
+		reportDuplicatedFields(p, b)
 		init = b
 	}
 	return &Assignment{expr, init, operator}
 }
 
-func validateStruct(p *Parser, b *Block) {
-	for i, s := range b.Statements {
-		param, ok := s.(*Param)
-		b.Statements[i] = param
-		if !ok {
-			p.report("Field expected", s.Loc())
+func validateObject(p *Parser, b *Block) {
+	for i := range b.Statements {
+		b.Statements[i] = getValidatedObjectField(p, b.Statements[i])
+	}
+}
+
+func reportDuplicatedFields(p *Parser, b *Block) {
+	declarations := map[string][]Loc{}
+	for _, s := range b.Statements {
+		var identifier *Identifier
+		switch s := s.(type) {
+		case *Param:
+			identifier = s.Identifier
+		case *Entry:
+			identifier = s.Key.(*Identifier)
 		}
+		name := identifier.Text()
+		if name != "" {
+			declarations[name] = append(declarations[name], identifier.Loc())
+		}
+	}
+	for name, locs := range declarations {
+		if len(locs) == 1 {
+			continue
+		}
+		for _, loc := range locs {
+			p.report(fmt.Sprintf("Duplicate identifier '%v'", name), loc)
+		}
+	}
+}
+
+func getValidatedObjectField(p *Parser, node Node) Node {
+	switch node := node.(type) {
+	case *Param:
+		return node
+	case *Entry:
+		if _, ok := node.Key.(*Identifier); !ok {
+			p.report("Identifier expected", node.Key.Loc())
+			return nil
+		}
+		return node
+	default:
+		p.report("Field expected", node.Loc())
+		return nil
 	}
 }
 
@@ -262,22 +300,33 @@ func getInitType(p *Parser, expr Expression) ExpressionType {
 }
 
 func getObjectDefinedType(p *Parser, b *Block) ExpressionType {
-	t := Object{map[string]ExpressionType{}}
+	o := newObject()
 	for _, s := range b.Statements {
-		if s == nil {
-			continue
+		switch s := s.(type) {
+		case *Param:
+			key := s.Identifier.Text()
+			t, ok := s.Complement.Type().(Type)
+			if !ok {
+				p.report("Type expected, got value", s.Complement.Loc())
+				o.Members[key] = Unknown{}
+				continue
+			}
+			if isOptionType(t.Value) {
+				o.Optionals = append(o.Optionals, key)
+			} else if len(o.Defaults)+len(o.Optionals) > 0 {
+				p.report("Cannot define mandatory field after optional fields", s.Loc())
+			}
+			o.Members[key] = t.Value
+		case *Entry:
+			key := s.Key.(*Identifier).Text()
+			if _, ok := s.Value.Type().(Type); ok {
+				p.report("Value expected, got type", s.Value.Loc())
+			}
+			o.Defaults = append(o.Defaults, key)
+			o.Members[key] = s.Value.Type()
 		}
-		param := s.(*Param)
-		var field ExpressionType
-		if t, ok := param.Complement.Type().(Type); ok {
-			field = t.Value
-		} else {
-			p.report("Type expected, got value", param.Complement.Loc())
-			field = Unknown{}
-		}
-		t.Members[param.Identifier.Text()] = field
 	}
-	return t
+	return o
 }
 
 func typeCheckFunctionDefinition(p *Parser, a *Assignment) {

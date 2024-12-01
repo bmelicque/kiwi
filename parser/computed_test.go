@@ -6,12 +6,12 @@ import (
 
 func TestGenericWithTypeArgs(t *testing.T) {
 	parser := MakeParser(nil)
+	o := newObject()
+	o.Members["value"] = Type{Generic{Name: "Type"}}
 	parser.scope.Add("Boxed", Loc{}, Type{TypeAlias{
 		Name:   "Boxed",
 		Params: []Generic{{Name: "Type"}},
-		Ref: Object{map[string]ExpressionType{
-			"value": Type{Generic{Name: "Type"}},
-		}},
+		Ref:    o,
 	}})
 	// Boxed[number]
 	expr := &ComputedAccessExpression{
