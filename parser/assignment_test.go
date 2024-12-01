@@ -314,10 +314,12 @@ func TestCheckObjectTypeDefinition(t *testing.T) {
 	parser := MakeParser(nil)
 	declaration := &Assignment{
 		Pattern: &Identifier{Token: literal{kind: Name, value: "Type"}},
-		Value: &ParenthesizedExpression{Expr: &Param{
-			Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
-			Complement: &Literal{token{kind: NumberKeyword}},
-		}},
+		Value: &Block{Statements: []Node{
+			&Param{
+				Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
+				Complement: &Literal{token{kind: NumberKeyword}},
+			}},
+		},
 		Operator: token{kind: Define},
 	}
 	declaration.typeCheck(parser)
@@ -379,13 +381,15 @@ func TestCheckGenericTypeDefinition(t *testing.T) {
 	declaration := &Assignment{
 		Pattern: &ComputedAccessExpression{
 			Expr: &Identifier{Token: literal{kind: Name, value: "Boxed"}},
-			Property: &BracketedExpression{
-				Expr: &Identifier{Token: literal{kind: Name, value: "Type"}},
-			},
+			Property: &BracketedExpression{Expr: &TupleExpression{Elements: []Expression{
+				&Param{Identifier: &Identifier{Token: literal{kind: Name, value: "Type"}}},
+			}}},
 		},
-		Value: &ParenthesizedExpression{Expr: &Param{
-			Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
-			Complement: &Identifier{Token: literal{kind: Name, value: "Type"}},
+		Value: &Block{Statements: []Node{
+			&Param{
+				Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
+				Complement: &Identifier{Token: literal{kind: Name, value: "Type"}},
+			},
 		}},
 		Operator: token{kind: Define},
 	}
