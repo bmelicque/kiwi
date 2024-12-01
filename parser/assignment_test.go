@@ -291,9 +291,10 @@ func TestCheckTupleDeclarationTooMany(t *testing.T) {
 }
 
 func TestObjectTypeDefinition(t *testing.T) {
-	str := "Type :: (\n"
-	str += "    n number,\n"
-	str += ")"
+	str := "Type :: {\n"
+	str += "    n number\n"
+	str += "    s string\n"
+	str += "}"
 	parser := MakeParser(strings.NewReader(str))
 	node := parser.parseAssignment()
 
@@ -304,8 +305,8 @@ func TestObjectTypeDefinition(t *testing.T) {
 	if _, ok := expr.Pattern.(*Identifier); !ok {
 		t.Fatalf("Expected identifier 'Type'")
 	}
-	if _, ok := expr.Value.(*ParenthesizedExpression); !ok {
-		t.Fatalf("Expected ParenthesizedExpression")
+	if _, ok := expr.Value.(*Block); !ok {
+		t.Fatalf("Expected block, got:\n %#v", expr.Value)
 	}
 }
 

@@ -57,7 +57,21 @@ func (p *Parser) parseAssignment() Node {
 		return expr
 	}
 	init := p.parseExpression()
+	if b, ok := init.(*Block); ok && operator.Kind() == Define {
+		validateStruct(p, b)
+		init = b
+	}
 	return &Assignment{expr, init, operator}
+}
+
+func validateStruct(p *Parser, b *Block) {
+	for i, s := range b.Statements {
+		param, ok := s.(*Param)
+		b.Statements[i] = param
+		if !ok {
+			p.report("Field expected", s.Loc())
+		}
+	}
 }
 
 // type check assignment where operator is '='
