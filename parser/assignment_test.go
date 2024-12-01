@@ -291,9 +291,10 @@ func TestCheckTupleDeclarationTooMany(t *testing.T) {
 }
 
 func TestObjectTypeDefinition(t *testing.T) {
-	str := "Type :: (\n"
-	str += "    n number,\n"
-	str += ")"
+	str := "Type :: {\n"
+	str += "    n number\n"
+	str += "    s string\n"
+	str += "}"
 	parser := MakeParser(strings.NewReader(str))
 	node := parser.parseAssignment()
 
@@ -304,8 +305,12 @@ func TestObjectTypeDefinition(t *testing.T) {
 	if _, ok := expr.Pattern.(*Identifier); !ok {
 		t.Fatalf("Expected identifier 'Type'")
 	}
-	if _, ok := expr.Value.(*ParenthesizedExpression); !ok {
-		t.Fatalf("Expected ParenthesizedExpression")
+	b, ok := expr.Value.(*Block)
+	if !ok {
+		t.Fatalf("Expected block, got:\n %#v", expr.Value)
+	}
+	if _, ok := b.Statements[0].(*Param); !ok {
+		t.Fatalf("Expected param, got:\n %#v", b.Statements[0])
 	}
 }
 
@@ -313,10 +318,12 @@ func TestCheckObjectTypeDefinition(t *testing.T) {
 	parser := MakeParser(nil)
 	declaration := &Assignment{
 		Pattern: &Identifier{Token: literal{kind: Name, value: "Type"}},
-		Value: &ParenthesizedExpression{Expr: &Param{
-			Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
-			Complement: &Literal{token{kind: NumberKeyword}},
-		}},
+		Value: &Block{Statements: []Node{
+			&Param{
+				Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
+				Complement: &Literal{token{kind: NumberKeyword}},
+			}},
+		},
 		Operator: token{kind: Define},
 	}
 	declaration.typeCheck(parser)
@@ -378,13 +385,15 @@ func TestCheckGenericTypeDefinition(t *testing.T) {
 	declaration := &Assignment{
 		Pattern: &ComputedAccessExpression{
 			Expr: &Identifier{Token: literal{kind: Name, value: "Boxed"}},
-			Property: &BracketedExpression{
-				Expr: &Identifier{Token: literal{kind: Name, value: "Type"}},
-			},
+			Property: &BracketedExpression{Expr: &TupleExpression{Elements: []Expression{
+				&Param{Identifier: &Identifier{Token: literal{kind: Name, value: "Type"}}},
+			}}},
 		},
-		Value: &ParenthesizedExpression{Expr: &Param{
-			Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
-			Complement: &Identifier{Token: literal{kind: Name, value: "Type"}},
+		Value: &Block{Statements: []Node{
+			&Param{
+				Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
+				Complement: &Identifier{Token: literal{kind: Name, value: "Type"}},
+			},
 		}},
 		Operator: token{kind: Define},
 	}
