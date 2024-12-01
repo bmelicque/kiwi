@@ -64,6 +64,7 @@ func (p *Parser) parseAssignment() Node {
 	}
 	if b, ok := init.(*Block); ok && operator.Kind() == Define {
 		validateObject(p, b)
+		reportDuplicatedFields(p, b)
 		init = b
 	}
 	return &Assignment{expr, init, operator}
@@ -72,6 +73,31 @@ func (p *Parser) parseAssignment() Node {
 func validateObject(p *Parser, b *Block) {
 	for i := range b.Statements {
 		b.Statements[i] = getValidatedObjectField(p, b.Statements[i])
+	}
+}
+
+func reportDuplicatedFields(p *Parser, b *Block) {
+	declarations := map[string][]Loc{}
+	for _, s := range b.Statements {
+		var identifier *Identifier
+		switch s := s.(type) {
+		case *Param:
+			identifier = s.Identifier
+		case *Entry:
+			identifier = s.Key.(*Identifier)
+		}
+		name := identifier.Text()
+		if name != "" {
+			declarations[name] = append(declarations[name], identifier.Loc())
+		}
+	}
+	for name, locs := range declarations {
+		if len(locs) == 1 {
+			continue
+		}
+		for _, loc := range locs {
+			p.report(fmt.Sprintf("Duplicate identifier '%v'", name), loc)
+		}
 	}
 }
 

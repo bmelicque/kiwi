@@ -331,6 +331,19 @@ func TestObjectTypeDefinitionWithDefaults(t *testing.T) {
 	}
 }
 
+func TestObjectTypeDefinitionWithDuplicates(t *testing.T) {
+	str := "Type :: {\n"
+	str += "    n number\n"
+	str += "    n string\n"
+	str += "}"
+	parser := MakeParser(strings.NewReader(str))
+	parser.parseAssignment()
+
+	if len(parser.errors) != 2 {
+		t.Fatalf("Expected 2 parsing errors, got:\n%#v", parser.errors)
+	}
+}
+
 func TestCheckObjectTypeDefinition(t *testing.T) {
 	parser := MakeParser(nil)
 	declaration := &Assignment{
