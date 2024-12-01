@@ -7,8 +7,6 @@ import (
 	"github.com/bmelicque/test-parser/parser"
 )
 
-const maxClassParamsLength = 66
-
 func emitAssign(e *Emitter, pattern parser.Expression, value parser.Expression) {
 	e.emit(pattern)
 	e.write(" = ")
@@ -84,54 +82,77 @@ func isSliceElement(pattern parser.Expression) bool {
 	return ok
 }
 
-func (e *Emitter) getClassParamNames(b *parser.Block) []string {
-	names := make([]string, len(b.Statements))
-	length := 0
-	for i, member := range b.Statements {
-		param := member.(*parser.Param)
-		name := getSanitizedName(param.Identifier.Text())
-		names[i] = name
-		length += len(name) + 2
+func (e *Emitter) emitObjectConstructorParam(n parser.Node) {
+	switch n := n.(type) {
+	case *parser.Param:
+		e.emitIdentifier(n.Identifier)
+	case *parser.Entry:
+		e.emitIdentifier(n.Key.(*parser.Identifier))
+		e.write(" = ")
+		e.emitExpression(n.Value)
 	}
-
-	if length > maxClassParamsLength {
-		e.write("\n")
-		for _, name := range names {
-			e.write("        ")
-			e.write(name)
-			e.write(",\n")
-		}
-		e.write("    ")
-	} else {
-		for i, name := range names {
-			e.write(name)
-			if i != len(names)-1 {
-				e.write(", ")
-			}
-		}
-	}
-	return names
 }
-func (e *Emitter) emitTypeDeclaration(declaration *parser.Assignment) {
-	if b, ok := declaration.Value.(*parser.Block); ok {
+
+func (e *Emitter) emitObjectConstructorStatement(n parser.Node) {
+	var name string
+	switch n := n.(type) {
+	case *parser.Param:
+		name = getSanitizedName(n.Identifier.Text())
+	case *parser.Entry:
+		name = getSanitizedName(n.Key.(*parser.Identifier).Text())
+	}
+	e.indent()
+	e.write(fmt.Sprintf("this.%v = %v;\n", name, name))
+}
+
+func (e *Emitter) emitObjectTypeDefinition(definition *parser.Assignment) {
+	b := definition.Value.(*parser.Block)
+	if len(b.Statements) == 0 {
 		e.write("class ")
-		e.write(getTypeIdentifier(declaration.Pattern))
-		e.write(" {\n    constructor(")
-		names := e.getClassParamNames(b)
-		e.write(") {\n")
-		for _, name := range names {
-			e.write(fmt.Sprintf("        this.%v = %v;\n", name, name))
-		}
-		e.write("    }\n}\n")
+		e.write(getTypeIdentifier(definition.Pattern))
+		e.write(" {}\n")
 		return
 	}
-	switch declaration.Value.Type().(parser.Type).Value.(type) {
+
+	e.write("class ")
+	e.write(getTypeIdentifier(definition.Pattern))
+	e.write(" {\n")
+
+	e.depth++
+	e.indent()
+	e.write("constructor(")
+	max := len(b.Statements) - 1
+	for _, s := range b.Statements[:max] {
+		e.emitObjectConstructorParam(s)
+		e.write(", ")
+	}
+	e.emitObjectConstructorParam(b.Statements[max])
+	e.write(") {\n")
+
+	e.depth++
+	for _, s := range b.Statements {
+		e.emitObjectConstructorStatement(s)
+	}
+	e.depth--
+	e.indent()
+	e.write("}\n")
+	e.depth--
+	e.indent()
+	e.write("}\n")
+}
+
+func (e *Emitter) emitTypeDeclaration(definition *parser.Assignment) {
+	if _, ok := definition.Value.(*parser.Block); ok {
+		e.emitObjectTypeDefinition(definition)
+		return
+	}
+	switch definition.Value.Type().(parser.Type).Value.(type) {
 	case parser.Trait:
 		return
 	case parser.Sum:
 		e.addFlag(SumFlag)
 		e.write("class ")
-		e.write(getTypeIdentifier(declaration.Pattern))
+		e.write(getTypeIdentifier(definition.Pattern))
 		e.write(" extends _Sum {}\n")
 		return
 	}
