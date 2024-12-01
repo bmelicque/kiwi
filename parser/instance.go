@@ -1,6 +1,9 @@
 package parser
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 type InstanceExpression struct {
 	Typing Expression
@@ -69,7 +72,7 @@ func typeCheckStructInstanciation(p *Parser, i *InstanceExpression) {
 	}
 
 	reportExcessMembers(p, object.Members, args)
-	reportMissingMembers(p, object.Members, i.Args)
+	reportMissingMembers(p, object, i.Args)
 
 	i.typing = alias
 }
@@ -113,14 +116,14 @@ func reportExcessMembers(p *Parser, expected map[string]ExpressionType, received
 		)
 	}
 }
-func reportMissingMembers(
-	p *Parser,
-	expected map[string]ExpressionType,
-	received *BracedExpression,
-) {
+func reportMissingMembers(p *Parser, expected Object, received *BracedExpression) {
 	membersSet := map[string]bool{}
-	for name := range expected {
-		membersSet[name] = true
+	for name := range expected.Members {
+		isOptional := slices.Contains(expected.Optionals, name)
+		hasDefault := slices.Contains(expected.Defaults, name)
+		if !isOptional && !hasDefault {
+			membersSet[name] = true
+		}
 	}
 	for _, member := range received.Expr.(*TupleExpression).Elements {
 		if named, ok := member.(*Param); ok {
