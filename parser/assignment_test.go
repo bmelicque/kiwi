@@ -337,10 +337,21 @@ func TestCheckObjectTypeDefinition(t *testing.T) {
 		Pattern: &Identifier{Token: literal{kind: Name, value: "Type"}},
 		Value: &Block{Statements: []Node{
 			&Param{
-				Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
+				Identifier: &Identifier{Token: literal{kind: Name, value: "key"}},
 				Complement: &Literal{token{kind: NumberKeyword}},
-			}},
-		},
+			},
+			&Param{
+				Identifier: &Identifier{Token: literal{kind: Name, value: "optional"}},
+				Complement: &UnaryExpression{
+					Operator: token{kind: QuestionMark},
+					Operand:  &Literal{token{kind: NumberKeyword}},
+				},
+			},
+			&Entry{
+				Key:   &Identifier{Token: literal{kind: Name, value: "default"}},
+				Value: &Literal{literal{kind: NumberLiteral, value: "0"}},
+			},
+		}},
 		Operator: token{kind: Define},
 	}
 	declaration.typeCheck(parser)

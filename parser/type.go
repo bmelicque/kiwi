@@ -375,7 +375,17 @@ func (f Function) build(scope *Scope, compared ExpressionType) (ExpressionType, 
 }
 
 type Object struct {
-	Members map[string]ExpressionType
+	Members   map[string]ExpressionType
+	Optionals []string
+	Defaults  []string
+}
+
+func newObject() Object {
+	return Object{
+		Members:   map[string]ExpressionType{},
+		Optionals: []string{},
+		Defaults:  []string{},
+	}
 }
 
 func (o Object) Extends(t ExpressionType) bool {

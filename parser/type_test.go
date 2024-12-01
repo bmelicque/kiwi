@@ -57,7 +57,7 @@ func TestFunctionExtends(t *testing.T) {
 func TestTrait(t *testing.T) {
 	typing := TypeAlias{
 		Name: "Type",
-		Ref:  Object{map[string]ExpressionType{}},
+		Ref:  newObject(),
 		Methods: map[string]ExpressionType{
 			"method": Function{Returned: Number{}},
 		},

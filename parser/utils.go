@@ -40,6 +40,11 @@ func addTypeParamToScope(scope *Scope, param *Param) {
 	scope.Add(name, param.Loc(), t)
 }
 
+func isOptionType(t ExpressionType) bool {
+	alias, ok := t.(TypeAlias)
+	return ok && alias.Name == "?"
+}
+
 // If the given is a result, return its "Ok" type.
 // Else return the given type.
 func getHappyType(t ExpressionType) ExpressionType {
