@@ -178,7 +178,7 @@ func isTypePattern(expr parser.Expression) bool {
 func getTypeIdentifier(expr parser.Node) string {
 	c, ok := expr.(*parser.ComputedAccessExpression)
 	if ok {
-		expr = c
+		expr = c.Expr
 	}
 	identifier := expr.(*parser.Identifier)
 	return identifier.Text()

@@ -46,3 +46,13 @@ func TestObjectDefintion(t *testing.T) {
 	expected += "}\n"
 	testEmitter(t, source, expected, 0)
 }
+
+func TestGenericObjectDefintion(t *testing.T) {
+	source := "Boxed[Type] :: { value Type }"
+	expected := "class Boxed {\n"
+	expected += "    constructor(value) {\n"
+	expected += "        this.value = value;\n"
+	expected += "    }\n"
+	expected += "}\n"
+	testEmitter(t, source, expected, 0)
+}
