@@ -126,8 +126,8 @@ func reportMissingMembers(p *Parser, expected Object, received *BracedExpression
 		}
 	}
 	for _, member := range received.Expr.(*TupleExpression).Elements {
-		if named, ok := member.(*Param); ok {
-			delete(membersSet, named.Identifier.Text())
+		if named, ok := member.(*Entry); ok {
+			delete(membersSet, named.Key.(*Identifier).Text())
 		}
 	}
 

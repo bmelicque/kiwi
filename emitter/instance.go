@@ -2,16 +2,6 @@ package emitter
 
 import "github.com/bmelicque/test-parser/parser"
 
-func findMemberByName(members *parser.TupleExpression, name string) parser.Node {
-	for _, member := range members.Elements {
-		param := member.(*parser.Param)
-		text := param.Identifier.Text()
-		if text == name {
-			return param.Complement
-		}
-	}
-	return nil
-}
 func (e *Emitter) emitListInstance(constructor *parser.ListTypeExpression, args *parser.TupleExpression) {
 	e.write("[")
 	c := constructor.Expr
@@ -60,21 +50,53 @@ func emitMapEntry(e *Emitter, arg parser.Expression) {
 	e.emitExpression(entry.Value)
 	e.write("]")
 }
+
+func findMemberByName(members *parser.TupleExpression, name string) parser.Expression {
+	for _, member := range members.Elements {
+		switch member := member.(type) {
+		case *parser.Param:
+			text := member.Identifier.Text()
+			if text == name {
+				return member.Complement
+			}
+		case *parser.Entry:
+			text := member.Key.(*parser.Identifier).Text()
+			if text == name {
+				return member.Value
+			}
+		}
+	}
+	return nil
+}
 func (e *Emitter) emitObjectInstance(constructor *parser.Identifier, args *parser.TupleExpression) {
+	if len(args.Elements) == 0 {
+		e.write("new ")
+		e.emitExpression(constructor)
+		e.write("()")
+		return
+	}
+
 	e.write("new ")
 	e.emit(constructor)
 	e.write("(")
-	defer e.write(")")
 	typing := constructor.Type().(parser.Type).Value.(parser.TypeAlias).Ref.(parser.Object)
-	max := len(args.Elements) - 1
+	l := len(args.Elements)
 	i := 0
 	for name := range typing.Members {
-		e.emit(findMemberByName(args, name))
-		if i != max {
-			e.write(", ")
+		member := findMemberByName(args, name)
+		if member == nil {
+			e.write("undefined")
+		} else {
+			e.emitExpression(member)
+			i++
 		}
-		i++
+		if i != l {
+			e.write(", ")
+		} else {
+			break
+		}
 	}
+	e.write(")")
 }
 func (e *Emitter) emitSumInstance(constructor *parser.PropertyAccessExpression, args *parser.TupleExpression) {
 	e.write("new ")
