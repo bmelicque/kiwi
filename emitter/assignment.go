@@ -7,16 +7,36 @@ import (
 	"github.com/bmelicque/test-parser/parser"
 )
 
+func needsCopy(expr parser.Expression) bool {
+	switch expr.Type().(type) {
+	case parser.Nil, parser.Number, parser.Boolean, parser.String, parser.Function:
+		return false
+	}
+
+	switch expr := expr.(type) {
+	case *parser.CallExpression,
+		*parser.ComputedAccessExpression,
+		*parser.PropertyAccessExpression:
+		return true
+	case *parser.UnaryExpression:
+		if expr.Operator.Kind() != parser.Mul {
+			return false
+		}
+		_, isSlice := expr.Type().(parser.List)
+		return !isSlice
+	}
+	return false
+}
+
 func emitAssign(e *Emitter, pattern parser.Expression, value parser.Expression) {
 	e.emit(pattern)
 	e.write(" = ")
-	switch value.Type().(type) {
-	case parser.Nil, parser.Number, parser.Boolean, parser.String, parser.Function:
-		e.emit(value)
-	default:
+	if needsCopy(value) {
 		e.write("structuredClone(")
 		e.emit(value)
 		e.write(")")
+	} else {
+		e.emit(value)
 	}
 	e.write(";\n")
 }

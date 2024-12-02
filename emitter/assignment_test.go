@@ -37,6 +37,16 @@ func TestSliceAssignment(t *testing.T) {
 	testEmitter(t, source, expected, 2)
 }
 
+func TestSliceDerefAssignment(t *testing.T) {
+	source := "array := []number{}\n"
+	source += "slice := &array\n"
+	source += "array = *slice"
+
+	expected := "array = slice.clone()"
+
+	testEmitter(t, source, expected, 2)
+}
+
 func TestObjectDefinition(t *testing.T) {
 	source := "BoxedNumber :: { value number }"
 	expected := "class BoxedNumber {\n"
