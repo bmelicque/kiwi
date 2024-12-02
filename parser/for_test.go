@@ -23,6 +23,20 @@ func TestParseForExpression(t *testing.T) {
 	}
 }
 
+func TestParseForInRangeExpression(t *testing.T) {
+	parser := MakeParser(strings.NewReader("for i in 0..=4 { i }"))
+	expr := parser.parseForExpression()
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+
+	binary, ok := expr.Expr.(*BinaryExpression)
+	if !ok || binary.Operator.Kind() != InKeyword {
+		t.Fatalf("Expected 'in' expression, got:\n%#v", expr.Expr)
+	}
+}
+
 func TestParseForInExpression(t *testing.T) {
 	parser := MakeParser(strings.NewReader("for el in array { 42 }"))
 	parser.parseForExpression()

@@ -75,6 +75,8 @@ func (expr *BinaryExpression) Type() ExpressionType {
 			right = Unknown{}
 		}
 		return Type{makeResultType(right, left)}
+	case InKeyword:
+		return Nil{}
 	default:
 		panic(fmt.Sprintf("operator '%v' not implemented", expr.Operator.Kind()))
 	}
