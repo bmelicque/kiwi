@@ -46,7 +46,7 @@ func Parse(reader io.Reader) ([]Node, []ParserError) {
 		if next == EOL {
 			p.DiscardLineBreaks()
 		} else if next != EOF {
-			p.report("End of line expected", p.Peek().Loc())
+			p.error(&Literal{p.Peek()}, TokenExpected, token{kind: EOL})
 		}
 	}
 

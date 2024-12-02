@@ -44,23 +44,23 @@ func (expr *ComputedAccessExpression) typeCheck(p *Parser) {
 			expr.typing = makeOptionType(t.Element)
 			return
 		}
-		p.report("Number or range expected", expr.Property.loc)
+		p.error(expr.Property, IndexExpected)
 		expr.typing = Unknown{}
 	case Ref:
 		list, ok := t.To.(List)
 		if !ok {
-			p.report("Invalid type for computed access", expr.Expr.Loc())
+			p.error(expr.Expr, NotSubscriptable, t)
 			expr.typing = Unknown{}
 			return
 		}
 		if _, ok := expr.Property.Expr.Type().(Number); !ok {
-			p.report("Number expected", expr.Property.loc)
+			p.error(expr.Property, NumberExpected)
 			expr.typing = Unknown{}
 			return
 		}
 		expr.typing = makeOptionType(list.Element)
 	default:
-		p.report("Invalid type for computed access", expr.Property.loc)
+		p.error(expr.Expr, NotSubscriptable, t)
 		expr.typing = Unknown{}
 	}
 }
@@ -75,7 +75,7 @@ func typeCheckMapAccess(p *Parser, expr *ComputedAccessExpression) {
 	b, _ := a.Ref.build(p.scope, nil)
 	m := b.(Map)
 	if expr.Property.Expr != nil && !m.Key.Extends(expr.Property.Expr.Type()) {
-		p.report("Type doesn't match expected key type", expr.Property.loc)
+		p.error(expr.Property, CannotAssignType, m.Key, expr.Property.Expr)
 	}
 	expr.typing = makeOptionType(m.Value)
 }
@@ -83,7 +83,7 @@ func typeCheckMapAccess(p *Parser, expr *ComputedAccessExpression) {
 func typeCheckGenericType(p *Parser, expr *ComputedAccessExpression) {
 	alias, ok := expr.Expr.Type().(Type).Value.(TypeAlias)
 	if !ok {
-		p.report("No type arguments expected for this type", expr.Property.loc)
+		p.error(expr.Property, UnexpectedTypeArgs)
 		expr.typing = Unknown{}
 		return
 	}

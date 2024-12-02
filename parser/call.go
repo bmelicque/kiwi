@@ -39,7 +39,7 @@ func (c *CallExpression) typeCheck(p *Parser) {
 	case Function:
 		typeCheckFunctionCall(p, c)
 	default:
-		p.report("Function expected", c.Callee.Loc())
+		p.error(c.Callee, FunctionExpressionExpected)
 		c.Args.typeCheck(p)
 	}
 }
@@ -59,10 +59,7 @@ func typeCheckFunctionCall(p *Parser, c *CallExpression) {
 	validateArgumentsNumber(p, c.Args.Expr.(*TupleExpression), params)
 	t, ok := function.Returned.build(p.scope, nil)
 	if !ok {
-		p.report(
-			"Could not determine returned type (missing some type arguments)",
-			c.Loc(),
-		)
+		p.error(c, MissingTypeArgs)
 		c.typing = Unknown{}
 		return
 	}
@@ -79,16 +76,16 @@ func typeCheckFunctionArguments(p *Parser, args *TupleExpression, params []Expre
 	for i, element := range args.Elements[:l] {
 		element.typeCheck(p)
 		if _, ok := element.(*Param); ok {
-			p.report("Single expression expected", element.Loc())
+			p.error(element, ExpressionExpected)
 			continue
 		}
 		received := element.Type()
 		params[i], ok = params[i].build(p.scope, received)
 		if !ok {
-			p.report("Could not determine exact type", element.Loc())
+			p.error(element, MissingTypeArgs)
 		}
 		if !params[i].Extends(received) {
-			p.report("Types don't match", element.Loc())
+			p.error(element, CannotAssignType, params[i], received)
 		}
 	}
 }
@@ -96,11 +93,9 @@ func typeCheckFunctionArguments(p *Parser, args *TupleExpression, params []Expre
 // Make sure that the correct number of arguments were passed to the function
 func validateArgumentsNumber(p *Parser, args *TupleExpression, params []ExpressionType) {
 	if len(params) < len(args.Elements) {
-		loc := args.Elements[len(params)].Loc()
-		loc.End = args.Elements[len(args.Elements)-1].Loc().End
-		p.report("Too many arguments", loc)
+		p.error(args, TooManyElements, len(params), len(args.Elements))
 	}
 	if len(params) > len(args.Elements) {
-		p.report("Missing argument(s)", args.Loc())
+		p.error(args, MissingElements, len(params), len(args.Elements))
 	}
 }

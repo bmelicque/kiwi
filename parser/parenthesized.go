@@ -57,7 +57,7 @@ func (p *Parser) parseParenthesizedExpression() *ParenthesizedExpression {
 	p.DiscardLineBreaks()
 	next = p.Peek()
 	if next.Kind() != RightParenthesis {
-		p.report("')' expected", next.Loc())
+		p.error(&Literal{next}, TokenExpected, next)
 	}
 	loc.End = p.Consume().Loc().End
 	return &ParenthesizedExpression{expr, loc}

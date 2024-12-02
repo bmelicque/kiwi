@@ -32,7 +32,7 @@ func (p *Parser) parseBracketedExpression() *BracketedExpression {
 
 	next := p.Peek()
 	if next.Kind() != RightBracket {
-		p.report("']' expected", next.Loc())
+		p.error(&Literal{next}, RightBracketExpected)
 		if expr != nil {
 			loc.End = expr.Loc().End
 		}
@@ -47,7 +47,7 @@ func (p *Parser) parseBracketedExpression() *BracketedExpression {
 // Turn Expr into a *TupleExpression containing *Param elements.
 func validateTypeParams(p *Parser, bracketed *BracketedExpression) {
 	if bracketed.Expr == nil {
-		p.report("Type params expected between brackets", bracketed.loc)
+		p.error(bracketed, TypeParamsExpected)
 		return
 	}
 
@@ -65,7 +65,7 @@ func getValidatedTypeParam(p *Parser, expr Expression) *Param {
 	if !ok {
 		identifier, ok := expr.(*Identifier)
 		if !ok || !identifier.IsType() {
-			p.report("Type identifier expected", expr.Loc())
+			p.error(expr, TypeIdentifierExpected)
 			return &Param{}
 		}
 		return &Param{Identifier: identifier}
@@ -86,7 +86,7 @@ func typeCheckTypeParams(p *Parser, typeParams *BracketedExpression) {
 		}
 		param.Complement.typeCheck(p)
 		if _, ok := param.Complement.Type().(Type); !ok {
-			p.report("Type expected", param.Complement.Loc())
+			p.error(param.Complement, TypeExpected)
 		}
 	}
 	addTypeParamsToScope(p.scope, typeParams)
@@ -101,9 +101,7 @@ func typeCheckTypeArgs(p *Parser, args *TupleExpression, expected []Generic) {
 	}
 
 	if l > len(expected) {
-		loc := args.Elements[len(expected)].Loc()
-		loc.End = args.Elements[l-1].Loc().End
-		p.report("Too many type arguments", loc)
+		p.error(args, TooManyElements, len(expected), len(args.Elements))
 	}
 
 	for i := range expected {
@@ -118,17 +116,17 @@ func typeCheckTypeArgs(p *Parser, args *TupleExpression, expected []Generic) {
 func typeCheckTypeArg(p *Parser, arg Expression, expected *Generic) {
 	typing, ok := arg.Type().(Type)
 	if !ok {
-		p.report("Typing expected", arg.Loc())
+		p.error(arg, TypeExpected)
 		return
 	}
 	if expected.Value == nil {
 		if expected.Constraints != nil && !expected.Constraints.Extends(typing) {
-			p.report("Type doesn't match", arg.Loc())
+			p.error(arg, CannotAssignType, expected.Constraints, typing)
 		} else {
 			(*expected).Value = typing.Value
 		}
 	} else if !expected.Value.Extends(typing) {
-		p.report("Type doesn't match", arg.Loc())
+		p.error(arg, CannotAssignType, expected.Value, typing)
 	}
 	addGenericToScope(p.scope, *expected, arg.Loc())
 }

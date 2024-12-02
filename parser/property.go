@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -51,7 +50,7 @@ func parsePropertyAccess(p *Parser, left Expression) Expression {
 	switch prop.(type) {
 	case *Identifier, *Literal:
 	default:
-		p.report("Key name expected", prop.Loc())
+		p.error(prop, IdentifierExpected)
 	}
 	return &PropertyAccessExpression{Expr: left, Property: prop}
 }
@@ -69,13 +68,13 @@ func typeCheckTupleIndexAccess(p *Parser, expr *PropertyAccessExpression) {
 	}
 	number, err := strconv.Atoi(property.Text())
 	if err != nil {
-		p.report("Integer expected", property.Loc())
+		p.error(property, IntegerExpected)
 		expr.typing = Unknown{}
 		return
 	}
 	elements := deref(expr.Expr.Type()).(Tuple).Elements
 	if number > len(elements)-1 || number < 0 {
-		p.report("Index out of range", property.Loc())
+		p.error(property, OutOfRange, len(elements), number)
 		expr.typing = Unknown{}
 		return
 	}
@@ -93,10 +92,7 @@ func typeCheckSumConstructorAccess(p *Parser, expr *PropertyAccessExpression) {
 
 	expr.typing = getSumTypeConstructor(expr.Expr.Type().(Type), name)
 	if expr.typing == (Unknown{}) {
-		p.report(
-			fmt.Sprintf("Property '%v' doesn't exist on this type", name),
-			expr.Property.Loc(),
-		)
+		p.error(expr.Property, PropertyDoesNotExist, name)
 	}
 }
 
@@ -133,10 +129,7 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 
 	alias, ok := deref(expr.Expr.Type()).(TypeAlias)
 	if !ok {
-		p.report(
-			fmt.Sprintf("Property '%v' doesn't exist on this type", name),
-			expr.Property.Loc(),
-		)
+		p.error(expr.Property, PropertyDoesNotExist, name)
 		expr.typing = Unknown{}
 		return
 	}
@@ -147,20 +140,14 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 
 	object, ok := alias.Ref.(Object)
 	if !ok {
-		p.report(
-			fmt.Sprintf("Property '%v' doesn't exist on this type", name),
-			expr.Property.Loc(),
-		)
+		p.error(expr.Property, PropertyDoesNotExist, name)
 		expr.typing = Unknown{}
 		return
 	}
 
 	t, ok := object.Members[name]
 	if !ok {
-		p.report(
-			fmt.Sprintf("Property '%v' doesn't exist on this type", name),
-			expr.Property.Loc(),
-		)
+		p.error(expr.Property, PropertyDoesNotExist, name)
 		expr.typing = Unknown{}
 		return
 	}
@@ -205,11 +192,11 @@ func (t *TraitExpression) typeCheck(p *Parser) {
 		}
 		typing, ok := param.Complement.Type().(Type)
 		if !ok {
-			p.report("Function type expected", param.Complement.Loc())
+			p.error(param.Complement, FunctionTypeExpected)
 			continue
 		}
 		if _, ok := typing.Value.(Function); !ok {
-			p.report("Function type expected", param.Complement.Loc())
+			p.error(param.Complement, FunctionTypeExpected)
 		}
 	}
 }

@@ -42,7 +42,10 @@ func main() {
 		f.Sync()
 	} else {
 		for _, err := range errors {
-			fmt.Printf("Error at line %v, col. %v: %v\n", err.Loc.Start.Line, err.Loc.Start.Col, err.Message)
+			line := err.Node.Loc().Start
+			col := err.Node.Loc().End
+			msg := err.Text()
+			fmt.Printf("Error at line %v, col. %v: %v\n", line, col, msg)
 		}
 	}
 }

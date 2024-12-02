@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"slices"
 )
 
@@ -13,8 +12,7 @@ func recover(p *Parser, at TokenKind) bool {
 	for ; !slices.Contains(recovery, next.Kind()); next = p.Peek() {
 		end = p.Consume().Loc().End
 	}
-	// FIXME: token text
-	p.report(fmt.Sprintf("'%v' expected", at), Loc{Start: start, End: end})
+	p.error(&Block{loc: Loc{Start: start, End: end}}, TokenExpected, token{kind: at})
 	return next.Kind() == at
 }
 

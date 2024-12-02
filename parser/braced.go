@@ -32,7 +32,7 @@ func (p *Parser) parseBracedExpression() *BracedExpression {
 
 	next := p.Peek()
 	if next.Kind() != RightBrace {
-		p.report("'}' expected", next.Loc())
+		p.error(&Literal{next}, RightBraceExpected)
 		if expr != nil {
 			loc.End = expr.Loc().End
 		}

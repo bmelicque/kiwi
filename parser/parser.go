@@ -2,15 +2,6 @@ package parser
 
 import "io"
 
-type ParserError struct {
-	Message string
-	Loc     Loc
-}
-
-func (e ParserError) Error() string {
-	return e.Message
-}
-
 type Parser struct {
 	tokenizer
 	errors            []ParserError
@@ -28,8 +19,24 @@ type Parser struct {
 	conditionalDeclaration bool
 }
 
-func (p *Parser) report(message string, loc Loc) {
-	p.errors = append(p.errors, ParserError{message, loc})
+func (p *Parser) error(node Node, kind ErrorKind, comp ...interface{}) {
+	var complements [2]interface{}
+	switch len(comp) {
+	case 0:
+	case 1:
+		complements[0] = comp[0]
+	case 2:
+		complements[0] = comp[0]
+		complements[1] = comp[1]
+	default:
+		panic("too many complements")
+	}
+	err := ParserError{
+		Node:        node,
+		Kind:        kind,
+		Complements: complements,
+	}
+	p.errors = append(p.errors, err)
 }
 
 func MakeParser(reader io.Reader) *Parser {
@@ -50,7 +57,7 @@ func (p *Parser) pushScope(scope *Scope) {
 func (p *Parser) dropScope() {
 	for _, info := range p.scope.variables {
 		if len(info.reads) == 0 {
-			p.report("Unused variable", info.declaredAt)
+			p.error(&Block{loc: info.declaredAt}, UnusedVariable)
 		}
 	}
 	p.scope = p.scope.outer

@@ -56,14 +56,15 @@ func (p *Parser) parseRange() Expression {
 	}
 	operator := p.Consume()
 
-	right := p.parseBinaryExpression()
-	if operator.Kind() == InclusiveRange && right == nil {
-		p.report(
-			"Expected right operand with inclusive range operator '..='",
-			operator.Loc(),
-		)
+	var right Expression
+	if operator.Kind() == ExclusiveRange {
+		outer := p.allowEmptyExpr
+		p.allowEmptyExpr = true
+		right = p.parseBinaryExpression()
+		p.allowEmptyExpr = outer
+	} else {
+		right = p.parseBinaryExpression()
 	}
-
 	return &RangeExpression{left, right, operator}
 }
 
@@ -71,6 +72,6 @@ func (r *RangeExpression) typeCheck(p *Parser) {
 	r.Left.typeCheck(p)
 	r.Right.typeCheck(p)
 	if r.Left != nil && r.Right != nil && !Match(r.Left.Type(), r.Right.Type()) {
-		p.report("Left and right types don't match", r.Loc())
+		p.error(r, MismatchedTypes, r.Left.Type(), r.Right.Type())
 	}
 }

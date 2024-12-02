@@ -38,7 +38,7 @@ func typeCheckForInExpression(p *Parser, expr *BinaryExpression) {
 		checkExplicitRange(p, expr.Right)
 		el = getIteratedElementType(expr.Right.Type())
 		if el == (Unknown{}) {
-			p.report("Invalid type, list or slice expected", expr.Right.Loc())
+			p.error(expr.Right, IterableExpected, expr.Right.Type())
 		}
 	}
 	switch pattern := expr.Left.(type) {
@@ -62,7 +62,7 @@ func checkExplicitRange(p *Parser, expr Expression) {
 	}
 	_, ok = Unwrap(expr).(*RangeExpression)
 	if !ok {
-		p.report("Literal range expression expected", expr.Loc())
+		p.error(expr, RangeExpected)
 	}
 }
 func typeCheckForExpression(p *Parser, expr Expression) {
@@ -70,7 +70,7 @@ func typeCheckForExpression(p *Parser, expr Expression) {
 		return
 	}
 	if _, ok := expr.Type().(Boolean); !ok {
-		p.report("Boolean expected in loop condition", expr.Loc())
+		p.error(expr, BooleanExpected, expr.Type())
 	}
 }
 
@@ -110,7 +110,7 @@ func parseInExpression(p *Parser) Expression {
 	}
 	operator := p.Consume()
 	if expr == nil {
-		p.report("Expression expected", operator.Loc())
+		p.error(&Literal{operator}, ExpressionExpected)
 	}
 	right := p.parseExpression()
 	in := &BinaryExpression{
@@ -128,23 +128,23 @@ func validateInExpression(p *Parser, expr *BinaryExpression) {
 	case *TupleExpression:
 		expr.Left = getValidatedForInTuple(p, left)
 	default:
-		p.report("Invalid pattern", expr.Left.Loc())
+		p.error(expr.Left, InvalidPattern)
 		expr.Left = nil
 	}
 }
 
 func getValidatedForInTuple(p *Parser, tuple *TupleExpression) *TupleExpression {
 	if len(tuple.Elements) > 2 {
-		p.report("Only 2 elements expected", tuple.Loc())
+		p.error(tuple, TooManyElements, "at most 2", len(tuple.Elements))
 	}
 
 	index, ok := tuple.Elements[0].(*Identifier)
 	if !ok {
-		p.report("Identifier expected", tuple.Elements[0].Loc())
+		p.error(tuple.Elements[0], IdentifierExpected)
 	}
 	value, ok := tuple.Elements[1].(*Identifier)
 	if !ok {
-		p.report("Identifier expected", tuple.Elements[1].Loc())
+		p.error(tuple.Elements[1], IdentifierExpected)
 	}
 	return &TupleExpression{Elements: []Expression{index, value}}
 }
@@ -162,10 +162,10 @@ func getLoopType(p *Parser, body *Block) ExpressionType {
 	}
 	for _, b := range breaks[1:] {
 		if t == (Nil{}) && b.Value != nil {
-			p.report("No value expected", b.Value.Loc())
+			p.error(b.Value, CannotAssignType, t, b.Value.Type())
 		}
 		if t != (Nil{}) && !t.Extends(b.Value.Type()) {
-			p.report("Type doesn't match the type inferred from first break", b.Value.Loc())
+			p.error(b.Value, CannotAssignType, t, b.Value.Type())
 		}
 	}
 	return t

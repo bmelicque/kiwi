@@ -25,7 +25,7 @@ func (i *InstanceExpression) typeCheck(p *Parser) {
 	i.Typing.typeCheck(p)
 	t, ok := i.Typing.Type().(Type)
 	if !ok {
-		p.report("Type expected", i.Typing.Loc())
+		p.error(i.Typing, TypeExpected)
 		i.Args.typeCheck(p)
 		return
 	}
@@ -35,7 +35,7 @@ func (i *InstanceExpression) typeCheck(p *Parser) {
 	case List:
 		typeCheckListInstanciation(p, i)
 	default:
-		p.report("This type cannot be instantiated", i.Typing.Loc())
+		p.error(i.Typing, NotInstanceable)
 	}
 }
 
@@ -49,7 +49,7 @@ func typeCheckStructInstanciation(p *Parser, i *InstanceExpression) {
 	}
 	object, ok := alias.Ref.(Object)
 	if !ok {
-		p.report("Object type expected", i.Typing.Loc())
+		p.error(i.Typing, ObjectTypeExpected)
 		i.typing = Unknown{}
 		return
 	}
@@ -67,7 +67,7 @@ func typeCheckStructInstanciation(p *Parser, i *InstanceExpression) {
 		}
 		expected := object.Members[name]
 		if !expected.Extends(entry.Value.Type()) {
-			p.report("Type doesn't match the expected one", arg.Loc())
+			p.error(arg, CannotAssignType, expected, entry.Value)
 		}
 	}
 
@@ -87,15 +87,15 @@ func getFormattedStructEntry(p *Parser, received Expression) *Entry {
 	entry, ok := received.(*Entry)
 	if !ok {
 		if param, ok := received.(*Param); ok {
-			p.report("':' expected between key and value", param.Loc())
+			p.error(param, FieldExpected)
 			return &Entry{Key: param.Identifier, Value: param.Complement}
 		} else {
-			p.report("Entry expected", received.Loc())
+			p.error(received, FieldExpected)
 			return &Entry{Value: received}
 		}
 	}
 	if _, ok := entry.Key.(*Identifier); !ok {
-		p.report("Identifier expected", entry.Key.Loc())
+		p.error(entry.Key, IdentifierExpected)
 		entry.Key = &Identifier{}
 	}
 	return entry
@@ -110,10 +110,7 @@ func reportExcessMembers(p *Parser, expected map[string]ExpressionType, received
 		if _, ok := expected[name]; ok {
 			continue
 		}
-		p.report(
-			fmt.Sprintf("Property '%v' doesn't exist on this type", name),
-			arg.Loc(),
-		)
+		p.error(arg, PropertyDoesNotExist, name)
 	}
 }
 func reportMissingMembers(p *Parser, expected Object, received *BracedExpression) {
@@ -143,7 +140,7 @@ func reportMissingMembers(p *Parser, expected Object, received *BracedExpression
 		}
 		i++
 	}
-	p.report(fmt.Sprintf("Missing key(s) %v", msg), received.loc)
+	p.error(received, MissingKeys, msg)
 }
 
 func typeCheckMapInstanciation(p *Parser, i *InstanceExpression, t TypeAlias) {
@@ -165,15 +162,15 @@ func getFormattedMapEntry(p *Parser, received Expression) *Entry {
 	entry, ok := received.(*Entry)
 	if !ok {
 		if param, ok := received.(*Param); ok {
-			p.report("':' expected between key and value", param.Loc())
+			p.error(param, FieldExpected)
 			return &Entry{Key: param.Identifier, Value: param.Complement}
 		} else {
-			p.report("Entry expected", received.Loc())
+			p.error(received, FieldExpected)
 			return &Entry{Value: received}
 		}
 	}
 	if _, ok := entry.Key.(*Identifier); ok {
-		p.report("Literal or brackets expected", entry.Key.Loc())
+		p.error(entry.Key, FieldKeyExpected)
 		entry.Key = nil
 	}
 	return entry
@@ -194,10 +191,7 @@ func getMapType(p *Parser, i *InstanceExpression) ExpressionType {
 		value, vk = t.Params[1].build(p.scope, nil)
 	}
 	if !kk || !vk {
-		p.report(
-			"Could not fully determine returned type, consider adding type arguments",
-			i.Loc(),
-		)
+		p.error(i, MissingTypeArgs)
 	}
 	t.Params = append(t.Params[:0:0], t.Params...)
 	t.Params[0].Value = key
@@ -220,13 +214,13 @@ func typeCheckMapEntries(p *Parser, entries []Expression, t Map) {
 				key = entry.Key.Type()
 			}
 			if !t.Key.Extends(key) {
-				p.report("Type doesn't match expected key type", entry.Key.Loc())
+				p.error(entry.Key, CannotAssignType, t.Key, key)
 			}
 		}
 		if entry.Value != nil {
 			entry.Value.typeCheck(p)
 			if !t.Value.Extends(entry.Value.Type()) {
-				p.report("Type doesn't match expected value type", entry.Value.Loc())
+				p.error(entry.Key, CannotAssignType, t.Value, entry.Value)
 			}
 		}
 	}
@@ -253,7 +247,7 @@ func typeCheckListInstanciation(p *Parser, i *InstanceExpression) {
 	for i := range elements[1:] {
 		elements[i+1].typeCheck(p)
 		if !el.Extends(elements[i+1].Type()) {
-			p.report("Type doesn't match", elements[i+1].Loc())
+			p.error(elements[i+1], CannotAssignType, el, elements[i+1].Type())
 		}
 	}
 }

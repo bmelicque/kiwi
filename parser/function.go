@@ -126,7 +126,7 @@ func (f *FunctionTypeExpression) typeCheck(p *Parser) {
 	for i := range tuple.Elements {
 		tuple.Elements[i].typeCheck(p)
 		if _, ok := tuple.Elements[i].Type().(Type); !ok {
-			p.report("Type expected", tuple.Elements[i].Loc())
+			p.error(tuple.Elements[i], TypeExpected)
 		}
 	}
 
@@ -134,7 +134,7 @@ func (f *FunctionTypeExpression) typeCheck(p *Parser) {
 		return
 	}
 	if _, ok := f.Expr.Type().(Type); !ok {
-		p.report("Type expected", f.Expr.Loc())
+		p.error(f.Expr, TypeExpected)
 	}
 }
 
@@ -157,9 +157,6 @@ func (p *Parser) parseFunctionExpression(typeParams *BracketedExpression) Expres
 		p.allowBraceParsing = false
 		expr := p.parseRange()
 		p.allowBraceParsing = old
-		if p.Peek().Kind() == LeftBrace {
-			p.report("No function body expected", p.Peek().Loc())
-		}
 		return &FunctionTypeExpression{
 			TypeParams: typeParams,
 			Params:     paren,
@@ -208,7 +205,7 @@ func validateFunctionParams(p *Parser, node *ParenthesizedExpression) {
 // Validate a function param's structure
 func validateFunctionParam(p *Parser, expr Expression) {
 	if _, ok := expr.(*Param); !ok {
-		p.report("Parameter expected: (name Type)", expr.Loc())
+		p.error(expr, ParameterExpected)
 		return
 	}
 }
@@ -230,13 +227,13 @@ func typeCheckExplicitReturn(p *Parser, f *FunctionExpression) {
 	tries := findTryExpressions(f.Body)
 	for _, t := range tries {
 		if !err.Extends(getErrorType(t.Operand.Type())) {
-			p.report("Error type doesn't match expected type", t.Operand.Loc())
+			p.error(t.Operand, CannotAssignType, err, t.Operand.Type())
 		}
 	}
 	throws := findThrowStatements(f.Body)
 	for _, t := range throws {
 		if t.Value != nil && !err.Extends(t.Value.Type()) {
-			p.report("Error type doesn't match expected type", t.Value.Loc())
+			p.error(t.Value, CannotAssignType, err, t.Value)
 		}
 	}
 }
@@ -247,19 +244,16 @@ func typeCheckImplicitReturn(p *Parser, f *FunctionExpression) {
 
 	returns := findReturnStatements(f.Body)
 	for _, r := range returns {
-		p.report("Cannot return in functions without explicit returns", r.Loc())
+		p.error(r, IllegalReturn)
 	}
 
 	tries := findTryExpressions(f.Body)
 	for _, t := range tries {
-		p.report(
-			"Failable expressions are not allowed in functions without explicit returns",
-			t.Loc(),
-		)
+		p.error(t, IllegalResult)
 	}
 	throws := findThrowStatements(f.Body)
 	for _, t := range throws {
-		p.report("Cannot throw in functions without explicit returns", t.Loc())
+		p.error(t, IllegalThrow)
 	}
 }
 
@@ -269,13 +263,13 @@ func typeCheckHappyReturn(p *Parser, body *Block, expected ExpressionType) bool 
 	returns := findReturnStatements(body)
 	ok := true
 	if !expected.Extends(body.Type()) && !happy.Extends(body.Type()) {
-		p.report("Type doesn't match expected type", body.reportLoc())
+		p.error(body.reportedNode(), CannotAssignType, happy, body.Type())
 	}
 	for _, r := range returns {
 		returnType := getExitType(r)
 		if !expected.Extends(returnType) && !happy.Extends(returnType) {
 			ok = false
-			p.report("Type doesn't match expected type", r.Value.Loc())
+			p.error(r.Value, CannotAssignType, happy, returnType)
 		}
 	}
 	return ok
@@ -357,12 +351,12 @@ func addParamToScope(p *Parser, expr Expression) {
 		return
 	}
 	if param.Complement == nil {
-		p.report("Typing expected", param.Loc())
+		p.error(param, TypeExpected)
 		p.scope.Add(param.Identifier.Text(), param.Loc(), Unknown{})
 		return
 	}
 	if _, ok := param.Complement.Type().(Type); !ok {
-		p.report("Typing expected", param.Loc())
+		p.error(param, TypeExpected)
 		p.scope.Add(param.Identifier.Text(), param.Loc(), Unknown{})
 		return
 	}

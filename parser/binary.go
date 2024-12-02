@@ -167,10 +167,10 @@ func (b *BinaryExpression) typeCheck(p *Parser) {
 
 func (p *Parser) typeCheckLogicalExpression(left Expression, right Expression) {
 	if left != nil && !(Boolean{}).Extends(left.Type()) {
-		p.report("The left-hand side of a logical operation must be a boolean", left.Loc())
+		p.error(left, BooleanExpected, left.Type())
 	}
 	if right != nil && !(Boolean{}).Extends(right.Type()) {
-		p.report("The right-hand side of a logical operation must be a boolean", right.Loc())
+		p.error(right, BooleanExpected, right.Type())
 	}
 }
 
@@ -181,7 +181,8 @@ func (p *Parser) typeCheckComparisonExpression(left Expression, right Expression
 	leftType := left.Type()
 	rightType := right.Type()
 	if !Match(leftType, rightType) {
-		p.report("Types don't match", Loc{Start: left.Loc().Start, End: right.Loc().End})
+		dummy := &BinaryExpression{Left: left, Right: right}
+		p.error(dummy, MismatchedTypes, leftType, rightType)
 	}
 }
 func (p *Parser) typeCheckConcatExpression(left Expression, right Expression) {
@@ -194,10 +195,10 @@ func (p *Parser) typeCheckConcatExpression(left Expression, right Expression) {
 		rightType = right.Type()
 	}
 	if leftType != nil && !(String{}).Extends(leftType) && !(List{Unknown{}}).Extends(leftType) {
-		p.report("The left-hand side of concatenation must be a string or a list", left.Loc())
+		p.error(left, ConcatenableExpected, left.Type())
 	}
 	if rightType != nil && !(String{}).Extends(rightType) && !(List{Unknown{}}).Extends(rightType) {
-		p.report("The right-hand side of concatenation must be a string or a list", right.Loc())
+		p.error(right, ConcatenableExpected, right.Type())
 	}
 
 	rightList, ok := rightType.(List)
@@ -209,22 +210,23 @@ func (p *Parser) typeCheckConcatExpression(left Expression, right Expression) {
 		return
 	}
 	if !leftList.Element.Extends(rightList.Element) {
-		p.report("Element type doesn't match lhs", right.Loc())
+		dummy := &BinaryExpression{Left: left, Right: right}
+		p.error(dummy, MismatchedTypes, leftType, rightType)
 	}
 }
 func (p *Parser) typeCheckArithmeticExpression(left Expression, right Expression) {
 	if left != nil && !(Number{}).Extends(left.Type()) {
-		p.report("The left-hand side of an arithmetic operation must be a number", left.Loc())
+		p.error(left, NumberExpected, left.Type())
 	}
 	if right != nil && !(Number{}).Extends(right.Type()) {
-		p.report("The right-hand side of an arithmetic operation must be a number", right.Loc())
+		p.error(right, NumberExpected, right.Type())
 	}
 }
 func typeCheckBinaryErrorType(p *Parser, left Expression, right Expression) {
 	if _, ok := left.Type().(Type); !ok {
-		p.report("Type expected", left.Loc())
+		p.error(left, TypeExpected)
 	}
 	if _, ok := right.Type().(Type); !ok {
-		p.report("Type expected", right.Loc())
+		p.error(right, TypeExpected)
 	}
 }
