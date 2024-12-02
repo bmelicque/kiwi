@@ -31,7 +31,7 @@ func (i *IfExpression) typeCheck(p *Parser) {
 
 	if expr, ok := i.Condition.(Expression); ok {
 		if _, ok := expr.Type().(Boolean); !ok {
-			p.report("Expected boolean condition", i.Condition.Loc())
+			p.error(i.Condition, BooleanExpected, expr.Type())
 		}
 	}
 	i.Body.typeCheck(p)
@@ -43,7 +43,7 @@ func (i *IfExpression) typeCheck(p *Parser) {
 	i.Alternate.typeCheck(p)
 	if !Match(i.Body.Type(), i.Alternate.Type()) {
 		loc := Loc{i.Keyword.Loc().Start, i.Alternate.Loc().End}
-		p.report("Types of the main and alternate blocks don't match", loc)
+		p.error(&Block{loc: loc}, CannotAssignType, i.Body.Type(), i.Alternate.Type())
 	}
 }
 
@@ -80,7 +80,7 @@ func parseIfCondition(p *Parser) Node {
 // Parse the body of an If expression
 func parseIfBody(p *Parser) *Block {
 	if p.Peek().Kind() != LeftBrace {
-		p.report("Block expected", p.Peek().Loc())
+		p.error(&Literal{p.Peek()}, TokenExpected, LeftBrace)
 		return nil
 	}
 	return p.parseBlock()
@@ -99,7 +99,7 @@ func parseAlternate(p *Parser) Expression {
 	case LeftBrace:
 		return p.parseBlock()
 	default:
-		p.report("Block expected", p.Peek().Loc())
+		p.error(&Literal{p.Peek()}, TokenExpected, LeftBrace)
 		return nil
 	}
 }

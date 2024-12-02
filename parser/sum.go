@@ -30,7 +30,7 @@ func (s *SumTypeConstructor) typeCheck(p *Parser) {
 	for i := range tuple.Elements {
 		tuple.Elements[i].typeCheck(p)
 		if _, ok := tuple.Elements[i].Type().(Type); !ok {
-			p.report("Type expected", tuple.Elements[i].Loc())
+			p.error(tuple.Elements[i], TypeExpected)
 		}
 	}
 }
@@ -97,7 +97,7 @@ func (p *Parser) parseSumType() Expression {
 		p.DiscardLineBreaks()
 	}
 	if len(constructors) < 2 {
-		p.report("At least 2 constructors expected", constructors[0].Loc())
+		p.error(&Block{loc: constructors[0].Loc()}, MissingElements, "at least 2", len(constructors))
 	}
 
 	return &SumType{Members: constructors, start: start}
@@ -119,7 +119,7 @@ func parseSumTypeConstructorName(p *Parser) *Identifier {
 	}
 	identifier, ok := token.(*Identifier)
 	if !ok || !identifier.IsType() {
-		p.report("Type identifier expected for type constructor", token.Loc())
+		p.error(token, TypeIdentifierExpected)
 		return &Identifier{Token: token.(Token)}
 	}
 	return identifier

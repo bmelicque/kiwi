@@ -74,7 +74,7 @@ func (p *Parser) parseToken() Expression {
 		return &Identifier{Token: token}
 	}
 	if !p.allowEmptyExpr {
-		p.report("Expression expected", token.Loc())
+		p.error(&Literal{token}, ExpressionExpected)
 	}
 	return nil
 }

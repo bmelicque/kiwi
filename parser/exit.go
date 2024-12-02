@@ -37,26 +37,26 @@ func (p *Parser) parseExit() *Exit {
 
 	operator := keyword.Kind()
 	if operator == ContinueKeyword && value != nil {
-		p.report("No value expected after 'continue'", value.Loc())
+		p.error(value, UnexpectedExpression)
 	}
 	if operator == ThrowKeyword && value == nil {
-		p.report("Value expected after 'throw'", keyword.Loc())
+		p.error(&Literal{p.Peek()}, ExpressionExpected)
 	}
 
 	statement := &Exit{keyword, value}
 	inLoop := p.scope.in(LoopScope)
 	inFunction := p.scope.in(FunctionScope)
 	if operator == BreakKeyword && !inLoop {
-		p.report("Cannot break outside of a loop", statement.Loc())
+		p.error(statement, IllegalBreak)
 	}
 	if operator == ContinueKeyword && !inLoop {
-		p.report("Cannot continue outside of a loop", statement.Loc())
+		p.error(statement, IllegalContinue)
 	}
 	if operator == ReturnKeyword && !inFunction {
-		p.report("Cannot return outside of a function", statement.Loc())
+		p.error(statement, IllegalReturn)
 	}
 	if operator == ThrowKeyword && !inFunction {
-		p.report("Cannot throw outside of a function", statement.Loc())
+		p.error(statement, IllegalThrow)
 	}
 	return statement
 }

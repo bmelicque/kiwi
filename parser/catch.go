@@ -36,7 +36,7 @@ func (c *CatchExpression) typeCheck(p *Parser) {
 	var happy, err ExpressionType
 	alias, ok := c.Left.Type().(TypeAlias)
 	if !ok || alias.Name != "!" {
-		p.report("Catch not need (lhs is not a result type)", c.Loc())
+		p.error(c, UnneededCatch)
 		happy = c.Left.Type()
 		err = Unknown{}
 	} else {
@@ -49,7 +49,7 @@ func (c *CatchExpression) typeCheck(p *Parser) {
 
 	c.Body.typeCheck(p)
 	if !happy.Extends(c.Body.Type()) {
-		p.report("Type doesn't match result's ok type", c.Body.reportLoc())
+		p.error(c.Body.reportedNode(), CannotAssignType, happy, c.Body.Type())
 	}
 }
 
@@ -79,7 +79,7 @@ func (p *Parser) parseCatchExpression() Expression {
 	p.allowBraceParsing = outer
 	identifier, ok := token.(*Identifier)
 	if token != nil && !ok {
-		p.report("Identifier expected", token.Loc())
+		p.error(token, IdentifierExpected)
 	}
 
 	if p.Peek().Kind() != LeftBrace {

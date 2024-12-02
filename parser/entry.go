@@ -99,10 +99,7 @@ func parseEntry(p *Parser, expr Expression) Expression {
 	switch expr.(type) {
 	case *BracketedExpression, *Identifier, *Literal:
 	default:
-		p.report(
-			"Invalid expression before ':': identifier, literal or brackets expected",
-			expr.Loc(),
-		)
+		p.error(expr, FieldKeyExpected)
 		expr = nil
 	}
 	complement := p.parseRange()
@@ -129,7 +126,7 @@ func parseParam(p *Parser, identifier *Identifier) Expression {
 func (param *Param) typeCheck(p *Parser) {
 	param.Complement.typeCheck(p)
 	if _, ok := param.Complement.Type().(Type); !ok {
-		p.report("Type expected", param.Complement.Loc())
+		p.error(param.Complement, TypeExpected)
 	}
 }
 
@@ -139,6 +136,6 @@ func (e *Entry) typeCheck(p *Parser) {
 		b.typeCheck(p)
 	}
 	if _, ok := e.Value.Type().(Type); ok {
-		p.report("Value expected", e.Value.Loc())
+		p.error(e.Value, ValueExpected)
 	}
 }

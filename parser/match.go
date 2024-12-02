@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"slices"
 )
 
@@ -72,7 +71,7 @@ func (m *MatchExpression) typeCheck(p *Parser) {
 	switch t.(type) {
 	case Sum, Trait:
 	default:
-		p.report("Cannot match this type", m.Value.Loc())
+		p.error(m.Value, Unmatchable, t)
 	}
 	for i := range m.Cases {
 		p.pushScope(NewScope(BlockScope))
@@ -110,11 +109,11 @@ func (p *Parser) parseMatchExpression() Expression {
 	if next.Kind() == RightBrace {
 		p.Consume()
 	} else {
-		p.report("'}' expected", next.Loc())
+		p.error(&Literal{next}, RightBraceExpected)
 	}
 	expr := MatchExpression{keyword, condition, cases, end}
 	if len(cases) < 2 {
-		p.report("At least 2 cases expected", expr.Loc())
+		p.error(&expr, MissingElements, "at least 2", len(cases))
 	}
 	return &expr
 }
@@ -151,7 +150,7 @@ func validateCaseList(p *Parser, cases []MatchCase) {
 		return
 	}
 	if cases[0].Pattern == nil {
-		p.report("'case' keyword expected", cases[0].Statements[0].Loc())
+		p.error(cases[0].Statements[0], TokenExpected, token{kind: CaseKeyword})
 	}
 	reportUnreachableCases(p, cases)
 	reportDuplicatedCases(p, cases)
@@ -160,18 +159,18 @@ func validateCaseList(p *Parser, cases []MatchCase) {
 // return true if found a catch-all case
 func reportUnreachableCases(p *Parser, cases []MatchCase) {
 	var foundCatchall, foundUnreachable bool
-	var catchall Loc
+	var catchall Expression
 	for _, ca := range cases {
 		if foundCatchall {
 			foundUnreachable = true
 		}
 		if ca.IsCatchall() {
 			foundCatchall = true
-			catchall = ca.Pattern.Loc()
+			catchall = ca.Pattern
 		}
 	}
 	if foundUnreachable {
-		p.report("Catch-all case should be last", catchall)
+		p.error(catchall, CatchallNotLast)
 	}
 }
 
@@ -188,9 +187,8 @@ func reportDuplicatedCases(p *Parser, cases []MatchCase) {
 		if len(locs) == 1 {
 			continue
 		}
-		msg := fmt.Sprintf("Duplicated case '%v'", name)
 		for _, loc := range locs {
-			p.report(msg, loc)
+			p.error(&Block{loc: loc}, DuplicateIdentifier, name)
 		}
 	}
 }
@@ -216,13 +214,14 @@ func reportMissingCases(p *Parser, cases []MatchCase, matched ExpressionType) {
 	}
 	sum, ok := matched.(Sum)
 	if !ok {
-		p.report("Non exhaustive match, consider adding catch-all", loc)
+		p.error(&Block{loc: loc}, NotExhaustive)
 	}
 	for name := range sum.Members {
 		delete(names, name)
 	}
+	b := &Block{loc: loc}
 	for name := range names {
-		p.report(fmt.Sprintf("Missing constructor '%v'", name), loc)
+		p.error(b, MissingConstructor, name)
 	}
 }
 

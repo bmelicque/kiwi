@@ -1,7 +1,5 @@
 package parser
 
-import "fmt"
-
 type Assignment struct {
 	Pattern  Expression // "value", "Type", "(value: Type).method"
 	Value    Expression
@@ -77,7 +75,7 @@ func validateObject(p *Parser, b *Block) {
 }
 
 func reportDuplicatedFields(p *Parser, b *Block) {
-	declarations := map[string][]Loc{}
+	declarations := map[string][]*Identifier{}
 	for _, s := range b.Statements {
 		var identifier *Identifier
 		switch s := s.(type) {
@@ -88,15 +86,15 @@ func reportDuplicatedFields(p *Parser, b *Block) {
 		}
 		name := identifier.Text()
 		if name != "" {
-			declarations[name] = append(declarations[name], identifier.Loc())
+			declarations[name] = append(declarations[name], identifier)
 		}
 	}
-	for name, locs := range declarations {
-		if len(locs) == 1 {
+	for _, identifiers := range declarations {
+		if len(identifiers) == 1 {
 			continue
 		}
-		for _, loc := range locs {
-			p.report(fmt.Sprintf("Duplicate identifier '%v'", name), loc)
+		for _, identifier := range identifiers {
+			p.error(identifier, DuplicateIdentifier)
 		}
 	}
 }
@@ -107,12 +105,12 @@ func getValidatedObjectField(p *Parser, node Node) Node {
 		return node
 	case *Entry:
 		if _, ok := node.Key.(*Identifier); !ok {
-			p.report("Identifier expected", node.Key.Loc())
+			p.error(node.Key, IdentifierExpected)
 			return nil
 		}
 		return node
 	default:
-		p.report("Field expected", node.Loc())
+		p.error(node, FieldExpected)
 		return nil
 	}
 }
@@ -131,43 +129,34 @@ func typeCheckAssignment(p *Parser, a *Assignment) {
 		if isMap(pattern.Expr.Type()) {
 			t := pattern.typing.(TypeAlias).Ref.(Sum).getMember("Some")
 			if !t.Extends(a.Value.Type()) {
-				p.report("Mismatched types", a.Loc())
+				p.error(a, CannotAssignType, t, a.Value.Type())
 			}
 			return
 		}
 		if isSlice(pattern.Expr.Type()) {
 			el := pattern.Expr.Type().(Ref).To.(List).Element
 			if !el.Extends(a.Value.Type()) {
-				p.report("Mismatched types", a.Loc())
+				p.error(a, CannotAssignType, el, a.Value.Type())
 			}
 			return
 		}
-		p.report(
-			"Invalid type, expected assignment to map element",
-			pattern.Loc(),
-		)
+		p.error(pattern, InvalidAssignmentToEntry)
 	case *Identifier:
 		if pattern.typing.Extends(a.Value.Type()) {
 			return
 		}
-		p.report(
-			fmt.Sprintf(
-				"Cannot assign value to '%v' (types don't match)",
-				pattern.Text(),
-			),
-			pattern.Loc(),
-		)
+		p.error(pattern, CannotAssignType, pattern.typing, a.Value)
 	case *TupleExpression:
 		for _, element := range pattern.Elements {
 			if _, ok := element.(*Identifier); !ok {
-				p.report("Expected identifier", element.Loc())
+				p.error(element, IdentifierExpected)
 			}
 		}
 		if !pattern.typing.Extends(a.Value.Type()) {
-			p.report("Type doesn't match assignee's type", pattern.Loc())
+			p.error(a.Value, CannotAssignType, pattern.typing, a.Value)
 		}
 	default:
-		p.report("Invalid pattern for assignment", a.Pattern.Loc())
+		p.error(a.Pattern, InvalidPattern)
 	}
 }
 
@@ -182,12 +171,12 @@ func typeCheckDeclaration(p *Parser, a *Assignment) {
 		declareTuple(p, pattern, a.Value.Type())
 	case *CallExpression:
 		if !p.conditionalDeclaration {
-			p.report("Invalid pattern", a.Pattern.Loc())
+			p.error(a.Pattern, InvalidPattern)
 			return
 		}
 		p.typeCheckPattern(a.Pattern, a.Value.Type())
 	default:
-		p.report("Invalid pattern", a.Pattern.Loc())
+		p.error(a.Pattern, InvalidPattern)
 	}
 }
 
@@ -197,8 +186,7 @@ func declareIdentifier(p *Parser, identifier *Identifier, typing ExpressionType)
 		return
 	}
 	if name == "Map" {
-		msg := fmt.Sprintf("'%v' is a reserved name", name)
-		p.report(msg, identifier.Loc())
+		p.error(identifier, ReservedName, name)
 		return
 	}
 	p.scope.Add(name, identifier.Loc(), typing)
@@ -207,23 +195,17 @@ func declareIdentifier(p *Parser, identifier *Identifier, typing ExpressionType)
 func declareTuple(p *Parser, pattern *TupleExpression, typing ExpressionType) {
 	tuple, ok := typing.(Tuple)
 	if !ok {
-		p.report(
-			"Initializer type doesn't match pattern (expected tuple)",
-			pattern.Loc(),
-		)
+		p.error(pattern, InvalidTypeForPattern, pattern, typing)
 		return
 	}
 	l := len(pattern.Elements)
 	if l > len(tuple.Elements) {
-		start := pattern.Elements[len(tuple.Elements)-1].Loc().Start
-		end := pattern.Elements[l-1].Loc().End
-		p.report("Too many elements", Loc{start, end})
-		l = len(tuple.Elements)
+		p.error(pattern, TooManyElements, len(tuple.Elements), len(pattern.Elements))
 	}
 	for i := 0; i < l; i++ {
 		identifier, ok := pattern.Elements[i].(*Identifier)
 		if !ok {
-			p.report("Identifier expected", pattern.Elements[i].Loc())
+			p.error(pattern.Elements[i], IdentifierExpected)
 			continue
 		}
 		declareIdentifier(p, identifier, tuple.Elements[i])
@@ -250,7 +232,7 @@ func typeCheckDefinition(p *Parser, a *Assignment) {
 	default:
 		a.Value.typeCheck(p)
 		reportInvalidVariableType(p, a.Value)
-		p.report("Invalid pattern", pattern.Loc())
+		p.error(pattern, InvalidPattern)
 	}
 }
 
@@ -264,7 +246,7 @@ func typeCheckGenericTypeDefinition(p *Parser, a *Assignment) {
 
 	identifier, ok := pattern.Expr.(*Identifier)
 	if !ok || !identifier.IsType() {
-		p.report("Type identifier expected", pattern.Expr.Loc())
+		p.error(pattern.Expr, TypeIdentifierExpected)
 		return
 	}
 	t := Type{TypeAlias{
@@ -293,7 +275,7 @@ func getInitType(p *Parser, expr Expression) ExpressionType {
 	}
 	t, ok := expr.Type().(Type)
 	if !ok {
-		p.report("Type expected", expr.Loc())
+		p.error(expr, TypeExpected)
 		return Unknown{}
 	}
 	return t.Value
@@ -307,20 +289,20 @@ func getObjectDefinedType(p *Parser, b *Block) ExpressionType {
 			key := s.Identifier.Text()
 			t, ok := s.Complement.Type().(Type)
 			if !ok {
-				p.report("Type expected, got value", s.Complement.Loc())
+				p.error(s.Complement, TypeExpected)
 				o.Members[key] = Unknown{}
 				continue
 			}
 			if isOptionType(t.Value) {
 				o.Optionals = append(o.Optionals, key)
 			} else if len(o.Defaults)+len(o.Optionals) > 0 {
-				p.report("Cannot define mandatory field after optional fields", s.Loc())
+				p.error(s, MandatoryAfterOptional)
 			}
 			o.Members[key] = t.Value
 		case *Entry:
 			key := s.Key.(*Identifier).Text()
 			if _, ok := s.Value.Type().(Type); ok {
-				p.report("Value expected, got type", s.Value.Loc())
+				p.error(s.Value, ValueExpected)
 			}
 			o.Defaults = append(o.Defaults, key)
 			o.Members[key] = s.Value.Type()
@@ -333,7 +315,7 @@ func typeCheckFunctionDefinition(p *Parser, a *Assignment) {
 	identifier := a.Pattern.(*Identifier)
 	t, ok := a.Value.Type().(Function)
 	if !ok {
-		p.report("Function expected", a.Value.Loc())
+		p.error(a.Value, FunctionExpressionExpected)
 		return
 	}
 	declareIdentifier(p, identifier, t)
@@ -347,13 +329,13 @@ func typeCheckMethod(p *Parser, expr *PropertyAccessExpression, init Expression)
 
 	method, ok := expr.Property.(*Identifier)
 	if !ok {
-		p.report("Identifier expected", expr.Property.Loc())
+		p.error(expr.Property, IdentifierExpected)
 	}
 
 	init.typeCheck(p)
 
 	if _, ok := init.Type().(Function); !ok {
-		p.report("Function expected", init.Loc())
+		p.error(init, FunctionExpressionExpected)
 		return
 	}
 	if !ok || typeIdentifier == nil {
@@ -375,18 +357,18 @@ func typeCheckMethod(p *Parser, expr *PropertyAccessExpression, init Expression)
 func declareMethodReceiver(p *Parser, receiver Expression) *Identifier {
 	paren, ok := receiver.(*ParenthesizedExpression)
 	if !ok || paren.Expr == nil {
-		p.report("Receiver argument expected", receiver.Loc())
+		p.error(receiver, ReceiverExpected)
 		return nil
 	}
 	param, ok := paren.Expr.(*Param)
 	if !ok {
-		p.report("Receiver argument expected", paren.Expr.Loc())
+		p.error(paren.Expr, ReceiverExpected)
 		return nil
 	}
 
 	typeIdentifier, ok := param.Complement.(*Identifier)
 	if !ok || !typeIdentifier.IsType() {
-		p.report("Type identifier expected", param.Complement.Loc())
+		p.error(param.Complement, TypeIdentifierExpected)
 		return nil
 	}
 	typeIdentifier.typeCheck(p)
@@ -404,17 +386,10 @@ func declareMethodReceiver(p *Parser, receiver Expression) *Identifier {
 func reportInvalidVariableType(p *Parser, value Expression) {
 	switch t := value.Type().(type) {
 	case TypeAlias:
-		if t.Name != "!" {
-			return
+		if t.Name == "!" {
+			p.error(value, ResultDeclaration)
 		}
-		p.report(
-			"Cannot declare variable as Result, consider using a 'try' or 'catch' expression",
-			value.Loc(),
-		)
 	case Nil:
-		p.report(
-			"Cannot declare variables as nil, consider using option type",
-			value.Loc(),
-		)
+		p.error(value, NilDeclaration)
 	}
 }

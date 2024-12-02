@@ -27,7 +27,7 @@ func (b *Block) typeCheck(p *Parser) {
 		return
 	}
 	if _, ok := expr.Type().(Type); ok {
-		p.report("Blocks shouldn't return types", b.reportLoc())
+		p.error(b.reportedNode(), ValueExpected)
 	}
 }
 
@@ -37,6 +37,13 @@ func (b *Block) reportLoc() Loc {
 		return b.Statements[len(b.Statements)-1].Loc()
 	} else {
 		return b.loc
+	}
+}
+func (b *Block) reportedNode() Node {
+	if len(b.Statements) > 0 {
+		return b.Statements[len(b.Statements)-1]
+	} else {
+		return b
 	}
 }
 func (b *Block) Type() ExpressionType {
@@ -53,7 +60,7 @@ func (b *Block) Type() ExpressionType {
 
 func (p *Parser) parseBlock() *Block {
 	if p.Peek().Kind() != LeftBrace {
-		p.report("'{' expected", p.Peek().Loc())
+		p.error(&Literal{p.Peek()}, LeftBraceExpected)
 		return nil
 	}
 
@@ -72,7 +79,7 @@ func (p *Parser) parseBlock() *Block {
 	reportUnreachableCode(p, statements)
 
 	if p.Peek().Kind() != RightBrace {
-		p.report("'}' expected", p.Peek().Loc())
+		p.error(&Literal{p.Peek()}, RightBraceExpected)
 	}
 	end := p.Consume().Loc().End
 
@@ -95,7 +102,7 @@ func reportUnreachableCode(p *Parser, statements []Node) {
 		}
 	}
 	if foundUnreachable {
-		p.report("Detected unreachable code", unreachable)
+		p.error(&Block{loc: unreachable}, UnreachableCode)
 	}
 }
 

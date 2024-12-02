@@ -1,7 +1,5 @@
 package parser
 
-import "fmt"
-
 type TupleExpression struct {
 	Elements []Expression
 	typing   ExpressionType
@@ -105,7 +103,7 @@ func (t *TupleExpression) reportDuplicatedParams(p *Parser) {
 			continue
 		}
 		for _, loc := range locs {
-			p.report(fmt.Sprintf("Duplicate identifier '%v'", name), loc)
+			p.error(&Block{loc: loc}, DuplicateIdentifier, name)
 		}
 	}
 }

@@ -25,13 +25,13 @@ func (u *UnaryExpression) typeCheck(p *Parser) {
 	case AwaitKeyword:
 		alias, ok := u.Operand.Type().(TypeAlias)
 		if !ok || alias.Name != "..." {
-			p.report("Promise expected", u.Operand.Loc())
+			p.error(u.Operand, PromiseExpected, u.Operand.Type())
 		}
 	case Bang:
 		switch u.Operand.Type().(type) {
 		case Type, Boolean:
 		default:
-			p.report("Type or boolean expected with '!' operator", u.Operand.Loc())
+			p.error(u.Operand, TypeOrBoolExpected, u.Operand.Type())
 		}
 	case BinaryAnd:
 		identifier := getReferencedIdentifier(u.Operand)
@@ -44,17 +44,17 @@ func (u *UnaryExpression) typeCheck(p *Parser) {
 		}
 	case Mul:
 		if _, ok := u.Operand.Type().(Ref); !ok {
-			p.report("Reference expected", u.Operand.Loc())
+			p.error(u.Operand, RefExpected, u.Operand.Type())
 			return
 		}
 	case QuestionMark:
 		if _, ok := u.Operand.Type().(Type); !ok {
-			p.report("Type expected with question mark operator", u.Operand.Loc())
+			p.error(u.Operand, TypeExpected)
 		}
 	case TryKeyword:
 		alias, ok := u.Operand.Type().(TypeAlias)
 		if !ok || alias.Name != "!" {
-			p.report("Result type expected", u.Operand.Loc())
+			p.error(u.Operand, ResultExpected, u.Operand.Type())
 		}
 	default:
 		panic(fmt.Sprintf("Operator '%v' not implemented!", u.Operator.Kind()))
@@ -67,11 +67,11 @@ func typeCheckAsyncExpression(p *Parser, u *UnaryExpression) {
 	}
 	f, ok := call.Callee.Type().(Function)
 	if !ok {
-		p.report("Function expected", call.Loc())
+		p.error(call, FunctionExpected)
 		return
 	}
 	if !f.Async {
-		p.report("'async' keyword has no effect in this expression", u.Loc())
+		p.error(u, UnneededAsync)
 	}
 }
 
@@ -153,7 +153,7 @@ func (l *ListTypeExpression) typeCheck(p *Parser) {
 	}
 	l.Expr.typeCheck(p)
 	if _, ok := l.Expr.Type().(Type); !ok {
-		p.report("Type expected", l.Loc())
+		p.error(l, TypeExpected)
 	}
 }
 
@@ -182,7 +182,7 @@ func (p *Parser) parseUnaryExpression() Expression {
 			validateAsyncOperand(p, expr)
 		}
 		if token.Kind() == BinaryAnd && !isReferencable(expr) {
-			p.report("Cannot reference such an expression", expr.Loc())
+			p.error(expr, NotReferenceable)
 		}
 		return &UnaryExpression{token, expr}
 	case LeftBracket:
@@ -197,7 +197,7 @@ func validateAsyncOperand(p *Parser, operand Expression) {
 		return
 	}
 	if _, ok := operand.(*CallExpression); !ok {
-		p.report("Call expression expected", operand.Loc())
+		p.error(operand, CallExpressionExpected)
 	}
 }
 
@@ -216,7 +216,7 @@ func parseListTypeExpression(p *Parser) Expression {
 	}
 	expr := parseInnerUnary(p)
 	if brackets != nil && brackets.Expr != nil {
-		p.report("No expression expected for list type", brackets.Loc())
+		p.error(brackets, UnexpectedExpression)
 	}
 	return &ListTypeExpression{brackets, expr}
 }
