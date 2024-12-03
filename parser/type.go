@@ -374,57 +374,62 @@ func (f Function) build(scope *Scope, compared ExpressionType) (ExpressionType, 
 	return f, ok
 }
 
+type ObjectMember struct {
+	Name string
+	Type ExpressionType
+}
+
 type Object struct {
-	Members   map[string]ExpressionType
-	Optionals []string
-	Defaults  []string
+	Members  []ObjectMember
+	Defaults []ObjectMember
 }
 
 func newObject() Object {
 	return Object{
-		Members:   map[string]ExpressionType{},
-		Optionals: []string{},
-		Defaults:  []string{},
+		Members:  []ObjectMember{},
+		Defaults: []ObjectMember{},
 	}
 }
 
-func (o Object) Extends(t ExpressionType) bool {
-	structB, ok := t.(Object)
-	if !ok {
-		return false
-	}
-	for member, typeA := range o.Members {
-		typeB, ok := structB.Members[member]
-		if !ok {
-			return false
-		}
-		if !typeA.Extends(typeB) {
-			return false
-		}
-	}
-	for member := range structB.Members {
-		if _, ok := o.Members[member]; !ok {
-			return false
-		}
-	}
-	return true
-}
+func (o Object) Extends(t ExpressionType) bool { return false }
 func (o Object) Text() string {
-	s := "("
-	for name, member := range o.Members {
-		s += name + ": " + member.Text() + ", "
+	s := "{"
+	for _, member := range o.Members {
+		s += member.Name + ": " + member.Type.Text() + ", "
 	}
-	return s + ")"
+	return s + "}"
 }
 func (o Object) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	ok := true
-	for name, member := range o.Members {
+	for i, member := range o.Members {
 		var k bool
 		// FIXME: is compared an object?
-		o.Members[name], k = member.build(scope, compared)
+		built, k := member.Type.build(scope, compared)
+		o.Members[i] = ObjectMember{member.Name, built}
 		ok = ok && k
 	}
 	return o, ok
+}
+
+func (o Object) get(name string) (ExpressionType, bool) {
+	for _, member := range o.Members {
+		if member.Name == name {
+			return member.Type, true
+		}
+	}
+	for _, member := range o.Defaults {
+		if member.Name == name {
+			return member.Type, true
+		}
+	}
+	return nil, false
+}
+
+func (o *Object) addMember(name string, t ExpressionType) {
+	o.Members = append(o.Members, ObjectMember{name, t})
+}
+func (o *Object) addDefault(name string, t ExpressionType) {
+	o.Defaults = append(o.Defaults, ObjectMember{name, t})
 }
 
 type Sum struct {

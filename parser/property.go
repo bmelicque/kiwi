@@ -145,7 +145,7 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 		return
 	}
 
-	t, ok := object.Members[name]
+	t, ok := object.get(name)
 	if !ok {
 		p.error(expr.Property, PropertyDoesNotExist, name)
 		expr.typing = Unknown{}
@@ -167,9 +167,14 @@ func (t *TraitExpression) Loc() Loc {
 	return Loc{t.Receiver.loc.Start, t.Def.loc.End}
 }
 func (t *TraitExpression) Type() ExpressionType {
+	members := t.Def.Type().(Type).Value.(Object).Members
+	trait := map[string]ExpressionType{}
+	for _, member := range members {
+		trait[member.Name] = member.Type
+	}
 	return Trait{
 		Self:    Generic{Name: t.Receiver.Expr.(*Identifier).Text()},
-		Members: t.Def.Type().(Type).Value.(Object).Members,
+		Members: trait,
 	}
 }
 func (t *TraitExpression) typeCheck(p *Parser) {

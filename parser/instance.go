@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"slices"
 )
 
 type InstanceExpression struct {
@@ -65,13 +64,13 @@ func typeCheckStructInstanciation(p *Parser, i *InstanceExpression) {
 		if entry.Key != nil {
 			name = entry.Key.(*Identifier).Text()
 		}
-		expected := object.Members[name]
+		expected, _ := object.get(name)
 		if !expected.Extends(entry.Value.Type()) {
 			p.error(arg, CannotAssignType, expected, entry.Value.Type())
 		}
 	}
 
-	reportExcessMembers(p, object.Members, args)
+	reportExcessMembers(p, object, args)
 	reportMissingMembers(p, object, i.Args)
 
 	i.typing = alias
@@ -100,14 +99,14 @@ func getFormattedStructEntry(p *Parser, received Expression) *Entry {
 	}
 	return entry
 }
-func reportExcessMembers(p *Parser, expected map[string]ExpressionType, received []Expression) {
+func reportExcessMembers(p *Parser, expected Object, received []Expression) {
 	for _, arg := range received {
 		namedArg, ok := arg.(*Entry)
 		if !ok {
 			continue
 		}
 		name := namedArg.Key.(*Identifier).Text()
-		if _, ok := expected[name]; ok {
+		if _, ok := expected.get(name); ok {
 			continue
 		}
 		p.error(arg, PropertyDoesNotExist, name)
@@ -115,12 +114,8 @@ func reportExcessMembers(p *Parser, expected map[string]ExpressionType, received
 }
 func reportMissingMembers(p *Parser, expected Object, received *BracedExpression) {
 	membersSet := map[string]bool{}
-	for name := range expected.Members {
-		isOptional := slices.Contains(expected.Optionals, name)
-		hasDefault := slices.Contains(expected.Defaults, name)
-		if !isOptional && !hasDefault {
-			membersSet[name] = true
-		}
+	for _, member := range expected.Members {
+		membersSet[member.Name] = true
 	}
 	for _, member := range received.Expr.(*TupleExpression).Elements {
 		if named, ok := member.(*Entry); ok {

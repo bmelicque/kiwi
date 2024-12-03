@@ -9,9 +9,7 @@ func TestCheckPropertyAccess(t *testing.T) {
 	parser := MakeParser(nil)
 	alias := TypeAlias{
 		Name: "BoxedNumber",
-		Ref: Object{Members: map[string]ExpressionType{
-			"value": Number{},
-		}},
+		Ref:  Object{Members: []ObjectMember{{"value", Number{}}}},
 	}
 	parser.scope.Add("BoxedNumber", Loc{}, Type{alias})
 	parser.scope.Add("box", Loc{}, alias)
@@ -34,9 +32,7 @@ func TestCheckPropertyAccessThroughRef(t *testing.T) {
 	parser := MakeParser(nil)
 	alias := TypeAlias{
 		Name: "BoxedNumber",
-		Ref: Object{Members: map[string]ExpressionType{
-			"value": Number{},
-		}},
+		Ref:  Object{Members: []ObjectMember{{"value", Number{}}}},
 	}
 	parser.scope.Add("BoxedNumber", Loc{}, Type{alias})
 	parser.scope.Add("ref", Loc{}, Ref{alias})

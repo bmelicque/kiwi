@@ -7,7 +7,7 @@ import (
 func TestGenericWithTypeArgs(t *testing.T) {
 	parser := MakeParser(nil)
 	o := newObject()
-	o.Members["value"] = Type{Generic{Name: "Type"}}
+	o.Members = append(o.Members, ObjectMember{"value", Type{Generic{Name: "Type"}}})
 	parser.scope.Add("Boxed", Loc{}, Type{TypeAlias{
 		Name:   "Boxed",
 		Params: []Generic{{Name: "Type"}},
@@ -43,7 +43,7 @@ func TestGenericWithTypeArgs(t *testing.T) {
 		t.Fatalf("Type ref should've been Object{}, got %#v", alias.Ref)
 	}
 
-	member, ok := object.Members["value"]
+	member, ok := object.get("value")
 	if !ok {
 		t.Fatalf("Could not find member")
 	}

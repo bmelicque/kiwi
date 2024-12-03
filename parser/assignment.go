@@ -291,20 +291,19 @@ func getObjectDefinedType(p *Parser, b *Block) ExpressionType {
 			t, ok := s.Complement.Type().(Type)
 			if !ok {
 				p.error(s.Complement, TypeExpected)
-				o.Members[key] = Unknown{}
+				o.addMember(key, Unknown{})
 				continue
 			}
 			if len(o.Defaults) > 0 {
 				p.error(s, MandatoryAfterOptional)
 			}
-			o.Members[key] = t.Value
+			o.addMember(key, t.Value)
 		case *Entry:
 			key := s.Key.(*Identifier).Text()
 			if _, ok := s.Value.Type().(Type); ok {
 				p.error(s.Value, ValueExpected)
 			}
-			o.Defaults = append(o.Defaults, key)
-			o.Members[key] = s.Value.Type()
+			o.addDefault(key, s.Value.Type())
 		}
 	}
 	return o

@@ -166,11 +166,10 @@ func makePromise(t ExpressionType) TypeAlias {
 		Name:   "...",
 		Params: []Generic{{Name: "Type", Value: t}},
 		Ref: Object{
-			Members: map[string]ExpressionType{
-				"value": Generic{Name: "Type", Value: t},
+			Members: []ObjectMember{
+				{"value", Generic{Name: "Type", Value: t}},
 			},
-			Optionals: []string{},
-			Defaults:  []string{},
+			Defaults: []ObjectMember{},
 		},
 	}
 }
