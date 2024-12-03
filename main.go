@@ -21,7 +21,10 @@ const (
 )
 
 func main() {
-	file, err := os.Open("test.txt")
+	source := os.Args[1]
+	output := os.Args[2]
+
+	file, err := os.Open(source)
 	if err != nil {
 		panic(err)
 	}
@@ -29,7 +32,7 @@ func main() {
 
 	ast, errors := parser.Parse(file)
 	if len(errors) == 0 {
-		f, err := os.Create("out.js")
+		f, err := os.Create(output)
 		if err != nil {
 			log.Fatal(err)
 		}
