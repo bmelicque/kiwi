@@ -42,7 +42,7 @@ func TestSliceDerefAssignment(t *testing.T) {
 	source += "slice := &array\n"
 	source += "array = *slice"
 
-	expected := "array = slice.clone()"
+	expected := "array = slice.clone();"
 
 	testEmitter(t, source, expected, 2)
 }

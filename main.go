@@ -45,8 +45,8 @@ func main() {
 		f.Sync()
 	} else {
 		for _, err := range errors {
-			line := err.Node.Loc().Start
-			col := err.Node.Loc().End
+			line := err.Node.Loc().Start.Line
+			col := err.Node.Loc().End.Col
 			msg := err.Text()
 			fmt.Printf("Error at line %v, col. %v: %v\n", line, col, msg)
 		}

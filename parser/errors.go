@@ -232,7 +232,7 @@ func (p ParserError) Text() string {
 	case CannotAssignType:
 		t1 := p.Complements[0].(ExpressionType).Text()
 		t2 := p.Complements[1].(ExpressionType).Text()
-		return fmt.Sprintf("Cannot use this value (%v) as type %v", t1, t2)
+		return fmt.Sprintf("Cannot use value of type %v as type %v", t2, t1)
 	case NotSubscriptable:
 		t := p.Complements[0].(ExpressionType).Text()
 		return fmt.Sprintf("Type %v is not subscriptable", t)

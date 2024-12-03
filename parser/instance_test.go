@@ -5,6 +5,22 @@ import (
 	"testing"
 )
 
+func TestParseMultilineInstanciation(t *testing.T) {
+	source := "Type{\n"
+	source += "    key: value,\n"
+	source += "}\n"
+	parser := MakeParser(strings.NewReader(source))
+	parser.parseInstanceExpression()
+
+	if len(parser.errors) > 0 {
+		t.Logf("Expected no errors, got:")
+		for _, err := range parser.errors {
+			t.Logf("%v\n", err.Text())
+		}
+		t.Fail()
+	}
+}
+
 func TestParseMapInstanciation(t *testing.T) {
 	parser := MakeParser(strings.NewReader("Map{\"key\": \"value\"}"))
 	parser.parseInstanceExpression()

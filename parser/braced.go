@@ -24,12 +24,17 @@ func (p *Parser) parseBracedExpression() *BracedExpression {
 		panic("'{' expected!")
 	}
 	loc := p.Consume().Loc()
+	p.DiscardLineBreaks()
 
-	outer := p.allowEmptyExpr
+	outerMultiline := p.multiline
+	outerEmpty := p.allowEmptyExpr
+	p.multiline = true
 	p.allowEmptyExpr = true
-	expr := p.parseExpression()
-	p.allowEmptyExpr = outer
+	expr := p.parseTupleExpression()
+	p.multiline = outerMultiline
+	p.allowEmptyExpr = outerEmpty
 
+	p.DiscardLineBreaks()
 	next := p.Peek()
 	if next.Kind() != RightBrace {
 		p.error(&Literal{next}, RightBraceExpected)
