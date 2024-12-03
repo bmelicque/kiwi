@@ -318,6 +318,31 @@ func TestObjectTypeDefinition(t *testing.T) {
 	}
 }
 
+func TestObjectTypeDefinitionSingleLine(t *testing.T) {
+	str := "Type :: { n number, s string }"
+	parser := MakeParser(strings.NewReader(str))
+	node := parser.parseAssignment()
+
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no parsing errors, got:\n%#v", parser.errors)
+	}
+
+	expr, ok := node.(*Assignment)
+	if !ok {
+		t.Fatalf("Expected Assignment, got %#v", node)
+	}
+	if _, ok := expr.Pattern.(*Identifier); !ok {
+		t.Fatalf("Expected identifier 'Type'")
+	}
+	b, ok := expr.Value.(*Block)
+	if !ok {
+		t.Fatalf("Expected block, got:\n %#v", expr.Value)
+	}
+	if _, ok := b.Statements[0].(*Param); !ok {
+		t.Fatalf("Expected param, got:\n %#v", b.Statements[0])
+	}
+}
+
 func TestObjectTypeDefinitionWithDefaults(t *testing.T) {
 	str := "Type :: {\n"
 	str += "    n number\n"

@@ -69,6 +69,19 @@ func (p *Parser) parseAssignment() Node {
 }
 
 func validateObject(p *Parser, b *Block) {
+	if len(b.Statements) == 1 {
+		s := b.Statements[0]
+		t, ok := s.(*TupleExpression)
+		if !ok {
+			b.Statements[0] = getValidatedObjectField(p, s)
+			return
+		}
+		b.Statements = make([]Node, len(t.Elements))
+		for i := range t.Elements {
+			b.Statements[i] = getValidatedObjectField(p, t.Elements[i])
+		}
+		return
+	}
 	for i := range b.Statements {
 		b.Statements[i] = getValidatedObjectField(p, b.Statements[i])
 	}
