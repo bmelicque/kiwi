@@ -12,11 +12,24 @@ func (e *Emitter) findUninlinables(node parser.Node) {
 			skip()
 			return
 		}
+		if _, ok := node.(*parser.InstanceExpression); ok {
+			skip()
+			return
+		}
+		if isTypeDef(node) {
+			skip()
+			return
+		}
 		if isUninlinable(node) {
 			e.uninlinables[node] = len(e.uninlinables)
 			skip()
 		}
 	})
+}
+
+func isTypeDef(node parser.Node) bool {
+	a, ok := node.(*parser.Assignment)
+	return ok && a.Operator.Kind() == parser.Define && isTypePattern(a.Pattern)
 }
 
 func isUninlinable(node parser.Node) bool {
