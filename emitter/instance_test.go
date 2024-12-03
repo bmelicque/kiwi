@@ -18,7 +18,6 @@ func TestObjectInstance(t *testing.T) {
 func TestObjectInstanceWithOptionals(t *testing.T) {
 	source := "Boxed :: {\n"
 	source += "    value    number\n"
-	source += "    optional ?number\n"
 	source += "    default: 42\n"
 	source += "}\n"
 	source += "Boxed{ value: 42 }"

@@ -201,6 +201,7 @@ func declareTuple(p *Parser, pattern *TupleExpression, typing ExpressionType) {
 	l := len(pattern.Elements)
 	if l > len(tuple.Elements) {
 		p.error(pattern, TooManyElements, len(tuple.Elements), len(pattern.Elements))
+		l = len(tuple.Elements)
 	}
 	for i := 0; i < l; i++ {
 		identifier, ok := pattern.Elements[i].(*Identifier)
@@ -293,9 +294,7 @@ func getObjectDefinedType(p *Parser, b *Block) ExpressionType {
 				o.Members[key] = Unknown{}
 				continue
 			}
-			if isOptionType(t.Value) {
-				o.Optionals = append(o.Optionals, key)
-			} else if len(o.Defaults)+len(o.Optionals) > 0 {
+			if len(o.Defaults) > 0 {
 				p.error(s, MandatoryAfterOptional)
 			}
 			o.Members[key] = t.Value
