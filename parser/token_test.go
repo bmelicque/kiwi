@@ -11,6 +11,10 @@ func TestParseLiteral(t *testing.T) {
 	if len(parser.errors) > 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
+	loc := Loc{Position{1, 1}, Position{1, 5}}
+	if expr.Loc() != loc {
+		t.Fatalf("Expected loc %v, got %#v", loc, expr.Loc())
+	}
 	if _, ok := expr.(*Literal); !ok {
 		t.Fatalf("Expected Literal, got %#v", expr)
 	}

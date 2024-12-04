@@ -22,6 +22,9 @@ func (f *FunctionExpression) getChildren() []Node {
 
 func (f *FunctionExpression) Loc() Loc {
 	loc := Loc{Start: f.Params.Loc().Start, End: Position{}}
+	if f.TypeParams != nil {
+		loc.Start = f.TypeParams.loc.Start
+	}
 	if f.Body == nil {
 		loc.End = f.Explicit.Loc().End
 	} else {
@@ -177,7 +180,7 @@ func (p *Parser) parseFunctionExpression(typeParams *BracketedExpression) Expres
 		}
 		body := p.parseBlock()
 		return &FunctionExpression{
-			TypeParams: nil,
+			TypeParams: typeParams,
 			Params:     paren,
 			Explicit:   explicit,
 			Body:       body,

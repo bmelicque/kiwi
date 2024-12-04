@@ -27,6 +27,10 @@ func TestParseFunctionExpressionWithNoParams(t *testing.T) {
 	parser := MakeParser(strings.NewReader("() => {}"))
 	node := parser.parseFunctionExpression(nil)
 	testParserErrors(t, parser, 0)
+	loc := Loc{Position{1, 1}, Position{1, 9}}
+	if node.Loc() != loc {
+		t.Fatalf("Expected loc %v, got %v", loc, node.Loc())
+	}
 
 	function, ok := node.(*FunctionExpression)
 	if !ok {
@@ -89,6 +93,7 @@ func TestParseFunctionExpressionWithBadParamNode(t *testing.T) {
 func TestParseFunctionExpressionExplicit(t *testing.T) {
 	parser := MakeParser(strings.NewReader("() => number {}"))
 	node := parser.parseFunctionExpression(nil)
+	testParserErrors(t, parser, 0)
 
 	function, ok := node.(*FunctionExpression)
 	if !ok {
@@ -104,14 +109,21 @@ func TestParseFunctionExpressionExplicit(t *testing.T) {
 	}
 }
 
-func TestParseFunctionWithTypeArgs(t *testing.T) {
+func TestParseFunctionWithTypeParams(t *testing.T) {
 	parser := MakeParser(strings.NewReader("[Type]() => {}"))
 	node := parser.parseExpression()
+	testParserErrors(t, parser, 0)
+	loc := Loc{Position{1, 1}, Position{1, 15}}
+	if node.Loc() != loc {
+		t.Fatalf("Expected loc %v, got %v", loc, node.Loc())
+	}
 
-	_, ok := node.(*FunctionExpression)
+	f, ok := node.(*FunctionExpression)
 	if !ok {
 		t.Fatalf("Expected FunctionExpression, got %#v", node)
-		return
+	}
+	if f.TypeParams == nil {
+		t.Fatalf("Expected type params, got nothing")
 	}
 }
 
