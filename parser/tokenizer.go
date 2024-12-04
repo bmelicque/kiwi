@@ -179,7 +179,7 @@ var newLine = regexp.MustCompile(`^\s+`)
 var number = regexp.MustCompile(`^\d+`)
 var str = regexp.MustCompile(`^"(.*?)[^\\]"`)
 var word = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9]*`)
-var operator = regexp.MustCompile(`^(\+\+?|->?|\*\*?|/|%|::|:=|\.\.=?|=>|<=?|>=?|={1,2}|!=?|\|{1,2}|\?|&&?)`)
+var operator = regexp.MustCompile(`^(&&=|\|\|=|\+=|-=|\*=|/=|%=|\+\+?|->?|\*\*?|/|%|::|:=|\.\.=?|=>|<=?|>=?|={1,2}|!=?|\|{1,2}|\?|&&?)`)
 var punctuation = regexp.MustCompile(`^(\[|\]|,|:|\(|\)|\{|\}|_|\.)`)
 
 func split(data []byte, atEOF bool) (advance int, token []byte, err error) {
@@ -344,6 +344,22 @@ func makeToken(text string, loc Loc) Token {
 		return token{SlimArrow, loc}
 	case "=>":
 		return token{FatArrow, loc}
+	case "+=":
+		return token{AddAssign, loc}
+	case "++=":
+		return token{ConcatAssign, loc}
+	case "-=":
+		return token{SubAssign, loc}
+	case "*=":
+		return token{MulAssign, loc}
+	case "/=":
+		return token{DivAssign, loc}
+	case "%=":
+		return token{ModAssign, loc}
+	case "&&=":
+		return token{LogicalAndAssign, loc}
+	case "||=":
+		return token{LogicalOrAssign, loc}
 	}
 	switch {
 	case newLine.MatchString(text):

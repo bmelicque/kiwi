@@ -25,6 +25,21 @@ func TestParseAssignment(t *testing.T) {
 	}
 }
 
+func TestParseAssignmentShorthand(t *testing.T) {
+	parser := MakeParser(strings.NewReader("n += 42"))
+	node := parser.parseAssignment()
+
+	testParserErrors(t, parser, 0)
+
+	expr, ok := node.(*Assignment)
+	if !ok {
+		t.Fatalf("Expected Assignment, got %#v", node)
+	}
+	if expr.Operator.Kind() != AddAssign {
+		t.Fatal("Expected +=, got", expr.Operator)
+	}
+}
+
 func TestCheckAssignmentToIdentifier(t *testing.T) {
 	parser := MakeParser(nil)
 	parser.scope.Add("value", Loc{}, Number{})

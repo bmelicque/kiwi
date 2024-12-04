@@ -58,7 +58,15 @@ func (p *Parser) parseAssignment() Node {
 	switch next.Kind() {
 	case Declare,
 		Define,
-		Assign:
+		Assign,
+		AddAssign,
+		ConcatAssign,
+		SubAssign,
+		MulAssign,
+		DivAssign,
+		ModAssign,
+		LogicalAndAssign,
+		LogicalOrAssign:
 		operator = p.Consume()
 	default:
 		return expr
