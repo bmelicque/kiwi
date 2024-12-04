@@ -190,10 +190,6 @@ func (p *Parser) parseFunctionExpression(typeParams *BracketedExpression) Expres
 
 // Validate all of a function params' structures
 func validateFunctionParams(p *Parser, node *ParenthesizedExpression) {
-	if node.Expr == nil {
-		return
-	}
-
 	tuple := node.Expr.(*TupleExpression)
 	for _, element := range tuple.Elements {
 		validateFunctionParam(p, element)

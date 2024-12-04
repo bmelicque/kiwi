@@ -19,30 +19,75 @@ func TestFunctionType(t *testing.T) {
 	}
 }
 
-func TestFunctionExpressionWithoutArgs(t *testing.T) {
-	parser := MakeParser(strings.NewReader("() => number { 42 }"))
+// ---------------------------------
+// TEST PARSING FUNCTION EXPRESSIONS
+// ---------------------------------
+
+func TestParseFunctionExpressionWithNoParams(t *testing.T) {
+	parser := MakeParser(strings.NewReader("() => {}"))
 	node := parser.parseFunctionExpression(nil)
+	testParserErrors(t, parser, 0)
 
 	function, ok := node.(*FunctionExpression)
 	if !ok {
 		t.Fatalf("Expected FunctionExpression, got %#v", node)
-		return
 	}
 
 	params := function.Params.Expr.(*TupleExpression).Elements
 	if len(params) > 0 {
 		t.Fatalf("Expected no params, got %#v", function.Params.Expr)
 	}
-	if _, ok := function.Explicit.(*Literal); !ok {
-		t.Fatalf("Expected literal, got %#v", function.Explicit)
+	if function.Body == nil {
+		t.Fatalf("Expected Body, got nothing")
+	}
+}
+
+func TestParseFunctionExpressionWithOneParam(t *testing.T) {
+	parser := MakeParser(strings.NewReader("(n number) => {}"))
+	node := parser.parseFunctionExpression(nil)
+	testParserErrors(t, parser, 0)
+
+	function, ok := node.(*FunctionExpression)
+	if !ok {
+		t.Fatalf("Expected FunctionExpression, got %#v", node)
+	}
+
+	params := function.Params.Expr.(*TupleExpression).Elements
+	if len(params) != 1 {
+		t.Fatalf("Expected 1 param, got %#v", function.Params.Expr)
 	}
 	if function.Body == nil {
 		t.Fatalf("Expected Body, got nothing")
 	}
 }
 
-func TestFunctionExpressionWithArgs(t *testing.T) {
-	parser := MakeParser(strings.NewReader("(n number) => number { n }"))
+func TestParseFunctionExpressionWithSeveralParams(t *testing.T) {
+	parser := MakeParser(strings.NewReader("(a number, b number) => {}"))
+	node := parser.parseFunctionExpression(nil)
+	testParserErrors(t, parser, 0)
+
+	function, ok := node.(*FunctionExpression)
+	if !ok {
+		t.Fatalf("Expected FunctionExpression, got %#v", node)
+	}
+
+	params := function.Params.Expr.(*TupleExpression).Elements
+	if len(params) != 2 {
+		t.Fatalf("Expected 2 params, got %#v", function.Params.Expr)
+	}
+	if function.Body == nil {
+		t.Fatalf("Expected Body, got nothing")
+	}
+}
+
+func TestParseFunctionExpressionWithBadParamNode(t *testing.T) {
+	parser := MakeParser(strings.NewReader("(a, b number) => {}"))
+	parser.parseFunctionExpression(nil)
+	testParserErrors(t, parser, 1)
+}
+
+func TestParseFunctionExpressionExplicit(t *testing.T) {
+	parser := MakeParser(strings.NewReader("() => number {}"))
 	node := parser.parseFunctionExpression(nil)
 
 	function, ok := node.(*FunctionExpression)
@@ -51,9 +96,6 @@ func TestFunctionExpressionWithArgs(t *testing.T) {
 		return
 	}
 
-	if len(function.Params.Expr.(*TupleExpression).Elements) != 1 {
-		t.Fatalf("Expected 1 param, got %#v", function.Params.Expr)
-	}
 	if _, ok := function.Explicit.(*Literal); !ok {
 		t.Fatalf("Expected literal, got %#v", function.Explicit)
 	}
@@ -62,7 +104,7 @@ func TestFunctionExpressionWithArgs(t *testing.T) {
 	}
 }
 
-func TestFunctionWithTypeArgs(t *testing.T) {
+func TestParseFunctionWithTypeArgs(t *testing.T) {
 	parser := MakeParser(strings.NewReader("[Type]() => {}"))
 	node := parser.parseExpression()
 
