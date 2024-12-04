@@ -32,13 +32,6 @@ func (b *Block) typeCheck(p *Parser) {
 }
 
 func (b *Block) Loc() Loc { return b.loc }
-func (b *Block) reportLoc() Loc {
-	if len(b.Statements) > 0 {
-		return b.Statements[len(b.Statements)-1].Loc()
-	} else {
-		return b.loc
-	}
-}
 func (b *Block) reportedNode() Node {
 	if len(b.Statements) > 0 {
 		return b.Statements[len(b.Statements)-1]

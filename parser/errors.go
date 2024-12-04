@@ -50,7 +50,7 @@ const (
 	ValueExpected
 	BooleanExpected
 	TypeOrBoolExpected
-	NumberExpected
+	NumberExpected // [got]
 	IndexExpected
 	ConcatenableExpected
 	IterableExpected

@@ -10,6 +10,15 @@ func (a *Assignment) typeCheck(p *Parser) {
 	switch a.Operator.Kind() {
 	case Assign:
 		typeCheckAssignment(p, a)
+	case AddAssign,
+		SubAssign,
+		MulAssign,
+		DivAssign,
+		ModAssign,
+		ConcatAssign,
+		LogicalAndAssign,
+		LogicalOrAssign:
+		typeCheckOtherAssignment(p, a)
 	case Declare:
 		typeCheckDeclaration(p, a)
 	case Define:
@@ -170,6 +179,47 @@ func typeCheckAssignment(p *Parser, a *Assignment) {
 		}
 	default:
 		p.error(a.Pattern, InvalidPattern)
+	}
+}
+
+func typeCheckOtherAssignment(p *Parser, a *Assignment) {
+	outer := p.writing
+	p.writing = a
+	a.Pattern.typeCheck(p)
+	p.writing = outer
+	a.Value.typeCheck(p)
+
+	left := a.Pattern.Type()
+
+	switch a.Operator.Kind() {
+	case AddAssign, SubAssign, MulAssign, DivAssign, ModAssign:
+		if !(Number{}).Extends(left) {
+			p.error(a.Pattern, NumberExpected, left)
+		}
+		if !(Number{}).Extends(a.Value.Type()) {
+			p.error(a.Pattern, NumberExpected, left)
+		}
+	case ConcatAssign:
+		init := a.Value.Type()
+		var err bool
+		if !(String{}).Extends(left) && !(List{Unknown{}}).Extends(left) {
+			p.error(a.Pattern, ConcatenableExpected, left)
+			err = true
+		}
+		if !(String{}).Extends(init) && !(List{Unknown{}}).Extends(init) {
+			p.error(a.Pattern, ConcatenableExpected, init)
+			err = true
+		}
+		if !err && !left.Extends(init) {
+			p.error(a, CannotAssignType, left, init)
+		}
+	case LogicalAndAssign, LogicalOrAssign:
+		if !(Boolean{}).Extends(left) {
+			p.error(a.Pattern, BooleanExpected, left)
+		}
+		if !(Boolean{}).Extends(a.Value.Type()) {
+			p.error(a.Pattern, BooleanExpected, left)
+		}
 	}
 }
 

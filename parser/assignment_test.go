@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestAssignment(t *testing.T) {
+func TestParseAssignment(t *testing.T) {
 	parser := MakeParser(strings.NewReader("n = 42"))
 	node := parser.parseAssignment()
 
@@ -51,6 +51,99 @@ func TestCheckAssignmentToIdentifierBadType(t *testing.T) {
 	if len(parser.errors) != 1 {
 		t.Fatalf("Expected 1 error, got %#v", parser.errors)
 	}
+}
+
+func TestCheckArithmeticAssigns(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("value", Loc{}, Number{})
+	assignment := &Assignment{
+		Pattern:  &Identifier{Token: literal{kind: Name, value: "value"}},
+		Value:    &Literal{literal{kind: NumberLiteral, value: "42"}},
+		Operator: token{kind: AddAssign},
+	}
+	assignment.typeCheck(parser)
+
+	assignment.Operator = token{kind: SubAssign}
+	assignment.typeCheck(parser)
+
+	assignment.Operator = token{kind: MulAssign}
+	assignment.typeCheck(parser)
+
+	assignment.Operator = token{kind: DivAssign}
+	assignment.typeCheck(parser)
+
+	assignment.Operator = token{kind: ModAssign}
+	assignment.typeCheck(parser)
+
+	testParserErrors(t, parser, 0)
+}
+
+func TestCheckArithmeticBadAssign(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("value", Loc{}, String{})
+	assignment := &Assignment{
+		Pattern:  &Identifier{Token: literal{kind: Name, value: "value"}},
+		Value:    &Literal{literal{kind: NumberLiteral, value: "42"}},
+		Operator: token{kind: AddAssign},
+	}
+	assignment.typeCheck(parser)
+
+	testParserErrors(t, parser, 1)
+}
+
+func TestCheckConcatAssign(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("value", Loc{}, String{})
+	assignment := &Assignment{
+		Pattern:  &Identifier{Token: literal{kind: Name, value: "value"}},
+		Value:    &Literal{literal{kind: StringLiteral, value: "\"\""}},
+		Operator: token{kind: ConcatAssign},
+	}
+	assignment.typeCheck(parser)
+
+	testParserErrors(t, parser, 0)
+}
+
+func TestCheckConcatBadAssign(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("value", Loc{}, Number{})
+	assignment := &Assignment{
+		Pattern:  &Identifier{Token: literal{kind: Name, value: "value"}},
+		Value:    &Literal{literal{kind: StringLiteral, value: "\"\""}},
+		Operator: token{kind: ConcatAssign},
+	}
+	assignment.typeCheck(parser)
+
+	testParserErrors(t, parser, 1)
+}
+
+func TestCheckLogicalAssign(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("value", Loc{}, Boolean{})
+	assignment := &Assignment{
+		Pattern:  &Identifier{Token: literal{kind: Name, value: "value"}},
+		Value:    &Literal{literal{kind: BooleanLiteral, value: "true"}},
+		Operator: token{kind: LogicalAndAssign},
+	}
+	assignment.typeCheck(parser)
+
+	assignment.Operator = token{kind: LogicalOrAssign}
+	assignment.typeCheck(parser)
+
+	testParserErrors(t, parser, 0)
+}
+
+func TestCheckLogicalBadAssign(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("value", Loc{}, Number{})
+	assignment := &Assignment{
+		Pattern:  &Identifier{Token: literal{kind: Name, value: "value"}},
+		Value:    &Literal{literal{kind: BooleanLiteral, value: "true"}},
+		Operator: token{kind: LogicalAndAssign},
+	}
+	assignment.typeCheck(parser)
+
+	testParserErrors(t, parser, 1)
 }
 
 func TestTupleAssignment(t *testing.T) {
