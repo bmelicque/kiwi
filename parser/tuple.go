@@ -33,6 +33,9 @@ func (t *TupleExpression) typeCheck(p *Parser) {
 }
 
 func (t *TupleExpression) Loc() Loc {
+	if len(t.Elements) == 0 {
+		return Loc{}
+	}
 	return Loc{
 		Start: t.Elements[0].Loc().Start,
 		End:   t.Elements[len(t.Elements)-1].Loc().End,

@@ -27,9 +27,7 @@ func (c *CallExpression) Type() ExpressionType { return c.typing }
 // It can be either a function call or an instanciation.
 func parseCallExpression(p *Parser, callee Expression) *CallExpression {
 	args := p.parseParenthesizedExpression()
-	if args.Expr != nil {
-		args.Expr = makeTuple(args.Expr)
-	}
+	args.Expr = makeTuple(args.Expr)
 	return &CallExpression{callee, args, nil}
 }
 
