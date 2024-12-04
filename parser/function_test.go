@@ -90,6 +90,16 @@ func TestParseFunctionExpressionWithBadParamNode(t *testing.T) {
 	testParserErrors(t, parser, 1)
 }
 
+func TestParseFunctionExpressionMissingBody(t *testing.T) {
+	parser := MakeParser(strings.NewReader("() =>"))
+	expr := parser.parseFunctionExpression(nil)
+	testParserErrors(t, parser, 1)
+	loc := Loc{Position{1, 1}, Position{1, 6}}
+	if expr.Loc() != loc {
+		t.Fatalf("Expected loc %v, got %v", loc, expr.Loc())
+	}
+}
+
 func TestParseFunctionExpressionExplicit(t *testing.T) {
 	parser := MakeParser(strings.NewReader("() => number {}"))
 	node := parser.parseFunctionExpression(nil)

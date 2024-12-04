@@ -3,7 +3,8 @@ package parser
 type FunctionExpression struct {
 	TypeParams *BracketedExpression     // contains *TupleExpression of *Param
 	Params     *ParenthesizedExpression // contains *TupleExpression
-	Explicit   Expression               // Explicit return type (if any)
+	Array      Token
+	Explicit   Expression // Explicit return type (if any)
 	Body       *Block
 	returnType ExpressionType
 	canBeAsync bool
@@ -25,10 +26,12 @@ func (f *FunctionExpression) Loc() Loc {
 	if f.TypeParams != nil {
 		loc.Start = f.TypeParams.loc.Start
 	}
-	if f.Body == nil {
+	if f.Body != nil {
+		loc.End = f.Body.Loc().End
+	} else if f.Explicit != nil {
 		loc.End = f.Explicit.Loc().End
 	} else {
-		loc.End = f.Body.Loc().End
+		loc.End = f.Array.Loc().End
 	}
 	return loc
 }
@@ -166,22 +169,23 @@ func (p *Parser) parseFunctionExpression(typeParams *BracketedExpression) Expres
 			Expr:       expr,
 		}
 	case FatArrow:
-		p.Consume() // =>
+		arrow := p.Consume() // =>
 		if paren != nil {
 			paren.Expr = makeTuple(paren.Expr)
 			validateFunctionParams(p, paren)
 		}
-		var explicit Expression
-		if p.Peek().Kind() != LeftBrace {
-			old := p.allowBraceParsing
-			p.allowBraceParsing = false
-			explicit = p.parseRange()
-			p.allowBraceParsing = old
-		}
+		outerBrace := p.allowBraceParsing
+		outerEmpty := p.allowEmptyExpr
+		p.allowBraceParsing = false
+		p.allowEmptyExpr = true
+		explicit := p.parseRange()
+		p.allowBraceParsing = outerBrace
+		p.allowEmptyExpr = outerEmpty
 		body := p.parseBlock()
 		return &FunctionExpression{
 			TypeParams: typeParams,
 			Params:     paren,
+			Array:      arrow,
 			Explicit:   explicit,
 			Body:       body,
 			returnType: nil,
