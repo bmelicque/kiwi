@@ -194,15 +194,16 @@ func (e *Emitter) emitMethodDeclaration(a *parser.Assignment) {
 	e.write("(")
 	params := init.Params.Expr.(*parser.TupleExpression).Elements
 	max := len(params)
-	for i := range params[:max] {
-		param := params[i].(*parser.Param)
-		e.emit(param.Identifier)
-		e.write(", ")
+	if max > 0 {
+		for i := range params[:max] {
+			param := params[i].(*parser.Param)
+			e.emit(param.Identifier)
+			e.write(", ")
+		}
+		e.emit(params[max].(*parser.Param).Identifier)
 	}
-	e.emit(params[max].(*parser.Param).Identifier)
 	e.write(") ")
-	e.emitBlockStatement(init.Body)
-	e.write("\n")
+	e.emitFunctionBody(init.Body, init.Params.Expr.(*parser.TupleExpression))
 }
 
 func isTypePattern(expr parser.Expression) bool {

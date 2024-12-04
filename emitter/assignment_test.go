@@ -76,3 +76,12 @@ func TestGenericObjectDefintion(t *testing.T) {
 	expected += "}\n"
 	testEmitter(t, source, expected, 0)
 }
+
+func TestMethodDefinition(t *testing.T) {
+	source := "User :: { name string }\n"
+	source += "(u User).getName :: () => { u.name }"
+	expected := "User.prototype.getName = function () {\n"
+	expected += "    return this.name;\n"
+	expected += "}\n"
+	testEmitter(t, source, expected, 1)
+}
