@@ -141,6 +141,21 @@ func TestParseFunctionWithTypeParams(t *testing.T) {
 // TEST TYPE-CHECK FUNCTION EXPRESSIONS
 // ------------------------------------
 
+func TestCheckFunctionExpressionNoParams(t *testing.T) {
+	parser := MakeParser(nil)
+	expr := &FunctionExpression{
+		Params: &ParenthesizedExpression{Expr: &TupleExpression{Elements: []Expression{}}},
+		Body:   &Block{Statements: []Node{}},
+	}
+	expr.typeCheck(parser)
+	testParserErrors(t, parser, 0)
+
+	params := expr.Type().(Function).Params.Elements
+	if len(params) != 0 {
+		t.Fatalf("Expected no params, found %#v", params)
+	}
+}
+
 func TestCheckFunctionExpressionParams(t *testing.T) {
 	parser := MakeParser(nil)
 	expr := &FunctionExpression{

@@ -509,7 +509,11 @@ func TestCheckGenericTypeDefinition(t *testing.T) {
 	}
 }
 
-func TestMethodDeclaration(t *testing.T) {
+// -----------------------
+// TEST METHOD DEFINITIONS
+// -----------------------
+
+func TestParseMethodDeclaration(t *testing.T) {
 	str := "(t Type).method :: () => { t }"
 	parser := MakeParser(strings.NewReader(str))
 	node := parser.parseAssignment()
@@ -552,9 +556,7 @@ func TestCheckMethodDeclaration(t *testing.T) {
 	}
 	node.typeCheck(parser)
 
-	if len(parser.errors) > 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
-	}
+	testParserErrors(t, parser, 0)
 
 	v, _ := parser.scope.Find("Type")
 	alias := v.Typing.(Type).Value.(TypeAlias)
@@ -562,5 +564,8 @@ func TestCheckMethodDeclaration(t *testing.T) {
 	if !ok {
 		t.Fatal("Expected method to have been declared")
 	}
-	_ = method
+	params := method.(Function).Params.Elements
+	if len(params) != 0 {
+		t.Fatalf("Expected no params for method, found %#v", params)
+	}
 }

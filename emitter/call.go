@@ -12,6 +12,9 @@ func (e *Emitter) emitCallExpression(expr *parser.CallExpression, await bool) {
 
 	args := expr.Args.Expr.(*parser.TupleExpression).Elements
 	max := len(args) - 1
+	if max == -1 {
+		return
+	}
 	for i := range args[:max] {
 		e.emit(args[i])
 		e.write(", ")
