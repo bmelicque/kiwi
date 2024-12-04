@@ -216,17 +216,17 @@ func validateFunctionParam(p *Parser, expr Expression) {
 // Type check all possible return points against the explicit return type.
 // Also check possible failure points.
 func typeCheckExplicitReturn(p *Parser, f *FunctionExpression) {
-	explicit := f.Explicit.Type()
-	if t, ok := explicit.(Type); ok {
-		explicit = t.Value
-	} else {
-		explicit = Unknown{}
+	t, ok := f.Explicit.Type().(Type)
+	if !ok {
+		p.error(f.Explicit, TypeExpected)
+		f.returnType = Unknown{}
+		return
 	}
-	f.returnType = explicit
+	f.returnType = t.Value
 
-	typeCheckHappyReturn(p, f.Body, explicit)
+	typeCheckHappyReturn(p, f.Body, f.returnType)
 
-	err := getErrorType(explicit)
+	err := getErrorType(f.returnType)
 	tries := findTryExpressions(f.Body)
 	for _, t := range tries {
 		if !err.Extends(getErrorType(t.Operand.Type())) {
