@@ -47,7 +47,10 @@ func (p *Parser) parseRange() Expression {
 
 	var left Expression
 	if token.Kind() != InclusiveRange && token.Kind() != ExclusiveRange {
-		left = p.parseBinaryExpression()
+		left = p.parseTupleExpression()
+	}
+	if t, ok := left.(*TupleExpression); ok {
+		return t
 	}
 
 	token = p.Peek()

@@ -163,7 +163,7 @@ func (p *Parser) parseFunctionExpression(typeParams *BracketedExpression) Expres
 		}
 		old := p.allowBraceParsing
 		p.allowBraceParsing = false
-		expr := p.parseRange()
+		expr := p.parseBinaryExpression()
 		p.allowBraceParsing = old
 		return &FunctionTypeExpression{
 			TypeParams: typeParams,
@@ -180,7 +180,7 @@ func (p *Parser) parseFunctionExpression(typeParams *BracketedExpression) Expres
 		outerEmpty := p.allowEmptyExpr
 		p.allowBraceParsing = false
 		p.allowEmptyExpr = true
-		explicit := p.parseRange()
+		explicit := p.parseBinaryExpression()
 		p.allowBraceParsing = outerBrace
 		p.allowEmptyExpr = outerEmpty
 		body := p.parseBlock()

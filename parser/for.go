@@ -112,7 +112,7 @@ func parseInExpression(p *Parser) Expression {
 	if expr == nil {
 		p.error(&Literal{operator}, ExpressionExpected)
 	}
-	right := p.parseExpression()
+	right := p.parseRange()
 	in := &BinaryExpression{
 		Left:     expr,
 		Right:    right,

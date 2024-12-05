@@ -12,8 +12,7 @@ type EmitterFlag int
 
 const (
 	NoFlags   EmitterFlag = 0
-	RangeFlag EmitterFlag = 1 << iota
-	SliceFlag
+	SliceFlag EmitterFlag = 1 << iota
 	SumFlag
 )
 
@@ -119,8 +118,6 @@ func (e *Emitter) emitExpression(expr parser.Expression) {
 		e.write(")")
 	case *parser.PropertyAccessExpression:
 		e.emitPropertyAccessExpression(expr)
-	case *parser.RangeExpression:
-		e.emitRangeExpression(expr)
 	case *parser.TupleExpression:
 		e.emitTupleExpression(expr)
 	case *parser.UnaryExpression:
@@ -134,9 +131,6 @@ func EmitProgram(nodes []parser.Node) string {
 		e.emit(node)
 	}
 	e.write("\n")
-	if e.hasFlag(RangeFlag) {
-		e.write("function* __range(start, end) {\n    while (start < end) yield start++;\n}\n")
-	}
 	if e.hasFlag(SliceFlag) {
 		e.emitSliceConstructor()
 	}

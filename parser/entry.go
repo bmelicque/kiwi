@@ -81,7 +81,7 @@ func (p *Param) Type() ExpressionType {
 }
 
 func (p *Parser) parseTaggedExpression() Expression {
-	expr := p.parseRange()
+	expr := p.parseBinaryExpression()
 	if p.Peek().Kind() == Colon {
 		return parseEntry(p, expr)
 	}
@@ -102,7 +102,7 @@ func parseEntry(p *Parser, expr Expression) Expression {
 		p.error(expr, FieldKeyExpected)
 		expr = nil
 	}
-	complement := p.parseRange()
+	complement := p.parseBinaryExpression()
 	return &Entry{
 		Key:   expr,
 		Value: complement,
@@ -112,7 +112,7 @@ func parseEntry(p *Parser, expr Expression) Expression {
 func parseParam(p *Parser, identifier *Identifier) Expression {
 	outer := p.allowEmptyExpr
 	p.allowEmptyExpr = true
-	expr := p.parseRange()
+	expr := p.parseBinaryExpression()
 	p.allowEmptyExpr = outer
 	if expr == nil {
 		return identifier
