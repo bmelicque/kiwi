@@ -6,6 +6,15 @@ import (
 	"github.com/bmelicque/test-parser/parser"
 )
 
+func TestAssignmentShorthand(t *testing.T) {
+	source := "n := 42\n"
+	source += "n += 1\n"
+
+	expected := "n += 1;\n"
+
+	testEmitter(t, source, expected, 1)
+}
+
 func TestMapAssignment(t *testing.T) {
 	emitter := makeEmitter()
 	// map[key] = value
@@ -42,7 +51,7 @@ func TestSliceDerefAssignment(t *testing.T) {
 	source += "slice := &array\n"
 	source += "array = *slice"
 
-	expected := "array = slice.clone();"
+	expected := "array = slice.clone();\n"
 
 	testEmitter(t, source, expected, 2)
 }

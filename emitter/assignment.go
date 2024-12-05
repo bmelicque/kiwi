@@ -28,15 +28,34 @@ func needsCopy(expr parser.Expression) bool {
 	return false
 }
 
-func emitAssign(e *Emitter, pattern parser.Expression, value parser.Expression) {
-	e.emit(pattern)
-	e.write(" = ")
-	if needsCopy(value) {
+func emitAssign(e *Emitter, a *parser.Assignment) {
+	e.emit(a.Pattern)
+
+	switch a.Operator.Kind() {
+	case parser.Assign, parser.Declare:
+		e.write(" = ")
+	case parser.AddAssign, parser.ConcatAssign:
+		e.write(" += ")
+	case parser.SubAssign:
+		e.write(" -= ")
+	case parser.MulAssign:
+		e.write(" *= ")
+	case parser.DivAssign:
+		e.write(" /= ")
+	case parser.ModAssign:
+		e.write(" %= ")
+	case parser.LogicalAndAssign:
+		e.write(" &&= ")
+	case parser.LogicalOrAssign:
+		e.write(" ||= ")
+	}
+
+	if needsCopy(a.Value) {
 		e.write("structuredClone(")
-		e.emit(value)
+		e.emit(a.Value)
 		e.write(")")
 	} else {
-		e.emit(value)
+		e.emit(a.Value)
 	}
 	e.write(";\n")
 }
@@ -46,11 +65,20 @@ func (e *Emitter) emitAssignment(a *parser.Assignment) {
 		if isMapElementAccess(a.Pattern) || isSliceElement(a.Pattern) {
 			emitSetElement(e, a)
 		} else {
-			emitAssign(e, a.Pattern, a.Value)
+			emitAssign(e, a)
 		}
+	case parser.AddAssign,
+		parser.ConcatAssign,
+		parser.SubAssign,
+		parser.MulAssign,
+		parser.DivAssign,
+		parser.ModAssign,
+		parser.LogicalAndAssign,
+		parser.LogicalOrAssign:
+		emitAssign(e, a)
 	case parser.Declare:
 		e.write("let ")
-		emitAssign(e, a.Pattern, a.Value)
+		emitAssign(e, a)
 	case parser.Define:
 		if isTypePattern(a.Pattern) {
 			e.emitTypeDeclaration(a)
