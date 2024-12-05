@@ -56,9 +56,7 @@ func (p *Parser) parseAssignment() Node {
 	var operator Token
 	next := p.Peek()
 	switch next.Kind() {
-	case Declare,
-		Define,
-		Assign,
+	case Assign,
 		AddAssign,
 		ConcatAssign,
 		SubAssign,
@@ -67,6 +65,12 @@ func (p *Parser) parseAssignment() Node {
 		ModAssign,
 		LogicalAndAssign,
 		LogicalOrAssign:
+		if !isValidAssignee(expr) {
+			p.error(expr, InvalidPattern)
+			expr = nil
+		}
+		operator = p.Consume()
+	case Declare, Define:
 		operator = p.Consume()
 	default:
 		return expr
@@ -83,6 +87,38 @@ func (p *Parser) parseAssignment() Node {
 		init = b
 	}
 	return &Assignment{expr, init, operator}
+}
+
+func isValidAssignee(expr Expression) bool {
+	valid := true
+	Walk(expr, func(n Node, skip func()) {
+		switch n := n.(type) {
+		case *ComputedAccessExpression:
+			// this is valid but we need to skip brackets,
+			// which are otherwise invalid
+			valid = isValidAssignee(n.Expr)
+			skip()
+		case *BinaryExpression,
+			*Block,
+			*BracketedExpression,
+			*CallExpression,
+			*CatchExpression,
+			*Entry,
+			*ForExpression,
+			*FunctionExpression,
+			*FunctionTypeExpression,
+			*IfExpression,
+			*InstanceExpression,
+			*MatchExpression,
+			*Param,
+			*RangeExpression,
+			*SumType,
+			*UnaryExpression:
+			valid = false
+			skip()
+		}
+	})
+	return valid
 }
 
 func validateObject(p *Parser, b *Block) {

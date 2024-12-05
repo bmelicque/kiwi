@@ -8,10 +8,11 @@ import (
 func TestParseAssignment(t *testing.T) {
 	parser := MakeParser(strings.NewReader("n = 42"))
 	node := parser.parseAssignment()
-
-	if len(parser.errors) != 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	loc := Loc{Position{1, 1}, Position{1, 7}}
+	if node.Loc() != loc {
+		t.Fatalf("Expected loc %v, got %v", node.Loc(), loc)
 	}
+	testParserErrors(t, parser, 0)
 
 	expr, ok := node.(*Assignment)
 	if !ok {
@@ -23,6 +24,28 @@ func TestParseAssignment(t *testing.T) {
 	if _, ok := expr.Value.(*Literal); !ok {
 		t.Fatalf("Expected literal 42")
 	}
+}
+
+func TestParseAssignmentToField(t *testing.T) {
+	parser := MakeParser(strings.NewReader("object.key = 42"))
+	parser.parseAssignment()
+	testParserErrors(t, parser, 0)
+}
+
+func TestParseAssignmentBadAssignee(t *testing.T) {
+	var parser *Parser
+
+	parser = MakeParser(strings.NewReader("f() = 42"))
+	parser.parseAssignment()
+	testParserErrors(t, parser, 1)
+
+	parser = MakeParser(strings.NewReader("T{} = 42"))
+	parser.parseAssignment()
+	testParserErrors(t, parser, 1)
+
+	parser = MakeParser(strings.NewReader("a + b = 42"))
+	parser.parseAssignment()
+	testParserErrors(t, parser, 1)
 }
 
 func TestParseAssignmentShorthand(t *testing.T) {
