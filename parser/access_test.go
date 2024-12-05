@@ -72,20 +72,6 @@ func TestMethodAccess(t *testing.T) {
 	}
 }
 
-func TestTraitDefinition(t *testing.T) {
-	parser := MakeParser(strings.NewReader("(Self).(method() -> Self)"))
-	node := parser.parseAccessExpression()
-
-	if len(parser.errors) > 0 {
-		t.Fatalf("Got %v parsing errors: %#v", len(parser.errors), parser.errors)
-	}
-
-	_, ok := node.(*TraitExpression)
-	if !ok {
-		t.Fatalf("Expected PropertyAccessExpression, got %#v", node)
-	}
-}
-
 func TestFunctionCall(t *testing.T) {
 	parser := MakeParser(strings.NewReader("f(42)"))
 	node := parser.parseAccessExpression()

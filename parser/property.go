@@ -42,7 +42,7 @@ func (expr *PropertyAccessExpression) typeCheck(p *Parser) {
 func parsePropertyAccess(p *Parser, left Expression) Expression {
 	p.Consume() // .
 	if _, ok := left.(*ParenthesizedExpression); ok {
-		if p.Peek().Kind() == LeftParenthesis {
+		if p.Peek().Kind() == LeftBrace {
 			return parseTraitExpression(p, left)
 		}
 	}
@@ -156,7 +156,7 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 
 type TraitExpression struct {
 	Receiver *ParenthesizedExpression // Receiver.Expr is an Identifier
-	Def      *ParenthesizedExpression // contains *TupleExpression
+	Def      *BracedExpression        // contains *TupleExpression
 }
 
 func (t *TraitExpression) getChildren() []Node {
@@ -209,15 +209,25 @@ func (t *TraitExpression) typeCheck(p *Parser) {
 func parseTraitExpression(p *Parser, left Expression) Expression {
 	outer := p.allowCallExpr
 	p.allowCallExpr = false
-	paren := p.parseParenthesizedExpression()
+	block := p.parseBlock()
 	p.allowCallExpr = outer
 
-	if paren != nil {
-		paren.Expr = makeTuple(paren.Expr)
-		validateFunctionParams(p, paren)
-	}
+	braced := getValidatedTraitMethods(p, block)
 	return &TraitExpression{
 		Receiver: left.(*ParenthesizedExpression),
-		Def:      paren,
+		Def:      braced,
 	}
+}
+
+func getValidatedTraitMethods(p *Parser, b *Block) *BracedExpression {
+	tuple := &TupleExpression{Elements: make([]Expression, len(b.Statements))}
+	for i, s := range b.Statements {
+		param, ok := s.(*Param)
+		if !ok {
+			p.error(s, ParameterExpected)
+		}
+		tuple.Elements[i] = param
+	}
+	tuple.reportDuplicatedParams(p)
+	return &BracedExpression{tuple, b.loc}
 }

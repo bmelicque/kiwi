@@ -5,6 +5,27 @@ import (
 	"testing"
 )
 
+func TestParseTraitExpression(t *testing.T) {
+	source := "(self Type).{\n"
+	source += "    methodA() -> number\n"
+	source += "    methodB() -> number\n"
+	source += "}\n"
+	parser := MakeParser(strings.NewReader(source))
+	parser.parseAssignment()
+	testParserErrors(t, parser, 0)
+}
+
+func TestParseTraitExpressionDuplicates(t *testing.T) {
+	source := "(self Type).{\n"
+	source += "    method() -> number\n"
+	source += "    method() -> number\n"
+	source += "}\n"
+	parser := MakeParser(strings.NewReader(source))
+	parser.parseAssignment()
+	// 1 for each method
+	testParserErrors(t, parser, 2)
+}
+
 func TestCheckPropertyAccess(t *testing.T) {
 	parser := MakeParser(nil)
 	alias := TypeAlias{
