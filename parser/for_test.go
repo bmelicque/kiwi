@@ -90,8 +90,13 @@ func TestCheckForExpressionType(t *testing.T) {
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	// FIXME: should be an optionnal
-	if _, ok := expr.Type().(Number); !ok {
+
+	alias, ok := expr.Type().(TypeAlias)
+	if !ok || alias.Name != "?" {
+		t.Fatalf("Expected ?number, got %v", expr.Type().Text())
+	}
+
+	if _, ok := getSomeType(alias.Ref.(Sum)).(Number); !ok {
 		t.Fatalf("Expected number type, got %#v", expr.Type())
 	}
 }

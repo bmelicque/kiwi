@@ -168,7 +168,7 @@ func getLoopType(p *Parser, body *Block) ExpressionType {
 			p.error(b.Value, CannotAssignType, t, b.Value.Type())
 		}
 	}
-	return t
+	return makeOptionType(t)
 }
 
 func findBreakStatements(body *Block) []*Exit {
