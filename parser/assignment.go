@@ -98,6 +98,9 @@ func isValidAssignee(expr Expression) bool {
 			// which are otherwise invalid
 			valid = isValidAssignee(n.Expr)
 			skip()
+		case *UnaryExpression:
+			valid = n.Operator.Kind() == Mul
+			skip()
 		case *BinaryExpression,
 			*Block,
 			*BracketedExpression,
@@ -112,8 +115,7 @@ func isValidAssignee(expr Expression) bool {
 			*MatchExpression,
 			*Param,
 			*RangeExpression,
-			*SumType,
-			*UnaryExpression:
+			*SumType:
 			valid = false
 			skip()
 		}
@@ -211,7 +213,7 @@ func typeCheckAssignment(p *Parser, a *Assignment) {
 		if pattern.typing.Extends(a.Value.Type()) {
 			return
 		}
-		p.error(pattern, CannotAssignType, pattern.typing, a.Value)
+		p.error(pattern, CannotAssignType, pattern.typing, a.Value.Type())
 	case *TupleExpression:
 		for _, element := range pattern.Elements {
 			if _, ok := element.(*Identifier); !ok {
@@ -219,10 +221,28 @@ func typeCheckAssignment(p *Parser, a *Assignment) {
 			}
 		}
 		if !pattern.typing.Extends(a.Value.Type()) {
-			p.error(a.Value, CannotAssignType, pattern.typing, a.Value)
+			p.error(a.Value, CannotAssignType, pattern.typing, a.Value.Type())
 		}
+	case *UnaryExpression:
+		readDeref(p, pattern)
+		t := pattern.Operand.Type().(Ref)
+		if t.To.Extends(a.Value.Type()) {
+			return
+		}
+		p.error(pattern, CannotAssignType, t.To, a.Value.Type())
 	default:
 		p.error(a.Pattern, InvalidPattern)
+	}
+}
+
+func readDeref(p *Parser, pattern *UnaryExpression) {
+	identifier, ok := pattern.Operand.(*Identifier)
+	if !ok {
+		return
+	}
+	v, ok := p.scope.Find(identifier.Text())
+	if ok {
+		v.reads = append(v.reads, pattern.Loc())
 	}
 }
 

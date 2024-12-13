@@ -36,6 +36,16 @@ func TestMapAssignment(t *testing.T) {
 	}
 }
 
+func TestInderectAssignment(t *testing.T) {
+	source := "i := 0\n"
+	source += "ref := &i\n"
+	source += "*ref = 42"
+
+	expected := "ref(42)"
+
+	testEmitter(t, source, expected, 2)
+}
+
 func TestSliceAssignment(t *testing.T) {
 	source := "array := []number{}\n"
 	source += "slice := &array\n"

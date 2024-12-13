@@ -64,6 +64,12 @@ func (e *Emitter) emitAssignment(a *parser.Assignment) {
 	case parser.Assign:
 		if isMapElementAccess(a.Pattern) || isSliceElement(a.Pattern) {
 			emitSetElement(e, a)
+		} else if u, ok := a.Pattern.(*parser.UnaryExpression); ok {
+			// deref
+			e.emitExpression(u.Operand)
+			e.write("(")
+			e.emitExpression(a.Value)
+			e.write(")")
 		} else {
 			emitAssign(e, a)
 		}

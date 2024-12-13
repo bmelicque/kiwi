@@ -63,6 +63,9 @@ func isReferencable(expr Expression) bool {
 		switch e := expr.(type) {
 		case *Identifier:
 			return true
+		case *Literal:
+			_, ok := e.Type().(Type)
+			return ok
 		case *InstanceExpression:
 			expr = e.Typing
 		case *PropertyAccessExpression:
