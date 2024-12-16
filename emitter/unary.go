@@ -31,11 +31,37 @@ func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
 }
 
 func (e *Emitter) emitReference(expr parser.Expression) {
-	e.write("function (_) { return arguments.length ? void (")
+	switch expr.(type) {
+	case *parser.PropertyAccessExpression, *parser.ComputedAccessExpression:
+		e.emitObjectReference(expr)
+	default:
+		e.emitPrimitiveReference(expr)
+	}
+}
+
+func (e *Emitter) emitPrimitiveReference(expr parser.Expression) {
+	e.write("(a,p)=>(a&4?__s:a&2?\"")
 	e.emit(expr)
-	e.write(" = _) : ")
+	e.write("\":a?")
 	e.emit(expr)
-	e.write(" }")
+	e.write(":void (")
+	e.emit(expr)
+	e.write("=p))")
+}
+func (e *Emitter) emitObjectReference(expr parser.Expression) {
+	e.write("((o,k)=>(a,p)=>(a&4?o:a&2?k:a?o[k]:void (o[k]=p)))(")
+	switch expr := expr.(type) {
+	case *parser.PropertyAccessExpression:
+		e.emit(expr.Expr)
+		e.write(",\"")
+		e.emit(expr.Property)
+		e.write("\")")
+	case *parser.ComputedAccessExpression:
+		e.emit(expr.Expr)
+		e.write(",")
+		e.emit(expr.Property)
+		e.write(")")
+	}
 }
 
 func (e *Emitter) emitSlice(expr parser.Expression) {

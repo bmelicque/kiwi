@@ -3,6 +3,12 @@ package emitter
 import "github.com/bmelicque/test-parser/parser"
 
 func (e *Emitter) emitBinaryExpression(expr *parser.BinaryExpression) {
+	if expr.Operator.Kind() == parser.Equal {
+		if e.emitComparison(expr) {
+			return
+		}
+	}
+
 	precedence := Precedence(expr)
 	if expr.Left != nil {
 		left := Precedence(expr.Left)
@@ -29,4 +35,17 @@ func (e *Emitter) emitBinaryExpression(expr *parser.BinaryExpression) {
 			e.write(")")
 		}
 	}
+}
+
+func (e *Emitter) emitComparison(expr *parser.BinaryExpression) bool {
+	if _, ok := expr.Left.Type().(parser.Ref); ok {
+		e.addFlag(RefComparisonFlag)
+		e.write("__refEquals(")
+		e.emitExpression(expr.Left)
+		e.write(", ")
+		e.emitExpression(expr.Right)
+		e.write(")")
+		return true
+	}
+	return false
 }
