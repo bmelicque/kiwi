@@ -8,7 +8,7 @@ func TestEmitReference(t *testing.T) {
 	source := "value := 0\n"
 	source += "&value"
 
-	expected := "function (_) { return arguments.length ? void (value = _) : value }"
+	expected := "(a,p)=>(a&4?__s:a&2?\"value\":a?value:void (value=p))"
 
 	testEmitter(t, source, expected, 1)
 }
