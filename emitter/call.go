@@ -6,7 +6,7 @@ func (e *Emitter) emitCallExpression(expr *parser.CallExpression, await bool) {
 	if expr.Callee.Type().(parser.Function).Async && await {
 		e.write("await ")
 	}
-	e.emit(expr.Callee)
+	e.emitExpression(expr.Callee)
 	e.write("(")
 	defer e.write(")")
 
@@ -16,8 +16,8 @@ func (e *Emitter) emitCallExpression(expr *parser.CallExpression, await bool) {
 		return
 	}
 	for i := range args[:max] {
-		e.emit(args[i])
+		e.emitExpression(args[i])
 		e.write(", ")
 	}
-	e.emit(args[max])
+	e.emitExpression(args[max])
 }

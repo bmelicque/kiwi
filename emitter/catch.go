@@ -7,10 +7,9 @@ func (e *Emitter) emitCatchStatement(c *parser.CatchExpression) {
 	e.depth++
 	e.indent()
 	e.emit(c.Left)
-	e.write(";\n")
 	e.depth--
 	e.write("} catch (")
-	e.emit(c.Identifier)
+	e.emitExpression(c.Identifier)
 	e.write(") ")
 	e.emitBlockStatement(c.Body)
 }

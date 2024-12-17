@@ -15,7 +15,7 @@ func (e *Emitter) emitBinaryExpression(expr *parser.BinaryExpression) {
 		if left < precedence {
 			e.write("(")
 		}
-		e.emit(expr.Left)
+		e.emitExpression(expr.Left)
 		if left < precedence {
 			e.write(")")
 		}
@@ -30,7 +30,7 @@ func (e *Emitter) emitBinaryExpression(expr *parser.BinaryExpression) {
 		if right < precedence {
 			e.write("(")
 		}
-		e.emit(expr.Right)
+		e.emitExpression(expr.Right)
 		if right < precedence {
 			e.write(")")
 		}

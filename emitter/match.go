@@ -8,7 +8,7 @@ import (
 
 func (e *Emitter) emitMatchStatement(m parser.MatchExpression) {
 	e.write("const _m = ")
-	e.emit(m.Value)
+	e.emitExpression(m.Value)
 	e.write(";\n")
 	if _, ok := m.Value.Type().(parser.Sum); ok {
 		e.write("switch (_m._tag) {\n")
@@ -21,11 +21,11 @@ func (e *Emitter) emitMatchStatement(m parser.MatchExpression) {
 			e.write("default:")
 		} else if call, ok := c.Pattern.(*parser.CallExpression); ok {
 			e.write("case ")
-			e.emit(call.Callee)
+			e.emitExpression(call.Callee)
 			e.write(": {\n")
 		} else if id, ok := c.Pattern.(*parser.Identifier); ok {
 			e.write("case ")
-			e.emit(id)
+			e.emitIdentifier(id)
 			e.write(": {\n")
 		}
 		e.depth++

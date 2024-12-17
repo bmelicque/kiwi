@@ -27,7 +27,7 @@ func TestEmitSliceAccess(t *testing.T) {
 	source += "slice := &array\n"
 	source += "slice[0]"
 
-	expected := "slice.get(0)"
+	expected := "slice.get(0);\n"
 
 	testEmitter(t, source, expected, 2)
 }

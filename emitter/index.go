@@ -81,6 +81,7 @@ func (e *Emitter) emit(node parser.Node) {
 		e.emitExit(node)
 	case parser.Expression:
 		e.emitExpression(node)
+		e.write(";\n")
 	default:
 		panic(fmt.Sprintf("Cannot emit type '%v' (not implemented yet)", reflect.TypeOf(node)))
 	}

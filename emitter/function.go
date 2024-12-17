@@ -37,7 +37,6 @@ func (e *Emitter) emitFunctionBody(b *parser.Block, params *parser.TupleExpressi
 	e.indent()
 	e.write("return ")
 	e.emit(b.Statements[max])
-	e.write(";\n")
 	e.depth--
 	e.indent()
 	e.write("}\n")
@@ -52,10 +51,10 @@ func (e *Emitter) emitFunctionExpression(f *parser.FunctionExpression) {
 	max := len(args) - 1
 	for i := range args[:max] {
 		param := args[i].(*parser.Param)
-		e.emit(param.Identifier)
+		e.emitIdentifier(param.Identifier)
 		e.write(", ")
 	}
-	e.emit(args[max].(*parser.Param).Identifier)
+	e.emitIdentifier(args[max].(*parser.Param).Identifier)
 	e.write(") => ")
 
 	params := f.Params.Expr.(*parser.TupleExpression)

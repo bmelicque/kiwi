@@ -77,7 +77,7 @@ func (e *Emitter) emitObjectInstance(constructor *parser.Identifier, args *parse
 	}
 
 	e.write("new ")
-	e.emit(constructor)
+	e.emitExpression(constructor)
 	e.write("(")
 	typing := constructor.Type().(parser.Type).Value.(parser.TypeAlias).Ref.(parser.Object)
 	l := len(args.Elements)
@@ -100,9 +100,9 @@ func (e *Emitter) emitObjectInstance(constructor *parser.Identifier, args *parse
 }
 func (e *Emitter) emitSumInstance(constructor *parser.PropertyAccessExpression, args *parser.TupleExpression) {
 	e.write("new ")
-	e.emit(constructor.Expr)
+	e.emitExpression(constructor.Expr)
 	e.write("(\"")
-	e.emit(constructor.Property)
+	e.emitExpression(constructor.Property)
 	e.write("\", ")
 	sum := constructor.Expr.(*parser.Identifier).Text()
 	cons := constructor.Property.(*parser.Identifier).Text()

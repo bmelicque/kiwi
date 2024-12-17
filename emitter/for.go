@@ -12,7 +12,7 @@ func (e *Emitter) emitFor(f *parser.ForExpression) {
 	binary, ok := f.Expr.(*parser.BinaryExpression)
 	if !ok || binary.Operator.Kind() != parser.InKeyword {
 		e.write("while (")
-		e.emit(f.Expr)
+		e.emitExpression(f.Expr)
 		e.write(") ")
 		e.emitBlockStatement(f.Body)
 		return

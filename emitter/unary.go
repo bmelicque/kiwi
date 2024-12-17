@@ -21,7 +21,7 @@ func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
 			e.emitReference(u.Operand)
 		}
 	case parser.Mul:
-		e.emit(u.Operand)
+		e.emitExpression(u.Operand)
 		if _, ok := u.Operand.Type().(parser.Ref).To.(parser.List); ok {
 			e.write(".clone()")
 		} else {
@@ -41,25 +41,25 @@ func (e *Emitter) emitReference(expr parser.Expression) {
 
 func (e *Emitter) emitPrimitiveReference(expr parser.Expression) {
 	e.write("(a,p)=>(a&4?__s:a&2?\"")
-	e.emit(expr)
+	e.emitExpression(expr)
 	e.write("\":a?")
-	e.emit(expr)
+	e.emitExpression(expr)
 	e.write(":void (")
-	e.emit(expr)
+	e.emitExpression(expr)
 	e.write("=p))")
 }
 func (e *Emitter) emitObjectReference(expr parser.Expression) {
 	e.write("((o,k)=>(a,p)=>(a&4?o:a&2?k:a?o[k]:void (o[k]=p)))(")
 	switch expr := expr.(type) {
 	case *parser.PropertyAccessExpression:
-		e.emit(expr.Expr)
+		e.emitExpression(expr.Expr)
 		e.write(",\"")
-		e.emit(expr.Property)
+		e.emitExpression(expr.Property)
 		e.write("\")")
 	case *parser.ComputedAccessExpression:
-		e.emit(expr.Expr)
+		e.emitExpression(expr.Expr)
 		e.write(",")
-		e.emit(expr.Property)
+		e.emitExpression(expr.Property)
 		e.write(")")
 	}
 }
@@ -72,17 +72,17 @@ func (e *Emitter) emitSlice(expr parser.Expression) {
 	}
 	e.addFlag(SliceFlag)
 	e.write("new __Slice(() => ")
-	e.emit(expr)
+	e.emitExpression(expr)
 	if r != nil {
 		e.write(", ")
 		if r.Left != nil {
-			e.emit(r.Left)
+			e.emitExpression(r.Left)
 		} else {
 			e.write("0")
 		}
 		if r.Right != nil {
 			e.write(", ")
-			e.emit(r.Right)
+			e.emitExpression(r.Right)
 		}
 	}
 	e.write(")")

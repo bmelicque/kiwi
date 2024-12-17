@@ -29,7 +29,7 @@ func needsCopy(expr parser.Expression) bool {
 }
 
 func emitAssign(e *Emitter, a *parser.Assignment) {
-	e.emit(a.Pattern)
+	e.emitExpression(a.Pattern)
 
 	switch a.Operator.Kind() {
 	case parser.Assign, parser.Declare:
@@ -52,10 +52,10 @@ func emitAssign(e *Emitter, a *parser.Assignment) {
 
 	if needsCopy(a.Value) {
 		e.write("structuredClone(")
-		e.emit(a.Value)
+		e.emitExpression(a.Value)
 		e.write(")")
 	} else {
-		e.emit(a.Value)
+		e.emitExpression(a.Value)
 	}
 	e.write(";\n")
 }
@@ -96,9 +96,9 @@ func (e *Emitter) emitAssignment(a *parser.Assignment) {
 		}
 
 		e.write("const ")
-		e.emit(a.Pattern)
+		e.emitExpression(a.Pattern)
 		e.write(" = ")
-		e.emit(a.Value)
+		e.emitExpression(a.Value)
 	}
 }
 
@@ -216,9 +216,9 @@ func (e *Emitter) emitMethodDeclaration(a *parser.Assignment) {
 	pattern := a.Pattern.(*parser.PropertyAccessExpression)
 	receiver := pattern.Expr.(*parser.ParenthesizedExpression).Expr.(*parser.Param)
 
-	e.emit(receiver.Complement)
+	e.emitExpression(receiver.Complement)
 	e.write(".prototype.")
-	e.emit(pattern.Property)
+	e.emitExpression(pattern.Property)
 	e.write(" = function ")
 
 	e.thisName = receiver.Identifier.Text()
@@ -231,10 +231,10 @@ func (e *Emitter) emitMethodDeclaration(a *parser.Assignment) {
 	if max > 0 {
 		for i := range params[:max] {
 			param := params[i].(*parser.Param)
-			e.emit(param.Identifier)
+			e.emitIdentifier(param.Identifier)
 			e.write(", ")
 		}
-		e.emit(params[max].(*parser.Param).Identifier)
+		e.emitIdentifier(params[max].(*parser.Param).Identifier)
 	}
 	e.write(") ")
 	e.emitFunctionBody(init.Body, init.Params.Expr.(*parser.TupleExpression))

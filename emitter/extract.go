@@ -73,12 +73,10 @@ func emitExtractedBlock(e *Emitter, b *parser.Block, id int) {
 	for _, statement := range b.Statements[:max] {
 		e.indent()
 		e.emit(statement)
-		e.write(";\n")
 	}
 	e.indent()
 	e.write(fmt.Sprintf("_tmp%v = ", id))
 	e.emit(b.Statements[max])
-	e.write(";\n")
 	e.depth--
 	e.indent()
 	e.write("}\n")
@@ -90,11 +88,11 @@ func emitExtractedCatch(e *Emitter, c *parser.CatchExpression) {
 	e.indent()
 	id := e.uninlinables[c]
 	e.write(fmt.Sprintf("_tmp%v = ", id))
-	e.emit(c.Left)
+	e.emitExpression(c.Left)
 	e.write(";\n")
 	e.depth--
 	e.write("} catch (")
-	e.emit(c.Identifier)
+	e.emitIdentifier(c.Identifier)
 	e.write(") ")
 	emitExtractedBlock(e, c.Body, id)
 }

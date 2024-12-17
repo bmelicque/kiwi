@@ -10,7 +10,7 @@ func TestObjectInstance(t *testing.T) {
 	source += "}\n"
 	source += "Boxed{ value: 42 }"
 
-	expected := "new Boxed(42)"
+	expected := "new Boxed(42);\n"
 
 	testEmitter(t, source, expected, 1)
 }
@@ -22,7 +22,7 @@ func TestObjectInstanceWithOptionals(t *testing.T) {
 	source += "}\n"
 	source += "Boxed{ value: 42 }"
 
-	expected := "new Boxed(42)"
+	expected := "new Boxed(42);\n"
 
 	testEmitter(t, source, expected, 1)
 }

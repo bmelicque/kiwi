@@ -15,7 +15,7 @@ func (e *Emitter) emitExit(r *parser.Exit) {
 	}
 	if r.Value != nil {
 		e.write(" ")
-		e.emit(r.Value)
+		e.emitExpression(r.Value)
 	}
 	e.write(";\n")
 }

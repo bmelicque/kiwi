@@ -23,7 +23,7 @@ func (e *Emitter) emitListAccess(expr *parser.ComputedAccessExpression) {
 		e.write(")")
 	default:
 		e.write("[")
-		e.emit(expr.Property.Expr)
+		e.emitExpression(expr.Property.Expr)
 		e.write("]")
 	}
 }
@@ -33,7 +33,7 @@ func (e *Emitter) emitComputedAccessExpression(expr *parser.ComputedAccessExpres
 		if left.Name == "Map" {
 			emitGetElement(e, expr)
 		} else {
-			e.emit(expr.Expr)
+			e.emitExpression(expr.Expr)
 		}
 	case parser.Ref:
 		if _, ok := left.To.(parser.List); !ok {
@@ -43,7 +43,7 @@ func (e *Emitter) emitComputedAccessExpression(expr *parser.ComputedAccessExpres
 	case parser.List:
 		e.emitListAccess(expr)
 	default:
-		e.emit(expr.Expr)
+		e.emitExpression(expr.Expr)
 	}
 }
 func emitGetElement(e *Emitter, c *parser.ComputedAccessExpression) {

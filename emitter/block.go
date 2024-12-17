@@ -21,9 +21,6 @@ func (e *Emitter) emitBlockStatement(b *parser.Block) {
 	for _, statement := range b.Statements {
 		e.indent()
 		e.emit(statement)
-		if _, ok := statement.(parser.Expression); ok {
-			e.write(";\n")
-		}
 	}
 	e.depth--
 	e.indent()
@@ -61,14 +58,14 @@ func (e *Emitter) emitBlockExpression(b *parser.Block) {
 		return
 	}
 	if len(b.Statements) == 1 {
-		e.emit(b.Statements[0])
+		e.emitExpression(b.Statements[0].(parser.Expression))
 		return
 	}
 	e.write("(\n")
 	e.depth += 1
 	for _, statement := range b.Statements {
 		e.indent()
-		e.emit(statement)
+		e.emitExpression(statement.(parser.Expression))
 		e.write(",\n")
 	}
 	e.depth -= 1

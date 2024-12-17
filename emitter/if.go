@@ -4,7 +4,8 @@ import "github.com/bmelicque/test-parser/parser"
 
 func (e *Emitter) emitIfStatement(i *parser.IfExpression) {
 	e.write("if (")
-	e.emit(i.Condition)
+	// FIXME:
+	e.emitExpression(i.Condition.(parser.Expression))
 	e.write(") ")
 	e.emitBlockStatement(i.Body)
 	if i.Alternate == nil {
@@ -20,7 +21,8 @@ func (e *Emitter) emitIfStatement(i *parser.IfExpression) {
 }
 
 func (e *Emitter) emitIfExpression(i *parser.IfExpression) {
-	e.emit(i.Condition)
+	// FIXME:
+	e.emitExpression(i.Condition.(parser.Expression))
 	e.write(" ? ")
 	e.emitBlockExpression(i.Body)
 	e.write(" : ")
