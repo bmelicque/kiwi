@@ -196,5 +196,24 @@ var std = Scope{
 		"!": {
 			Typing: Type{makeResultType(nil, nil)},
 		},
+
+		"io": {
+			Typing: TypeAlias{
+				Name: "IO",
+				Ref: Object{
+					Members: []ObjectMember{
+						{
+							Name: "log",
+							Type: Function{
+								Params: &Tuple{[]ExpressionType{
+									Unknown{},
+								}},
+								Returned: Nil{},
+							},
+						},
+					},
+				},
+			},
+		},
 	},
 }

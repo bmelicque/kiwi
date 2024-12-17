@@ -129,6 +129,8 @@ func (e *Emitter) emitExpression(expr parser.Expression) {
 
 func EmitProgram(nodes []parser.Node) string {
 	e := makeEmitter()
+	e.write("const io = { log(data) { console.log(data) } }\n")
+
 	for _, node := range nodes {
 		e.emit(node)
 	}
@@ -144,8 +146,7 @@ func EmitProgram(nodes []parser.Node) string {
 		e.write("    }\n}\n")
 	}
 	if e.hasFlag(RefComparisonFlag) {
-		e.write(`function __refEquals(a, b) { return a(4) == b(4) && a(2) == b(2) }`)
-		e.write("\n")
+		e.write("function __refEquals(a, b) { return a(4) == b(4) && a(2) == b(2) }\n")
 	}
 	return e.string()
 }
