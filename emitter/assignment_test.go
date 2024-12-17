@@ -41,7 +41,7 @@ func TestInderectAssignment(t *testing.T) {
 	source += "ref := &i\n"
 	source += "*ref = 42"
 
-	expected := "ref(42)"
+	expected := "ref(0, 42)"
 
 	testEmitter(t, source, expected, 2)
 }

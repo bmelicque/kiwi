@@ -67,7 +67,7 @@ func (e *Emitter) emitAssignment(a *parser.Assignment) {
 		} else if u, ok := a.Pattern.(*parser.UnaryExpression); ok {
 			// deref
 			e.emitExpression(u.Operand)
-			e.write("(")
+			e.write("(0, ")
 			e.emitExpression(a.Value)
 			e.write(")")
 		} else {

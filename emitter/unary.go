@@ -25,7 +25,7 @@ func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
 		if _, ok := u.Operand.Type().(parser.Ref).To.(parser.List); ok {
 			e.write(".clone()")
 		} else {
-			e.write("()")
+			e.write("(1)")
 		}
 	}
 }

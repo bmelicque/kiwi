@@ -36,7 +36,7 @@ func TestEmitDeref(t *testing.T) {
 	source += "ref := &value\n"
 	source += "*ref"
 
-	expected := "ref();\n"
+	expected := "ref(1);\n"
 
 	testEmitter(t, source, expected, 2)
 }

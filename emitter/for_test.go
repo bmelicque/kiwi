@@ -69,7 +69,7 @@ func TestEmitForInSliceTuple(t *testing.T) {
 
 	expected := "const __s = slice;\n"
 	expected += "for (let x = __s.ref(0), i = 0; i < __s.length; x = __s.ref(++i)) {\n"
-	expected += "    x() + i;\n"
+	expected += "    x(1) + i;\n"
 	expected += "}\n"
 	testEmitter(t, source, expected, 2)
 }
