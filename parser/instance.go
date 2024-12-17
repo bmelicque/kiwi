@@ -64,8 +64,8 @@ func typeCheckStructInstanciation(p *Parser, i *InstanceExpression) {
 		if entry.Key != nil {
 			name = entry.Key.(*Identifier).Text()
 		}
-		expected, _ := object.get(name)
-		if !expected.Extends(entry.Value.Type()) {
+		expected, ok := object.get(name)
+		if ok && entry.Value != nil && !expected.Extends(entry.Value.Type()) {
 			p.error(arg, CannotAssignType, expected, entry.Value.Type())
 		}
 	}
