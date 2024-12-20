@@ -193,22 +193,6 @@ func typeCheckAssignment(p *Parser, a *Assignment) {
 	reportInvalidVariableType(p, a.Value)
 
 	switch pattern := a.Pattern.(type) {
-	case *ComputedAccessExpression:
-		if isMap(pattern.Expr.Type()) {
-			t := pattern.typing.(TypeAlias).Ref.(Sum).getMember("Some")
-			if !t.Extends(a.Value.Type()) {
-				p.error(a, CannotAssignType, t, a.Value.Type())
-			}
-			return
-		}
-		if isSlice(pattern.Expr.Type()) {
-			el := pattern.Expr.Type().(Ref).To.(List).Element
-			if !el.Extends(a.Value.Type()) {
-				p.error(a, CannotAssignType, el, a.Value.Type())
-			}
-			return
-		}
-		p.error(pattern, InvalidAssignmentToEntry)
 	case *Identifier:
 		if pattern.typing.Extends(a.Value.Type()) {
 			return

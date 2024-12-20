@@ -11,9 +11,8 @@ import (
 type EmitterFlag int
 
 const (
-	NoFlags   EmitterFlag = 0
-	SliceFlag EmitterFlag = 1 << iota
-	SumFlag
+	NoFlags EmitterFlag = 0
+	SumFlag EmitterFlag = 1 << iota
 	RefComparisonFlag
 )
 
@@ -135,9 +134,6 @@ func EmitProgram(nodes []parser.Node) string {
 		e.emit(node)
 	}
 	e.write("\n")
-	if e.hasFlag(SliceFlag) {
-		e.emitSliceConstructor()
-	}
 	if e.hasFlag(SumFlag) {
 		e.write("class _Sum {\n")
 		e.write("    constructor(_tag, _value) {\n")
@@ -149,41 +145,4 @@ func EmitProgram(nodes []parser.Node) string {
 		e.write("function __refEquals(a, b) { return a(4) == b(4) && a(2) == b(2) }\n")
 	}
 	return e.string()
-}
-
-func (e *Emitter) emitSliceConstructor() {
-	e.write(`class __Slice {
-	constructor(getter, start = 0, end = getter().length) {
-		this._ = getter;
-		this.start = start;
-		this.end = end;
-		this.length = end - this.start;
-	}
-
-	get(index) {
-		return index < this.length ? this._()[this.start + index] : undefined;
-	}
-
-	set(index, value) {
-		if (index >= this.length) throw new OutOfRangeError();
-		this._()[this.start + index] = value;
-	}
-
-	clone() {
-		return this._().slice(this.start, this.end);
-	}
-
-	ref(index) {
-		if (index >= this.length) throw new OutOfRangeError();
-		return function (value) {
-			if (arguments.length === 0) return this._()[this.start + index];
-			this._()[this.start + index] = value;
-		};
-	}
-
-	*[Symbol.iterator]() {
-		let i = 0;
-		while (i++ < this.length) yield this.ref(i);
-	}
-}`)
 }

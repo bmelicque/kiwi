@@ -15,11 +15,7 @@ func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
 	case parser.TryKeyword:
 		e.emitExpression(u.Operand)
 	case parser.BinaryAnd:
-		if _, ok := u.Operand.Type().(parser.List); ok {
-			e.emitSlice(u.Operand)
-		} else {
-			e.emitReference(u.Operand)
-		}
+		e.emitReference(u.Operand)
 	case parser.Mul:
 		e.emitExpression(u.Operand)
 		if _, ok := u.Operand.Type().(parser.Ref).To.(parser.List); ok {
@@ -62,28 +58,4 @@ func (e *Emitter) emitObjectReference(expr parser.Expression) {
 		e.emitExpression(expr.Property)
 		e.write(")")
 	}
-}
-
-func (e *Emitter) emitSlice(expr parser.Expression) {
-	var r *parser.RangeExpression
-	if computed, ok := expr.(*parser.ComputedAccessExpression); ok {
-		expr = computed.Expr
-		r = computed.Property.Expr.(*parser.RangeExpression)
-	}
-	e.addFlag(SliceFlag)
-	e.write("new __Slice(() => ")
-	e.emitExpression(expr)
-	if r != nil {
-		e.write(", ")
-		if r.Left != nil {
-			e.emitExpression(r.Left)
-		} else {
-			e.write("0")
-		}
-		if r.Right != nil {
-			e.write(", ")
-			e.emitExpression(r.Right)
-		}
-	}
-	e.write(")")
 }

@@ -70,8 +70,6 @@ func isReferencable(expr Expression) bool {
 			expr = e.Typing
 		case *PropertyAccessExpression:
 			expr = e.Expr
-		case *ComputedAccessExpression:
-			expr = e.Expr
 		default:
 			return false
 		}
@@ -86,8 +84,6 @@ func getReferencedIdentifier(expr Expression) *Identifier {
 		case *InstanceExpression:
 			expr = e.Typing
 		case *PropertyAccessExpression:
-			expr = e.Expr
-		case *ComputedAccessExpression:
 			expr = e.Expr
 		default:
 			return nil

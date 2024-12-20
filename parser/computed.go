@@ -31,53 +31,12 @@ func (expr *ComputedAccessExpression) typeCheck(p *Parser) {
 	switch t := expr.Expr.Type().(type) {
 	case Type:
 		typeCheckGenericType(p, expr)
-	case TypeAlias:
-		typeCheckMapAccess(p, expr)
 	case Function:
 		typeCheckGenericFunction(p, expr)
-	case List:
-		if _, ok := expr.Property.Expr.(*RangeExpression); ok {
-			expr.typing = t
-			return
-		}
-		if _, ok := expr.Property.Expr.Type().(Number); ok {
-			expr.typing = makeOptionType(t.Element)
-			return
-		}
-		p.error(expr.Property, IndexExpected)
-		expr.typing = Unknown{}
-	case Ref:
-		list, ok := t.To.(List)
-		if !ok {
-			p.error(expr.Expr, NotSubscriptable, t)
-			expr.typing = Unknown{}
-			return
-		}
-		if _, ok := expr.Property.Expr.Type().(Number); !ok {
-			p.error(expr.Property, NumberExpected)
-			expr.typing = Unknown{}
-			return
-		}
-		expr.typing = makeOptionType(list.Element)
 	default:
 		p.error(expr.Expr, NotSubscriptable, t)
 		expr.typing = Unknown{}
 	}
-}
-
-func typeCheckMapAccess(p *Parser, expr *ComputedAccessExpression) {
-	expr.Property.typeCheck(p)
-	a := expr.Expr.Type().(TypeAlias)
-	if a.Name != "Map" {
-		expr.typing = Unknown{}
-		return
-	}
-	b, _ := a.Ref.build(p.scope, nil)
-	m := b.(Map)
-	if expr.Property.Expr != nil && !m.Key.Extends(expr.Property.Expr.Type()) {
-		p.error(expr.Property, CannotAssignType, m.Key, expr.Property.Expr)
-	}
-	expr.typing = makeOptionType(m.Value)
 }
 
 func typeCheckGenericType(p *Parser, expr *ComputedAccessExpression) {

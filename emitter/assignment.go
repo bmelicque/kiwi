@@ -62,9 +62,7 @@ func emitAssign(e *Emitter, a *parser.Assignment) {
 func (e *Emitter) emitAssignment(a *parser.Assignment) {
 	switch a.Operator.Kind() {
 	case parser.Assign:
-		if isMapElementAccess(a.Pattern) || isSliceElement(a.Pattern) {
-			emitSetElement(e, a)
-		} else if u, ok := a.Pattern.(*parser.UnaryExpression); ok {
+		if u, ok := a.Pattern.(*parser.UnaryExpression); ok {
 			// deref
 			e.emitExpression(u.Operand)
 			e.write("(0, ")
@@ -100,40 +98,6 @@ func (e *Emitter) emitAssignment(a *parser.Assignment) {
 		e.write(" = ")
 		e.emitExpression(a.Value)
 	}
-}
-
-func isMapElementAccess(pattern parser.Expression) bool {
-	c, ok := pattern.(*parser.ComputedAccessExpression)
-	if !ok {
-		return false
-	}
-	alias, ok := c.Expr.Type().(parser.TypeAlias)
-	return ok && alias.Name == "Map"
-}
-
-// Emit setting a map element, which is not a regular assignment in JS,
-// but a call to 'map.set(key, value)'.
-func emitSetElement(e *Emitter, a *parser.Assignment) {
-	pattern := a.Pattern.(*parser.ComputedAccessExpression)
-	e.emitExpression(pattern.Expr)
-	e.write(".set(")
-	e.emitExpression(pattern.Property.Expr)
-	e.write(", ")
-	e.emitExpression(a.Value)
-	e.write(")")
-}
-
-func isSliceElement(pattern parser.Expression) bool {
-	c, ok := pattern.(*parser.ComputedAccessExpression)
-	if !ok {
-		return false
-	}
-	ref, ok := c.Expr.Type().(parser.Ref)
-	if !ok {
-		return false
-	}
-	_, ok = ref.To.(parser.List)
-	return ok
 }
 
 func (e *Emitter) emitObjectConstructorParam(n parser.Node) {
