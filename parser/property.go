@@ -127,31 +127,42 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 		name = property.Token.Text()
 	}
 
-	alias, ok := deref(expr.Expr.Type()).(TypeAlias)
-	if !ok {
+	switch t := deref(expr.Expr.Type()).(type) {
+	case TypeAlias:
+		expr.typing = getAliasProperty(t, name)
+	case List:
+		expr.typing = getListMethod(t, name)
+	}
+	if expr.typing == nil {
 		p.error(expr.Property, PropertyDoesNotExist, name)
 		expr.typing = Unknown{}
-		return
 	}
-	if method, ok := alias.Methods[name]; ok {
-		expr.typing = method
-		return
-	}
+}
 
-	object, ok := alias.Ref.(Object)
-	if !ok {
-		p.error(expr.Property, PropertyDoesNotExist, name)
-		expr.typing = Unknown{}
-		return
+// Get property of given name in aliased object.
+// Also checks in alias's methods.
+func getAliasProperty(t TypeAlias, name string) ExpressionType {
+	if method, ok := t.Methods[name]; ok {
+		return method
 	}
+	object, ok := t.Ref.(Object)
+	if !ok {
+		return nil
+	}
+	res, _ := object.get(name)
+	return res
+}
 
-	t, ok := object.get(name)
-	if !ok {
-		p.error(expr.Property, PropertyDoesNotExist, name)
-		expr.typing = Unknown{}
-		return
+func getListMethod(l List, name string) ExpressionType {
+	switch name {
+	case "has":
+		return Function{
+			Params:   &Tuple{[]ExpressionType{Number{}}},
+			Returned: Boolean{},
+		}
+	default:
+		return nil
 	}
-	expr.typing = t
 }
 
 type TraitExpression struct {

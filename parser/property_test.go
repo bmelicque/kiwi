@@ -116,3 +116,13 @@ func TestTupleIndexAccess(t *testing.T) {
 		t.Fatalf("Expected string, got %#v", expr.Type())
 	}
 }
+
+func TestListMethodAccess(t *testing.T) {
+	source := "list.has(3)\n"
+	parser := MakeParser(strings.NewReader(source))
+	parser.scope.Add("list", Loc{}, List{Number{}})
+	expr := parser.parseExpression()
+	testParserErrors(t, parser, 0)
+	expr.typeCheck(parser)
+	testParserErrors(t, parser, 0)
+}
