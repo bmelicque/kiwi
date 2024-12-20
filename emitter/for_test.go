@@ -50,26 +50,3 @@ func TestEmitForInListTuple(t *testing.T) {
 	expected += "}\n"
 	testEmitter(t, source, expected, 1)
 }
-
-func TestEmitForInSlice(t *testing.T) {
-	source := "list := []number{1, 2, 3}\n"
-	source += "slice := &list\n"
-	source += "for x in slice { x }"
-
-	expected := "for (let x of slice) {\n"
-	expected += "    x;\n"
-	expected += "}\n"
-	testEmitter(t, source, expected, 2)
-}
-
-func TestEmitForInSliceTuple(t *testing.T) {
-	source := "list := []number{1, 2, 3}\n"
-	source += "slice := &list\n"
-	source += "for x, i in slice { *x + i }"
-
-	expected := "const __s = slice;\n"
-	expected += "for (let x = __s.ref(0), i = 0; i < __s.length; x = __s.ref(++i)) {\n"
-	expected += "    x(1) + i;\n"
-	expected += "}\n"
-	testEmitter(t, source, expected, 2)
-}

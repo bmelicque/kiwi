@@ -188,34 +188,6 @@ func TestCheckForInWithTuple(t *testing.T) {
 	}
 }
 
-func TestCheckForInSlice(t *testing.T) {
-	parser := MakeParser(nil)
-	parser.scope.Add("slice", Loc{}, Ref{List{Number{}}})
-	expr := &ForExpression{
-		Keyword: token{kind: ForKeyword},
-		Expr: &BinaryExpression{
-			Left:     &Identifier{Token: &literal{kind: Name, value: "el"}},
-			Right:    &Identifier{Token: &literal{kind: Name, value: "slice"}},
-			Operator: token{kind: InKeyword},
-		},
-		Body: &Block{Statements: []Node{
-			&Identifier{Token: &literal{kind: Name, value: "el"}},
-		}},
-	}
-	expr.typeCheck(parser)
-	if len(parser.errors) != 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
-	}
-
-	v, ok := expr.Body.scope.Find("el")
-	if !ok {
-		t.Fatalf("Expected to find 'el' variable in scope")
-	}
-	if v.Typing.Text() != "&number" {
-		t.Fatalf("Expected 'el' to be &number, got '%v'", v.Typing.Text())
-	}
-}
-
 func TestCheckForInBadType(t *testing.T) {
 	parser := MakeParser(nil)
 	parser.scope.Add("bad", Loc{}, Ref{Number{}})
