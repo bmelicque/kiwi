@@ -37,8 +37,8 @@ const (
 
 	InvalidPattern
 	InvalidTypeForPattern
-	TooManyElements
-	MissingElements
+	TooManyElements // [expecter count, received count]
+	MissingElements // [expecter count, received count]
 	MandatoryAfterOptional
 	UnreachableCode
 	CatchallNotLast
@@ -71,7 +71,7 @@ const (
 	OutOfRange
 	MissingTypeArgs
 	UnexpectedTypeArgs
-	CannotAssignType
+	CannotAssignType // [expected type, received type]
 	NotSubscriptable
 	NotInstanceable
 	Unmatchable

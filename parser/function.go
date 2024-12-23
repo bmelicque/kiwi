@@ -39,13 +39,19 @@ func (f *FunctionExpression) Loc() Loc {
 func (f *FunctionExpression) Type() ExpressionType { return f.typing }
 
 func (f *FunctionExpression) typeCheck(p *Parser) {
+	typeCheckFunctionExpression(p, f, func(params *TupleExpression) {
+		addParamsToScope(p, params.Elements)
+	})
+}
+
+func typeCheckFunctionExpression(p *Parser, f *FunctionExpression, paramHandler func(params *TupleExpression)) {
 	p.pushScope(NewScope(FunctionScope))
 	defer p.dropScope()
 
 	typeCheckTypeParams(p, f.TypeParams)
 
 	if f.Params != nil && f.Params.Expr != nil {
-		addParamsToScope(p, f.Params.Expr.(*TupleExpression).Elements)
+		paramHandler(f.Params.Expr.(*TupleExpression))
 	}
 	f.Body.typeCheck(p)
 
@@ -57,6 +63,58 @@ func (f *FunctionExpression) typeCheck(p *Parser) {
 
 	f.canBeAsync = containsAsync(f)
 	f.typing = getFunctionType(f)
+}
+
+func typeCheckHOF(p *Parser, f *FunctionExpression, expected *TupleExpression) {
+	typeCheckFunctionExpression(p, f, func(params *TupleExpression) {
+		l := checkHOFParamsLength(p, expected, params)
+		for i := 0; i < l; i++ {
+			expectedType := expected.Elements[i].(*Param).Complement.Type()
+			typeCheckHOFParam(p, params.Elements[i], expectedType)
+			addHOFParamToScope(p, params.Elements[i], expectedType)
+		}
+	})
+}
+
+// returns the number of elements that can be safely iterated
+func checkHOFParamsLength(p *Parser, expected *TupleExpression, received *TupleExpression) int {
+	le := len(expected.Elements)
+	lr := len(received.Elements)
+	if le < lr {
+		p.error(received, TooManyElements, le, lr)
+		return le
+	} else if le > lr {
+		p.error(received, MissingElements, le, lr)
+		return lr
+	}
+	return le
+}
+
+func typeCheckHOFParam(p *Parser, expr Expression, expectedType ExpressionType) {
+	var received ExpressionType
+	param, ok := expr.(*Param)
+	if !ok {
+		return
+	}
+	received = param.Complement.Type()
+	t, ok := received.(Type)
+	if !ok {
+		return
+	}
+	if !expectedType.Extends(t.Value) {
+		p.error(expr, CannotAssignType, expectedType, t.Value)
+	}
+}
+
+func addHOFParamToScope(p *Parser, param Expression, expected ExpressionType) {
+	switch param := param.(type) {
+	case *Param:
+		addParamToScope(p, param)
+	case *Identifier:
+		p.scope.Add(param.Text(), param.Loc(), expected)
+	default:
+		panic("param or identifier expected")
+	}
 }
 
 func getFunctionType(f *FunctionExpression) Function {
