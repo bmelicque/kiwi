@@ -160,6 +160,18 @@ func getListMethod(l List, name string) ExpressionType {
 			Params:   &Tuple{[]ExpressionType{Number{}}},
 			Returned: Boolean{},
 		}
+	case "get":
+		return Function{
+			Params: &Tuple{[]ExpressionType{Number{}}},
+			// FIXME: proper error type
+			Returned: makeResultType(l.Element, nil),
+		}
+	case "set":
+		return Function{
+			Params: &Tuple{[]ExpressionType{Number{}, l.Element}},
+			// FIXME: proper error type
+			Returned: makeResultType(Nil{}, nil),
+		}
 	default:
 		return nil
 	}

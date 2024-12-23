@@ -144,6 +144,21 @@ func makeResultType(ok ExpressionType, err ExpressionType) TypeAlias {
 	return alias
 }
 
+var mapMethods = map[string]ExpressionType{
+	"has": Function{
+		Params:   &Tuple{[]ExpressionType{Generic{Name: "Key"}}},
+		Returned: Boolean{},
+	},
+	"get": Function{
+		Params:   &Tuple{[]ExpressionType{Generic{Name: "Key"}}},
+		Returned: makeOptionType(Generic{Name: "Value"}),
+	},
+	"set": Function{
+		Params:   &Tuple{[]ExpressionType{Generic{Name: "Key"}, Generic{Name: "Value"}}},
+		Returned: Nil{},
+	},
+}
+
 // utility to create map types
 func makeMapType(key ExpressionType, value ExpressionType) TypeAlias {
 	alias := TypeAlias{
@@ -156,6 +171,7 @@ func makeMapType(key ExpressionType, value ExpressionType) TypeAlias {
 			Generic{Name: "Key", Value: key},
 			Generic{Name: "Value", Value: value},
 		},
+		Methods: mapMethods,
 	}
 	return alias
 }
