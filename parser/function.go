@@ -6,7 +6,7 @@ type FunctionExpression struct {
 	Array      Token
 	Explicit   Expression // Explicit return type (if any)
 	Body       *Block
-	returnType ExpressionType
+	typing     Function
 	canBeAsync bool
 }
 
@@ -36,22 +36,7 @@ func (f *FunctionExpression) Loc() Loc {
 	return loc
 }
 
-func (f *FunctionExpression) Type() ExpressionType {
-	tp := []Generic{}
-	if f.TypeParams != nil {
-		f.TypeParams.getGenerics()
-	}
-	tuple := Tuple{[]ExpressionType{}}
-	if len(f.Params.Expr.(*TupleExpression).Elements) != 0 {
-		t := f.Params.Type()
-		if tu, ok := t.(Tuple); ok {
-			tuple = tu
-		} else {
-			tuple.Elements = append(tuple.Elements, t)
-		}
-	}
-	return Function{tp, &tuple, f.returnType, f.canBeAsync}
-}
+func (f *FunctionExpression) Type() ExpressionType { return f.typing }
 
 func (f *FunctionExpression) typeCheck(p *Parser) {
 	p.pushScope(NewScope(FunctionScope))
@@ -71,6 +56,40 @@ func (f *FunctionExpression) typeCheck(p *Parser) {
 	}
 
 	f.canBeAsync = containsAsync(f)
+	f.typing = getFunctionType(f)
+}
+
+func getFunctionType(f *FunctionExpression) Function {
+	returned := getFunctionReturnedType(f)
+	typeParams := []Generic{}
+	if f.TypeParams != nil {
+		typeParams = f.TypeParams.getGenerics()
+	}
+	params := getFunctionParamsType(f)
+	return Function{typeParams, &params, returned, f.canBeAsync}
+}
+
+func getFunctionParamsType(f *FunctionExpression) Tuple {
+	if len(f.Params.Expr.(*TupleExpression).Elements) == 0 {
+		return Tuple{[]ExpressionType{}}
+	}
+	t := f.Params.Type()
+	if tu, ok := t.(Tuple); ok {
+		return tu
+	} else {
+		return Tuple{[]ExpressionType{t}}
+	}
+}
+
+func getFunctionReturnedType(f *FunctionExpression) ExpressionType {
+	if f.Explicit == nil {
+		return f.Body.Type()
+	}
+	t, ok := f.Explicit.Type().(Type)
+	if !ok {
+		return Unknown{}
+	}
+	return t.Value
 }
 
 type FunctionTypeExpression struct {
@@ -190,7 +209,6 @@ func (p *Parser) parseFunctionExpression(typeParams *BracketedExpression) Expres
 			Array:      arrow,
 			Explicit:   explicit,
 			Body:       body,
-			returnType: nil,
 		}
 	default:
 		return paren
@@ -221,14 +239,12 @@ func typeCheckExplicitReturn(p *Parser, f *FunctionExpression) {
 	t, ok := f.Explicit.Type().(Type)
 	if !ok {
 		p.error(f.Explicit, TypeExpected)
-		f.returnType = Unknown{}
 		return
 	}
-	f.returnType = t.Value
 
-	typeCheckHappyReturn(p, f.Body, f.returnType)
+	typeCheckHappyReturn(p, f.Body, t)
 
-	err := getErrorType(f.returnType)
+	err := getErrorType(t)
 	tries := findTryExpressions(f.Body)
 	for _, t := range tries {
 		if !err.Extends(getErrorType(t.Operand.Type())) {
@@ -245,8 +261,6 @@ func typeCheckExplicitReturn(p *Parser, f *FunctionExpression) {
 
 // Type check all possible return points and see if they match
 func typeCheckImplicitReturn(p *Parser, f *FunctionExpression) {
-	f.returnType = f.Body.Type()
-
 	returns := findReturnStatements(f.Body)
 	for _, r := range returns {
 		p.error(r, IllegalReturn)

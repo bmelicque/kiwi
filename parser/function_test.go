@@ -215,14 +215,14 @@ func TestCheckFunctionExpressionBadParam(t *testing.T) {
 func TestCheckImplicitReturn(t *testing.T) {
 	parser := MakeParser(nil)
 	expr := &FunctionExpression{
-		Params: &ParenthesizedExpression{},
+		Params: &ParenthesizedExpression{Expr: &TupleExpression{}},
 		Body: &Block{Statements: []Node{
 			&Literal{literal{kind: NumberLiteral, value: "42"}},
 		}},
 	}
 	expr.typeCheck(parser)
 	testParserErrors(t, parser, 0)
-	if _, ok := expr.returnType.(Number); !ok {
+	if _, ok := expr.typing.Returned.(Number); !ok {
 		t.Fatalf("Expected number, got %v", expr)
 	}
 }
@@ -232,7 +232,7 @@ func TestCheckImplicitReturnBadReturns(t *testing.T) {
 	parser.scope.Add("result", Loc{}, makeResultType(Nil{}, Number{}))
 	// () => { if true { return false } else if true { throw false } else {	try result }}
 	expr := &FunctionExpression{
-		Params: &ParenthesizedExpression{},
+		Params: &ParenthesizedExpression{Expr: &TupleExpression{}},
 		Body: &Block{Statements: []Node{
 			&IfExpression{
 				Keyword:   token{kind: IfKeyword},
@@ -274,7 +274,7 @@ func TestCheckImplicitReturnBadReturns(t *testing.T) {
 func TestCheckExplicitReturn(t *testing.T) {
 	parser := MakeParser(nil)
 	expr := &FunctionExpression{
-		Params:   &ParenthesizedExpression{},
+		Params:   &ParenthesizedExpression{Expr: &TupleExpression{}},
 		Explicit: &Literal{token{kind: NumberKeyword}},
 		Body: &Block{Statements: []Node{
 			&Literal{literal{kind: NumberLiteral, value: "42"}},
@@ -283,7 +283,7 @@ func TestCheckExplicitReturn(t *testing.T) {
 	expr.typeCheck(parser)
 	testParserErrors(t, parser, 0)
 
-	if _, ok := expr.returnType.(Number); !ok {
+	if _, ok := expr.typing.Returned.(Number); !ok {
 		t.Fatalf("Number type expected")
 	}
 }
@@ -291,7 +291,7 @@ func TestCheckExplicitReturn(t *testing.T) {
 func TestCheckBadExplicit(t *testing.T) {
 	parser := MakeParser(nil)
 	expr := &FunctionExpression{
-		Params:   &ParenthesizedExpression{},
+		Params:   &ParenthesizedExpression{Expr: &TupleExpression{}},
 		Explicit: &Literal{literal{kind: NumberLiteral, value: "42"}},
 		Body: &Block{Statements: []Node{
 			&Literal{literal{kind: NumberLiteral, value: "42"}},
@@ -300,7 +300,7 @@ func TestCheckBadExplicit(t *testing.T) {
 	expr.typeCheck(parser)
 	testParserErrors(t, parser, 1)
 
-	if expr.returnType != (Unknown{}) {
+	if expr.typing.Returned != (Unknown{}) {
 		t.Fatalf("unknown expected")
 	}
 }
@@ -308,7 +308,7 @@ func TestCheckBadExplicit(t *testing.T) {
 func TestCheckExplicitBadLastExpr(t *testing.T) {
 	parser := MakeParser(nil)
 	expr := &FunctionExpression{
-		Params:   &ParenthesizedExpression{},
+		Params:   &ParenthesizedExpression{Expr: &TupleExpression{}},
 		Explicit: &Literal{token{kind: NumberKeyword}},
 		Body: &Block{Statements: []Node{
 			&Literal{literal{kind: BooleanLiteral, value: "true"}},
@@ -317,7 +317,7 @@ func TestCheckExplicitBadLastExpr(t *testing.T) {
 	expr.typeCheck(parser)
 	testParserErrors(t, parser, 1)
 
-	if _, ok := expr.returnType.(Number); !ok {
+	if _, ok := expr.typing.Returned.(Number); !ok {
 		t.Fatalf("Number type expected")
 	}
 }
@@ -325,7 +325,7 @@ func TestCheckExplicitBadLastExpr(t *testing.T) {
 func TestCheckExplicitResult(t *testing.T) {
 	parser := MakeParser(nil)
 	expr := &FunctionExpression{
-		Params: &ParenthesizedExpression{},
+		Params: &ParenthesizedExpression{Expr: &TupleExpression{}},
 		Explicit: &BinaryExpression{
 			Left:     &Literal{token{kind: StringKeyword}},
 			Right:    &Literal{token{kind: NumberKeyword}},
@@ -338,7 +338,7 @@ func TestCheckExplicitResult(t *testing.T) {
 	expr.typeCheck(parser)
 	testParserErrors(t, parser, 0)
 
-	if alias, ok := expr.returnType.(TypeAlias); !ok || alias.Name != "!" {
+	if alias, ok := expr.typing.Returned.(TypeAlias); !ok || alias.Name != "!" {
 		t.Fatalf("Result type expected")
 	}
 }
@@ -346,7 +346,7 @@ func TestCheckExplicitResult(t *testing.T) {
 func TestCheckExplicitThrow(t *testing.T) {
 	parser := MakeParser(nil)
 	expr := &FunctionExpression{
-		Params: &ParenthesizedExpression{},
+		Params: &ParenthesizedExpression{Expr: &TupleExpression{}},
 		Explicit: &BinaryExpression{
 			Left:     &Literal{token{kind: StringKeyword}},
 			Right:    &Literal{token{kind: NumberKeyword}},
@@ -369,7 +369,7 @@ func TestCheckExplicitThrow(t *testing.T) {
 	expr.typeCheck(parser)
 	testParserErrors(t, parser, 0)
 
-	if alias, ok := expr.returnType.(TypeAlias); !ok || alias.Name != "!" {
+	if alias, ok := expr.typing.Returned.(TypeAlias); !ok || alias.Name != "!" {
 		t.Fatalf("Result type expected")
 	}
 }
@@ -377,7 +377,7 @@ func TestCheckExplicitThrow(t *testing.T) {
 func TestCheckExplicitBadThrow(t *testing.T) {
 	parser := MakeParser(nil)
 	expr := &FunctionExpression{
-		Params: &ParenthesizedExpression{},
+		Params: &ParenthesizedExpression{Expr: &TupleExpression{}},
 		Explicit: &BinaryExpression{
 			Left:     &Literal{token{kind: StringKeyword}},
 			Right:    &Literal{token{kind: NumberKeyword}},
@@ -404,7 +404,7 @@ func TestCheckExplicitBadThrow(t *testing.T) {
 func TestCheckExplicitBadReturn(t *testing.T) {
 	parser := MakeParser(nil)
 	expr := &FunctionExpression{
-		Params: &ParenthesizedExpression{},
+		Params: &ParenthesizedExpression{Expr: &TupleExpression{}},
 		Explicit: &BinaryExpression{
 			Left:     &Literal{token{kind: StringKeyword}},
 			Right:    &Literal{token{kind: NumberKeyword}},
@@ -436,7 +436,7 @@ func TestCheckAsyncFunctionExpression(t *testing.T) {
 		Async:    true,
 	})
 	expr := &FunctionExpression{
-		Params: &ParenthesizedExpression{},
+		Params: &ParenthesizedExpression{Expr: &TupleExpression{}},
 		Body: &Block{Statements: []Node{
 			&CallExpression{
 				Callee: &Identifier{Token: literal{kind: Name, value: "fetch"}},
