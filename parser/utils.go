@@ -90,16 +90,3 @@ func getReferencedIdentifier(expr Expression) *Identifier {
 		}
 	}
 }
-
-func isMap(t ExpressionType) bool {
-	alias, ok := t.(TypeAlias)
-	return ok && alias.Name == "Map"
-}
-func isSlice(t ExpressionType) bool {
-	ref, ok := t.(Ref)
-	if !ok {
-		return false
-	}
-	_, ok = ref.To.(List)
-	return ok
-}
