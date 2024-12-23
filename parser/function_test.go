@@ -84,10 +84,10 @@ func TestParseFunctionExpressionWithSeveralParams(t *testing.T) {
 	}
 }
 
-func TestParseFunctionExpressionWithBadParamNode(t *testing.T) {
+func TestParseHOFFunctionArgument(t *testing.T) {
 	parser := MakeParser(strings.NewReader("(a, b number) => {}"))
 	parser.parseFunctionExpression(nil)
-	testParserErrors(t, parser, 1)
+	testParserErrors(t, parser, 0)
 }
 
 func TestParseFunctionExpressionMissingBody(t *testing.T) {

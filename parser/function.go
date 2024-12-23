@@ -40,6 +40,11 @@ func (f *FunctionExpression) Type() ExpressionType { return f.typing }
 
 func (f *FunctionExpression) typeCheck(p *Parser) {
 	typeCheckFunctionExpression(p, f, func(params *TupleExpression) {
+		for _, param := range params.Elements {
+			if _, ok := param.(*Param); !ok {
+				p.error(param, ParameterExpected)
+			}
+		}
 		addParamsToScope(p, params.Elements)
 	})
 }
@@ -285,9 +290,10 @@ func validateFunctionParams(p *Parser, node *ParenthesizedExpression) {
 
 // Validate a function param's structure
 func validateFunctionParam(p *Parser, expr Expression) {
-	if _, ok := expr.(*Param); !ok {
+	switch expr := expr.(type) {
+	case *Param, *Identifier:
+	default:
 		p.error(expr, ParameterExpected)
-		return
 	}
 }
 
