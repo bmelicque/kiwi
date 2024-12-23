@@ -242,9 +242,12 @@ func typeCheckExplicitReturn(p *Parser, f *FunctionExpression) {
 		return
 	}
 
-	typeCheckHappyReturn(p, f.Body, t)
+	typeCheckHappyReturn(p, f.Body, t.Value)
 
-	err := getErrorType(t)
+	err := getErrorType(t.Value)
+	if err == nil {
+		return
+	}
 	tries := findTryExpressions(f.Body)
 	for _, t := range tries {
 		if !err.Extends(getErrorType(t.Operand.Type())) {
