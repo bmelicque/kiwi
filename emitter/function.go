@@ -50,13 +50,23 @@ func (e *Emitter) emitFunctionExpression(f *parser.FunctionExpression) {
 	args := f.Params.Expr.(*parser.TupleExpression).Elements
 	max := len(args) - 1
 	for i := range args[:max] {
-		param := args[i].(*parser.Param)
-		e.emitIdentifier(param.Identifier)
+		e.emitFunctionParam(args[i])
 		e.write(", ")
 	}
-	e.emitIdentifier(args[max].(*parser.Param).Identifier)
+	e.emitFunctionParam(args[max])
 	e.write(") => ")
 
 	params := f.Params.Expr.(*parser.TupleExpression)
 	e.emitFunctionBody(f.Body, params)
+}
+
+func (e *Emitter) emitFunctionParam(arg parser.Expression) {
+	switch arg := arg.(type) {
+	case *parser.Param:
+		e.emitIdentifier(arg.Identifier)
+	case *parser.Identifier:
+		e.emitIdentifier(arg)
+	default:
+		panic("expected param or identifier")
+	}
 }
