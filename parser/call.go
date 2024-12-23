@@ -70,21 +70,38 @@ func typeCheckFunctionArguments(p *Parser, args *TupleExpression, params []Expre
 	if len(args.Elements) < len(params) {
 		l = len(args.Elements)
 	}
-	var ok bool
 	for i, element := range args.Elements[:l] {
-		element.typeCheck(p)
-		if _, ok := element.(*Param); ok {
-			p.error(element, ExpressionExpected)
-			continue
-		}
-		received := element.Type()
-		params[i], ok = params[i].build(p.scope, received)
-		if !ok {
-			p.error(element, MissingTypeArgs)
-		}
-		if !params[i].Extends(received) {
-			p.error(element, CannotAssignType, params[i], received)
-		}
+		typeCheckFunctionArgument(p, &params[i], element)
+	}
+}
+
+func typeCheckFunctionArgument(p *Parser, expected *ExpressionType, received Expression) {
+	if f, ok := received.(*FunctionExpression); ok {
+		typeCheckFunctionHOFArgument(p, *expected, f)
+		return
+	}
+	received.typeCheck(p)
+	if _, ok := received.(*Param); ok {
+		p.error(received, ExpressionExpected)
+		return
+	}
+	t := received.Type()
+	built, ok := (*expected).build(p.scope, t)
+	*expected = built
+	if !ok {
+		p.error(received, MissingTypeArgs)
+	}
+	if !built.Extends(t) {
+		p.error(received, CannotAssignType, built, t)
+	}
+}
+
+func typeCheckFunctionHOFArgument(p *Parser, expected ExpressionType, received *FunctionExpression) {
+	if e, ok := expected.(Function); ok {
+		typeCheckHOF(p, received, *e.Params)
+	} else {
+		received.typeCheck(p)
+		p.error(received, CannotAssignType, expected, received.typing)
 	}
 }
 

@@ -65,11 +65,11 @@ func typeCheckFunctionExpression(p *Parser, f *FunctionExpression, paramHandler 
 	f.typing = getFunctionType(f)
 }
 
-func typeCheckHOF(p *Parser, f *FunctionExpression, expected *TupleExpression) {
+func typeCheckHOF(p *Parser, f *FunctionExpression, expected Tuple) {
 	typeCheckFunctionExpression(p, f, func(params *TupleExpression) {
 		l := checkHOFParamsLength(p, expected, params)
 		for i := 0; i < l; i++ {
-			expectedType := expected.Elements[i].(*Param).Complement.Type()
+			expectedType := expected.Elements[i]
 			typeCheckHOFParam(p, params.Elements[i], expectedType)
 			addHOFParamToScope(p, params.Elements[i], expectedType)
 		}
@@ -77,7 +77,7 @@ func typeCheckHOF(p *Parser, f *FunctionExpression, expected *TupleExpression) {
 }
 
 // returns the number of elements that can be safely iterated
-func checkHOFParamsLength(p *Parser, expected *TupleExpression, received *TupleExpression) int {
+func checkHOFParamsLength(p *Parser, expected Tuple, received *TupleExpression) int {
 	le := len(expected.Elements)
 	lr := len(received.Elements)
 	if le < lr {
