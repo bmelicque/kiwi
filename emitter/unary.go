@@ -27,8 +27,8 @@ func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
 }
 
 func (e *Emitter) emitReference(expr parser.Expression) {
-	switch expr.(type) {
-	case *parser.PropertyAccessExpression, *parser.ComputedAccessExpression:
+	switch expr := expr.(type) {
+	case *parser.PropertyAccessExpression:
 		e.emitObjectReference(expr)
 	default:
 		e.emitPrimitiveReference(expr)
@@ -36,26 +36,18 @@ func (e *Emitter) emitReference(expr parser.Expression) {
 }
 
 func (e *Emitter) emitPrimitiveReference(expr parser.Expression) {
-	e.write("(a,p)=>(a&4?__s:a&2?\"")
+	e.write("(_,__)=>(_&4?__s:_&2?\"")
 	e.emitExpression(expr)
-	e.write("\":a?")
+	e.write("\":_?")
 	e.emitExpression(expr)
-	e.write(":void (")
+	e.write(":(")
 	e.emitExpression(expr)
-	e.write("=p))")
+	e.write("=__))")
 }
-func (e *Emitter) emitObjectReference(expr parser.Expression) {
-	e.write("((o,k)=>(a,p)=>(a&4?o:a&2?k:a?o[k]:void (o[k]=p)))(")
-	switch expr := expr.(type) {
-	case *parser.PropertyAccessExpression:
-		e.emitExpression(expr.Expr)
-		e.write(",\"")
-		e.emitExpression(expr.Property)
-		e.write("\")")
-	case *parser.ComputedAccessExpression:
-		e.emitExpression(expr.Expr)
-		e.write(",")
-		e.emitExpression(expr.Property)
-		e.write(")")
-	}
+func (e *Emitter) emitObjectReference(expr *parser.PropertyAccessExpression) {
+	e.write("__ptr(")
+	e.emitExpression(expr.Expr)
+	e.write(",\"")
+	e.emitExpression(expr.Property)
+	e.write("\")")
 }

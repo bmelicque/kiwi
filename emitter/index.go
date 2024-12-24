@@ -15,6 +15,7 @@ const (
 	SumFlag EmitterFlag = 1 << iota
 	RefComparisonFlag
 	IOFlag // TODO: this will disappear with modules
+	PropertyPointerFlag
 
 	AllFlags
 )
@@ -145,6 +146,9 @@ func EmitProgram(nodes []parser.Node) string {
 	if e.hasFlag(IOFlag) {
 		e.write("const io = { log(data) { console.log(data) } }\n")
 	}
+	if e.hasFlag(PropertyPointerFlag) {
+		e.write("var __ptr=(o,k)=>(a,p)=>a&4?o:a&2?k:a?o[k]:(o[k]=p);\n")
+	}
 
 	for _, node := range nodes {
 		e.emit(node)
@@ -173,6 +177,8 @@ func (e *Emitter) scan(nodes []parser.Node) {
 			addFlag(RefComparisonFlag)
 		case isIO(n):
 			addFlag(IOFlag)
+		case isPropertyPointer(n):
+			addFlag(PropertyPointerFlag)
 		}
 	}
 
@@ -211,4 +217,13 @@ func isRefComparison(n parser.Node) bool {
 func isIO(n parser.Node) bool {
 	i, ok := n.(*parser.Identifier)
 	return ok && i.Text() == "io"
+}
+
+func isPropertyPointer(n parser.Node) bool {
+	u, ok := n.(*parser.UnaryExpression)
+	if !ok || u.Operator.Kind() != parser.BinaryAnd {
+		return false
+	}
+	_, ok = u.Operand.(*parser.PropertyAccessExpression)
+	return ok
 }
