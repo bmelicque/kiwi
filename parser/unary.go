@@ -214,6 +214,14 @@ func parseListTypeExpression(p *Parser) Expression {
 	if p.Peek().Kind() == LeftParenthesis {
 		return p.parseFunctionExpression(brackets)
 	}
+	if p.Peek().Kind() == LeftBrace {
+		args := p.parseBracedExpression()
+		args.Expr = makeTuple(args.Expr)
+		return &InstanceExpression{
+			Typing: &ListTypeExpression{brackets, nil},
+			Args:   args,
+		}
+	}
 	expr := parseInnerUnary(p)
 	if brackets != nil && brackets.Expr != nil {
 		p.error(brackets, UnexpectedExpression)

@@ -151,6 +151,23 @@ func TestCheckMapEntriesBadTypes(t *testing.T) {
 	}
 }
 
+func TestParseAnonymousList(t *testing.T) {
+	parser := MakeParser(strings.NewReader("[]{1, 2, 3}"))
+	expr := parser.parseInstanceExpression()
+
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+
+	i, ok := expr.(*InstanceExpression)
+	if !ok {
+		t.Fatalf("Expected *InstanceExpression")
+	}
+	if _, ok := i.Typing.(*ListTypeExpression); !ok {
+		t.Fatalf("Expected *ListTypeExpression, got %#v", i.Typing)
+	}
+}
+
 func TestCheckAnonymousList(t *testing.T) {
 	parser := MakeParser(nil)
 	expr := &InstanceExpression{
