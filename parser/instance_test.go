@@ -150,3 +150,24 @@ func TestCheckMapEntriesBadTypes(t *testing.T) {
 		t.Fatalf("Expected 2 errors, got %v: %#v", len(parser.errors), parser.errors)
 	}
 }
+
+func TestCheckAnonymousList(t *testing.T) {
+	parser := MakeParser(nil)
+	expr := &InstanceExpression{
+		Typing: &ListTypeExpression{
+			Bracketed: &BracketedExpression{},
+		},
+		Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
+			&Literal{literal{kind: NumberLiteral, value: "42"}},
+		}}},
+	}
+	expr.typeCheck(parser)
+
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	}
+	_, ok := expr.Type().(List)
+	if !ok {
+		t.Fatalf("List expected")
+	}
+}

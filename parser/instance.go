@@ -21,6 +21,10 @@ func (i *InstanceExpression) getChildren() []Node {
 }
 
 func (i *InstanceExpression) typeCheck(p *Parser) {
+	if l, ok := i.Typing.(*ListTypeExpression); ok && l.Expr == nil {
+		typeCheckAnonymousListInstanciation(p, i)
+		return
+	}
 	i.Typing.typeCheck(p)
 	t, ok := i.Typing.Type().(Type)
 	if !ok {
@@ -32,7 +36,7 @@ func (i *InstanceExpression) typeCheck(p *Parser) {
 	case TypeAlias:
 		typeCheckStructInstanciation(p, i)
 	case List:
-		typeCheckListInstanciation(p, i)
+		typeCheckNamedListInstanciation(p, i)
 	default:
 		p.error(i.Typing, NotInstanceable)
 	}
@@ -221,7 +225,7 @@ func typeCheckMapEntries(p *Parser, entries []Expression, t Map) {
 	}
 }
 
-func typeCheckListInstanciation(p *Parser, i *InstanceExpression) {
+func typeCheckNamedListInstanciation(p *Parser, i *InstanceExpression) {
 	// next line ensured by calling function
 	typing := i.Typing.Type().(Type).Value.(List)
 	i.typing = typing
@@ -243,6 +247,27 @@ func typeCheckListInstanciation(p *Parser, i *InstanceExpression) {
 		elements[i+1].typeCheck(p)
 		if !el.Extends(elements[i+1].Type()) {
 			p.error(elements[i+1], CannotAssignType, el, elements[i+1].Type())
+		}
+	}
+}
+
+// Type-check nodes like []{a, b, c}
+func typeCheckAnonymousListInstanciation(p *Parser, i *InstanceExpression) {
+	// next line ensured by calling function
+	elements := i.Args.Expr.(*TupleExpression).Elements
+	if len(elements) == 0 {
+		p.error(i, MissingTypeArgs)
+		i.typing = List{Unknown{}}
+		return
+	}
+	first := elements[0]
+	first.typeCheck(p)
+	i.typing = List{first.Type()}
+
+	for j := range elements[1:] {
+		elements[j+1].typeCheck(p)
+		if !i.typing.Extends(elements[j+1].Type()) {
+			p.error(elements[j+1], CannotAssignType, i.typing, elements[j+1].Type())
 		}
 	}
 }
