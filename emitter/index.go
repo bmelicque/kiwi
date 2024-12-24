@@ -14,6 +14,9 @@ const (
 	NoFlags EmitterFlag = 0
 	SumFlag EmitterFlag = 1 << iota
 	RefComparisonFlag
+	IOFlag // TODO: this will disappear with modules
+
+	AllFlags
 )
 
 type Emitter struct {
@@ -128,12 +131,7 @@ func (e *Emitter) emitExpression(expr parser.Expression) {
 
 func EmitProgram(nodes []parser.Node) string {
 	e := makeEmitter()
-	e.write("const io = { log(data) { console.log(data) } }\n")
-
-	for _, node := range nodes {
-		e.emit(node)
-	}
-	e.write("\n")
+	e.scan(nodes)
 	if e.hasFlag(SumFlag) {
 		e.write("class _Sum {\n")
 		e.write("    constructor(_tag, _value) {\n")
@@ -144,5 +142,73 @@ func EmitProgram(nodes []parser.Node) string {
 	if e.hasFlag(RefComparisonFlag) {
 		e.write("function __refEquals(a, b) { return a(4) == b(4) && a(2) == b(2) }\n")
 	}
+	if e.hasFlag(IOFlag) {
+		e.write("const io = { log(data) { console.log(data) } }\n")
+	}
+
+	for _, node := range nodes {
+		e.emit(node)
+	}
+
 	return e.string()
+}
+
+func (e *Emitter) scan(nodes []parser.Node) {
+	stop := false
+	addFlag := func(flag EmitterFlag) {
+		e.addFlag(flag)
+		if e.hasFlag(AllFlags - 1) {
+			stop = true
+		}
+	}
+
+	handleNode := func(n parser.Node, skip func()) {
+		if stop {
+			skip()
+		}
+		switch {
+		case isSumDef(n):
+			addFlag(SumFlag)
+		case isRefComparison(n):
+			addFlag(RefComparisonFlag)
+		case isIO(n):
+			addFlag(IOFlag)
+		}
+	}
+
+	for _, node := range nodes {
+		parser.Walk(node, handleNode)
+		if stop {
+			break
+		}
+	}
+}
+
+func isSumDef(n parser.Node) bool {
+	a, ok := n.(*parser.Assignment)
+	if !ok {
+		return false
+	}
+	if a.Operator.Kind() != parser.Define {
+		return false
+	}
+	_, isSum := a.Value.Type().(parser.Type).Value.(parser.Sum)
+	return isSum
+}
+
+func isRefComparison(n parser.Node) bool {
+	b, ok := n.(*parser.BinaryExpression)
+	if !ok {
+		return false
+	}
+	if b.Operator.Kind() != parser.Equal {
+		return false
+	}
+	_, ok = b.Left.Type().(parser.Ref)
+	return ok
+}
+
+func isIO(n parser.Node) bool {
+	i, ok := n.(*parser.Identifier)
+	return ok && i.Text() == "io"
 }

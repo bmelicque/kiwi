@@ -168,7 +168,6 @@ func (e *Emitter) emitTypeDeclaration(definition *parser.Assignment) {
 	case parser.Trait:
 		return
 	case parser.Sum:
-		e.addFlag(SumFlag)
 		e.write("class ")
 		e.write(getTypeIdentifier(definition.Pattern))
 		e.write(" extends _Sum {}\n")
