@@ -211,20 +211,25 @@ func parseInnerUnary(p *Parser) Expression {
 
 func parseListTypeExpression(p *Parser) Expression {
 	brackets := p.parseBracketedExpression()
-	if p.Peek().Kind() == LeftParenthesis {
+	switch p.Peek().Kind() {
+	case LeftParenthesis:
 		return p.parseFunctionExpression(brackets)
-	}
-	if p.Peek().Kind() == LeftBrace {
-		args := p.parseBracedExpression()
-		args.Expr = makeTuple(args.Expr)
-		return &InstanceExpression{
-			Typing: &ListTypeExpression{brackets, nil},
-			Args:   args,
+	case LeftBrace:
+		return parseAnonymousList(p, brackets)
+	default:
+		expr := parseInnerUnary(p)
+		if brackets != nil && brackets.Expr != nil {
+			p.error(brackets, UnexpectedExpression)
 		}
+		return &ListTypeExpression{brackets, expr}
 	}
-	expr := parseInnerUnary(p)
-	if brackets != nil && brackets.Expr != nil {
-		p.error(brackets, UnexpectedExpression)
+}
+
+func parseAnonymousList(p *Parser, brackets *BracketedExpression) *InstanceExpression {
+	args := p.parseBracedExpression()
+	args.Expr = makeTuple(args.Expr)
+	return &InstanceExpression{
+		Typing: &ListTypeExpression{brackets, nil},
+		Args:   args,
 	}
-	return &ListTypeExpression{brackets, expr}
 }
