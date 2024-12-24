@@ -14,6 +14,7 @@ const (
 	NoFlags EmitterFlag = 0
 	SumFlag EmitterFlag = 1 << iota
 	RefComparisonFlag
+	ObjectComparisonFlag
 	IOFlag // TODO: this will disappear with modules
 	PropertyPointerFlag
 
@@ -143,6 +144,9 @@ func EmitProgram(nodes []parser.Node) string {
 	if e.hasFlag(RefComparisonFlag) {
 		e.write("function __refEquals(a, b) { return a(4) == b(4) && a(2) == b(2) }\n")
 	}
+	if e.hasFlag(ObjectComparisonFlag) {
+		e.write("var __equals=(a,b)=>typeof a==typeof b&&(typeof a!=\"object\"||a==null||b==null?a==b:a.constructor==b.constructor&&(!Array.isArray(a)||a.length==b.length)&&!Object.keys(a).find(k=>!__equals(a[k],b[k]))));\n")
+	}
 	if e.hasFlag(IOFlag) {
 		e.write("const io = { log(data) { console.log(data) } }\n")
 	}
@@ -175,6 +179,8 @@ func (e *Emitter) scan(nodes []parser.Node) {
 			addFlag(SumFlag)
 		case isRefComparison(n):
 			addFlag(RefComparisonFlag)
+		case isObjectComparison(n):
+			addFlag(ObjectComparisonFlag)
 		case isIO(n):
 			addFlag(IOFlag)
 		case isPropertyPointer(n):
@@ -212,6 +218,22 @@ func isRefComparison(n parser.Node) bool {
 	}
 	_, ok = b.Left.Type().(parser.Ref)
 	return ok
+}
+
+func isObjectComparison(n parser.Node) bool {
+	b, ok := n.(*parser.BinaryExpression)
+	if !ok {
+		return false
+	}
+	if b.Operator.Kind() != parser.Equal {
+		return false
+	}
+	switch b.Left.Type().(type) {
+	case parser.List, parser.Trait, parser.TypeAlias:
+		return true
+	default:
+		return false
+	}
 }
 
 func isIO(n parser.Node) bool {
