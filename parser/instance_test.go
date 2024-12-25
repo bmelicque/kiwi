@@ -5,6 +5,51 @@ import (
 	"testing"
 )
 
+func TestParseExplicitGenericInstanciation(t *testing.T) {
+	source := "Boxed[number]{ value: 42 }"
+	parser := MakeParser(strings.NewReader(source))
+	expr := parser.parseStatement()
+	testParserErrors(t, parser, 0)
+	i, ok := expr.(*InstanceExpression)
+	if !ok {
+		t.Fatal("Expected *InstanceExpression")
+	}
+	computed, ok := i.Typing.(*ComputedAccessExpression)
+	if !ok {
+		t.Fatal("Expected *ComputedAccessExpression")
+	}
+	if id, ok := computed.Expr.(*Identifier); !ok || id.Text() != "Boxed" {
+		t.Fatal("Expected 'Boxed'")
+	}
+	if _, ok := computed.Property.Expr.(*Literal); !ok {
+		t.Fatalf("Expected *Literal, got %#v", computed.Property.Expr)
+	}
+}
+
+func TestCheckExplicitGenericInstanciation(t *testing.T) {
+	parser := MakeParser(nil)
+	parser.scope.Add("Boxed", Loc{}, Type{TypeAlias{
+		Name:   "Boxed",
+		Params: []Generic{{Name: "Type"}},
+		Ref:    Object{Members: []ObjectMember{{Name: "value", Type: Generic{Name: "Type"}}}},
+	}})
+	expr := &InstanceExpression{
+		Typing: &ComputedAccessExpression{
+			Expr:     &Identifier{Token: literal{kind: Name, value: "Boxed"}},
+			Property: &BracketedExpression{Expr: &Literal{token{kind: NumberKeyword}}},
+		},
+		Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
+			&Entry{
+				Key:   &Identifier{Token: literal{kind: Name, value: "value"}},
+				Value: &Literal{literal{kind: NumberLiteral, value: "42"}},
+			},
+		}}},
+	}
+	expr.typeCheck(parser)
+
+	testParserErrors(t, parser, 0)
+}
+
 func TestParseMultilineInstanciation(t *testing.T) {
 	source := "Type{\n"
 	source += "    key: value,\n"

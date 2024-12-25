@@ -367,12 +367,13 @@ func TestObjectTypeDefinition(t *testing.T) {
 	if _, ok := expr.Pattern.(*Identifier); !ok {
 		t.Fatalf("Expected identifier 'Type'")
 	}
-	b, ok := expr.Value.(*Block)
+	b, ok := expr.Value.(*BracedExpression)
 	if !ok {
-		t.Fatalf("Expected block, got:\n %#v", expr.Value)
+		t.Fatalf("Expected *BracedExpression, got:\n %#v", expr.Value)
 	}
-	if _, ok := b.Statements[0].(*Param); !ok {
-		t.Fatalf("Expected param, got:\n %#v", b.Statements[0])
+	elements := b.Expr.(*TupleExpression).Elements
+	if _, ok := elements[0].(*Param); !ok {
+		t.Fatalf("Expected param, got:\n %#v", elements[0])
 	}
 }
 
@@ -392,12 +393,13 @@ func TestObjectTypeDefinitionSingleLine(t *testing.T) {
 	if _, ok := expr.Pattern.(*Identifier); !ok {
 		t.Fatalf("Expected identifier 'Type'")
 	}
-	b, ok := expr.Value.(*Block)
+	b, ok := expr.Value.(*BracedExpression)
 	if !ok {
 		t.Fatalf("Expected block, got:\n %#v", expr.Value)
 	}
-	if _, ok := b.Statements[0].(*Param); !ok {
-		t.Fatalf("Expected param, got:\n %#v", b.Statements[0])
+	elements := b.Expr.(*TupleExpression).Elements
+	if _, ok := elements[0].(*Param); !ok {
+		t.Fatalf("Expected param, got:\n %#v", elements[0])
 	}
 }
 
@@ -424,6 +426,32 @@ func TestObjectTypeDefinitionWithDuplicates(t *testing.T) {
 
 	if len(parser.errors) != 2 {
 		t.Fatalf("Expected 2 parsing errors, got:\n%#v", parser.errors)
+	}
+}
+
+func TestParseGenericObjectDefinition(t *testing.T) {
+	source := "Boxed[Type] :: {\n"
+	source += "    value Type\n"
+	source += "}"
+	parser := MakeParser(strings.NewReader(source))
+	a := parser.parseAssignment()
+	a.typeCheck(parser)
+	testParserErrors(t, parser, 0)
+
+	v, ok := parser.scope.Find("Boxed")
+	if !ok {
+		t.Fatalf("Expected to find 'Boxed' in scope")
+	}
+	alias, ok := v.Typing.(Type).Value.(TypeAlias)
+	if !ok || alias.Name != "Boxed" {
+		t.Fatalf("Expected 'Boxed' type, got %v", v.Typing.Text())
+	}
+	if len(alias.Params) != 1 {
+		t.Fatal("Expected 1 param")
+	}
+	member := alias.Ref.(Object).Members[0]
+	if _, ok := member.Type.(Generic); ok {
+		t.Fatalf("Expected generic type")
 	}
 }
 

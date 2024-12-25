@@ -124,8 +124,9 @@ func (e *Emitter) emitObjectConstructorStatement(n parser.Node) {
 }
 
 func (e *Emitter) emitObjectTypeDefinition(definition *parser.Assignment) {
-	b := definition.Value.(*parser.Block)
-	if len(b.Statements) == 0 {
+	b := definition.Value.(*parser.BracedExpression)
+	elements := b.Expr.(*parser.TupleExpression).Elements
+	if len(elements) == 0 {
 		e.write("class ")
 		e.write(getTypeIdentifier(definition.Pattern))
 		e.write(" {}\n")
@@ -139,16 +140,16 @@ func (e *Emitter) emitObjectTypeDefinition(definition *parser.Assignment) {
 	e.depth++
 	e.indent()
 	e.write("constructor(")
-	max := len(b.Statements) - 1
-	for _, s := range b.Statements[:max] {
+	max := len(elements) - 1
+	for _, s := range elements[:max] {
 		e.emitObjectConstructorParam(s)
 		e.write(", ")
 	}
-	e.emitObjectConstructorParam(b.Statements[max])
+	e.emitObjectConstructorParam(elements[max])
 	e.write(") {\n")
 
 	e.depth++
-	for _, s := range b.Statements {
+	for _, s := range elements {
 		e.emitObjectConstructorStatement(s)
 	}
 	e.depth--
@@ -160,7 +161,7 @@ func (e *Emitter) emitObjectTypeDefinition(definition *parser.Assignment) {
 }
 
 func (e *Emitter) emitTypeDeclaration(definition *parser.Assignment) {
-	if _, ok := definition.Value.(*parser.Block); ok {
+	if _, ok := definition.Value.(*parser.BracedExpression); ok {
 		e.emitObjectTypeDefinition(definition)
 		return
 	}

@@ -82,9 +82,9 @@ func (p *Parser) parseAssignment() Node {
 		expr = c
 	}
 	if b, ok := init.(*Block); ok && operator.Kind() == Define {
-		validateObject(p, b)
-		reportDuplicatedFields(p, b)
-		init = b
+		braced := getValidatedObject(p, b)
+		reportDuplicatedFields(p, braced)
+		init = braced
 	}
 	return &Assignment{expr, init, operator}
 }
@@ -123,28 +123,50 @@ func isValidAssignee(expr Expression) bool {
 	return valid
 }
 
-func validateObject(p *Parser, b *Block) {
-	if len(b.Statements) == 1 {
-		s := b.Statements[0]
-		t, ok := s.(*TupleExpression)
-		if !ok {
-			b.Statements[0] = getValidatedObjectField(p, s)
-			return
-		}
-		b.Statements = make([]Node, len(t.Elements))
-		for i := range t.Elements {
-			b.Statements[i] = getValidatedObjectField(p, t.Elements[i])
-		}
-		return
+func getValidatedObject(p *Parser, b *Block) *BracedExpression {
+	if isTupleBlock(b) {
+		return getValidatedTupleObject(p, b)
+	} else {
+		return getValidatedNonTupleObject(p, b)
 	}
-	for i := range b.Statements {
-		b.Statements[i] = getValidatedObjectField(p, b.Statements[i])
+
+}
+
+// true if *Block consists of a single tuple
+func isTupleBlock(b *Block) bool {
+	if len(b.Statements) != 1 {
+		return false
+	}
+	_, ok := b.Statements[0].(*TupleExpression)
+	return ok
+}
+
+// format a *Block consisting of a single tuple into a *BracedExpression
+func getValidatedTupleObject(p *Parser, b *Block) *BracedExpression {
+	t := b.Statements[0].(*TupleExpression)
+	elements := make([]Expression, len(t.Elements))
+	for i := range t.Elements {
+		elements[i] = getValidatedObjectField(p, t.Elements[i])
+	}
+	return &BracedExpression{
+		Expr: &TupleExpression{Elements: elements},
 	}
 }
 
-func reportDuplicatedFields(p *Parser, b *Block) {
+func getValidatedNonTupleObject(p *Parser, b *Block) *BracedExpression {
+	elements := make([]Expression, len(b.Statements))
+	for i := range b.Statements {
+		elements[i] = getValidatedObjectField(p, b.Statements[i])
+	}
+	return &BracedExpression{
+		Expr: &TupleExpression{Elements: elements},
+	}
+}
+
+func reportDuplicatedFields(p *Parser, b *BracedExpression) {
+	elements := b.Expr.(*TupleExpression).Elements
 	declarations := map[string][]*Identifier{}
-	for _, s := range b.Statements {
+	for _, s := range elements {
 		var identifier *Identifier
 		switch s := s.(type) {
 		case *Param:
@@ -167,7 +189,7 @@ func reportDuplicatedFields(p *Parser, b *Block) {
 	}
 }
 
-func getValidatedObjectField(p *Parser, node Node) Node {
+func getValidatedObjectField(p *Parser, node Node) Expression {
 	switch node := node.(type) {
 	case *Param:
 		return node

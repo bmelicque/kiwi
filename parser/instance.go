@@ -50,15 +50,16 @@ func typeCheckStructInstanciation(p *Parser, i *InstanceExpression) {
 		typeCheckMapInstanciation(p, i, alias)
 		return
 	}
+	p.pushScope(NewScope(ProgramScope))
+	defer p.dropScope()
+	typeCheckTypeArgs(p, nil, alias.Params)
+
 	object, ok := alias.Ref.(Object)
 	if !ok {
 		p.error(i.Typing, ObjectTypeExpected)
 		i.typing = Unknown{}
 		return
 	}
-	p.pushScope(NewScope(ProgramScope))
-	defer p.dropScope()
-	typeCheckTypeArgs(p, nil, alias.Params)
 
 	args := i.Args.Expr.(*TupleExpression).Elements
 	formatStructEntries(p, args)

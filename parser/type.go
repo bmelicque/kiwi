@@ -27,7 +27,7 @@ func (t Type) Extends(testType ExpressionType) bool {
 	got, ok := testType.(Type)
 	return ok && t.Value.Extends(got.Value)
 }
-func (t Type) Text() string { return t.Value.Text() }
+func (t Type) Text() string { return "(" + t.Value.Text() + ")" }
 func (t Type) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	var value ExpressionType
 	if c, ok := compared.(Type); ok {
@@ -99,7 +99,7 @@ type TypeAlias struct {
 func (ta TypeAlias) Extends(t ExpressionType) bool {
 	alias, ok := t.(TypeAlias)
 	if !ok {
-		return false
+		return ta.Ref.Extends(t)
 	}
 	if alias.Name != ta.Name {
 		return false

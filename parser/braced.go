@@ -17,8 +17,26 @@ func (b *BracedExpression) typeCheck(p *Parser) {
 	b.Expr.typeCheck(p)
 }
 
-func (b *BracedExpression) Loc() Loc             { return b.loc }
-func (b *BracedExpression) Type() ExpressionType { return nil }
+func (b *BracedExpression) Loc() Loc { return b.loc }
+func (b *BracedExpression) Type() ExpressionType {
+	o := newObject()
+	b.Expr = makeTuple(b.Expr)
+	for _, element := range b.Expr.(*TupleExpression).Elements {
+		switch element := element.(type) {
+		case *Param:
+			var memberType ExpressionType
+			if t, ok := element.Complement.Type().(Type); ok {
+				memberType = t.Value
+			} else {
+				memberType = Unknown{}
+			}
+			o.addMember(element.Identifier.Text(), memberType)
+		case *Entry:
+			o.addDefault(element.Key.(*Identifier).Text(), element.Value.Type())
+		}
+	}
+	return Type{o}
+}
 func (p *Parser) parseBracedExpression() *BracedExpression {
 	if p.Peek().Kind() != LeftBrace {
 		panic("'{' expected!")

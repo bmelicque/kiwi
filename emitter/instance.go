@@ -116,6 +116,8 @@ func (e *Emitter) emitInstance(constructor parser.Expression, args *parser.Tuple
 		e.emitListInstance(c, args)
 	case *parser.PropertyAccessExpression:
 		e.emitSumInstance(c, args)
+	case *parser.ComputedAccessExpression:
+		e.emitInstance(c.Expr, args)
 	case *parser.Identifier:
 		if c.Text() == "Map" {
 			e.emitMapInstance(args)

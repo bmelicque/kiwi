@@ -204,7 +204,11 @@ func isSumDef(n parser.Node) bool {
 	if a.Operator.Kind() != parser.Define {
 		return false
 	}
-	_, isSum := a.Value.Type().(parser.Type).Value.(parser.Sum)
+	t, ok := a.Value.Type().(parser.Type)
+	if !ok {
+		return false
+	}
+	_, isSum := t.Value.(parser.Sum)
 	return isSum
 }
 
