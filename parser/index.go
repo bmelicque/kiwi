@@ -39,7 +39,7 @@ func Walk(node Node, predicate func(n Node, skip func())) {
 	}
 }
 
-func Parse(reader io.Reader) ([]Node, []ParserError) {
+func parseFile(reader io.Reader) ([]Node, []ParserError) {
 	p := MakeParser(reader)
 	statements := []Node{}
 
@@ -61,4 +61,8 @@ func Parse(reader io.Reader) ([]Node, []ParserError) {
 		statements = []Node{}
 	}
 	return statements, p.errors
+}
+
+func Parse(reader io.Reader) ([]Node, []ParserError) {
+	return parseFile(reader)
 }

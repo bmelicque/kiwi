@@ -15,6 +15,7 @@ const (
 	ExpressionExpected
 	UnexpectedExpression
 	IntegerExpected
+	StringLiteralExpected
 	IdentifierExpected
 	TypeIdentifierExpected
 	TypeParamsExpected
@@ -107,6 +108,8 @@ func (p ParserError) Text() string {
 		return "No expression expected"
 	case IntegerExpected:
 		return "Integer expected"
+	case StringLiteralExpected:
+		return "String literal expected"
 	case IdentifierExpected:
 		return "Identifier expected"
 	case TypeIdentifierExpected:

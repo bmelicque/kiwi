@@ -67,6 +67,8 @@ func (p *Parser) parseStatement() Node {
 	switch p.Peek().Kind() {
 	case BreakKeyword, ContinueKeyword, ReturnKeyword, ThrowKeyword:
 		return p.parseExit()
+	case UseKeyword:
+		return p.parseUseDirective()
 	default:
 		return p.parseAssignment()
 	}

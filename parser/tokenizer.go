@@ -33,7 +33,7 @@ const (
 	NumberKeyword   // number
 	BooleanKeyword  // boolean
 	IfKeyword       // if
-	ElseKeyword     //else
+	ElseKeyword     // else
 	MatchKeyword    // match
 	CaseKeyword     // case
 	ForKeyword      // for
@@ -46,6 +46,9 @@ const (
 	CatchKeyword    // catch
 	AsyncKeyword    // async
 	AwaitKeyword    // await
+	UseKeyword      // use
+	AsKeyword       // as
+	FromKeyword     // from
 
 	Add        // +
 	Concat     // ++
@@ -274,6 +277,12 @@ func makeToken(text string, loc Loc) Token {
 		return token{AsyncKeyword, loc}
 	case "await":
 		return token{AwaitKeyword, loc}
+	case "use":
+		return token{UseKeyword, loc}
+	case "as":
+		return token{AsKeyword, loc}
+	case "from":
+		return token{FromKeyword, loc}
 	case "+":
 		return token{Add, loc}
 	case "++":
