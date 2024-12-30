@@ -14,6 +14,9 @@ type Expression interface {
 
 func fallback(p *Parser) Expression {
 	switch p.Peek().Kind() {
+	case Dot:
+		p.Consume()
+		return parseTraitExpression(p, nil)
 	case LeftParenthesis:
 		return p.parseFunctionExpression(nil)
 	case LeftBrace:

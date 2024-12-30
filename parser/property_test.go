@@ -26,6 +26,19 @@ func TestParseTraitExpressionDuplicates(t *testing.T) {
 	testParserErrors(t, parser, 2)
 }
 
+func TestParseTraitShorthand(t *testing.T) {
+	source := ".{\n"
+	source += "    methodA() -> number\n"
+	source += "    methodB() -> number\n"
+	source += "}\n"
+	parser := MakeParser(strings.NewReader(source))
+	expr := parser.parseExpression()
+	testParserErrors(t, parser, 0)
+	if _, ok := expr.(*TraitExpression); !ok {
+		t.Fatalf("Expected *TraitExpression")
+	}
+}
+
 func TestCheckPropertyAccess(t *testing.T) {
 	parser := MakeParser(nil)
 	alias := TypeAlias{

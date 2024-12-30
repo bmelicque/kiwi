@@ -41,9 +41,9 @@ func (expr *PropertyAccessExpression) typeCheck(p *Parser) {
 
 func parsePropertyAccess(p *Parser, left Expression) Expression {
 	p.Consume() // .
-	if _, ok := left.(*ParenthesizedExpression); ok {
+	if l, ok := left.(*ParenthesizedExpression); ok {
 		if p.Peek().Kind() == LeftBrace {
-			return parseTraitExpression(p, left)
+			return parseTraitExpression(p, l)
 		}
 	}
 	prop := fallback(p)
@@ -204,14 +204,7 @@ func (t *TraitExpression) typeCheck(p *Parser) {
 	p.pushScope(NewScope(ProgramScope))
 	defer p.dropScope()
 
-	receiver := t.Receiver.Expr.(*Identifier)
-	if receiver != nil {
-		p.scope.Add(
-			receiver.Text(),
-			receiver.Loc(),
-			Generic{Name: receiver.Text()},
-		)
-	}
+	typeCheckTraitReceiver(p, t.Receiver)
 
 	for _, element := range t.Def.Expr.(*TupleExpression).Elements {
 		param, ok := element.(*Param)
@@ -228,8 +221,23 @@ func (t *TraitExpression) typeCheck(p *Parser) {
 		}
 	}
 }
+func typeCheckTraitReceiver(p *Parser, receiver *ParenthesizedExpression) {
+	// receiver is nil in case of .{} shorthand
+	if receiver == nil {
+		return
+	}
+	identifier := receiver.Expr.(*Identifier)
+	if identifier == nil {
+		return
+	}
+	p.scope.Add(
+		identifier.Text(),
+		identifier.Loc(),
+		Generic{Name: identifier.Text()},
+	)
+}
 
-func parseTraitExpression(p *Parser, left Expression) Expression {
+func parseTraitExpression(p *Parser, left *ParenthesizedExpression) Expression {
 	outer := p.allowCallExpr
 	p.allowCallExpr = false
 	block := p.parseBlock()
@@ -237,7 +245,7 @@ func parseTraitExpression(p *Parser, left Expression) Expression {
 
 	braced := getValidatedTraitMethods(p, block)
 	return &TraitExpression{
-		Receiver: left.(*ParenthesizedExpression),
+		Receiver: left,
 		Def:      braced,
 	}
 }
