@@ -83,6 +83,20 @@ func (e *Emitter) emit(node parser.Node) {
 		e.emitMatchStatement(*node)
 	case *parser.Exit:
 		e.emitExit(node)
+	case *parser.UseDirective:
+		// TODO: bundle
+		e.write("import ")
+		if node.Star {
+			e.write("* as ")
+			e.emitExpression(node.Names)
+		} else {
+			e.write("{")
+			e.emitExpression(node.Names)
+			e.write("} ")
+		}
+		e.write("from ")
+		e.emitExpression(node.Source)
+		e.write("\n")
 	case parser.Expression:
 		e.emitExpression(node)
 		e.write(";\n")

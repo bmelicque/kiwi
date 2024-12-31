@@ -30,6 +30,9 @@ func main() {
 	}
 	defer file.Close()
 
+	// TODO:
+	_, _ = parser.GetCompileOrder(source)
+
 	ast, errors := parser.Parse(file)
 	if len(errors) == 0 {
 		f, err := os.Create(output)
