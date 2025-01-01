@@ -41,9 +41,11 @@ func (p *Parser) error(node Node, kind ErrorKind, comp ...interface{}) {
 
 func MakeParser(reader io.Reader) *Parser {
 	tokenizer := NewTokenizer(reader)
+	scope := NewScope(ProgramScope)
+	scope.outer = &std
 	return &Parser{
 		tokenizer:         *tokenizer,
-		scope:             &std,
+		scope:             scope,
 		allowBraceParsing: true,
 		allowCallExpr:     true,
 	}

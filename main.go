@@ -24,16 +24,8 @@ func main() {
 	source := os.Args[1]
 	output := os.Args[2]
 
-	file, err := os.Open(source)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
+	chunks, errors := parser.Parse(source)
 
-	// TODO:
-	_, _ = parser.GetCompileOrder(source)
-
-	ast, errors := parser.Parse(file)
 	if len(errors) == 0 {
 		f, err := os.Create(output)
 		if err != nil {
@@ -41,9 +33,11 @@ func main() {
 		}
 		defer f.Close()
 
-		_, err = f.WriteString(emitter.EmitProgram(ast))
-		if err != nil {
-			log.Fatal(err)
+		for _, chunk := range chunks {
+			_, err = f.WriteString(emitter.EmitProgram(chunk))
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 		f.Sync()
 	} else {

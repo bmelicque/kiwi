@@ -85,6 +85,14 @@ func (s Scope) in(kind ScopeKind) bool {
 	return s.outer.in(kind)
 }
 
+func (s Scope) toObject() Object {
+	o := newObject()
+	for name, v := range s.variables {
+		o.addMember(name, v.Typing)
+	}
+	return o
+}
+
 // utility to create option types with different Some types
 func makeOptionType(t ExpressionType) TypeAlias {
 	alias := TypeAlias{

@@ -44,7 +44,7 @@ func Walk(node Node, predicate func(n Node, skip func())) {
 	}
 }
 
-func parseFile(reader io.Reader) ([]Node, []ParserError) {
+func ParseProgram(reader io.Reader) ([]Node, []ParserError) {
 	p := MakeParser(reader)
 	statements := []Node{}
 
@@ -66,6 +66,16 @@ func parseFile(reader io.Reader) ([]Node, []ParserError) {
 		statements = []Node{}
 	}
 	return statements, p.errors
+}
+
+func parseFile(path string) ([]Node, []ParserError) {
+	file, err := os.Open(path)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	return ParseProgram(file)
 }
 
 type File struct {
@@ -115,7 +125,7 @@ func (d *DependencyBuilder) buildDependencyTree(filePath string) *File {
 	f := d.makeFile(filePath)
 	file, err := os.Open(filePath)
 	if err != nil {
-		panic(err)
+		return nil
 	}
 	defer file.Close()
 
@@ -123,16 +133,23 @@ func (d *DependencyBuilder) buildDependencyTree(filePath string) *File {
 
 	names := parseDependencies(file)
 	files := make([]*File, len(names))
-	for i, name := range names {
+	i := 0
+	for _, name := range names {
 		name = filepath.Join(dir, name)
 		found := d.findFile(name)
 		if found != nil {
 			files[i] = found
 		} else {
-			files[i] = d.buildDependencyTree(name)
+			file := d.buildDependencyTree(name)
+			if file == nil {
+				continue
+			}
+			files[i] = file
 		}
 		files[i].NeededFor = append(files[i].NeededFor, f)
+		i++
 	}
+	files = files[0:i]
 	f.DependsOn = files
 	return f
 }
@@ -180,6 +197,14 @@ func GetCompileOrder(rootPath string) ([]*File, []*File) {
 	return d.files, d.inCycle
 }
 
-func Parse(reader io.Reader) ([]Node, []ParserError) {
-	return parseFile(reader)
+func Parse(rootPath string) ([][]Node, []ParserError) {
+	files, _ := GetCompileOrder(rootPath)
+	chunks := [][]Node{}
+	errors := []ParserError{}
+	for _, file := range files {
+		ast, errs := parseFile(file.Path)
+		chunks = append(chunks, ast)
+		errors = append(errors, errs...)
+	}
+	return chunks, errors
 }

@@ -84,19 +84,7 @@ func (e *Emitter) emit(node parser.Node) {
 	case *parser.Exit:
 		e.emitExit(node)
 	case *parser.UseDirective:
-		// TODO: bundle
-		e.write("import ")
-		if node.Star {
-			e.write("* as ")
-			e.emitExpression(node.Names)
-		} else {
-			e.write("{")
-			e.emitExpression(node.Names)
-			e.write("} ")
-		}
-		e.write("from ")
-		e.emitExpression(node.Source)
-		e.write("\n")
+		// not emitted, files are bundled together
 	case parser.Expression:
 		e.emitExpression(node)
 		e.write(";\n")
