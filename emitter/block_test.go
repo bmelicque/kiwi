@@ -12,7 +12,7 @@ func TestBlockSymbol(t *testing.T) {
 	source += "    value := 0\n"
 	source += "    ref := &value\n"
 	source += "}"
-	ast, _ := parser.ParseProgram(strings.NewReader(source))
+	ast, _, _ := parser.ParseProgram(strings.NewReader(source), "")
 	block, ok := ast[0].(*parser.Block)
 	if !ok {
 		t.Fatalf("Block expected, got %#v", ast[0])

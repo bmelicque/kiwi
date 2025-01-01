@@ -6,6 +6,7 @@ type Parser struct {
 	tokenizer
 	errors            []ParserError
 	scope             *Scope
+	filePath          string
 	writing           Node
 	multiline         bool
 	allowEmptyExpr    bool

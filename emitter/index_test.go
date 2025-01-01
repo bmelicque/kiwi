@@ -18,7 +18,7 @@ func (t testToken) Text() string           { return t.value }
 func (t testToken) Loc() parser.Loc        { return t.loc }
 
 func testEmitter(t *testing.T, source string, expected string, line int) {
-	ast, err := parser.ParseProgram(strings.NewReader(source))
+	ast, err, _ := parser.ParseProgram(strings.NewReader(source), "")
 	if len(err) > 0 {
 		t.Log("Got unexpected parser errors:\n")
 		for _, err := range err {

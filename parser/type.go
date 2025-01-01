@@ -432,6 +432,10 @@ func (o *Object) addDefault(name string, t ExpressionType) {
 	o.Defaults = append(o.Defaults, ObjectMember{name, t})
 }
 
+type Module struct {
+	Object
+}
+
 type Sum struct {
 	Members map[string]Function
 }

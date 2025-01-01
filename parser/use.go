@@ -1,5 +1,9 @@
 package parser
 
+import (
+	"path/filepath"
+)
+
 type UseDirective struct {
 	Names  Expression // *Identifier | *TupleExpression{[]*Identifier}
 	Star   bool       // is 'use * as XXX from YYY'
@@ -15,7 +19,49 @@ func (u *UseDirective) Loc() Loc {
 }
 func (u *UseDirective) getChildren() []Node { return []Node{} }
 func (u *UseDirective) typeCheck(p *Parser) {
-	// TODO:
+	module := typeCheckModule(p, u.Source)
+	if u.Star {
+		id, ok := u.Names.(*Identifier)
+		if ok {
+			declareIdentifier(p, id, module)
+		}
+	} else {
+		declareUseNames(p, module, u.Names)
+	}
+}
+func typeCheckModule(p *Parser, source Expression) ExpressionType {
+	l, ok := source.(*Literal)
+	if !ok {
+		return Unknown{}
+	}
+	path := l.Text()
+	path = path[1 : len(path)-1]
+	path = filepath.Join(filepath.Dir(p.filePath), path)
+	module, ok := filesExports[path]
+	if !ok {
+		p.error(l, CannotResolvePath)
+		return Unknown{}
+	}
+	return module
+}
+
+// 'names' should be either *Identifier or *TupleExpression{*Identifier}.
+func declareUseNames(p *Parser, module ExpressionType, names Expression) {
+	tuple := makeTuple(names)
+	for _, el := range tuple.Elements {
+		id := el.(*Identifier)
+		switch module := module.(type) {
+		case Unknown:
+			declareIdentifier(p, id, module)
+		case Module:
+			t, ok := module.get(id.Text())
+			if !ok {
+				p.error(id, NotInModule, id.Text())
+				t = Unknown{}
+			}
+			declareIdentifier(p, id, t)
+		}
+	}
 }
 
 func (p *Parser) parseUseDirective() *UseDirective {

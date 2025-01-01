@@ -85,12 +85,12 @@ func (s Scope) in(kind ScopeKind) bool {
 	return s.outer.in(kind)
 }
 
-func (s Scope) toObject() Object {
+func (s Scope) toModule() Module {
 	o := newObject()
 	for name, v := range s.variables {
 		o.addMember(name, v.Typing)
 	}
-	return o
+	return Module{o}
 }
 
 // utility to create option types with different Some types

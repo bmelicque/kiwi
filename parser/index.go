@@ -44,8 +44,9 @@ func Walk(node Node, predicate func(n Node, skip func())) {
 	}
 }
 
-func ParseProgram(reader io.Reader) ([]Node, []ParserError) {
+func ParseProgram(reader io.Reader, path string) ([]Node, []ParserError, *Scope) {
 	p := MakeParser(reader)
+	p.filePath = path
 	statements := []Node{}
 
 	for p.Peek().Kind() != EOF {
@@ -65,8 +66,10 @@ func ParseProgram(reader io.Reader) ([]Node, []ParserError) {
 	if len(p.errors) > 0 {
 		statements = []Node{}
 	}
-	return statements, p.errors
+	return statements, p.errors, p.scope
 }
+
+var filesExports = map[string]Module{}
 
 func parseFile(path string) ([]Node, []ParserError) {
 	file, err := os.Open(path)
@@ -75,7 +78,10 @@ func parseFile(path string) ([]Node, []ParserError) {
 	}
 	defer file.Close()
 
-	return ParseProgram(file)
+	ast, errors, scope := ParseProgram(file, path)
+	o := scope.toModule()
+	filesExports[path] = o
+	return ast, errors
 }
 
 type File struct {

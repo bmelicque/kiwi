@@ -7,6 +7,8 @@ type ErrorKind = uint
 const (
 	NoError ErrorKind = iota
 
+	CannotResolvePath // node should be *Literal containing path
+
 	TokenExpected
 	LeftBraceExpected
 	RightBraceExpected
@@ -79,6 +81,7 @@ const (
 	NotReferenceable
 	MismatchedTypes
 	PropertyDoesNotExist
+	NotInModule // [expected variable name]
 	TypeDoesNotImplement
 	MissingKeys
 	MissingConstructor
@@ -92,6 +95,9 @@ type ParserError struct {
 
 func (p ParserError) Text() string {
 	switch p.Kind {
+	case CannotResolvePath:
+		return fmt.Sprintf("Cannot resolve path to \"%v\"", p.Node.(*Literal).Text())
+
 	case TokenExpected:
 		expected := p.Complements[0].(Token).Text()
 		return fmt.Sprintf("'%v' expected", expected)
@@ -255,6 +261,9 @@ func (p ParserError) Text() string {
 		name := p.Complements[0]
 		// parent := p.Complements[1].(ExpressionType).Text()
 		return fmt.Sprintf("Property '%v' does not exist on this type", name)
+	case NotInModule:
+		variableName := p.Complements[0]
+		return fmt.Sprintf("Variable '%v' does not exist in this module", variableName)
 	case TypeDoesNotImplement:
 		name := p.Complements[0].(ExpressionType).Text()
 		return fmt.Sprintf("Type %v does not implement this trait", name)
