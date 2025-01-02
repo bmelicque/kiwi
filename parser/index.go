@@ -71,7 +71,7 @@ func ParseProgram(reader io.Reader, path string) ([]Node, []ParserError, *Scope)
 
 var filesExports = map[string]Module{}
 
-func parseFile(path string) ([]Node, []ParserError) {
+func ParseFile(path string) ([]Node, []ParserError) {
 	file, err := os.Open(path)
 	if err != nil {
 		panic(err)
@@ -208,7 +208,7 @@ func Parse(rootPath string) ([][]Node, []ParserError) {
 	chunks := [][]Node{}
 	errors := []ParserError{}
 	for _, file := range files {
-		ast, errs := parseFile(file.Path)
+		ast, errs := ParseFile(file.Path)
 		chunks = append(chunks, ast)
 		errors = append(errors, errs...)
 	}

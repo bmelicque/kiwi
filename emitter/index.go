@@ -84,7 +84,7 @@ func (e *Emitter) emit(node parser.Node) {
 	case *parser.Exit:
 		e.emitExit(node)
 	case *parser.UseDirective:
-		// not emitted, files are bundled together
+		e.emitUseStatement(node)
 	case parser.Expression:
 		e.emitExpression(node)
 		e.write(";\n")
