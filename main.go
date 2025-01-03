@@ -82,7 +82,7 @@ func writeChunk(chunk chunk) {
 func logErrors(errors []parser.ParserError) {
 	for _, err := range errors {
 		line := err.Node.Loc().Start.Line
-		col := err.Node.Loc().End.Col
+		col := err.Node.Loc().Start.Col
 		msg := err.Text()
 		fmt.Printf("Error at line %v, col. %v: %v\n", line, col, msg)
 	}

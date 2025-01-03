@@ -107,7 +107,7 @@ func getFormattedStructEntry(p *Parser, received Expression) *Entry {
 func reportExcessMembers(p *Parser, expected Object, received []Expression) {
 	for _, arg := range received {
 		namedArg, ok := arg.(*Entry)
-		if !ok {
+		if !ok || namedArg.Key == nil {
 			continue
 		}
 		name := namedArg.Key.(*Identifier).Text()
@@ -123,7 +123,7 @@ func reportMissingMembers(p *Parser, expected Object, received *BracedExpression
 		membersSet[member.Name] = true
 	}
 	for _, member := range received.Expr.(*TupleExpression).Elements {
-		if named, ok := member.(*Entry); ok {
+		if named, ok := member.(*Entry); ok && named.Key != nil {
 			delete(membersSet, named.Key.(*Identifier).Text())
 		}
 	}

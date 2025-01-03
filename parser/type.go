@@ -408,6 +408,7 @@ func (o Object) build(scope *Scope, compared ExpressionType) (ExpressionType, bo
 		o.Members[i] = ObjectMember{member.Name, built}
 		ok = ok && k
 	}
+	// FIXME: Defaults
 	return o, ok
 }
 
