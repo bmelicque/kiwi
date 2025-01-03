@@ -94,6 +94,7 @@ type TypeAlias struct {
 	Params  []Generic
 	Ref     ExpressionType
 	Methods map[string]ExpressionType
+	from    string // path to origin file
 }
 
 func (ta TypeAlias) Extends(t ExpressionType) bool {

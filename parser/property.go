@@ -117,6 +117,9 @@ func getSumTypeConstructor(t Type, name string) ExpressionType {
 
 // check accessing an object's property or method: object.property
 func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
+	if reportPrivateFromOtherModule(p, expr) {
+		return
+	}
 	property, ok := expr.Property.(*Identifier)
 	if expr.Property != nil && !ok {
 		expr.typing = Unknown{}
@@ -137,6 +140,25 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 		p.error(expr.Property, PropertyDoesNotExist, name)
 		expr.typing = Unknown{}
 	}
+}
+func reportPrivateFromOtherModule(p *Parser, expr *PropertyAccessExpression) bool {
+	i, ok := expr.Property.(*Identifier)
+	if !ok {
+		return false
+	}
+	t := expr.Expr.Type()
+	if a, ok := t.(Type); ok {
+		t = a.Value
+	}
+	alias, ok := t.(TypeAlias)
+	if !ok {
+		return false
+	}
+	if i.IsPrivate() && alias.from != p.filePath {
+		p.error(expr, PrivateProperty, i.Text(), alias.from)
+		return true
+	}
+	return false
 }
 
 // Get property of given name in aliased object.

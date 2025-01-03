@@ -388,6 +388,7 @@ func typeCheckGenericTypeDefinition(p *Parser, a *Assignment) {
 		Name:   identifier.Text(),
 		Params: pattern.Property.getGenerics(),
 		Ref:    getInitType(p, a.Value),
+		from:   p.filePath,
 	}}
 	p.scope.Add(identifier.Text(), pattern.Loc(), t)
 }
@@ -397,6 +398,7 @@ func typeCheckTypeDefinition(p *Parser, a *Assignment) {
 	t := Type{TypeAlias{
 		Name: identifier.Text(),
 		Ref:  getInitType(p, a.Value),
+		from: p.filePath,
 	}}
 	declareIdentifier(p, identifier, t)
 }
