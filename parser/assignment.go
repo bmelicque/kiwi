@@ -302,6 +302,7 @@ func typeCheckDeclaration(p *Parser, a *Assignment) {
 		declareIdentifier(p, pattern, a.Value.Type())
 	case *TupleExpression:
 		declareTuple(p, pattern, a.Value.Type())
+	// FIXME: next should be InstanceExpression
 	case *CallExpression:
 		if !p.conditionalDeclaration {
 			p.error(a.Pattern, InvalidPattern)

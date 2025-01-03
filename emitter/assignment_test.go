@@ -24,8 +24,8 @@ func TestInderectAssignment(t *testing.T) {
 }
 
 func TestObjectDefinition(t *testing.T) {
-	source := "BoxedNumber :: { value number }"
-	expected := "class BoxedNumber {\n"
+	source := "_BoxedNumber :: { value number }"
+	expected := "class _BoxedNumber {\n"
 	expected += "    constructor(value) {\n"
 	expected += "        this.value = value;\n"
 	expected += "    }\n"
@@ -34,8 +34,8 @@ func TestObjectDefinition(t *testing.T) {
 }
 
 func TestObjectDefinitionDefault(t *testing.T) {
-	source := "BoxedNumber :: { value: 0 }"
-	expected := "class BoxedNumber {\n"
+	source := "_BoxedNumber :: { value: 0 }"
+	expected := "class _BoxedNumber {\n"
 	expected += "    constructor(value = 0) {\n"
 	expected += "        this.value = value;\n"
 	expected += "    }\n"
@@ -44,8 +44,8 @@ func TestObjectDefinitionDefault(t *testing.T) {
 }
 
 func TestGenericObjectDefintion(t *testing.T) {
-	source := "Boxed[Type] :: { value Type }"
-	expected := "class Boxed {\n"
+	source := "_Boxed[Type] :: { value Type }"
+	expected := "class _Boxed {\n"
 	expected += "    constructor(value) {\n"
 	expected += "        this.value = value;\n"
 	expected += "    }\n"

@@ -88,7 +88,9 @@ func (s Scope) in(kind ScopeKind) bool {
 func (s Scope) toModule() Module {
 	o := newObject()
 	for name, v := range s.variables {
-		o.addMember(name, v.Typing)
+		if name[0] != '_' {
+			o.addMember(name, v.Typing)
+		}
 	}
 	return Module{o}
 }

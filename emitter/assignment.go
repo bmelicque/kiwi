@@ -2,7 +2,6 @@ package emitter
 
 import (
 	"fmt"
-	"unicode"
 
 	"github.com/bmelicque/test-parser/parser"
 )
@@ -81,8 +80,7 @@ func (e *Emitter) emitAssignment(a *parser.Assignment) {
 		parser.LogicalOrAssign:
 		emitAssign(e, a)
 	case parser.Declare:
-		e.write("let ")
-		emitAssign(e, a)
+		e.emitDeclaration(a)
 	case parser.Define:
 		if isTypePattern(a.Pattern) {
 			e.emitTypeDeclaration(a)
@@ -93,11 +91,21 @@ func (e *Emitter) emitAssignment(a *parser.Assignment) {
 			return
 		}
 
+		if needsExport(a.Pattern) {
+			e.write("export ")
+		}
 		e.write("const ")
 		e.emitExpression(a.Pattern)
 		e.write(" = ")
 		e.emitExpression(a.Value)
 	}
+}
+func (e *Emitter) emitDeclaration(a *parser.Assignment) {
+	if needsExport(a.Pattern) {
+		e.write("export ")
+	}
+	e.write("let ")
+	emitAssign(e, a)
 }
 
 func (e *Emitter) emitObjectConstructorParam(n parser.Node) {
@@ -124,6 +132,9 @@ func (e *Emitter) emitObjectConstructorStatement(n parser.Node) {
 }
 
 func (e *Emitter) emitObjectTypeDefinition(definition *parser.Assignment) {
+	if needsExport(definition.Pattern) {
+		e.write("export ")
+	}
 	b := definition.Value.(*parser.BracedExpression)
 	elements := b.Expr.(*parser.TupleExpression).Elements
 	if len(elements) == 0 {
@@ -169,6 +180,9 @@ func (e *Emitter) emitTypeDeclaration(definition *parser.Assignment) {
 	case parser.Trait:
 		return
 	case parser.Sum:
+		if needsExport(definition.Pattern) {
+			e.write("export ")
+		}
 		e.write("class ")
 		e.write(getTypeIdentifier(definition.Pattern))
 		e.write(" extends _Sum {}\n")
@@ -213,7 +227,7 @@ func isTypePattern(expr parser.Expression) bool {
 	if !ok {
 		return false
 	}
-	return unicode.IsUpper(rune(identifier.Token.Text()[0]))
+	return identifier.IsType()
 }
 func getTypeIdentifier(expr parser.Node) string {
 	c, ok := expr.(*parser.ComputedAccessExpression)
@@ -222,4 +236,22 @@ func getTypeIdentifier(expr parser.Node) string {
 	}
 	identifier := expr.(*parser.Identifier)
 	return identifier.Text()
+}
+
+func needsExport(pattern parser.Expression) bool {
+	switch pattern := pattern.(type) {
+	case *parser.Identifier:
+		return !pattern.IsPrivate()
+	case *parser.TupleExpression:
+		for _, el := range pattern.Elements {
+			if needsExport(el) {
+				return true
+			}
+		}
+		return false
+	case *parser.ComputedAccessExpression:
+		return needsExport(pattern.Expr)
+	default:
+		panic("Case not handled!")
+	}
 }

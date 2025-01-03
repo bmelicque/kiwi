@@ -181,9 +181,9 @@ var blank = regexp.MustCompile(`^[\t\f\r ]+`)
 var newLine = regexp.MustCompile(`^\s+`)
 var number = regexp.MustCompile(`^\d+`)
 var str = regexp.MustCompile(`^"(.*?)[^\\]"`)
-var word = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9]*`)
+var word = regexp.MustCompile(`^[_a-zA-Z][a-zA-Z0-9]*`)
 var operator = regexp.MustCompile(`^(&&=|\|\|=|\+=|-=|\*=|/=|%=|\+\+?|->?|\*\*?|/|%|::|:=|\.\.=?|=>|<=?|>=?|={1,2}|!=?|\|{1,2}|\?|&&?)`)
-var punctuation = regexp.MustCompile(`^(\[|\]|,|:|\(|\)|\{|\}|_|\.)`)
+var punctuation = regexp.MustCompile(`^(\[|\]|,|:|\(|\)|\{|\}|\.)`)
 
 func split(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	switch {
@@ -239,8 +239,6 @@ func (t *tokenizer) updateCursor(token string) {
 
 func makeToken(text string, loc Loc) Token {
 	switch text {
-	case "_":
-		return literal{Name, text, loc}
 	case "true", "false":
 		return literal{BooleanLiteral, text, loc}
 	case "string":

@@ -43,8 +43,22 @@ func (i *Identifier) getChildren() []Node {
 	return []Node{}
 }
 
+func (i *Identifier) IsPrivate() bool {
+	return i.Text()[0] == '_'
+}
 func (i *Identifier) IsType() bool {
-	return unicode.IsUpper(rune(i.Token.Text()[0]))
+	text := i.Text()
+	var firstLetter rune
+	if text[0] == '_' {
+		if len(text) == 1 {
+			return false
+		}
+		firstLetter = rune(text[1])
+	} else {
+		firstLetter = rune(text[0])
+	}
+
+	return unicode.IsUpper(firstLetter)
 }
 
 func (i *Identifier) typeCheck(p *Parser) {
