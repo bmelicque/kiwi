@@ -402,15 +402,24 @@ func (o Object) Text() string {
 }
 func (o Object) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	ok := true
+	var k bool
 	for i, member := range o.Members {
-		var k bool
-		// FIXME: is compared an object?
-		built, k := member.Type.build(scope, compared)
-		o.Members[i] = ObjectMember{member.Name, built}
+		o.Members[i], k = buildObjectMember(scope, member, compared)
 		ok = ok && k
 	}
-	// FIXME: Defaults
+	for i, member := range o.Defaults {
+		o.Defaults[i], k = buildObjectMember(scope, member, compared)
+		ok = ok && k
+	}
 	return o, ok
+}
+func buildObjectMember(scope *Scope, member ObjectMember, compared ExpressionType) (ObjectMember, bool) {
+	var comparedMember ExpressionType
+	if o, ok := compared.(Object); ok {
+		comparedMember, _ = o.get(member.Name)
+	}
+	built, ok := member.Type.build(scope, comparedMember)
+	return ObjectMember{member.Name, built}, ok
 }
 
 func (o Object) get(name string) (ExpressionType, bool) {
