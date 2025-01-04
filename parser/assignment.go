@@ -407,42 +407,12 @@ func getInitType(p *Parser, expr Expression) ExpressionType {
 	if expr == nil {
 		return Unknown{}
 	}
-	if b, ok := expr.(*Block); ok {
-		return getObjectDefinedType(p, b)
-	}
 	t, ok := expr.Type().(Type)
 	if !ok {
 		p.error(expr, TypeExpected)
 		return Unknown{}
 	}
 	return t.Value
-}
-
-func getObjectDefinedType(p *Parser, b *Block) ExpressionType {
-	o := newObject()
-	for _, s := range b.Statements {
-		switch s := s.(type) {
-		case *Param:
-			key := s.Identifier.Text()
-			t, ok := s.Complement.Type().(Type)
-			if !ok {
-				p.error(s.Complement, TypeExpected)
-				o.addMember(key, Unknown{})
-				continue
-			}
-			if len(o.Defaults) > 0 {
-				p.error(s, MandatoryAfterOptional)
-			}
-			o.addMember(key, t.Value)
-		case *Entry:
-			key := s.Key.(*Identifier).Text()
-			if _, ok := s.Value.Type().(Type); ok {
-				p.error(s.Value, ValueExpected)
-			}
-			o.addDefault(key, s.Value.Type())
-		}
-	}
-	return o
 }
 
 func typeCheckFunctionDefinition(p *Parser, a *Assignment) {

@@ -15,12 +15,26 @@ func (b *BracedExpression) getChildren() []Node {
 
 func (b *BracedExpression) typeCheck(p *Parser) {
 	b.Expr.typeCheck(p)
+	b.Expr = makeTuple(b.Expr)
+	var foundDefault bool
+	for _, element := range b.Expr.(*TupleExpression).Elements {
+		switch element := element.(type) {
+		case *Param:
+			if element.Identifier.IsPrivate() {
+				p.error(element, MissingDefault)
+			}
+			if foundDefault {
+				p.error(element, MandatoryAfterOptional)
+			}
+		case *Entry:
+			foundDefault = true
+		}
+	}
 }
 
 func (b *BracedExpression) Loc() Loc { return b.loc }
 func (b *BracedExpression) Type() ExpressionType {
 	o := newObject()
-	b.Expr = makeTuple(b.Expr)
 	for _, element := range b.Expr.(*TupleExpression).Elements {
 		switch element := element.(type) {
 		case *Param:
@@ -30,7 +44,13 @@ func (b *BracedExpression) Type() ExpressionType {
 			} else {
 				memberType = Unknown{}
 			}
-			o.addMember(element.Identifier.Text(), memberType)
+			if element.Identifier.IsPrivate() {
+				// This case is reported as an error in the type-check phase.
+				// However, to ensure non malfunction during import, this next line is necessary.
+				o.addDefault(element.Identifier.Text(), memberType)
+			} else {
+				o.addMember(element.Identifier.Text(), memberType)
+			}
 		case *Entry:
 			o.addDefault(element.Key.(*Identifier).Text(), element.Value.Type())
 		}

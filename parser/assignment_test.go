@@ -459,7 +459,7 @@ func TestCheckObjectTypeDefinition(t *testing.T) {
 	parser := MakeParser(nil)
 	declaration := &Assignment{
 		Pattern: &Identifier{Token: literal{kind: Name, value: "Type"}},
-		Value: &Block{Statements: []Node{
+		Value: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
 			&Param{
 				Identifier: &Identifier{Token: literal{kind: Name, value: "key"}},
 				Complement: &Literal{token{kind: NumberKeyword}},
@@ -475,7 +475,7 @@ func TestCheckObjectTypeDefinition(t *testing.T) {
 				Key:   &Identifier{Token: literal{kind: Name, value: "default"}},
 				Value: &Literal{literal{kind: NumberLiteral, value: "0"}},
 			},
-		}},
+		}}},
 		Operator: token{kind: Define},
 	}
 	declaration.typeCheck(parser)
@@ -507,7 +507,7 @@ func TestCheckObjectTypeDefinitionBadOrder(t *testing.T) {
 	parser := MakeParser(nil)
 	declaration := &Assignment{
 		Pattern: &Identifier{Token: literal{kind: Name, value: "Type"}},
-		Value: &Block{Statements: []Node{
+		Value: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
 			&Entry{
 				Key:   &Identifier{Token: literal{kind: Name, value: "default"}},
 				Value: &Literal{literal{kind: NumberLiteral, value: "0"}},
@@ -516,7 +516,7 @@ func TestCheckObjectTypeDefinitionBadOrder(t *testing.T) {
 				Identifier: &Identifier{Token: literal{kind: Name, value: "key"}},
 				Complement: &Literal{token{kind: NumberKeyword}},
 			},
-		}},
+		}}},
 		Operator: token{kind: Define},
 	}
 	declaration.typeCheck(parser)
@@ -564,12 +564,12 @@ func TestCheckGenericTypeDefinition(t *testing.T) {
 				&Param{Identifier: &Identifier{Token: literal{kind: Name, value: "Type"}}},
 			}}},
 		},
-		Value: &Block{Statements: []Node{
+		Value: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
 			&Param{
 				Identifier: &Identifier{Token: literal{kind: Name, value: "value"}},
 				Complement: &Identifier{Token: literal{kind: Name, value: "Type"}},
 			},
-		}},
+		}}},
 		Operator: token{kind: Define},
 	}
 	declaration.typeCheck(parser)
