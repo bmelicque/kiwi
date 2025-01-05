@@ -113,9 +113,9 @@ func TestCheckIfPattern(t *testing.T) {
 	// if Some(s) := option { s } else { 0 }
 	expr := &IfExpression{
 		Condition: &Assignment{
-			Pattern: &CallExpression{
-				Callee: &Identifier{Token: literal{kind: Name, value: "Some"}},
-				Args: &ParenthesizedExpression{
+			Pattern: &InstanceExpression{
+				Typing: &Identifier{Token: literal{kind: Name, value: "Some"}},
+				Args: &BracedExpression{
 					Expr: &Identifier{Token: literal{kind: Name, value: "s"}},
 				},
 			},
