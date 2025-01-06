@@ -447,6 +447,9 @@ func (o Object) getOwned(name string) (ExpressionType, bool) {
 	return nil, false
 }
 
+func (o *Object) addEmbedded(name string, t ExpressionType) {
+	o.Embedded = append(o.Embedded, ObjectMember{name, t})
+}
 func (o *Object) addMember(name string, t ExpressionType) {
 	o.Members = append(o.Members, ObjectMember{name, t})
 }

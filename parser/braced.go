@@ -17,8 +17,12 @@ func (b *BracedExpression) typeCheck(p *Parser) {
 	b.Expr.typeCheck(p)
 	b.Expr = makeTuple(b.Expr)
 	var foundDefault bool
-	for _, element := range b.Expr.(*TupleExpression).Elements {
+	for i, element := range b.Expr.(*TupleExpression).Elements {
 		switch element := element.(type) {
+		case *Identifier:
+			if !element.IsType() {
+				p.error(element, TypeExpected)
+			}
 		case *Param:
 			if element.Identifier.IsPrivate() {
 				p.error(element, MissingDefault)
@@ -28,6 +32,9 @@ func (b *BracedExpression) typeCheck(p *Parser) {
 			}
 		case *Entry:
 			foundDefault = true
+		default:
+			p.error(element, InvalidPattern)
+			b.Expr.(*TupleExpression).Elements[i] = nil
 		}
 	}
 }
@@ -37,6 +44,10 @@ func (b *BracedExpression) Type() ExpressionType {
 	o := newObject()
 	for _, element := range b.Expr.(*TupleExpression).Elements {
 		switch element := element.(type) {
+		case *Identifier:
+			if element.IsType() {
+				o.addEmbedded(element.Text(), element.typing.(Type).Value)
+			}
 		case *Param:
 			var memberType ExpressionType
 			if t, ok := element.Complement.Type().(Type); ok {
