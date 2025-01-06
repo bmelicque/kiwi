@@ -110,6 +110,8 @@ func (e *Emitter) emitDeclaration(a *parser.Assignment) {
 
 func (e *Emitter) emitObjectConstructorParam(n parser.Node) {
 	switch n := n.(type) {
+	case *parser.Identifier:
+		e.emitIdentifier(n)
 	case *parser.Param:
 		e.emitIdentifier(n.Identifier)
 	case *parser.Entry:
@@ -122,6 +124,10 @@ func (e *Emitter) emitObjectConstructorParam(n parser.Node) {
 func (e *Emitter) emitObjectConstructorStatement(n parser.Node) {
 	var name string
 	switch n := n.(type) {
+	case *parser.Identifier:
+		// parser ensures it is a type identifier,
+		// which does not collide with JS reserved names
+		name = n.Text()
 	case *parser.Param:
 		name = getSanitizedName(n.Identifier.Text())
 	case *parser.Entry:
