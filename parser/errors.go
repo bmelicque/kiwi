@@ -82,8 +82,9 @@ const (
 	NotReferenceable
 	MismatchedTypes
 	PropertyDoesNotExist
-	NotInModule     // [expected variable name]
-	PrivateProperty // [property name, path to origin file]
+	MultipleEmbeddedProperties // [name]
+	NotInModule                // [expected variable name]
+	PrivateProperty            // [property name, path to origin file]
 	TypeDoesNotImplement
 	MissingKeys
 	MissingConstructor
@@ -265,6 +266,10 @@ func (p ParserError) Text() string {
 		name := p.Complements[0]
 		// parent := p.Complements[1].(ExpressionType).Text()
 		return fmt.Sprintf("Property '%v' does not exist on this type", name)
+	case MultipleEmbeddedProperties:
+		name := p.Complements[0]
+		// parent := p.Complements[1].(ExpressionType).Text()
+		return fmt.Sprintf("Found several embedded properties with name '%v', consider fully qualifying the property", name)
 	case NotInModule:
 		variableName := p.Complements[0]
 		return fmt.Sprintf("Variable '%v' does not exist in this module", variableName)

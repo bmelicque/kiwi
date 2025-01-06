@@ -132,7 +132,16 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 
 	switch t := deref(expr.Expr.Type()).(type) {
 	case TypeAlias:
-		expr.typing = getAliasProperty(t, name)
+		typing := getCheckedAliasProperty(t, name)
+		if len(typing) == 1 {
+			expr.typing = typing[0]
+		} else if len(typing) > 1 {
+			p.error(expr.Property, MultipleEmbeddedProperties, name)
+			expr.typing = Unknown{}
+		} else {
+			p.error(expr.Property, PropertyDoesNotExist, name)
+			expr.typing = Unknown{}
+		}
 	case List:
 		expr.typing = getListMethod(t, name)
 	}
@@ -161,9 +170,58 @@ func reportPrivateFromOtherModule(p *Parser, expr *PropertyAccessExpression) boo
 	return false
 }
 
+func getCheckedAliasProperty(t TypeAlias, name string) []ExpressionType {
+	owned := getAliasOwnedProperty(t, name)
+	if owned != nil {
+		return []ExpressionType{owned}
+	}
+	o, ok := t.Ref.(Object)
+	if !ok {
+		return nil
+	}
+	shallow := o.Embedded
+	for {
+		types, deep := findShallowlyEmbedded(shallow, name)
+		if len(types) > 0 {
+			return types
+		}
+		if len(deep) == 0 {
+			return nil
+		}
+		shallow = deep
+	}
+}
+
+// returns [found types, deeper layer of member]
+func findShallowlyEmbedded(members []ObjectMember, name string) ([]ExpressionType, []ObjectMember) {
+	var found bool
+	types := []ExpressionType{}
+	deep := []ObjectMember{}
+	for _, embedded := range members {
+		if embedded.Name == name {
+			types = append(types, embedded.Type)
+			found = true
+			continue
+		}
+		if found {
+			continue
+		}
+		alias, ok := embedded.Type.(TypeAlias)
+		if !ok {
+			continue
+		}
+		o, ok := alias.Ref.(Object)
+		if !ok {
+			continue
+		}
+		deep = append(deep, o.Embedded...)
+	}
+	return types, deep
+}
+
 // Get property of given name in aliased object.
 // Also checks in alias's methods.
-func getAliasProperty(t TypeAlias, name string) ExpressionType {
+func getAliasOwnedProperty(t TypeAlias, name string) ExpressionType {
 	if method, ok := t.Methods[name]; ok {
 		return method
 	}
@@ -171,7 +229,7 @@ func getAliasProperty(t TypeAlias, name string) ExpressionType {
 	if !ok {
 		return nil
 	}
-	res, _ := object.get(name)
+	res, _ := object.getOwned(name)
 	return res
 }
 

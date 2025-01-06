@@ -69,7 +69,7 @@ func typeCheckStructInstanciation(p *Parser, i *InstanceExpression) {
 		if entry.Key != nil {
 			name = entry.Key.(*Identifier).Text()
 		}
-		expected, ok := object.get(name)
+		expected, ok := object.getOwned(name)
 		if ok && entry.Value != nil && !expected.Extends(entry.Value.Type()) {
 			p.error(arg, CannotAssignType, expected, entry.Value.Type())
 		}
@@ -111,7 +111,7 @@ func reportExcessMembers(p *Parser, expected Object, received []Expression) {
 			continue
 		}
 		name := namedArg.Key.(*Identifier).Text()
-		if _, ok := expected.get(name); ok {
+		if _, ok := expected.getOwned(name); ok {
 			continue
 		}
 		p.error(arg, PropertyDoesNotExist, name)

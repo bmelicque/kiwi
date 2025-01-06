@@ -54,7 +54,7 @@ func declareUseNames(p *Parser, module ExpressionType, names Expression) {
 		case Unknown:
 			declareIdentifier(p, id, module)
 		case Module:
-			t, ok := module.get(id.Text())
+			t, ok := module.getOwned(id.Text())
 			if !ok {
 				p.error(id, NotInModule, id.Text())
 				t = Unknown{}

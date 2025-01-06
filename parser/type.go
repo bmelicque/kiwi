@@ -381,12 +381,14 @@ type ObjectMember struct {
 }
 
 type Object struct {
+	Embedded []ObjectMember
 	Members  []ObjectMember
 	Defaults []ObjectMember
 }
 
 func newObject() Object {
 	return Object{
+		Embedded: []ObjectMember{},
 		Members:  []ObjectMember{},
 		Defaults: []ObjectMember{},
 	}
@@ -403,6 +405,10 @@ func (o Object) Text() string {
 func (o Object) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	ok := true
 	var k bool
+	for i, member := range o.Embedded {
+		o.Embedded[i], k = buildObjectMember(scope, member, compared)
+		ok = ok && k
+	}
 	for i, member := range o.Members {
 		o.Members[i], k = buildObjectMember(scope, member, compared)
 		ok = ok && k
@@ -416,13 +422,18 @@ func (o Object) build(scope *Scope, compared ExpressionType) (ExpressionType, bo
 func buildObjectMember(scope *Scope, member ObjectMember, compared ExpressionType) (ObjectMember, bool) {
 	var comparedMember ExpressionType
 	if o, ok := compared.(Object); ok {
-		comparedMember, _ = o.get(member.Name)
+		comparedMember, _ = o.getOwned(member.Name)
 	}
 	built, ok := member.Type.build(scope, comparedMember)
 	return ObjectMember{member.Name, built}, ok
 }
 
-func (o Object) get(name string) (ExpressionType, bool) {
+func (o Object) getOwned(name string) (ExpressionType, bool) {
+	for _, member := range o.Embedded {
+		if member.Name == name {
+			return member.Type, true
+		}
+	}
 	for _, member := range o.Members {
 		if member.Name == name {
 			return member.Type, true
