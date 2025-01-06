@@ -119,6 +119,9 @@ func reportExcessMembers(p *Parser, expected Object, received []Expression) {
 }
 func reportMissingMembers(p *Parser, expected Object, received *BracedExpression) {
 	membersSet := map[string]bool{}
+	for _, member := range expected.Embedded {
+		membersSet[member.Name] = true
+	}
 	for _, member := range expected.Members {
 		membersSet[member.Name] = true
 	}
