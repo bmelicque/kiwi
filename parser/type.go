@@ -319,6 +319,15 @@ type Function struct {
 	Async      bool // true if the function can be called with 'async'
 }
 
+// returns a function equivalent to () => {}
+func newFunction() Function {
+	return Function{
+		TypeParams: []Generic{},
+		Params:     &Tuple{[]ExpressionType{}},
+		Returned:   Nil{},
+	}
+}
+
 func (f Function) arity() int {
 	if f.Params == nil {
 		return 0

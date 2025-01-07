@@ -36,8 +36,13 @@ func typeCheckModule(p *Parser, source Expression) ExpressionType {
 	}
 	path := l.Text()
 	path = path[1 : len(path)-1]
-	path = filepath.Join(filepath.Dir(p.filePath), path)
-	module, ok := filesExports[path]
+	var module Module
+	if isLocalPath(path) {
+		path = filepath.Join(filepath.Dir(p.filePath), path)
+		module, ok = filesExports[path]
+	} else {
+		module, ok = getLib(path)
+	}
 	if !ok {
 		p.error(l, CannotResolvePath)
 		return Unknown{}
@@ -69,6 +74,7 @@ func (p *Parser) parseUseDirective() *UseDirective {
 	star := false
 	if p.Peek().Kind() == Mul {
 		p.Consume()
+		star = true
 		if p.Peek().Kind() != AsKeyword {
 			recover(p, AsKeyword)
 		} else {

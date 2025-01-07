@@ -143,6 +143,8 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 			p.error(expr.Property, PropertyDoesNotExist, name)
 			expr.typing = Unknown{}
 		}
+	case Module:
+		expr.typing, _ = t.getOwned(name)
 	case List:
 		expr.typing = getListMethod(t, name)
 	}

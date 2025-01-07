@@ -182,7 +182,12 @@ func parseDependencies(reader io.Reader) []string {
 			continue
 		}
 		source := u.Source.Text()
-		files = append(files, source[1:len(source)-1]) // remove quotation marks
+		source = source[1 : len(source)-1] // remove quotation marks
+		// sources like "io" are std.
+		// if referring to a file in same dir, use "./io" instead.
+		if isLocalPath(source) {
+			files = append(files, source)
+		}
 		next := p.Peek().Kind()
 		if next == EOL {
 			p.DiscardLineBreaks()

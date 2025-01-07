@@ -100,7 +100,7 @@ type ParserError struct {
 func (p ParserError) Text() string {
 	switch p.Kind {
 	case CannotResolvePath:
-		return fmt.Sprintf("Cannot resolve path to \"%v\"", p.Node.(*Literal).Text())
+		return fmt.Sprintf("Cannot resolve path to %v", p.Node.(*Literal).Text())
 
 	case TokenExpected:
 		expected := p.Complements[0].(Token).Text()
