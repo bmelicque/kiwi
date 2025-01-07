@@ -93,7 +93,7 @@ func getReferencedIdentifier(expr Expression) *Identifier {
 
 // local file paths are expected to start with either "/", "./" or "../".
 // paths that start with a letter are reserved for std and other libs.
-func isLocalPath(path string) bool {
+func IsLocalPath(path string) bool {
 	for len(path) > 0 && path[0] == '.' {
 		path = path[1:]
 	}

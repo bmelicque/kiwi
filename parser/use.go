@@ -37,7 +37,7 @@ func typeCheckModule(p *Parser, source Expression) ExpressionType {
 	path := l.Text()
 	path = path[1 : len(path)-1]
 	var module Module
-	if isLocalPath(path) {
+	if IsLocalPath(path) {
 		path = filepath.Join(filepath.Dir(p.filePath), path)
 		module, ok = filesExports[path]
 	} else {

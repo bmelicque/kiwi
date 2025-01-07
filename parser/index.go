@@ -185,7 +185,7 @@ func parseDependencies(reader io.Reader) []string {
 		source = source[1 : len(source)-1] // remove quotation marks
 		// sources like "io" are std.
 		// if referring to a file in same dir, use "./io" instead.
-		if isLocalPath(source) {
+		if IsLocalPath(source) {
 			files = append(files, source)
 		}
 		next := p.Peek().Kind()
