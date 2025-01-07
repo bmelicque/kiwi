@@ -380,6 +380,20 @@ type ObjectMember struct {
 	Type ExpressionType
 }
 
+func findMemberDuplicates(members []ObjectMember) []string {
+	names := map[string]int{}
+	for _, member := range members {
+		names[member.Name] += 1
+	}
+	duplicates := []string{}
+	for name, count := range names {
+		if count > 1 {
+			duplicates = append(duplicates, name)
+		}
+	}
+	return duplicates
+}
+
 type Object struct {
 	Embedded []ObjectMember
 	Members  []ObjectMember
@@ -455,6 +469,14 @@ func (o *Object) addMember(name string, t ExpressionType) {
 }
 func (o *Object) addDefault(name string, t ExpressionType) {
 	o.Defaults = append(o.Defaults, ObjectMember{name, t})
+}
+func (o Object) flatten() []ObjectMember {
+	members := []ObjectMember{}
+	for _, e := range o.Embedded {
+		o := e.Type.(TypeAlias).Ref.(Object)
+		members = append(members, o.flatten()...)
+	}
+	return append(members, o.Members...)
 }
 
 type Module struct {

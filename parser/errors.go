@@ -20,6 +20,7 @@ const (
 	StringLiteralExpected
 	IdentifierExpected
 	TypeIdentifierExpected
+	ValueIdentifierExpected
 	TypeParamsExpected
 	RangeExpected
 	FieldExpected
@@ -36,7 +37,7 @@ const (
 	IllegalResult
 
 	ReservedName
-	DuplicateIdentifier
+	DuplicateIdentifier // [name]
 
 	InvalidPattern
 	InvalidTypeForPattern
@@ -123,6 +124,8 @@ func (p ParserError) Text() string {
 		return "Identifier expected"
 	case TypeIdentifierExpected:
 		return "Type identifier expected"
+	case ValueIdentifierExpected:
+		return "Value identifier expected"
 	case TypeParamsExpected:
 		return "Type params expected"
 	case RangeExpected:

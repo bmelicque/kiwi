@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"slices"
 	"strconv"
 )
 
@@ -260,6 +261,7 @@ func getListMethod(l List, name string) ExpressionType {
 type TraitExpression struct {
 	Receiver *ParenthesizedExpression // Receiver.Expr is an Identifier
 	Def      *BracedExpression        // contains *TupleExpression
+	typing   ExpressionType
 }
 
 func (t *TraitExpression) getChildren() []Node {
@@ -269,36 +271,29 @@ func (t *TraitExpression) getChildren() []Node {
 func (t *TraitExpression) Loc() Loc {
 	return Loc{t.Receiver.loc.Start, t.Def.loc.End}
 }
-func (t *TraitExpression) Type() ExpressionType {
-	members := t.Def.Type().(Type).Value.(Object).Members
-	trait := map[string]ExpressionType{}
-	for _, member := range members {
-		trait[member.Name] = member.Type
-	}
-	return Trait{
-		Self:    Generic{Name: t.Receiver.Expr.(*Identifier).Text()},
-		Members: trait,
-	}
-}
+func (t *TraitExpression) Type() ExpressionType { return t.typing }
 func (t *TraitExpression) typeCheck(p *Parser) {
 	p.pushScope(NewScope(ProgramScope))
 	defer p.dropScope()
 
 	typeCheckTraitReceiver(p, t.Receiver)
 
-	for _, element := range t.Def.Expr.(*TupleExpression).Elements {
-		param, ok := element.(*Param)
-		if !ok {
-			continue
+	// parsing makes sure all elements inside braces{} is a valid,
+	// either a type identifier, or a &Param{identifier, function type}
+	members := t.Def.Type().(Type).Value.(Object).flatten()
+	duplicates := findMemberDuplicates(members)
+	for _, duplicate := range duplicates {
+		p.error(t, DuplicateIdentifier, duplicate)
+	}
+	trait := map[string]ExpressionType{}
+	for _, member := range members {
+		if !slices.Contains(duplicates, member.Name) {
+			trait[member.Name] = member.Type
 		}
-		typing, ok := param.Complement.Type().(Type)
-		if !ok {
-			p.error(param.Complement, FunctionTypeExpected)
-			continue
-		}
-		if _, ok := typing.Value.(Function); !ok {
-			p.error(param.Complement, FunctionTypeExpected)
-		}
+	}
+	t.typing = Trait{
+		Self:    Generic{Name: t.Receiver.Expr.(*Identifier).Text()},
+		Members: trait,
 	}
 }
 func typeCheckTraitReceiver(p *Parser, receiver *ParenthesizedExpression) {
@@ -332,13 +327,43 @@ func parseTraitExpression(p *Parser, left *ParenthesizedExpression) Expression {
 
 func getValidatedTraitMethods(p *Parser, b *Block) *BracedExpression {
 	tuple := &TupleExpression{Elements: make([]Expression, len(b.Statements))}
-	for i, s := range b.Statements {
-		param, ok := s.(*Param)
-		if !ok {
-			p.error(s, ParameterExpected)
+	i := 0
+	for _, s := range b.Statements {
+		if expr := getValidatedTraitMethod(p, s); expr != nil {
+			tuple.Elements[i] = expr
+			i++
 		}
-		tuple.Elements[i] = param
 	}
+	tuple.Elements = tuple.Elements[:i]
 	tuple.reportDuplicatedParams(p)
 	return &BracedExpression{tuple, b.loc}
+}
+
+// returns nil if given Node is not valid
+func getValidatedTraitMethod(p *Parser, n Node) Expression {
+	switch expr := n.(type) {
+	case *Identifier:
+		if !expr.IsType() {
+			p.error(expr, TypeExpected)
+			return nil
+		}
+		return expr
+	// TODO: property access: 	module.Type
+	case *Param:
+		_, okComplement := expr.Complement.(*FunctionTypeExpression)
+		if !okComplement {
+			p.error(expr.Complement, FunctionTypeExpected)
+		}
+		okIdentifier := !expr.Identifier.IsType()
+		if !okIdentifier {
+			p.error(expr.Identifier, ValueIdentifierExpected)
+		}
+		if !okComplement || !okIdentifier {
+			return nil
+		}
+		return expr
+	default:
+		p.error(n, ParameterExpected)
+		return nil
+	}
 }
