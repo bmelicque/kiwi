@@ -26,3 +26,18 @@ func isMutated(v *parser.Variable) bool {
 	}
 	return false
 }
+
+func implementsNode(t parser.ExpressionType) bool {
+	alias, ok := t.(parser.TypeAlias)
+	if !ok {
+		return false
+	}
+	var node parser.Trait
+	for _, member := range parser.DomLib().Members {
+		if member.Name == "Node" {
+			node = member.Type.(parser.Trait)
+			break
+		}
+	}
+	return alias.Implements(node)
+}

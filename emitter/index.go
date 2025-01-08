@@ -124,7 +124,7 @@ func (e *Emitter) emitExpression(expr parser.Expression) {
 		e.emit(expr.Expr)
 		e.write(")")
 	case *parser.PropertyAccessExpression:
-		e.emitPropertyAccessExpression(expr)
+		e.emitPropertyAccessExpression(expr, false)
 	case *parser.TupleExpression:
 		e.emitTupleExpression(expr)
 	case *parser.UnaryExpression:

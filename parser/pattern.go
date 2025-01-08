@@ -25,7 +25,7 @@ func validateTraitPattern(p *Parser, pattern Expression, trait Trait) {
 		return
 	}
 	alias, ok := v.Typing.(TypeAlias)
-	if !ok || alias.implements(trait) {
+	if !ok || alias.Implements(trait) {
 		p.error(callee, TypeDoesNotImplement, callee.Type())
 		return
 	}

@@ -12,7 +12,7 @@ func newGetter(t ExpressionType) Function {
 
 var domLib Module
 
-func makeDomLib() Module {
+func DomLib() Module {
 	if len(domLib.Members) > 0 {
 		return domLib
 	}
