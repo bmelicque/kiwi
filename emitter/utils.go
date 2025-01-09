@@ -43,6 +43,10 @@ func implementsNode(t parser.ExpressionType) bool {
 }
 
 func isReferenced(identifier *parser.Identifier) bool {
-	v := identifier.GetScope().FindLocal(identifier.Text())
+	scope := identifier.GetScope()
+	if scope == nil {
+		return false
+	}
+	v := scope.FindLocal(identifier.Text())
 	return v != nil && v.HasDirectRef()
 }

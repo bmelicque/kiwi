@@ -6,6 +6,10 @@ import (
 	"github.com/bmelicque/test-parser/parser"
 )
 
+func emitScope(e *Emitter, scope *parser.Scope) {
+	e.write(fmt.Sprintf("__s%v", scope.GetId()))
+}
+
 func (e *Emitter) emitBlockStatement(b *parser.Block) {
 	e.write("{")
 	if len(b.Statements) == 0 {
@@ -20,7 +24,8 @@ func (e *Emitter) emitBlockStatement(b *parser.Block) {
 	}
 	if b.Scope().HasReferencedVars() {
 		e.indent()
-		e.write(fmt.Sprintf("const __s%v", b.Scope().GetId()))
+		e.write("const ")
+		emitScope(e, b.Scope())
 	}
 	for _, statement := range b.Statements {
 		e.indent()

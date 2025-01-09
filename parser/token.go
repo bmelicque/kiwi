@@ -64,6 +64,7 @@ func (i *Identifier) IsType() bool {
 func (i *Identifier) GetScope() *Scope { return i.scope }
 
 func (i *Identifier) typeCheck(p *Parser) {
+	i.scope = p.scope
 	name := i.Text()
 	if variable, ok := p.scope.Find(name); ok {
 		if p.writing != nil {
