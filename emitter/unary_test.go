@@ -9,7 +9,7 @@ func TestEmitReference(t *testing.T) {
 	source += "&value"
 
 	// FIXME: __s55 is magic, should handle this properly (regex?)
-	expected := "new __.Pointer(__s55, \"value\");\n"
+	expected := "new __.Pointer(__s54, \"value\");\n"
 
 	testEmitter(t, source, expected, 1)
 }

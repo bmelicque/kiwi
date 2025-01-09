@@ -15,7 +15,6 @@ const (
 	SumFlag EmitterFlag = 1 << iota
 	RefComparisonFlag
 	ObjectComparisonFlag
-	PropertyPointerFlag
 
 	AllFlags
 )
@@ -148,9 +147,6 @@ func EmitProgram(nodes []parser.Node) string {
 	if e.hasFlag(ObjectComparisonFlag) {
 		e.write("var __equals=(a,b)=>typeof a==typeof b&&(typeof a!=\"object\"||a==null||b==null?a==b:a.constructor==b.constructor&&(!Array.isArray(a)||a.length==b.length)&&!Object.keys(a).find(k=>!__equals(a[k],b[k]))));\n")
 	}
-	if e.hasFlag(PropertyPointerFlag) {
-		e.write("var __ptr=(o,k)=>(a,p)=>a&4?o:a&2?k:a?o[k]:(o[k]=p);\n")
-	}
 
 	for _, node := range nodes {
 		e.emit(node)
@@ -179,8 +175,6 @@ func (e *Emitter) scan(nodes []parser.Node) {
 			addFlag(RefComparisonFlag)
 		case isObjectComparison(n):
 			addFlag(ObjectComparisonFlag)
-		case isPropertyPointer(n):
-			addFlag(PropertyPointerFlag)
 		}
 	}
 
@@ -234,13 +228,4 @@ func isObjectComparison(n parser.Node) bool {
 	default:
 		return false
 	}
-}
-
-func isPropertyPointer(n parser.Node) bool {
-	u, ok := n.(*parser.UnaryExpression)
-	if !ok || u.Operator.Kind() != parser.BinaryAnd {
-		return false
-	}
-	_, ok = u.Operand.(*parser.PropertyAccessExpression)
-	return ok
 }

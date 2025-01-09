@@ -18,10 +18,6 @@ func (e *Emitter) emitBlockStatement(b *parser.Block) {
 	}
 	e.write("\n")
 	e.depth++
-	if needsSymbol(b) {
-		e.indent()
-		e.write("const __s = Symbol();\n")
-	}
 	if b.Scope().HasReferencedVars() {
 		e.indent()
 		e.write("const ")
@@ -34,25 +30,6 @@ func (e *Emitter) emitBlockStatement(b *parser.Block) {
 	e.depth--
 	e.indent()
 	e.write("}\n")
-}
-
-func needsSymbol(b *parser.Block) bool {
-	var found bool
-	parser.Walk(b, func(n parser.Node, skip func()) {
-		if found {
-			skip()
-			return
-		}
-		unary, ok := n.(*parser.UnaryExpression)
-		if !ok || unary.Operator.Kind() != parser.BinaryAnd {
-			return
-		}
-		if _, ok = unary.Operand.(*parser.Identifier); ok {
-			found = true
-			skip()
-		}
-	})
-	return found
 }
 
 func (e *Emitter) emitBlockExpression(b *parser.Block) {
