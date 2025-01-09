@@ -49,6 +49,7 @@ func EmitStd(rootDir, outDir string) string {
 
 	// creating "pointers"
 	f.WriteString("export class Pointer{constructor(c,n){this.c=c;this.n=n}get(){return this.c[this.n]}set(v){this.c[this.n]=v}}\n")
+	f.WriteString("export class NodePointer{constructor(c,n){this.c=c;this.n=n}get(){return this.c[this.n]}set(v,_=this.c[this.n]){_.parentNode?.replaceChild(_,this.c[this.n]=v)}}\n")
 
 	return name
 }
