@@ -19,8 +19,8 @@ func (b *BracedExpression) typeCheck(p *Parser) {
 	var foundDefault bool
 	for i, element := range b.Expr.(*TupleExpression).Elements {
 		switch element := element.(type) {
-		case *Identifier:
-			if !element.IsType() {
+		case *Identifier, *PropertyAccessExpression:
+			if _, ok := element.Type().(Type); !ok {
 				p.error(element, TypeExpected)
 			}
 		case *Param:
@@ -45,8 +45,12 @@ func (b *BracedExpression) Type() ExpressionType {
 	for _, element := range b.Expr.(*TupleExpression).Elements {
 		switch element := element.(type) {
 		case *Identifier:
-			if element.IsType() {
+			if _, ok := element.Type().(Type); ok {
 				o.addEmbedded(element.Text(), element.typing.(Type).Value)
+			}
+		case *PropertyAccessExpression:
+			if _, ok := element.Type().(Type); ok {
+				o.addEmbedded(element.Property.(*Identifier).Text(), element.typing.(Type).Value)
 			}
 		case *Param:
 			var memberType ExpressionType

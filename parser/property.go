@@ -12,6 +12,18 @@ type PropertyAccessExpression struct {
 	typing   ExpressionType
 }
 
+// consists only of embedded property accesses (a.b.c etc.)
+func (p *PropertyAccessExpression) isSimple() bool {
+	switch expr := p.Expr.(type) {
+	case *Identifier:
+		return true
+	case *PropertyAccessExpression:
+		return expr.isSimple()
+	default:
+		return false
+	}
+}
+
 func (p *PropertyAccessExpression) getChildren() []Node {
 	children := []Node{p.Expr}
 	if p.Property != nil {
@@ -350,7 +362,8 @@ func getValidatedTraitMethod(p *Parser, n Node) Expression {
 			return nil
 		}
 		return expr
-	// TODO: property access: 	module.Type
+	case *PropertyAccessExpression:
+		return getValidatedEmbedding(p, expr)
 	case *Param:
 		_, okComplement := expr.Complement.(*FunctionTypeExpression)
 		if !okComplement {

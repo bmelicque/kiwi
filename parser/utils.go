@@ -99,3 +99,20 @@ func IsLocalPath(path string) bool {
 	}
 	return len(path) > 0 && path[0] == '/'
 }
+
+func getValidatedEmbedding(p *Parser, expr *PropertyAccessExpression) *PropertyAccessExpression {
+	if !expr.isSimple() {
+		p.error(expr, InvalidPattern)
+		return nil
+	}
+	id, ok := expr.Property.(*Identifier)
+	if !ok {
+		p.error(expr.Property, InvalidPattern)
+		return nil
+	}
+	if !id.IsType() {
+		p.error(id, TypeIdentifierExpected)
+		return nil
+	}
+	return expr
+}

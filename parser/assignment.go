@@ -191,6 +191,14 @@ func reportDuplicatedFields(p *Parser, b *BracedExpression) {
 
 func getValidatedObjectField(p *Parser, node Node) Expression {
 	switch node := node.(type) {
+	case *Identifier:
+		if !node.IsType() {
+			p.error(node, TypeIdentifierExpected)
+			return nil
+		}
+		return node
+	case *PropertyAccessExpression:
+		return getValidatedEmbedding(p, node)
 	case *Param:
 		return node
 	case *Entry:
