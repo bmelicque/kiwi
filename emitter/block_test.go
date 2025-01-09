@@ -1,26 +1,10 @@
 package emitter
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/bmelicque/test-parser/parser"
 )
-
-func TestBlockSymbol(t *testing.T) {
-	source := "{\n"
-	source += "    value := 0\n"
-	source += "    ref := &value\n"
-	source += "}"
-	ast, _, _ := parser.ParseProgram(strings.NewReader(source), "")
-	block, ok := ast[0].(*parser.Block)
-	if !ok {
-		t.Fatalf("Block expected, got %#v", ast[0])
-	}
-	if !needsSymbol(block) {
-		t.Fatalf("Expected block to need a symbol")
-	}
-}
 
 func TestEmptyBlockExpression(t *testing.T) {
 	emitter := makeEmitter()

@@ -12,9 +12,9 @@ func TestCatchStatement(t *testing.T) {
 	emitter.emit(&parser.CatchExpression{
 		Left:       &parser.Identifier{Token: testToken{kind: parser.Name, value: "result"}},
 		Identifier: &parser.Identifier{Token: testToken{kind: parser.Name, value: "_"}},
-		Body: &parser.Block{Statements: []parser.Node{
+		Body: parser.MakeBlock([]parser.Node{
 			&parser.Literal{Token: testToken{kind: parser.NumberLiteral, value: "0"}},
-		}},
+		}),
 	})
 
 	text := emitter.string()

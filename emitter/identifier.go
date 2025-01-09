@@ -12,7 +12,12 @@ func (e *Emitter) emitIdentifier(i *parser.Identifier) {
 		e.write("this")
 		return
 	}
-	e.write(getSanitizedName(text))
+	if isReferenced(i) {
+		emitScope(e, i.GetScope())
+		e.write("." + text)
+	} else {
+		e.write(getSanitizedName(text))
+	}
 }
 
 var reservedWords = []string{

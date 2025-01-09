@@ -10,6 +10,13 @@ type Block struct {
 	loc        Loc
 }
 
+func MakeBlock(statements []Node) *Block {
+	return &Block{
+		Statements: statements,
+		scope:      NewScope(BlockScope),
+	}
+}
+
 func (b *Block) getChildren() []Node {
 	return b.Statements
 }

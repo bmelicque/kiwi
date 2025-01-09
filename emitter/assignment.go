@@ -100,11 +100,15 @@ func (e *Emitter) emitAssignment(a *parser.Assignment) {
 		e.emitExpression(a.Value)
 	}
 }
+
+// FIXME: this is broken: export __sXXX.identifier =
 func (e *Emitter) emitDeclaration(a *parser.Assignment) {
 	if needsExport(a.Pattern) {
 		e.write("export ")
 	}
-	e.write("let ")
+	if i, ok := a.Pattern.(*parser.Identifier); !ok || !isReferenced(i) {
+		e.write("let ")
+	}
 	emitAssign(e, a)
 }
 

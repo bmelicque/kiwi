@@ -1,6 +1,10 @@
 package emitter
 
-import "github.com/bmelicque/test-parser/parser"
+import (
+	"fmt"
+
+	"github.com/bmelicque/test-parser/parser"
+)
 
 func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
 	switch u.Operator.Kind() {
@@ -27,27 +31,26 @@ func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
 }
 
 func (e *Emitter) emitReference(expr parser.Expression) {
-	switch expr := expr.(type) {
-	case *parser.PropertyAccessExpression:
-		e.emitObjectReference(expr)
-	default:
-		e.emitPrimitiveReference(expr)
+	if implementsNode(expr.Type()) {
+		e.write("new __.NodePointer(")
+	} else {
+		e.write("new __.Pointer(")
 	}
+	identifier, isIdentifier := getRefIdentifier(expr)
+	if isIdentifier {
+		emitScope(e, identifier.GetScope())
+	} else {
+		e.emitExpression(expr.(*parser.PropertyAccessExpression).Expr)
+	}
+	e.write(fmt.Sprintf(", \"%v\")", identifier.Text()))
 }
-
-func (e *Emitter) emitPrimitiveReference(expr parser.Expression) {
-	e.write("(_,__)=>(_&4?__s:_&2?\"")
-	e.emitExpression(expr)
-	e.write("\":_?")
-	e.emitExpression(expr)
-	e.write(":(")
-	e.emitExpression(expr)
-	e.write("=__))")
-}
-func (e *Emitter) emitObjectReference(expr *parser.PropertyAccessExpression) {
-	e.write("__ptr(")
-	e.emitExpression(expr.Expr)
-	e.write(",\"")
-	e.emitExpression(expr.Property)
-	e.write("\")")
+func getRefIdentifier(expr parser.Expression) (*parser.Identifier, bool) {
+	switch expr := expr.(type) {
+	case *parser.Identifier:
+		return expr, true
+	case *parser.PropertyAccessExpression:
+		return expr.Property.(*parser.Identifier), false
+	default:
+		panic("unexpected ref expression (should be &identifier or &object.prop)")
+	}
 }

@@ -37,6 +37,7 @@ func (l *Literal) Type() ExpressionType {
 type Identifier struct {
 	Token
 	typing ExpressionType
+	scope  *Scope
 }
 
 func (i *Identifier) getChildren() []Node {
@@ -60,8 +61,10 @@ func (i *Identifier) IsType() bool {
 
 	return unicode.IsUpper(firstLetter)
 }
+func (i *Identifier) GetScope() *Scope { return i.scope }
 
 func (i *Identifier) typeCheck(p *Parser) {
+	i.scope = p.scope
 	name := i.Text()
 	if variable, ok := p.scope.Find(name); ok {
 		if p.writing != nil {

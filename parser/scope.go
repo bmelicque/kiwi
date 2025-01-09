@@ -1,16 +1,18 @@
 package parser
 
 type Variable struct {
-	declaredAt Loc
-	Typing     ExpressionType
-	writes     []Node
-	reads      []Loc
+	declaredAt   Loc
+	Typing       ExpressionType
+	writes       []Node
+	reads        []Loc
+	hasDirectRef bool
 }
 
 func (v *Variable) readAt(l Loc)   { v.reads = append(v.reads, l) }
 func (v *Variable) writeAt(n Node) { v.writes = append(v.writes, n) }
 
-func (v *Variable) Writes() []Node { return v.writes }
+func (v *Variable) Writes() []Node     { return v.writes }
+func (v *Variable) HasDirectRef() bool { return v.hasDirectRef }
 
 type ScopeKind uint8
 
@@ -22,17 +24,24 @@ const (
 )
 
 type Scope struct {
+	id        int
 	variables map[string]*Variable
 	kind      ScopeKind
 	outer     *Scope
 }
 
+var lastScopeId int
+
 func NewScope(kind ScopeKind) *Scope {
+	lastScopeId++
 	return &Scope{
+		id:        lastScopeId,
 		kind:      kind,
 		variables: map[string]*Variable{},
 	}
 }
+
+func (s Scope) GetId() int { return s.id }
 
 func (s Scope) Find(name string) (*Variable, bool) {
 	variable, ok := s.variables[name]
@@ -43,6 +52,10 @@ func (s Scope) Find(name string) (*Variable, bool) {
 		return s.outer.Find(name)
 	}
 	return nil, false
+}
+
+func (s Scope) FindLocal(name string) *Variable {
+	return s.variables[name]
 }
 
 func (s Scope) Has(name string) bool {
@@ -73,6 +86,15 @@ func (s *Scope) AddMethod(name string, self TypeAlias, signature Function) {
 	}
 	self.registerMethod(name, signature)
 	t.Typing = Type{self}
+}
+
+func (s Scope) HasReferencedVars() bool {
+	for _, v := range s.variables {
+		if v.hasDirectRef {
+			return true
+		}
+	}
+	return false
 }
 
 func (s Scope) in(kind ScopeKind) bool {
