@@ -41,3 +41,8 @@ func implementsNode(t parser.ExpressionType) bool {
 	}
 	return alias.Implements(node)
 }
+
+func isReferenced(identifier *parser.Identifier) bool {
+	v := identifier.GetScope().FindLocal(identifier.Text())
+	return v != nil && v.HasDirectRef()
+}

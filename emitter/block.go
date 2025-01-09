@@ -18,6 +18,10 @@ func (e *Emitter) emitBlockStatement(b *parser.Block) {
 		e.indent()
 		e.write("const __s = Symbol();\n")
 	}
+	if b.Scope().HasReferencedVars() {
+		e.indent()
+		e.write(fmt.Sprintf("const __s%v", b.Scope().GetId()))
+	}
 	for _, statement := range b.Statements {
 		e.indent()
 		e.emit(statement)

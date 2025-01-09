@@ -39,8 +39,13 @@ func (u *UnaryExpression) typeCheck(p *Parser) {
 			return
 		}
 		v, ok := p.scope.Find(identifier.Text())
-		if ok {
-			v.writeAt(u)
+		if !ok {
+			return
+		}
+		v.readAt(u.Loc())
+		v.writeAt(u)
+		if _, ok := u.Operand.(*Identifier); ok {
+			v.hasDirectRef = true
 		}
 	case Mul:
 		if _, ok := u.Operand.Type().(Ref); !ok {
