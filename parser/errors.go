@@ -86,6 +86,7 @@ const (
 	MultipleEmbeddedProperties // [name]
 	NotInModule                // [expected variable name]
 	PrivateProperty            // [property name, path to origin file]
+	PublicDeclaration
 	TypeDoesNotImplement
 	MissingKeys
 	MissingConstructor
@@ -280,6 +281,8 @@ func (p ParserError) Text() string {
 		key := p.Complements[0]
 		path := p.Complements[1]
 		return fmt.Sprintf("Property '%v' is private and cannot be used outside of its declaration file (%v)", key, path)
+	case PublicDeclaration:
+		return "Cannot declare public variables at top-level, consider making it private and defining a getter/setter"
 	case TypeDoesNotImplement:
 		name := p.Complements[0].(ExpressionType).Text()
 		return fmt.Sprintf("Type %v does not implement this trait", name)

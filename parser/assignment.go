@@ -299,7 +299,7 @@ func typeCheckDeclaration(p *Parser, a *Assignment) {
 	reportInvalidVariableType(p, a.Value)
 	switch pattern := a.Pattern.(type) {
 	case *Identifier:
-		declareIdentifier(p, pattern, a.Value.Type())
+		declareVariable(p, pattern, a.Value.Type())
 	case *TupleExpression:
 		declareTuple(p, pattern, a.Value.Type())
 	case *InstanceExpression:
@@ -313,11 +313,17 @@ func typeCheckDeclaration(p *Parser, a *Assignment) {
 	}
 }
 
-func declareIdentifier(p *Parser, identifier *Identifier, typing ExpressionType) {
-	name := identifier.Text()
-	if name == "" || name == "_" {
+func declareVariable(p *Parser, identifier *Identifier, typing ExpressionType) {
+	isTopLevel := p.scope.outer == nil
+	if isTopLevel && !identifier.IsPrivate() {
+		p.error(identifier, PublicDeclaration)
 		return
 	}
+	addVariableToScope(p, identifier, typing)
+}
+
+func addVariableToScope(p *Parser, identifier *Identifier, typing ExpressionType) {
+	name := identifier.Text()
 	if name == "Map" {
 		p.error(identifier, ReservedName, name)
 		return
@@ -342,7 +348,7 @@ func declareTuple(p *Parser, pattern *TupleExpression, typing ExpressionType) {
 			p.error(pattern.Elements[i], IdentifierExpected)
 			continue
 		}
-		declareIdentifier(p, identifier, tuple.Elements[i])
+		declareVariable(p, identifier, tuple.Elements[i])
 	}
 }
 
@@ -399,7 +405,7 @@ func typeCheckTypeDefinition(p *Parser, a *Assignment) {
 		Ref:  getInitType(p, a.Value),
 		from: p.filePath,
 	}}
-	declareIdentifier(p, identifier, t)
+	addVariableToScope(p, identifier, t)
 }
 
 func getInitType(p *Parser, expr Expression) ExpressionType {
@@ -421,7 +427,7 @@ func typeCheckFunctionDefinition(p *Parser, a *Assignment) {
 		p.error(a.Value, FunctionExpressionExpected)
 		return
 	}
-	declareIdentifier(p, identifier, t)
+	addVariableToScope(p, identifier, t)
 }
 
 func typeCheckMethod(p *Parser, expr *PropertyAccessExpression, init Expression) {
