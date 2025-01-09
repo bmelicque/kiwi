@@ -45,6 +45,8 @@ func EmitStd(rootDir, outDir string) string {
 	f.WriteString("export let callNodeGetter=(o,m)=>typeof o[m]==\"function\"?o[m]():o[m]\n")
 	f.WriteString("export let bindNodeGetter=(o,m)=>typeof o[m]==\"function\"?o[m].bind(o):()=>o[m]\n")
 
+	f.WriteString("export let bind=(o,m)=>o[m].bind(o)\n")
+
 	// creating "pointers"
 	f.WriteString("export class Pointer{constructor(c,n){this.c=c;this.n=n}get(){return this.c[this.n]}set(v){this.c[this.n]=v}}\n")
 
