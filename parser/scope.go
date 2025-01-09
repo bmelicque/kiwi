@@ -3,6 +3,7 @@ package parser
 type Variable struct {
 	declaredAt   Loc
 	Typing       ExpressionType
+	scope        *Scope
 	writes       []Node
 	reads        []Loc
 	hasDirectRef bool
@@ -76,6 +77,7 @@ func (s *Scope) Add(name string, declaredAt Loc, typing ExpressionType) {
 	s.variables[name] = &Variable{
 		declaredAt: declaredAt,
 		Typing:     typing,
+		scope:      s,
 	}
 }
 

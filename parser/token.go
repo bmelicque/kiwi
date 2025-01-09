@@ -64,18 +64,18 @@ func (i *Identifier) IsType() bool {
 func (i *Identifier) GetScope() *Scope { return i.scope }
 
 func (i *Identifier) typeCheck(p *Parser) {
-	i.scope = p.scope
-	name := i.Text()
-	if variable, ok := p.scope.Find(name); ok {
-		if p.writing != nil {
-			variable.writeAt(p.writing)
-		} else {
-			variable.readAt(i.Loc())
-		}
-		i.typing = variable.Typing
-	} else {
+	variable, ok := p.scope.Find(i.Text())
+	if !ok {
 		i.typing = Unknown{}
+		return
 	}
+	i.scope = variable.scope
+	if p.writing != nil {
+		variable.writeAt(p.writing)
+	} else {
+		variable.readAt(i.Loc())
+	}
+	i.typing = variable.Typing
 }
 
 func (i *Identifier) Type() ExpressionType { return i.typing }

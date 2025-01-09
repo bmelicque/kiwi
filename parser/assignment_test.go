@@ -348,11 +348,7 @@ func TestCheckTupleDeclarationTooMany(t *testing.T) {
 	}
 }
 
-func TestObjectTypeDefinition(t *testing.T) {
-	str := "Type :: {\n"
-	str += "    n number\n"
-	str += "    s string\n"
-	str += "}"
+func testObjectTypeDefinition(t *testing.T, str string) {
 	parser := MakeParser(strings.NewReader(str))
 	node := parser.parseAssignment()
 
@@ -375,32 +371,29 @@ func TestObjectTypeDefinition(t *testing.T) {
 	if _, ok := elements[0].(*Param); !ok {
 		t.Fatalf("Expected param, got:\n %#v", elements[0])
 	}
+
+	expr.typeCheck(parser)
+	testParserErrors(t, parser, 0)
+	v, _ := parser.scope.Find("Type")
+	if v == nil {
+		t.Fatal("expected to find variable 'Type'")
+	}
+	if _, ok := v.Typing.(Type); !ok {
+		t.Fatal("expected 'Type' to be a type")
+	}
+}
+
+func TestObjectTypeDefinitionMultiline(t *testing.T) {
+	str := "Type :: {\n"
+	str += "    n number\n"
+	str += "    s string\n"
+	str += "}"
+	testObjectTypeDefinition(t, str)
 }
 
 func TestObjectTypeDefinitionSingleLine(t *testing.T) {
 	str := "Type :: { n number, s string }"
-	parser := MakeParser(strings.NewReader(str))
-	node := parser.parseAssignment()
-
-	if len(parser.errors) > 0 {
-		t.Fatalf("Expected no parsing errors, got:\n%#v", parser.errors)
-	}
-
-	expr, ok := node.(*Assignment)
-	if !ok {
-		t.Fatalf("Expected Assignment, got %#v", node)
-	}
-	if _, ok := expr.Pattern.(*Identifier); !ok {
-		t.Fatalf("Expected identifier 'Type'")
-	}
-	b, ok := expr.Value.(*BracedExpression)
-	if !ok {
-		t.Fatalf("Expected block, got:\n %#v", expr.Value)
-	}
-	elements := b.Expr.(*TupleExpression).Elements
-	if _, ok := elements[0].(*Param); !ok {
-		t.Fatalf("Expected param, got:\n %#v", elements[0])
-	}
+	testObjectTypeDefinition(t, str)
 }
 
 func TestObjectTypeDefinitionWithDefaults(t *testing.T) {
@@ -409,11 +402,8 @@ func TestObjectTypeDefinitionWithDefaults(t *testing.T) {
 	str += "    d: 0\n"
 	str += "}"
 	parser := MakeParser(strings.NewReader(str))
-	parser.parseAssignment()
-
-	if len(parser.errors) > 0 {
-		t.Fatalf("Expected no parsing errors, got:\n%#v", parser.errors)
-	}
+	parser.parseAssignment().typeCheck(parser)
+	testParserErrors(t, parser, 0)
 }
 
 func TestObjectTypeDefinitionWithDuplicates(t *testing.T) {
@@ -422,11 +412,8 @@ func TestObjectTypeDefinitionWithDuplicates(t *testing.T) {
 	str += "    n string\n"
 	str += "}"
 	parser := MakeParser(strings.NewReader(str))
-	parser.parseAssignment()
-
-	if len(parser.errors) != 2 {
-		t.Fatalf("Expected 2 parsing errors, got:\n%#v", parser.errors)
-	}
+	parser.parseAssignment().typeCheck(parser)
+	testParserErrors(t, parser, 2)
 }
 
 func TestParseGenericObjectDefinition(t *testing.T) {
@@ -453,54 +440,6 @@ func TestParseGenericObjectDefinition(t *testing.T) {
 	if _, ok := member.Type.(Generic); ok {
 		t.Fatalf("Expected generic type")
 	}
-}
-
-func TestCheckObjectTypeDefinition(t *testing.T) {
-	parser := MakeParser(nil)
-	declaration := &Assignment{
-		Pattern: &Identifier{Token: literal{kind: Name, value: "Type"}},
-		Value: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
-			&Param{
-				Identifier: &Identifier{Token: literal{kind: Name, value: "key"}},
-				Complement: &Literal{token{kind: NumberKeyword}},
-			},
-			&Param{
-				Identifier: &Identifier{Token: literal{kind: Name, value: "optional"}},
-				Complement: &UnaryExpression{
-					Operator: token{kind: QuestionMark},
-					Operand:  &Literal{token{kind: NumberKeyword}},
-				},
-			},
-			&Entry{
-				Key:   &Identifier{Token: literal{kind: Name, value: "default"}},
-				Value: &Literal{literal{kind: NumberLiteral, value: "0"}},
-			},
-		}}},
-		Operator: token{kind: Define},
-	}
-	declaration.typeCheck(parser)
-
-	if len(parser.errors) > 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
-	}
-
-	ty, ok := parser.scope.Find("Type")
-	if !ok {
-		t.Fatal("Expected 'Type' to have been added to scope")
-	}
-	typing, ok := ty.Typing.(Type)
-	if !ok {
-		t.Fatal("Expected type 'Type'")
-	}
-	alias, ok := typing.Value.(TypeAlias)
-	if !ok {
-		t.Fatal("Expected an alias")
-	}
-	object, ok := alias.Ref.(Object)
-	if !ok {
-		t.Fatal("Expected an object")
-	}
-	_ = object
 }
 
 func TestCheckObjectTypeDefinitionBadOrder(t *testing.T) {
