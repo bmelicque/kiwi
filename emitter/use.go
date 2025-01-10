@@ -1,6 +1,10 @@
 package emitter
 
-import "github.com/bmelicque/test-parser/parser"
+import (
+	"slices"
+
+	"github.com/bmelicque/test-parser/parser"
+)
 
 func (e *Emitter) emitUseStatement(u *parser.UseDirective) {
 	path := u.Source.Text()
@@ -10,6 +14,17 @@ func (e *Emitter) emitUseStatement(u *parser.UseDirective) {
 		return
 	}
 	switch path {
+	case "dom":
+		if u.Star {
+			e.write("const ")
+			e.emitExpression(u.Names)
+			e.write(" = { createElement: (s) => document.createElement(s) }\n")
+			return
+		}
+		names := getUsedNames(u.Names)
+		if slices.Contains(names, "createElement") {
+			e.write("const createElement = (s) => document.createElement(s);\n")
+		}
 	case "io":
 		if u.Star {
 			e.write("const ")
@@ -20,6 +35,21 @@ func (e *Emitter) emitUseStatement(u *parser.UseDirective) {
 			e.emitExpression(u.Names)
 			e.write("} = console;\n")
 		}
+	}
+}
+
+func getUsedNames(n parser.Expression) []string {
+	switch n := n.(type) {
+	case *parser.Identifier:
+		return []string{n.Text()}
+	case *parser.TupleExpression:
+		names := make([]string, len(n.Elements))
+		for i := range n.Elements {
+			names[i] = n.Elements[i].(*parser.Identifier).Text()
+		}
+		return names
+	default:
+		panic("unexpected names")
 	}
 }
 

@@ -17,29 +17,49 @@ func DomLib() Module {
 		return domLib
 	}
 
-	Event := Trait{
-		Self:    Generic{Name: "Self"},
-		Members: map[string]ExpressionType{},
+	eventMembers := map[string]ExpressionType{}
+	Event := TypeAlias{
+		Name: "Event",
+		Ref: Trait{
+			Self:    Generic{Name: "Self"},
+			Members: map[string]ExpressionType{},
+		},
 	}
 	EventHandler := Function{
 		Params:   &Tuple{[]ExpressionType{Event}},
 		Returned: Nil{},
 	}
-	EventTarget := Trait{}
-	Node := Trait{
-		Self:    Generic{Name: "Self"},
-		Members: map[string]ExpressionType{},
+	eventTargetMembers := map[string]ExpressionType{}
+	EventTarget := TypeAlias{
+		Name: "EventTarget",
+		Ref:  Trait{Members: eventTargetMembers},
 	}
-	Element := Trait{
-		Self:    Generic{Name: "Self"},
-		Members: map[string]ExpressionType{},
+	nodeMembers := map[string]ExpressionType{}
+	Node := TypeAlias{
+		Name: "Node",
+		Ref: Trait{
+			Self:    Generic{Name: "Self"},
+			Members: nodeMembers,
+		},
 	}
-	Document := Trait{
-		Self:    Generic{Name: "Self"},
-		Members: map[string]ExpressionType{},
+	elementMembers := map[string]ExpressionType{}
+	Element := TypeAlias{
+		Name: "Element",
+		Ref: Trait{
+			Self:    Generic{Name: "Self"},
+			Members: elementMembers,
+		},
+	}
+	documentMembers := map[string]ExpressionType{}
+	Document := TypeAlias{
+		Name: "Document",
+		Ref: Trait{
+			Self:    Generic{Name: "Self"},
+			Members: documentMembers,
+		},
 	}
 
-	Event.Members = map[string]ExpressionType{
+	maps.Copy(eventMembers, map[string]ExpressionType{
 		"bubbles":                  newGetter(Boolean{}),
 		"cancelable":               newGetter(Boolean{}),
 		"composed":                 newGetter(Boolean{}),
@@ -54,9 +74,9 @@ func DomLib() Module {
 		"target":                   newGetter(Ref{EventTarget}),
 		"timeStamp":                newGetter(Number{}),
 		"type":                     newGetter(String{}),
-	}
+	})
 
-	EventTarget.Members = map[string]ExpressionType{
+	maps.Copy(eventTargetMembers, map[string]ExpressionType{
 		"addEventListener": Function{
 			Params: &Tuple{[]ExpressionType{
 				String{},
@@ -77,9 +97,9 @@ func DomLib() Module {
 			}},
 			Returned: Nil{},
 		},
-	}
+	})
 
-	Node.Members = map[string]ExpressionType{
+	maps.Copy(nodeMembers, map[string]ExpressionType{
 		"appendChild": Function{
 			Params:   &Tuple{[]ExpressionType{Ref{Node}}},
 			Returned: Nil{},
@@ -137,15 +157,13 @@ func DomLib() Module {
 
 		// TODO: nodeValue => getter & setter
 		// TODO: textContent => getter & setter
-	}
-	maps.Copy(Node.Members, EventTarget.Members)
+	})
+	maps.Copy(nodeMembers, eventTargetMembers)
 
-	Document.Members = map[string]ExpressionType{
-		"activeElement": newGetter(Nil{}), // TODO: returns &Element
-	}
+	documentMembers["activeElement"] = newGetter(Nil{}) // TODO: returns &Element
+	maps.Copy(documentMembers, nodeMembers)
 
-	Element.Members = map[string]ExpressionType{}
-	maps.Copy(Element.Members, Node.Members)
+	maps.Copy(elementMembers, nodeMembers)
 
 	domLib.addMember("Event", Event)
 	domLib.addMember("EventHandler", EventHandler)
@@ -155,7 +173,7 @@ func DomLib() Module {
 
 	domLib.addMember("createElement", Function{
 		Params:   &Tuple{[]ExpressionType{String{}}},
-		Returned: Element,
+		Returned: Element, // TODO: this should be a Result
 	})
 
 	return domLib

@@ -145,15 +145,20 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 
 	switch t := deref(expr.Expr.Type()).(type) {
 	case TypeAlias:
-		typing := getCheckedAliasProperty(t, name)
-		if len(typing) == 1 {
-			expr.typing = typing[0]
-		} else if len(typing) > 1 {
-			p.error(expr.Property, MultipleEmbeddedProperties, name)
-			expr.typing = Unknown{}
-		} else {
-			p.error(expr.Property, PropertyDoesNotExist, name)
-			expr.typing = Unknown{}
+		switch t.Ref.(type) {
+		case Trait:
+			expr.typing = t.Ref.(Trait).Members[name]
+		case Object:
+			typing := getCheckedAliasProperty(t, name)
+			if len(typing) == 1 {
+				expr.typing = typing[0]
+			} else if len(typing) > 1 {
+				p.error(expr.Property, MultipleEmbeddedProperties, name)
+				expr.typing = Unknown{}
+			} else {
+				p.error(expr.Property, PropertyDoesNotExist, name)
+				expr.typing = Unknown{}
+			}
 		}
 	case Module:
 		expr.typing, _ = t.getOwned(name)

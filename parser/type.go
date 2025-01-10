@@ -266,8 +266,11 @@ func (tuple Tuple) Extends(t ExpressionType) bool {
 	}
 }
 func (t Tuple) Text() string {
-	s := "("
 	max := len(t.Elements) - 1
+	if max == -1 {
+		return "()"
+	}
+	s := "("
 	for _, el := range t.Elements[:max] {
 		s += el.Text() + ", "
 	}
