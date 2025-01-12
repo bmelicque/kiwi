@@ -48,7 +48,7 @@ func (u Unknown) build(scope *Scope, c ExpressionType) (ExpressionType, bool) {
 type Nil struct{}
 
 func (n Nil) Extends(t ExpressionType) bool {
-	_, ok := t.(Number)
+	_, ok := t.(Nil)
 	return ok
 }
 func (n Nil) Text() string { return "nil" }
@@ -160,6 +160,9 @@ func (ta *TypeAlias) registerMethod(name string, signature ExpressionType) {
 	ta.Methods[name] = signature
 }
 func (ta TypeAlias) Implements(trait Trait) bool {
+	if t, ok := ta.Ref.(Trait); ok {
+		return t.implements(trait)
+	}
 	for name, signature := range trait.Members {
 		method, ok := ta.Methods[name]
 		if !ok || !signature.Extends(method) {
@@ -562,8 +565,8 @@ func (t Trait) Extends(et ExpressionType) bool {
 	default:
 		return false
 	}
-	for name, signature := range t.Members {
-		method, ok := receivedMethods[name]
+	for name, signature := range receivedMethods {
+		method, ok := t.Members[name]
 		if !ok || !signature.Extends(method) {
 			return false
 		}
@@ -581,6 +584,15 @@ func (t Trait) build(scope *Scope, compared ExpressionType) (ExpressionType, boo
 	// FIXME:
 	return t, true
 }
+func (t Trait) implements(t2 Trait) bool {
+	for name, signature := range t2.Members {
+		method, ok := t.Members[name]
+		if !ok || !signature.Extends(method) {
+			return false
+		}
+	}
+	return true
+}
 
 type Generic struct {
 	Name        string
@@ -591,6 +603,10 @@ type Generic struct {
 func (g Generic) Extends(t ExpressionType) bool {
 	if g.Constraints == nil {
 		return true
+	}
+	generic, ok := t.(Generic)
+	if ok {
+		t = generic.Constraints
 	}
 	return g.Constraints.Extends(t)
 }

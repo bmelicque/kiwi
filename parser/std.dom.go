@@ -22,7 +22,7 @@ func DomLib() Module {
 		Name: "Event",
 		Ref: Trait{
 			Self:    Generic{Name: "Self"},
-			Members: map[string]ExpressionType{},
+			Members: eventMembers,
 		},
 	}
 	EventHandler := Function{

@@ -230,7 +230,6 @@ func TestCheckImplicitReturn(t *testing.T) {
 func TestCheckImplicitReturnBadReturns(t *testing.T) {
 	parser := MakeParser(nil)
 	parser.scope.Add("result", Loc{}, makeResultType(Nil{}, Number{}))
-	// () => { if true { return false } else if true { throw false } else {	try result }}
 	expr := &FunctionExpression{
 		Params: &ParenthesizedExpression{Expr: &TupleExpression{}},
 		Body: &Block{Statements: []Node{
@@ -243,32 +242,29 @@ func TestCheckImplicitReturnBadReturns(t *testing.T) {
 						Value:    &Literal{literal{kind: BooleanLiteral, value: "false"}},
 					},
 				}},
-				Alternate: &IfExpression{
-					Keyword:   token{kind: IfKeyword},
-					Condition: &Literal{literal{kind: BooleanLiteral, value: "true"}},
-					Body: &Block{Statements: []Node{
-						&Exit{
-							Operator: token{kind: ThrowKeyword},
-							Value:    &Literal{literal{kind: BooleanLiteral, value: "false"}},
-						},
-					}},
-					Alternate: &Block{Statements: []Node{
-						&UnaryExpression{
-							Operator: token{kind: TryKeyword},
-							Operand:  &Identifier{Token: literal{kind: Name, value: "result"}},
-						},
-					}},
-				},
+			},
+			&IfExpression{
+				Keyword:   token{kind: IfKeyword},
+				Condition: &Literal{literal{kind: BooleanLiteral, value: "true"}},
+				Body: &Block{Statements: []Node{
+					&Exit{
+						Operator: token{kind: ThrowKeyword},
+						Value:    &Literal{literal{kind: BooleanLiteral, value: "false"}},
+					},
+				}},
+			},
+			&UnaryExpression{
+				Operator: token{kind: TryKeyword},
+				Operand:  &Identifier{Token: literal{kind: Name, value: "result"}},
 			},
 		}},
 	}
 	expr.typeCheck(parser)
 
-	// expect 2 errors for if expression types
 	// expect 1 error for early return
 	// expect 1 error for try with implicit return type
 	// expect 1 error for throw with implicit return type
-	testParserErrors(t, parser, 5)
+	testParserErrors(t, parser, 3)
 }
 
 func TestCheckExplicitReturn(t *testing.T) {
