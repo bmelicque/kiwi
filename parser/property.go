@@ -161,7 +161,7 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 			}
 		}
 	case Module:
-		expr.typing, _ = t.getOwned(name)
+		expr.typing, _ = t.GetOwned(name)
 	case List:
 		expr.typing = getListMethod(t, name)
 	}
@@ -249,7 +249,7 @@ func getAliasOwnedProperty(t TypeAlias, name string) ExpressionType {
 	if !ok {
 		return nil
 	}
-	res, _ := object.getOwned(name)
+	res, _ := object.GetOwned(name)
 	return res
 }
 

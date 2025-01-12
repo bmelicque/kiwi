@@ -65,5 +65,5 @@ func (e *Emitter) emitLocalImport(u *parser.UseDirective) {
 	}
 	e.write("from ")
 	e.emitExpression(u.Source)
-	e.write("\n")
+	e.write(".js\n")
 }

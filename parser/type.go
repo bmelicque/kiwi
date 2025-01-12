@@ -448,13 +448,13 @@ func (o Object) build(scope *Scope, compared ExpressionType) (ExpressionType, bo
 func buildObjectMember(scope *Scope, member ObjectMember, compared ExpressionType) (ObjectMember, bool) {
 	var comparedMember ExpressionType
 	if o, ok := compared.(Object); ok {
-		comparedMember, _ = o.getOwned(member.Name)
+		comparedMember, _ = o.GetOwned(member.Name)
 	}
 	built, ok := member.Type.build(scope, comparedMember)
 	return ObjectMember{member.Name, built}, ok
 }
 
-func (o Object) getOwned(name string) (ExpressionType, bool) {
+func (o Object) GetOwned(name string) (ExpressionType, bool) {
 	for _, member := range o.Embedded {
 		if member.Name == name {
 			return member.Type, true

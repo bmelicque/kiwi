@@ -49,7 +49,10 @@ func emitAssign(e *Emitter, a *parser.Assignment) {
 		e.write(" ||= ")
 	}
 
-	if needsCopy(a.Value) {
+	if implementsNode(a.Value.Type()) {
+		e.emitExpression(a.Value)
+		e.write(".cloneNode(true)")
+	} else if needsCopy(a.Value) {
 		e.write("structuredClone(")
 		e.emitExpression(a.Value)
 		e.write(")")

@@ -43,7 +43,7 @@ func TestGenericWithTypeArgs(t *testing.T) {
 		t.Fatalf("Type ref should've been Object{}, got %#v", alias.Ref)
 	}
 
-	member, ok := object.getOwned("value")
+	member, ok := object.GetOwned("value")
 	if !ok {
 		t.Fatalf("Could not find member")
 	}

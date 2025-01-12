@@ -59,7 +59,7 @@ func declareUseNames(p *Parser, module ExpressionType, names Expression) {
 		case Unknown:
 			addVariableToScope(p, id, module)
 		case Module:
-			t, ok := module.getOwned(id.Text())
+			t, ok := module.GetOwned(id.Text())
 			if !ok {
 				p.error(id, NotInModule, id.Text())
 				t = Unknown{}
