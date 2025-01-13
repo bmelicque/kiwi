@@ -102,6 +102,9 @@ func (ta TypeAlias) Extends(t ExpressionType) bool {
 	if !ok {
 		return ta.Ref.Extends(t)
 	}
+	if trait, ok := ta.Ref.(Trait); ok {
+		return ta.Name == alias.Name || alias.Implements(trait)
+	}
 	if alias.Name != ta.Name {
 		return false
 	}

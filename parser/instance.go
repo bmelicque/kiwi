@@ -32,20 +32,34 @@ func (i *InstanceExpression) typeCheck(p *Parser) {
 		i.Args.typeCheck(p)
 		return
 	}
-	switch t.Value.(type) {
+	constructor := t.Value
+	ref, isRef := constructor.(Ref)
+	if isRef {
+		constructor = ref.To
+	}
+	switch constructor.(type) {
 	case TypeAlias:
 		typeCheckStructInstanciation(p, i)
 	case List:
 		typeCheckNamedListInstanciation(p, i)
 	default:
-		p.error(i.Typing, NotInstanceable)
+		p.error(i.Typing, NotInstanceable, constructor)
+	}
+	if isRef {
+		i.typing = Ref{i.typing}
 	}
 }
 
 // Parse a struct instanciation, like 'Object{key: value}'
 func typeCheckStructInstanciation(p *Parser, i *InstanceExpression) {
 	// next line should be ensured by calling function
-	alias := i.Typing.Type().(Type).Value.(TypeAlias)
+	t := i.Typing.Type().(Type).Value
+	var alias TypeAlias
+	if ref, ok := t.(Ref); ok {
+		alias = ref.To.(TypeAlias)
+	} else {
+		alias = t.(TypeAlias)
+	}
 	if alias.Name == "Map" {
 		typeCheckMapInstanciation(p, i, alias)
 		return

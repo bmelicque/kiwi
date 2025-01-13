@@ -12,7 +12,7 @@ func (e *Emitter) emitIdentifier(i *parser.Identifier) {
 		e.write("this")
 		return
 	}
-	if isReferenced(i) {
+	if _, ok := i.Type().(parser.Type); !ok && isReferenced(i) {
 		emitScope(e, i.GetScope())
 		e.write("." + text)
 	} else {

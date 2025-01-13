@@ -111,6 +111,11 @@ func (e *Emitter) emitSumInstance(constructor *parser.PropertyAccessExpression, 
 	e.write(")")
 }
 func (e *Emitter) emitInstance(constructor parser.Expression, args *parser.TupleExpression) {
+	if isReferenceExpression(constructor) {
+		// FIXME: emit as ref
+		e.emitInstance(constructor.(*parser.UnaryExpression).Operand, args)
+		return
+	}
 	switch c := constructor.(type) {
 	case *parser.ListTypeExpression:
 		e.emitListInstance(c, args)

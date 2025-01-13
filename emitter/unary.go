@@ -54,3 +54,8 @@ func getRefIdentifier(expr parser.Expression) (*parser.Identifier, bool) {
 		panic("unexpected ref expression (should be &identifier or &object.prop)")
 	}
 }
+
+func isReferenceExpression(expr parser.Expression) bool {
+	u, ok := expr.(*parser.UnaryExpression)
+	return ok && u.Operator.Kind() == parser.BinaryAnd
+}
