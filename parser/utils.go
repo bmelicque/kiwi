@@ -4,7 +4,7 @@ import (
 	"slices"
 )
 
-func recover(p *Parser, at TokenKind) bool {
+func recoverBadTokens(p *Parser, at TokenKind) bool {
 	next := p.Peek()
 	start := next.Loc().Start
 	end := start

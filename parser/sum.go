@@ -92,7 +92,7 @@ func (p *Parser) parseSumType() Expression {
 		constructor := parseSumTypeConstructor(p)
 		constructors = append(constructors, constructor)
 		if !slices.Contains(expected, p.Peek().Kind()) {
-			recover(p, BinaryOr)
+			recoverBadTokens(p, BinaryOr)
 		}
 		p.DiscardLineBreaks()
 	}

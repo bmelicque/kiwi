@@ -91,7 +91,7 @@ func (p *Parser) parseMatchExpression() Expression {
 	p.allowBraceParsing = false
 	condition := p.parseExpression()
 	p.allowBraceParsing = outer
-	if p.Peek().Kind() != LeftBrace && !recover(p, LeftBrace) {
+	if p.Peek().Kind() != LeftBrace && !recoverBadTokens(p, LeftBrace) {
 		return &MatchExpression{Keyword: keyword, Value: condition}
 	}
 	p.Consume()
@@ -135,11 +135,11 @@ func parseMatchCase(p *Parser) MatchCase {
 func parseCaseStatement(p *Parser) Expression {
 	p.Consume()
 	pattern := p.parseExpression()
-	if p.Peek().Kind() == Colon || recover(p, Colon) {
+	if p.Peek().Kind() == Colon || recoverBadTokens(p, Colon) {
 		p.Consume()
 	}
 	if p.Peek().Kind() != EOL {
-		recover(p, EOL)
+		recoverBadTokens(p, EOL)
 	}
 	p.DiscardLineBreaks()
 	return pattern

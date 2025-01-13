@@ -76,14 +76,14 @@ func (p *Parser) parseUseDirective() *UseDirective {
 		p.Consume()
 		star = true
 		if p.Peek().Kind() != AsKeyword {
-			recover(p, AsKeyword)
+			recoverBadTokens(p, AsKeyword)
 		} else {
 			p.Consume()
 		}
 	}
 	names := p.parseExpression()
 	if p.Peek().Kind() != FromKeyword {
-		recover(p, FromKeyword)
+		recoverBadTokens(p, FromKeyword)
 	} else {
 		p.Consume()
 	}

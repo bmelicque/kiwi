@@ -83,7 +83,7 @@ func (p *Parser) parseCatchExpression() Expression {
 	}
 
 	if p.Peek().Kind() != LeftBrace {
-		recover(p, LeftBrace)
+		recoverBadTokens(p, LeftBrace)
 	}
 	body := p.parseBlock()
 	return &CatchExpression{

@@ -72,7 +72,7 @@ func (p *Parser) parseBlock() *Block {
 	for p.Peek().Kind() != RightBrace && p.Peek().Kind() != EOF {
 		statements = append(statements, p.parseStatement())
 		if !slices.Contains(stopAt, p.Peek().Kind()) {
-			recover(p, RightBrace)
+			recoverBadTokens(p, RightBrace)
 		}
 		p.DiscardLineBreaks()
 	}
