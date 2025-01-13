@@ -14,6 +14,6 @@ func TestEmitRefComparison(t *testing.T) {
 	source += "b := &value\n"
 	source += "a == b"
 
-	expected := "__refEquals(a, b);\n"
+	expected := "__.equals(a, b);\n"
 	testEmitter(t, source, expected, 3)
 }

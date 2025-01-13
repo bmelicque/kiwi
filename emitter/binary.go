@@ -40,15 +40,8 @@ func (e *Emitter) emitBinaryExpression(expr *parser.BinaryExpression) {
 // returns true if wrote something
 func (e *Emitter) emitComparison(expr *parser.BinaryExpression) bool {
 	switch expr.Left.Type().(type) {
-	case parser.Ref:
-		e.write("__refEquals(")
-		e.emitExpression(expr.Left)
-		e.write(", ")
-		e.emitExpression(expr.Right)
-		e.write(")")
-		return true
-	case parser.List, parser.Trait, parser.TypeAlias:
-		e.write("__equals(")
+	case parser.List, parser.Ref, parser.Trait, parser.TypeAlias:
+		e.write("__.equals(")
 		e.emitExpression(expr.Left)
 		e.write(", ")
 		e.emitExpression(expr.Right)

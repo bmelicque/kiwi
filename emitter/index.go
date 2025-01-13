@@ -8,20 +8,8 @@ import (
 	"github.com/bmelicque/test-parser/parser"
 )
 
-type EmitterFlag int
-
-const (
-	NoFlags EmitterFlag = 0
-	SumFlag EmitterFlag = 1 << iota
-	RefComparisonFlag
-	ObjectComparisonFlag
-
-	AllFlags
-)
-
 type Emitter struct {
 	depth        int
-	flags        EmitterFlag
 	builder      strings.Builder
 	thisName     string
 	constructors map[string]map[string]parser.Expression
@@ -31,19 +19,10 @@ type Emitter struct {
 func makeEmitter() *Emitter {
 	return &Emitter{
 		depth:        0,
-		flags:        NoFlags,
 		builder:      strings.Builder{},
 		constructors: map[string]map[string]parser.Expression{},
 		uninlinables: map[parser.Node]int{},
 	}
-}
-
-func (e *Emitter) addFlag(flag EmitterFlag) {
-	e.flags |= flag
-}
-
-func (e *Emitter) hasFlag(flag EmitterFlag) bool {
-	return (e.flags & flag) != NoFlags
 }
 
 func (e *Emitter) write(str string) {
@@ -133,99 +112,8 @@ func (e *Emitter) emitExpression(expr parser.Expression) {
 
 func EmitProgram(nodes []parser.Node) string {
 	e := makeEmitter()
-	e.scan(nodes)
-	if e.hasFlag(SumFlag) {
-		e.write("class _Sum {\n")
-		e.write("    constructor(_tag, _value) {\n")
-		e.write("        this._tag = _tag;\n")
-		e.write("        if (arguments.length > 1) { this._value = _value }\n")
-		e.write("    }\n}\n")
-	}
-	if e.hasFlag(RefComparisonFlag) {
-		e.write("function __refEquals(a, b) { return a(4) == b(4) && a(2) == b(2) }\n")
-	}
-	if e.hasFlag(ObjectComparisonFlag) {
-		e.write("var __equals=(a,b)=>typeof a==typeof b&&(typeof a!=\"object\"||a==null||b==null?a==b:a.constructor==b.constructor&&(!Array.isArray(a)||a.length==b.length)&&!Object.keys(a).find(k=>!__equals(a[k],b[k]))));\n")
-	}
-
 	for _, node := range nodes {
 		e.emit(node)
 	}
-
 	return e.string()
-}
-
-func (e *Emitter) scan(nodes []parser.Node) {
-	stop := false
-	addFlag := func(flag EmitterFlag) {
-		e.addFlag(flag)
-		if e.hasFlag(AllFlags - 1) {
-			stop = true
-		}
-	}
-
-	handleNode := func(n parser.Node, skip func()) {
-		if stop {
-			skip()
-		}
-		switch {
-		case isSumDef(n):
-			addFlag(SumFlag)
-		case isRefComparison(n):
-			addFlag(RefComparisonFlag)
-		case isObjectComparison(n):
-			addFlag(ObjectComparisonFlag)
-		}
-	}
-
-	for _, node := range nodes {
-		parser.Walk(node, handleNode)
-		if stop {
-			break
-		}
-	}
-}
-
-func isSumDef(n parser.Node) bool {
-	a, ok := n.(*parser.Assignment)
-	if !ok {
-		return false
-	}
-	if a.Operator.Kind() != parser.Define {
-		return false
-	}
-	t, ok := a.Value.Type().(parser.Type)
-	if !ok {
-		return false
-	}
-	_, isSum := t.Value.(parser.Sum)
-	return isSum
-}
-
-func isRefComparison(n parser.Node) bool {
-	b, ok := n.(*parser.BinaryExpression)
-	if !ok {
-		return false
-	}
-	if b.Operator.Kind() != parser.Equal {
-		return false
-	}
-	_, ok = b.Left.Type().(parser.Ref)
-	return ok
-}
-
-func isObjectComparison(n parser.Node) bool {
-	b, ok := n.(*parser.BinaryExpression)
-	if !ok {
-		return false
-	}
-	if b.Operator.Kind() != parser.Equal {
-		return false
-	}
-	switch b.Left.Type().(type) {
-	case parser.List, parser.Trait, parser.TypeAlias:
-		return true
-	default:
-		return false
-	}
 }

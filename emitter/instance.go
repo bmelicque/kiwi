@@ -1,6 +1,10 @@
 package emitter
 
-import "github.com/bmelicque/test-parser/parser"
+import (
+	"fmt"
+
+	"github.com/bmelicque/test-parser/parser"
+)
 
 func (e *Emitter) emitListInstance(constructor *parser.ListTypeExpression, args *parser.TupleExpression) {
 	e.write("[")
@@ -110,10 +114,22 @@ func (e *Emitter) emitSumInstance(constructor *parser.PropertyAccessExpression, 
 	e.emitInstance(c, args)
 	e.write(")")
 }
+
+func (e *Emitter) emitRefInstance(constructor parser.Expression, args *parser.TupleExpression) {
+	c := constructor.Type().(parser.Type).Value.(parser.Ref).To
+	fmt.Println(c.Text())
+	if implementsNode(c) {
+		e.write("new __.NodePointer(")
+	} else {
+		e.write("new __.Pointer(null, ")
+	}
+	e.emitInstance(constructor.(*parser.UnaryExpression).Operand, args)
+	e.write(")")
+}
+
 func (e *Emitter) emitInstance(constructor parser.Expression, args *parser.TupleExpression) {
 	if isReferenceExpression(constructor) {
-		// FIXME: emit as ref
-		e.emitInstance(constructor.(*parser.UnaryExpression).Operand, args)
+		e.emitRefInstance(constructor, args)
 		return
 	}
 	switch c := constructor.(type) {

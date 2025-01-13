@@ -39,17 +39,9 @@ func EmitStd(rootDir, outDir string) string {
 	defer f.Close()
 
 	// sum types
-	f.WriteString("export function Sum(t,v){this.tag=t;if(arguments.length>1)this.value=v}\n")
-
-	// method for handling dom Node getter properties
-	f.WriteString("export let callNodeGetter=(o,m)=>typeof o[m]==\"function\"?o[m]():o[m]\n")
-	f.WriteString("export let bindNodeGetter=(o,m)=>typeof o[m]==\"function\"?o[m].bind(o):()=>o[m]\n")
-
-	f.WriteString("export let bind=(o,m)=>o[m].bind(o)\n")
-
-	// creating "pointers"
-	f.WriteString("export class Pointer{constructor(c,n){this.c=c;this.n=n}get(){return this.c[this.n]}set(v){this.c[this.n]=v}}\n")
-	f.WriteString("export class NodePointer{constructor(c,n){this.c=c;this.n=n}get(){return this.c[this.n]}set(v,_=this.c[this.n]){_.parentNode?.replaceChild(_,this.c[this.n]=v)}}\n")
-
+	f.WriteString(`export function Sum(t,v){this.tag=t;this.value=v}
+export class Pointer{constructor(c,n){this.c=c;this.n=n}get(){return this.c?.[this.n]??this.n}set(v){this.c?(this.c[this.n]=v):(this.n=v)}}
+export class NodePointer{constructor(v){this._=v}get(){return this._}set(v){this._.parentNode?.replaceChild(this._,v);this._=v}}
+export let n=NodePointer,wrapNodeMethod=(o,m,r,f=(...a)=>o[m].apply(o,a.map(a=>a instanceof n?a.get():a)))=>(typeof o[m]!="function"?r?()=>new n(o[m]):()=>o[m]:r?(...a)=>new n(f(...a)):f),bind=(o,m)=>(o[m].bind(o)),equals=(a,b,t=typeof a)=>(t==typeof b&&(t!="object"||a==null||b==null?a==b:a.constructor==b.constructor&&(a instanceof n?a.get()==b.get():!(Array.isArray(a)&&a.length-b.length)&&!Object.keys(a).find(k=>!equals(a[k],b[k])))))`)
 	return name
 }
