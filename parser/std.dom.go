@@ -1,6 +1,8 @@
 package parser
 
-import "maps"
+import (
+	"maps"
+)
 
 func newGetter(t ExpressionType) Function {
 	return Function{
@@ -50,6 +52,20 @@ func DomLib() Module {
 			Members: elementMembers,
 		},
 	}
+	characterDataMembers := map[string]ExpressionType{}
+	CharacterData := TypeAlias{
+		Name: "CharacterData",
+		Ref: Trait{
+			Self:    Generic{Name: "Self"},
+			Members: characterDataMembers,
+		},
+	}
+	textMethods := map[string]ExpressionType{}
+	Text := Type{TypeAlias{
+		Name:    "Text",
+		Ref:     Object{Members: []ObjectMember{{Name: "data", Type: String{}}}},
+		Methods: textMethods,
+	}}
 	documentMembers := map[string]ExpressionType{}
 	Document := TypeAlias{
 		Name: "Document",
@@ -165,11 +181,24 @@ func DomLib() Module {
 
 	maps.Copy(elementMembers, nodeMembers)
 
+	maps.Copy(characterDataMembers, nodeMembers)
+
+	textMethods["assignedSlot"] = Function{Params: &Tuple{}, Returned: Ref{Element}} // TODO: HTMLSlotElement
+	textMethods["wholeText"] = Function{Params: &Tuple{}, Returned: Text.Value}
+	textMethods["splitText"] = Function{
+		Params:   &Tuple{Elements: []ExpressionType{Number{}}},
+		Returned: List{Text.Value},
+	}
+	maps.Copy(textMethods, characterDataMembers)
+	textMethods["cloneNode"] = newGetter(Text.Value)
+
 	domLib.addMember("Event", Event)
 	domLib.addMember("EventHandler", EventHandler)
 	domLib.addMember("EventTarget", EventTarget)
 	domLib.addMember("Node", Node)
 	domLib.addMember("Element", Element)
+	domLib.addMember("CharacterData", CharacterData)
+	domLib.addMember("Text", Text)
 
 	domLib.addMember("createElement", Function{
 		Params:   &Tuple{[]ExpressionType{String{}}},

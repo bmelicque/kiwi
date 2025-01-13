@@ -27,6 +27,21 @@ func TestBuildGeneric(t *testing.T) {
 	}
 }
 
+func TestBuildGenericFromScope(t *testing.T) {
+	scope := NewScope(ProgramScope)
+	scope.Add("Type", Loc{}, Number{})
+	typing := Generic{Name: "Type"}
+
+	built, ok := typing.build(scope, nil)
+	if !ok {
+		t.Fatalf("Expected 'ok' to be true (no remaining generics)")
+	}
+
+	if _, ok = built.(Number); !ok {
+		t.Fatalf("Expected number type, got %v", built.Text())
+	}
+}
+
 func TestBuildTypeAlias(t *testing.T) {
 	scope := NewScope(ProgramScope)
 	typing := TypeAlias{
@@ -73,6 +88,36 @@ func TestTrait(t *testing.T) {
 		t.Fatalf("Should've extended!")
 	}
 }
+
+// func TestBuildTrait(t *testing.T) {
+// 	trait := Trait{
+// 		Self: Generic{Name: "Self"},
+// 		Members: map[string]ExpressionType{
+// 			"method": Function{
+// 				Params:   &Tuple{[]ExpressionType{Generic{Name: "Self"}}},
+// 				Returned: Generic{Name: "Self"},
+// 			},
+// 		},
+// 	}
+// 	s := NewScope(ProgramScope)
+// 	s.Add("Self", Loc{}, Type{TypeAlias{Name: "Type", Ref: Object{}}})
+// 	built, _ := trait.build(s, nil)
+
+// 	trait, ok := built.(Trait)
+// 	if !ok {
+// 		t.Fatalf("Trait expected")
+// 	}
+// 	f, ok := trait.Members["method"].(Function)
+// 	if !ok {
+// 		t.Fatalf("Function expected")
+// 	}
+// 	if f.Params.Elements[0].(Type).Value.(TypeAlias).Name != "Type" {
+// 		t.Fatalf("'Type' expected")
+// 	}
+// 	if f.Returned.(Type).Value.(TypeAlias).Name != "Type" {
+// 		t.Fatalf("'Type' expected")
+// 	}
+// }
 
 func TestGetSumTypeMember(t *testing.T) {
 	option := makeOptionType(Number{})

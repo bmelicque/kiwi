@@ -371,23 +371,41 @@ func (f Function) build(scope *Scope, compared ExpressionType) (ExpressionType, 
 		s.Add(param.Name, Loc{}, param)
 	}
 	c, k := compared.(Function)
-	f.Params = &Tuple{make([]ExpressionType, len(f.Params.Elements))}
-	for i, param := range f.Params.Elements {
-		var el ExpressionType
-		if len(c.Params.Elements) > i {
-			el = c.Params.Elements[i]
-		}
-		p, k := param.build(s, el)
-		ok = ok && k
-		f.Params.Elements[i] = p
-	}
 	var r ExpressionType
 	if k {
+		f.Params, k = f.buildParamsFromFunction(s, c)
 		r = c.Returned
+	} else {
+		f.Params, k = f.buildParamsFromUnknown(s)
 	}
+	ok = ok && k
 	f.Returned, k = f.Returned.build(s, r)
 	ok = ok && k
 	return f, ok
+}
+func (f Function) buildParamsFromFunction(scope *Scope, compared Function) (*Tuple, bool) {
+	ok := true
+	params := &Tuple{make([]ExpressionType, len(f.Params.Elements))}
+	for i, param := range f.Params.Elements {
+		var el ExpressionType
+		if len(compared.Params.Elements) > i {
+			el = compared.Params.Elements[i]
+		}
+		p, k := param.build(scope, el)
+		ok = ok && k
+		params.Elements[i] = p
+	}
+	return params, ok
+}
+func (f Function) buildParamsFromUnknown(scope *Scope) (*Tuple, bool) {
+	ok := true
+	params := &Tuple{make([]ExpressionType, len(f.Params.Elements))}
+	for i, param := range f.Params.Elements {
+		p, k := param.build(scope, nil)
+		ok = ok && k
+		params.Elements[i] = p
+	}
+	return params, ok
 }
 
 type ObjectMember struct {
@@ -581,9 +599,33 @@ func (t Trait) Text() string {
 	return s + ")"
 }
 func (t Trait) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
-	// FIXME:
 	return t, true
+	// var ok bool
+	// t.Self, ok = t.buildSelf(scope, compared)
+	// t.Members = maps.Clone(t.Members)
+	// var k bool
+	// for name, signature := range t.Members {
+	// 	// FIXME: use compared
+	// 	t.Members[name], k = signature.build(scope, nil)
+	// 	ok = ok && k
+	// }
+	// return t, ok
 }
+
+// func (t Trait) buildSelf(scope *Scope, compared ExpressionType) (Generic, bool) {
+// 	var self Generic
+// 	if tr, k := compared.(Trait); k {
+// 		self = tr.Self
+// 	}
+// 	built, ok := t.Self.build(scope, self)
+// 	if g, ok := built.(Generic); ok {
+// 		t.Self = g
+// 	} else {
+// 		t.Self.Value = built
+// 	}
+// 	return t.Self, ok
+// }
+
 func (t Trait) implements(t2 Trait) bool {
 	for name, signature := range t2.Members {
 		method, ok := t.Members[name]

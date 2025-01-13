@@ -248,9 +248,17 @@ func (p ParserError) Text() string {
 	case UnexpectedTypeArgs:
 		return "No type arguments expected for this type"
 	case CannotAssignType:
-		t1 := p.Complements[0].(ExpressionType).Text()
-		t2 := p.Complements[1].(ExpressionType).Text()
-		return fmt.Sprintf("Cannot use value of type %v as type %v", t2, t1)
+		t1, ok := p.Complements[0].(ExpressionType)
+		var s1 string
+		if ok {
+			s1 = t1.Text()
+		}
+		t2, ok := p.Complements[1].(ExpressionType)
+		var s2 string
+		if ok {
+			s2 = t2.Text()
+		}
+		return fmt.Sprintf("Cannot use value of type %v as type %v", s2, s1)
 	case NotSubscriptable:
 		t := p.Complements[0].(ExpressionType).Text()
 		return fmt.Sprintf("Type %v is not subscriptable", t)
