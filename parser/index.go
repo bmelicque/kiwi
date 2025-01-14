@@ -44,7 +44,15 @@ func Walk(node Node, predicate func(n Node, skip func())) {
 	}
 }
 
-func ParseProgram(reader io.Reader, path string) ([]Node, []ParserError, *Scope) {
+type Program struct {
+	scope *Scope
+	nodes []Node
+}
+
+func (p Program) Scope() *Scope { return p.scope }
+func (p Program) Nodes() []Node { return p.nodes }
+
+func ParseProgram(reader io.Reader, path string) (Program, []ParserError) {
 	p := MakeParser(reader)
 	p.filePath = path
 	statements := []Node{}
@@ -62,26 +70,34 @@ func ParseProgram(reader io.Reader, path string) ([]Node, []ParserError, *Scope)
 	for i := range statements {
 		statements[i].typeCheck(p)
 	}
+	checkUnusedPrivateVariables(p)
 
 	if len(p.errors) > 0 {
 		statements = []Node{}
 	}
-	return statements, p.errors, p.scope
+	return Program{p.scope, statements}, p.errors
+}
+func checkUnusedPrivateVariables(p *Parser) {
+	for name, info := range p.scope.variables {
+		if name[0] != '_' && len(info.reads) == 0 {
+			p.error(&Identifier{Token: literal{kind: Name, value: name, loc: info.declaredAt}}, UnusedVariable, name)
+		}
+	}
 }
 
 var filesExports = map[string]Module{}
 
-func ParseFile(path string) ([]Node, []ParserError) {
+func ParseFile(path string) (Program, []ParserError) {
 	file, err := os.Open(path)
 	if err != nil {
 		panic(err)
 	}
 	defer file.Close()
 
-	ast, errors, scope := ParseProgram(file, path)
-	o := scope.toModule()
+	program, errors := ParseProgram(file, path)
+	o := program.scope.toModule()
 	filesExports[path] = o
-	return ast, errors
+	return program, errors
 }
 
 type File struct {
@@ -208,13 +224,13 @@ func GetCompileOrder(rootPath string) ([]*File, []*File) {
 	return d.files, d.inCycle
 }
 
-func Parse(rootPath string) ([][]Node, []ParserError) {
+func Parse(rootPath string) ([]Program, []ParserError) {
 	files, _ := GetCompileOrder(rootPath)
-	chunks := [][]Node{}
+	chunks := []Program{}
 	errors := []ParserError{}
 	for _, file := range files {
-		ast, errs := ParseFile(file.Path)
-		chunks = append(chunks, ast)
+		program, errs := ParseFile(file.Path)
+		chunks = append(chunks, program)
 		errors = append(errors, errs...)
 	}
 	return chunks, errors

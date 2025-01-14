@@ -1,8 +1,6 @@
 package emitter
 
 import (
-	"fmt"
-
 	"github.com/bmelicque/test-parser/parser"
 )
 
@@ -117,7 +115,6 @@ func (e *Emitter) emitSumInstance(constructor *parser.PropertyAccessExpression, 
 
 func (e *Emitter) emitRefInstance(constructor parser.Expression, args *parser.TupleExpression) {
 	c := constructor.Type().(parser.Type).Value.(parser.Ref).To
-	fmt.Println(c.Text())
 	if implementsNode(c) {
 		e.write("new __.NodePointer(")
 	} else {

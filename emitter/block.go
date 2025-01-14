@@ -22,6 +22,7 @@ func (e *Emitter) emitBlockStatement(b *parser.Block) {
 		e.indent()
 		e.write("const ")
 		emitScope(e, b.Scope())
+		e.write(" = {};\n")
 	}
 	for _, statement := range b.Statements {
 		e.indent()

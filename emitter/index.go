@@ -110,9 +110,12 @@ func (e *Emitter) emitExpression(expr parser.Expression) {
 	}
 }
 
-func EmitProgram(nodes []parser.Node) string {
+func EmitProgram(program parser.Program) string {
 	e := makeEmitter()
-	for _, node := range nodes {
+	e.write("const ")
+	emitScope(e, program.Scope())
+	e.write(" = {};\n")
+	for _, node := range program.Nodes() {
 		e.emit(node)
 	}
 	return e.string()

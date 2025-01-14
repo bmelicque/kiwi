@@ -5,10 +5,10 @@ import (
 )
 
 func TestAssignmentShorthand(t *testing.T) {
-	source := "n := 42\n"
-	source += "n += 1\n"
+	source := "_n := 42\n"
+	source += "_n += 1\n"
 
-	expected := "n += 1;\n"
+	expected := "_n += 1;\n"
 
 	testEmitter(t, source, expected, 1)
 }

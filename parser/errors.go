@@ -70,7 +70,7 @@ const (
 	NilDeclaration
 	UnneededCatch
 	UnneededAsync
-	UnusedVariable
+	UnusedVariable // [variable name]
 	CannotFind
 
 	OutOfRange

@@ -31,8 +31,8 @@ func main() {
 }
 
 type chunk struct {
-	path  string
-	nodes []parser.Node
+	parser.Program
+	path string
 }
 
 func transpile(rootPath string, outDir string) {
@@ -48,10 +48,10 @@ func transpile(rootPath string, outDir string) {
 	chunks := []chunk{}
 	errors := []parser.ParserError{}
 	for _, f := range files {
-		nodes, errs := parser.ParseFile(f.Path)
+		program, errs := parser.ParseFile(f.Path)
 		chunks = append(chunks, chunk{
-			path:  getOutPath(rootPath, f.Path, outDir),
-			nodes: nodes,
+			path:    getOutPath(rootPath, f.Path, outDir),
+			Program: program,
 		})
 		errors = append(errors, errs...)
 	}
@@ -150,7 +150,7 @@ func writeChunk(chunk chunk, stdPath string) {
 		stdPath = "./" + stdPath
 	}
 	f.WriteString("import * as __ from \"" + stdPath + ".js\";\n")
-	_, err = f.WriteString(emitter.EmitProgram(chunk.nodes))
+	_, err = f.WriteString(emitter.EmitProgram(chunk.Program))
 	if err != nil {
 		log.Fatal(err)
 	}
