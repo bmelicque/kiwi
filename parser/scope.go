@@ -227,12 +227,8 @@ func makePromise(t ExpressionType) TypeAlias {
 // The scope containing the standard library
 var std = Scope{
 	variables: map[string]*Variable{
-		"List": {
-			Typing: Type{TypeAlias{
-				Name:   "List",
-				Params: []Generic{{Name: "Type"}},
-				Ref:    List{Generic{Name: "Type"}},
-			}},
+		"Error": {
+			Typing: Type{Trait{Members: map[string]ExpressionType{"error": newGetter(String{})}}},
 		},
 		"Map": {
 			Typing: Type{makeMapType(nil, nil)},

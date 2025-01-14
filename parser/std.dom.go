@@ -19,191 +19,231 @@ func DomLib() Module {
 		return domLib
 	}
 
-	eventMembers := map[string]ExpressionType{}
 	Event := TypeAlias{
 		Name: "Event",
-		Ref: Trait{
-			Self:    Generic{Name: "Self"},
-			Members: eventMembers,
-		},
+		Ref:  Trait{Self: Generic{Name: "Self"}, Members: map[string]ExpressionType{}},
 	}
-	EventHandler := Function{
+	domLib.addMember("Event", Type{Event})
+	domLib.addMember("EventHandler", Function{
 		Params:   &Tuple{[]ExpressionType{Event}},
 		Returned: Nil{},
-	}
-	eventTargetMembers := map[string]ExpressionType{}
-	EventTarget := TypeAlias{
+	})
+	domLib.addMember("EventTarget", Type{TypeAlias{
 		Name: "EventTarget",
-		Ref:  Trait{Members: eventTargetMembers},
-	}
-	nodeMembers := map[string]ExpressionType{}
-	Node := TypeAlias{
+		Ref:  Trait{Members: map[string]ExpressionType{}},
+	}})
+	domLib.addMember("Node", Type{TypeAlias{
 		Name: "Node",
-		Ref: Trait{
-			Self:    Generic{Name: "Self"},
-			Members: nodeMembers,
-		},
-	}
-	elementMembers := map[string]ExpressionType{}
+		Ref:  Trait{Self: Generic{Name: "Self"}, Members: map[string]ExpressionType{}},
+	}})
 	Element := TypeAlias{
 		Name: "Element",
-		Ref: Trait{
-			Self:    Generic{Name: "Self"},
-			Members: elementMembers,
-		},
+		Ref:  Trait{Self: Generic{Name: "Self"}, Members: map[string]ExpressionType{}},
 	}
-	characterDataMembers := map[string]ExpressionType{}
-	CharacterData := TypeAlias{
+	domLib.addMember("Element", Type{Element})
+	domLib.addMember("CharacterData", Type{TypeAlias{
 		Name: "CharacterData",
-		Ref: Trait{
-			Self:    Generic{Name: "Self"},
-			Members: characterDataMembers,
-		},
-	}
-	textMethods := map[string]ExpressionType{}
-	Text := Type{TypeAlias{
+		Ref:  Trait{Self: Generic{Name: "Self"}, Members: map[string]ExpressionType{}},
+	}})
+	domLib.addMember("Text", Type{TypeAlias{
 		Name:    "Text",
 		Ref:     Object{Members: []ObjectMember{{Name: "data", Type: String{}}}},
-		Methods: textMethods,
-	}}
-	documentMembers := map[string]ExpressionType{}
-	Document := TypeAlias{
-		Name: "Document",
-		Ref: Trait{
-			Self:    Generic{Name: "Self"},
-			Members: documentMembers,
-		},
+		Methods: map[string]ExpressionType{},
+	}})
+	domLib.addMember("Document", Type{TypeAlias{
+		Name:    "Document",
+		Ref:     newObject(),
+		Methods: map[string]ExpressionType{},
+	}})
+	HTMLError := TypeAlias{
+		Name:    "HTMLError",
+		Methods: map[string]ExpressionType{"error": newGetter(String{})},
 	}
+	domLib.addMember("HTMLError", Type{HTMLError})
 
-	maps.Copy(eventMembers, map[string]ExpressionType{
-		"bubbles":                  newGetter(Boolean{}),
-		"cancelable":               newGetter(Boolean{}),
-		"composed":                 newGetter(Boolean{}),
-		"composedPath":             newGetter(List{Ref{EventTarget}}),
-		"currentTarget":            newGetter(Ref{Generic{Name: "Self"}}),
-		"defaultPrevented":         newGetter(Boolean{}),
-		"eventPhase":               newGetter(Nil{}), // TODO: returns https://developer.mozilla.org/fr/docs/Web/API/Event/eventPhase
-		"isTrusted":                newGetter(Boolean{}),
-		"preventDefault":           newFunction(),
-		"stopImmediatePropagation": newFunction(),
-		"stopPropagation":          newFunction(),
-		"target":                   newGetter(Ref{EventTarget}),
-		"timeStamp":                newGetter(Number{}),
-		"type":                     newGetter(String{}),
-	})
-
-	maps.Copy(eventTargetMembers, map[string]ExpressionType{
-		"addEventListener": Function{
-			Params: &Tuple{[]ExpressionType{
-				String{},
-				EventHandler,
-			}},
-			Returned: Nil{},
-		},
-		"dispatchEvent": Function{
-			Params: &Tuple{[]ExpressionType{
-				Event,
-			}},
-			Returned: Nil{},
-		},
-		"removeEventListener": Function{
-			Params: &Tuple{[]ExpressionType{
-				String{},
-				EventHandler,
-			}},
-			Returned: Nil{},
-		},
-	})
-
-	maps.Copy(nodeMembers, map[string]ExpressionType{
-		"appendChild": Function{
-			Params:   &Tuple{[]ExpressionType{Ref{Node}}},
-			Returned: Nil{},
-		},
-		"baseURI":    newGetter(String{}),
-		"childNodes": newGetter(Ref{List{Ref{Node}}}),
-		"cloneNode":  newGetter(Generic{Name: "Self"}),
-		"compareDocumentPosition": Function{
-			Params:   &Tuple{[]ExpressionType{Node}},
-			Returned: Number{}, // TODO: return enum https://developer.mozilla.org/en-US/docs/Web/API/Node/compareDocumentPosition
-		},
-		"contains": Function{
-			Params:   &Tuple{[]ExpressionType{Ref{Node}}},
-			Returned: Boolean{},
-		},
-		"firstChild":    newGetter(Ref{Node}),
-		"getRootNode":   newGetter(Ref{Node}), // TODO: options params https://developer.mozilla.org/en-US/docs/Web/API/Node/getRootNode
-		"hasChildNodes": newGetter(Boolean{}),
-		"insertBefore": Function{
-			TypeParams: []Generic{{Name: "Inserted", Constraints: Ref{Node}}},
-			Params: &Tuple{[]ExpressionType{
-				Ref{Node},
-				Generic{Name: "Inserted", Constraints: Ref{Node}},
-			}},
-			Returned: Generic{Name: "Inserted", Constraints: Ref{Node}},
-		},
-		"isDefaultNamespace": Function{
-			Params:   &Tuple{[]ExpressionType{String{}}},
-			Returned: Boolean{},
-		},
-		// TODO: isEqualNode? shouldn't '==' be enough?
-		// TODO: isSameNode? shouldn't '&a == &b' be enough?
-		"lastChild":       newGetter(Ref{Node}),
-		"nextSibling":     newGetter(Ref{Node}),
-		"nodeName":        newGetter(String{}),
-		"nodeType":        newGetter(Number{}), // TODO: node type enum: https://developer.mozilla.org/fr/docs/Web/API/Node
-		"normalize":       newFunction(),
-		"ownerDocument":   newGetter(Ref{Document}),
-		"parentNode":      newGetter(Ref{Node}),
-		"parentElement":   newGetter(Nil{}), // TODO: &Element{}
-		"previousSibling": newGetter(Ref{Node}),
-		"removeChild": Function{
-			TypeParams: []Generic{{Name: "Removed", Constraints: Ref{Node}}},
-			Params:     &Tuple{[]ExpressionType{Generic{Name: "Removed", Constraints: Ref{Node}}}},
-			Returned:   Generic{Name: "Removed", Constraints: Ref{Node}},
-		},
-		"replaceChild": Function{
-			TypeParams: []Generic{{Name: "Replaced", Constraints: Ref{Node}}},
-			Params: &Tuple{[]ExpressionType{
-				Generic{Name: "Replaced", Constraints: Ref{Node}},
-				Ref{Node},
-			}},
-			Returned: Generic{Name: "Replaced", Constraints: Ref{Node}},
-		},
-
-		// TODO: nodeValue => getter & setter
-		// TODO: textContent => getter & setter
-	})
-	maps.Copy(nodeMembers, eventTargetMembers)
-
-	documentMembers["activeElement"] = newGetter(Nil{}) // TODO: returns &Element
-	maps.Copy(documentMembers, nodeMembers)
-
-	maps.Copy(elementMembers, nodeMembers)
-
-	maps.Copy(characterDataMembers, nodeMembers)
-
-	textMethods["assignedSlot"] = Function{Params: &Tuple{}, Returned: Ref{Element}} // TODO: HTMLSlotElement
-	textMethods["wholeText"] = Function{Params: &Tuple{}, Returned: Text.Value}
-	textMethods["splitText"] = Function{
-		Params:   &Tuple{Elements: []ExpressionType{Number{}}},
-		Returned: List{Text.Value},
-	}
-	maps.Copy(textMethods, characterDataMembers)
-	textMethods["cloneNode"] = newGetter(Text.Value)
-
-	domLib.addMember("Event", Event)
-	domLib.addMember("EventHandler", EventHandler)
-	domLib.addMember("EventTarget", EventTarget)
-	domLib.addMember("Node", Node)
-	domLib.addMember("Element", Element)
-	domLib.addMember("CharacterData", CharacterData)
-	domLib.addMember("Text", Text)
+	buildEventTrait()
+	buildEventTargetTrait()
+	buildNodeTrait()
+	buildDocumentType()
+	buildElementTrait()
+	buildCharacterDataTrait()
+	buildTextType()
 
 	domLib.addMember("createElement", Function{
 		Params:   &Tuple{[]ExpressionType{String{}}},
-		Returned: Element, // TODO: this should be a Result
+		Returned: makeResultType(Element, HTMLError),
 	})
 
 	return domLib
+}
+
+func buildEventTrait() {
+	event, _ := domLib.GetOwned("Event")
+	eventTarget, _ := domLib.GetOwned("EventTarget")
+	EventTarget := eventTarget.(Type).Value
+	methods := event.(Type).Value.(TypeAlias).Ref.(Trait).Members
+
+	methods["bubbles"] = newGetter(Boolean{})
+	methods["cancelable"] = newGetter(Boolean{})
+	methods["composed"] = newGetter(Boolean{})
+	methods["composedPath"] = newGetter(List{Ref{EventTarget}})
+	methods["currentTarget"] = newGetter(Ref{Generic{Name: "Self"}})
+	methods["defaultPrevented"] = newGetter(Boolean{})
+	methods["eventPhase"] = newGetter(Nil{}) // TODO: returns https://developer.mozilla.org/fr/docs/Web/API/Event/eventPhase
+	methods["isTrusted"] = newGetter(Boolean{})
+	methods["preventDefault"] = newFunction()
+	methods["stopImmediatePropagation"] = newFunction()
+	methods["stopPropagation"] = newFunction()
+	methods["target"] = newGetter(Ref{EventTarget})
+	methods["timeStamp"] = newGetter(Number{})
+	methods["type"] = newGetter(String{})
+}
+
+func buildEventTargetTrait() {
+	eventTarget, _ := domLib.GetOwned("EventTarget")
+	EventHandler, _ := domLib.GetOwned("EventHandler")
+	event, _ := domLib.GetOwned("Event")
+	Event := event.(Type).Value
+	methods := eventTarget.(Type).Value.(TypeAlias).Ref.(Trait).Members
+
+	methods["addEventListener"] = Function{
+		Params: &Tuple{[]ExpressionType{
+			String{},
+			EventHandler,
+		}},
+		Returned: Nil{},
+	}
+	methods["dispatchEvent"] = Function{
+		Params: &Tuple{[]ExpressionType{
+			Event,
+		}},
+		Returned: Nil{},
+	}
+	methods["removeEventListener"] = Function{
+		Params: &Tuple{[]ExpressionType{
+			String{},
+			EventHandler,
+		}},
+		Returned: Nil{},
+	}
+}
+
+func buildNodeTrait() {
+	node, _ := domLib.GetOwned("Node")
+	Node := node.(Type).Value
+	document, _ := domLib.GetOwned("Document")
+	Document := document.(Type).Value
+	eventTarget, _ := domLib.GetOwned("EventTarget")
+	methods := Node.(TypeAlias).Ref.(Trait).Members
+
+	methods["appendChild"] = Function{
+		Params:   &Tuple{[]ExpressionType{Ref{Node}}},
+		Returned: Nil{},
+	}
+	methods["baseURI"] = newGetter(String{})
+	methods["childNodes"] = newGetter(Ref{List{Ref{Node}}})
+	methods["cloneNode"] = newGetter(Generic{Name: "Self"})
+	methods["compareDocumentPosition"] = Function{
+		Params:   &Tuple{[]ExpressionType{Node}},
+		Returned: Number{}, // TODO: return enum https://developer.mozilla.org/en-US/docs/Web/API/Node/compareDocumentPosition
+	}
+	methods["contains"] = Function{
+		Params:   &Tuple{[]ExpressionType{Ref{Node}}},
+		Returned: Boolean{},
+	}
+	methods["firstChild"] = newGetter(Ref{Node})
+	methods["getRootNode"] = newGetter(Ref{Node}) // TODO: options params https://developer.mozilla.org/en-US/docs/Web/API/Node/getRootNode
+	methods["hasChildNodes"] = newGetter(Boolean{})
+	methods["insertBefore"] = Function{
+		TypeParams: []Generic{{Name: "Inserted", Constraints: Ref{Node}}},
+		Params: &Tuple{[]ExpressionType{
+			Ref{Node},
+			Generic{Name: "Inserted", Constraints: Ref{Node}},
+		}},
+		Returned: Generic{Name: "Inserted", Constraints: Ref{Node}},
+	}
+	methods["isDefaultNamespace"] = Function{
+		Params:   &Tuple{[]ExpressionType{String{}}},
+		Returned: Boolean{},
+	}
+	// TODO: isEqualNode? shouldn't '==' be enough?
+	// TODO: isSameNode? shouldn't '&a == &b' be enough?
+	methods["lastChild"] = newGetter(Ref{Node})
+	methods["nextSibling"] = newGetter(Ref{Node})
+	methods["nodeName"] = newGetter(String{})
+	methods["nodeType"] = newGetter(Number{}) // TODO: node type enum: https://developer.mozilla.org/fr/docs/Web/API/Node
+	methods["normalize"] = newFunction()
+	methods["ownerDocument"] = newGetter(Ref{Document})
+	methods["parentNode"] = newGetter(Ref{Node})
+	methods["parentElement"] = newGetter(Nil{}) // TODO: &Element{}
+	methods["previousSibling"] = newGetter(Ref{Node})
+	methods["removeChild"] = Function{
+		TypeParams: []Generic{{Name: "Removed", Constraints: Ref{Node}}},
+		Params:     &Tuple{[]ExpressionType{Generic{Name: "Removed", Constraints: Ref{Node}}}},
+		Returned:   Generic{Name: "Removed", Constraints: Ref{Node}},
+	}
+	methods["replaceChild"] = Function{
+		TypeParams: []Generic{{Name: "Replaced", Constraints: Ref{Node}}},
+		Params: &Tuple{[]ExpressionType{
+			Generic{Name: "Replaced", Constraints: Ref{Node}},
+			Ref{Node},
+		}},
+		Returned: Generic{Name: "Replaced", Constraints: Ref{Node}},
+	}
+	// TODO: nodeValue => getter & setter
+	// TODO: textContent => getter & setter
+
+	maps.Copy(methods, eventTarget.(Type).Value.(TypeAlias).Ref.(Trait).Members)
+}
+
+func buildDocumentType() {
+	document, _ := domLib.GetOwned("Document")
+	Document := document.(Type).Value
+	node, _ := domLib.GetOwned("Node")
+	methods := Document.(TypeAlias).Methods
+
+	methods["activeElement"] = newGetter(Nil{}) // TODO: returns &Element
+
+	maps.Copy(methods, node.(Type).Value.(TypeAlias).Ref.(Trait).Members)
+}
+
+func buildElementTrait() {
+	element, _ := domLib.GetOwned("Element")
+	Element := element.(Type).Value
+	node, _ := domLib.GetOwned("Node")
+	methods := Element.(TypeAlias).Ref.(Trait).Members
+
+	// TODO: Element methods
+
+	maps.Copy(methods, node.(Type).Value.(TypeAlias).Ref.(Trait).Members)
+}
+
+func buildCharacterDataTrait() {
+	characterData, _ := domLib.GetOwned("CharacterData")
+	CharacterData := characterData.(Type).Value
+	node, _ := domLib.GetOwned("Node")
+	methods := CharacterData.(TypeAlias).Ref.(Trait).Members
+
+	// TODO: CharacterData methods
+
+	maps.Copy(methods, node.(Type).Value.(TypeAlias).Ref.(Trait).Members)
+}
+
+func buildTextType() {
+	text, _ := domLib.GetOwned("Text")
+	Text := text.(Type).Value
+	element, _ := domLib.GetOwned("Element")
+	Element := element.(Type).Value
+	characterData, _ := domLib.GetOwned("CharacterData")
+	methods := Text.(TypeAlias).Methods
+
+	methods["assignedSlot"] = Function{Params: &Tuple{}, Returned: Ref{Element}} // TODO: HTMLSlotElement
+	methods["wholeText"] = Function{Params: &Tuple{}, Returned: Text}
+	methods["splitText"] = Function{
+		Params:   &Tuple{Elements: []ExpressionType{Number{}}},
+		Returned: List{Text},
+	}
+	methods["cloneNode"] = newGetter(Text)
+
+	maps.Copy(methods, characterData.(Type).Value.(TypeAlias).Ref.(Trait).Members)
 }
