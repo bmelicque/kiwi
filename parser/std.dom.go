@@ -57,6 +57,7 @@ func DomLib() Module {
 	}})
 	HTMLError := TypeAlias{
 		Name:    "HTMLError",
+		Ref:     Object{},
 		Methods: map[string]ExpressionType{"error": newGetter(String{})},
 	}
 	domLib.addMember("HTMLError", Type{HTMLError})

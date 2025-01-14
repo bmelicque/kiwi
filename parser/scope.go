@@ -121,30 +121,20 @@ func (s Scope) toModule() Module {
 
 // utility to create option types with different Some types
 func makeOptionType(t ExpressionType) TypeAlias {
-	alias := TypeAlias{
+	return TypeAlias{
 		Name:   "?",
 		Params: []Generic{{Name: "Type", Value: t}},
-		Ref: Sum{map[string]Function{
-			"Some": {
-				Params: &Tuple{[]ExpressionType{Generic{Name: "Type", Value: t}}},
-			},
-			"None": {},
+		Ref: Sum{map[string]Tuple{
+			"Some": {[]ExpressionType{Generic{Name: "Type", Value: t}}},
+			"None": newTuple(),
 		}},
 	}
-	some := alias.Ref.(Sum).Members["Some"]
-	some.Returned = alias
-	alias.Ref.(Sum).Members["Some"] = some
-
-	none := alias.Ref.(Sum).Members["None"]
-	none.Returned = alias
-	alias.Ref.(Sum).Members["None"] = none
-	return alias
 }
 
 // extracts the Some type from an Option
 func getSomeType(t Sum) ExpressionType {
 	some := t.Members["Some"]
-	return some.Params.Elements[0].(Generic).Value
+	return some.Elements[0].(Generic).Value
 }
 
 // The vanilla option type.
@@ -153,29 +143,17 @@ var optionType = makeOptionType(nil)
 
 // utility to create result types
 func makeResultType(ok ExpressionType, err ExpressionType) TypeAlias {
-	alias := TypeAlias{
+	return TypeAlias{
 		Name: "!",
 		Params: []Generic{
 			{Name: "Ok", Value: ok},
 			{Name: "Err", Value: err},
 		},
-		Ref: Sum{map[string]Function{
-			"Ok": {
-				Params: &Tuple{[]ExpressionType{Generic{Name: "Ok", Value: ok}}},
-			},
-			"Err": {
-				Params: &Tuple{[]ExpressionType{Generic{Name: "Err", Value: err}}},
-			},
+		Ref: Sum{map[string]Tuple{
+			"Ok":  {[]ExpressionType{Generic{Name: "Ok", Value: ok}}},
+			"Err": {[]ExpressionType{Generic{Name: "Err", Value: err}}},
 		}},
 	}
-	okConst := alias.Ref.(Sum).Members["Ok"]
-	okConst.Returned = alias
-	alias.Ref.(Sum).Members["Ok"] = okConst
-
-	errConst := alias.Ref.(Sum).Members["Err"]
-	errConst.Returned = alias
-	alias.Ref.(Sum).Members["Err"] = errConst
-	return alias
 }
 
 var mapMethods = map[string]ExpressionType{

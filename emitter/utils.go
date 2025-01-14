@@ -35,7 +35,7 @@ func implementsNode(t parser.ExpressionType) bool {
 	var node parser.Trait
 	for _, member := range parser.DomLib().Members {
 		if member.Name == "Node" {
-			node = member.Type.(parser.TypeAlias).Ref.(parser.Trait)
+			node = member.Type.(parser.Type).Value.(parser.TypeAlias).Ref.(parser.Trait)
 			break
 		}
 	}

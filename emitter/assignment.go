@@ -61,7 +61,7 @@ func emitAssign(e *Emitter, a *parser.Assignment) {
 	}
 	e.write(";\n")
 }
-func (e *Emitter) emitAssignment(a *parser.Assignment) {
+func (e *Emitter) emitAssignment(a *parser.Assignment, isTopLevel bool) {
 	switch a.Operator.Kind() {
 	case parser.Assign:
 		if u, ok := a.Pattern.(*parser.UnaryExpression); ok {
@@ -83,7 +83,7 @@ func (e *Emitter) emitAssignment(a *parser.Assignment) {
 		parser.LogicalOrAssign:
 		emitAssign(e, a)
 	case parser.Declare:
-		e.emitDeclaration(a)
+		e.emitDeclaration(a, isTopLevel)
 	case parser.Define:
 		if isTypePattern(a.Pattern) {
 			e.emitTypeDeclaration(a)
@@ -104,9 +104,8 @@ func (e *Emitter) emitAssignment(a *parser.Assignment) {
 	}
 }
 
-// FIXME: this is broken: export __sXXX.identifier =
-func (e *Emitter) emitDeclaration(a *parser.Assignment) {
-	if needsExport(a.Pattern) {
+func (e *Emitter) emitDeclaration(a *parser.Assignment, isTopLevel bool) {
+	if needsExport(a.Pattern) && isTopLevel {
 		e.write("export ")
 	}
 	if i, ok := a.Pattern.(*parser.Identifier); !ok || !isReferenced(i) {

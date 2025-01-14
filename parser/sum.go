@@ -62,7 +62,7 @@ func (s *SumType) Loc() Loc {
 }
 func (s *SumType) Type() ExpressionType { return s.typing }
 func (s *SumType) typeCheck(p *Parser) {
-	memberTypes := map[string]Function{}
+	memberTypes := map[string]Tuple{}
 	for i := range s.Members {
 		s.Members[i].typeCheck(p)
 		if s.Members[i].Name != nil {
@@ -70,13 +70,7 @@ func (s *SumType) typeCheck(p *Parser) {
 			memberTypes[name] = getSumConstructorType(s.Members[i])
 		}
 	}
-	typing := Sum{memberTypes}
-	for name := range memberTypes {
-		constructor := memberTypes[name]
-		constructor.Returned = typing
-		memberTypes[name] = constructor
-	}
-	s.typing = Type{typing}
+	s.typing = Type{Sum{memberTypes}}
 }
 
 func (p *Parser) parseSumType() Expression {
@@ -125,9 +119,9 @@ func parseSumTypeConstructorName(p *Parser) *Identifier {
 	return identifier
 }
 
-func getSumConstructorType(member SumTypeConstructor) Function {
+func getSumConstructorType(member SumTypeConstructor) Tuple {
 	if member.Params == nil || member.Params.Expr == nil {
-		return Function{}
+		return newTuple()
 	}
 
 	tuple := member.Params.Expr.(*TupleExpression)
@@ -140,5 +134,5 @@ func getSumConstructorType(member SumTypeConstructor) Function {
 			tu.Elements[i] = Unknown{}
 		}
 	}
-	return Function{Params: &tu}
+	return tu
 }

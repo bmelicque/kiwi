@@ -125,7 +125,7 @@ func getSumTypeConstructor(t Type, name string) ExpressionType {
 		return Unknown{}
 	}
 
-	return constructor
+	return Function{Params: &constructor, Returned: alias}
 }
 
 // check accessing an object's property or method: object.property

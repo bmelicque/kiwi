@@ -1,5 +1,7 @@
 package parser
 
+import "fmt"
+
 type ExpressionType interface {
 	Extends(ExpressionType) bool
 	Text() string
@@ -251,6 +253,8 @@ func (m Map) build(scope *Scope, compared ExpressionType) (ExpressionType, bool)
 type Tuple struct {
 	Elements []ExpressionType
 }
+
+func newTuple() Tuple { return Tuple{[]ExpressionType{}} }
 
 func (tuple Tuple) Extends(t ExpressionType) bool {
 	switch t := t.(type) {
@@ -520,7 +524,7 @@ type Module struct {
 }
 
 type Sum struct {
-	Members map[string]Function
+	Members map[string]Tuple
 }
 
 func (s Sum) Extends(t ExpressionType) bool {
@@ -540,7 +544,7 @@ func (s Sum) Extends(t ExpressionType) bool {
 func (s Sum) Text() string {
 	str := "("
 	for name, member := range s.Members {
-		str += "| " + name + member.Params.Text() + " "
+		str += fmt.Sprintf("| %v{%v} ", name, member.Text())
 	}
 	return str + ")"
 }
@@ -550,7 +554,7 @@ func (s Sum) build(scope *Scope, compared ExpressionType) (ExpressionType, bool)
 		var k bool
 		// FIXME: is compared a sum type? should it work like this?
 		m, k := member.build(scope, compared)
-		s.Members[name] = m.(Function)
+		s.Members[name] = m.(Tuple)
 		ok = ok && k
 	}
 	return s, ok
@@ -560,13 +564,9 @@ func (s Sum) getMember(name string) ExpressionType {
 	if !ok {
 		return Unknown{}
 	}
-	if len(member.Params.Elements) == 1 {
-		ret, _ := member.Params.Elements[0].build(nil, nil)
-		return ret
-	}
-	tuple := Tuple{make([]ExpressionType, len(member.Params.Elements))}
-	for i := range member.Params.Elements {
-		tuple.Elements[i], _ = member.Params.Elements[i].build(nil, nil)
+	tuple, _ := member.build(nil, nil)
+	if len(tuple.(Tuple).Elements) == 1 {
+		return tuple.(Tuple).Elements[0]
 	}
 	return tuple
 }

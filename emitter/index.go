@@ -39,6 +39,16 @@ func (e Emitter) string() string {
 	return e.builder.String()
 }
 
+func (e *Emitter) emitAtTopLevel(node parser.Node) {
+	switch node := node.(type) {
+	case *parser.Assignment:
+		e.extractUninlinables(node)
+		e.emitAssignment(node, true)
+	default:
+		e.emit(node)
+	}
+}
+
 func (e *Emitter) emit(node parser.Node) {
 	//TODO: if not node that needs extraction, look if contains one
 	if !isUninlinable(node) {
@@ -47,7 +57,7 @@ func (e *Emitter) emit(node parser.Node) {
 	switch node := node.(type) {
 	// Statements
 	case *parser.Assignment:
-		e.emitAssignment(node)
+		e.emitAssignment(node, false)
 	case *parser.Block:
 		e.emitBlockStatement(node)
 	case *parser.CatchExpression:
@@ -116,7 +126,7 @@ func EmitProgram(program parser.Program) string {
 	emitScope(e, program.Scope())
 	e.write(" = {};\n")
 	for _, node := range program.Nodes() {
-		e.emit(node)
+		e.emitAtTopLevel(node)
 	}
 	return e.string()
 }

@@ -46,18 +46,28 @@ func (e *Emitter) emitFunctionExpression(f *parser.FunctionExpression) {
 	if f.Type().(parser.Function).Async {
 		e.write("async ")
 	}
-	e.write("(")
 	args := f.Params.Expr.(*parser.TupleExpression).Elements
-	max := len(args) - 1
-	for i := range args[:max] {
-		e.emitFunctionParam(args[i])
-		e.write(", ")
-	}
-	e.emitFunctionParam(args[max])
-	e.write(") => ")
+	e.emitFunctionParams(args)
+	e.write(" => ")
 
 	params := f.Params.Expr.(*parser.TupleExpression)
 	e.emitFunctionBody(f.Body, params)
+}
+
+func (e *Emitter) emitFunctionParams(params []parser.Expression) {
+	if len(params) == 0 {
+		e.write("()")
+		return
+	}
+
+	e.write("(")
+	max := len(params) - 1
+	for i := range params[:max] {
+		e.emitFunctionParam(params[i])
+		e.write(", ")
+	}
+	e.emitFunctionParam(params[max])
+	e.write(")")
 }
 
 func (e *Emitter) emitFunctionParam(arg parser.Expression) {
