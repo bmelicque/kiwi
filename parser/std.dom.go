@@ -21,6 +21,7 @@ func DomLib() Module {
 
 	Event := TypeAlias{
 		Name: "Event",
+		from: "dom",
 		Ref:  Trait{Self: Generic{Name: "Self"}, Members: map[string]ExpressionType{}},
 	}
 	domLib.addMember("Event", Type{Event})
@@ -30,33 +31,40 @@ func DomLib() Module {
 	})
 	domLib.addMember("EventTarget", Type{TypeAlias{
 		Name: "EventTarget",
+		from: "dom",
 		Ref:  Trait{Members: map[string]ExpressionType{}},
 	}})
 	domLib.addMember("Node", Type{TypeAlias{
 		Name: "Node",
+		from: "dom",
 		Ref:  Trait{Self: Generic{Name: "Self"}, Members: map[string]ExpressionType{}},
 	}})
 	Element := TypeAlias{
 		Name: "Element",
+		from: "dom",
 		Ref:  Trait{Self: Generic{Name: "Self"}, Members: map[string]ExpressionType{}},
 	}
 	domLib.addMember("Element", Type{Element})
 	domLib.addMember("CharacterData", Type{TypeAlias{
 		Name: "CharacterData",
+		from: "dom",
 		Ref:  Trait{Self: Generic{Name: "Self"}, Members: map[string]ExpressionType{}},
 	}})
 	domLib.addMember("Text", Type{TypeAlias{
 		Name:    "Text",
+		from:    "dom",
 		Ref:     Object{Members: []ObjectMember{{Name: "data", Type: String{}}}},
 		Methods: map[string]ExpressionType{},
 	}})
 	domLib.addMember("Document", Type{TypeAlias{
 		Name:    "Document",
+		from:    "dom",
 		Ref:     newObject(),
 		Methods: map[string]ExpressionType{},
 	}})
 	HTMLError := TypeAlias{
 		Name:    "HTMLError",
+		from:    "dom",
 		Ref:     Object{},
 		Methods: map[string]ExpressionType{"error": newGetter(String{})},
 	}

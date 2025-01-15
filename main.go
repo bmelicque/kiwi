@@ -37,7 +37,6 @@ type chunk struct {
 
 func transpile(rootPath string, outDir string) {
 	outDir = filepath.Dir(outDir)
-	emptyOutDir(outDir)
 	files, _ := parser.GetCompileOrder(rootPath)
 	htmlPath := filepath.Join(filepath.Dir(rootPath), "index.html")
 	h := parseHtml(htmlPath)
@@ -61,6 +60,7 @@ func transpile(rootPath string, outDir string) {
 		return
 	}
 
+	emptyOutDir(outDir)
 	std := emitter.EmitStd(filepath.Dir(rootPath), outDir)
 	std = filepath.Join(outDir, std)
 	for _, chunk := range chunks {

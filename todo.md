@@ -1,0 +1,73 @@
+- rename `Nil{}` to `Void{}`?
+- prevent void assignment
+  - assign
+  - declare
+  - define
+  - function param
+  - …
+- fix return types…
+- update maps syntax to `Key#Value`
+  - inferred maps as `#{}`
+- cannot define method outside of module where type is declared
+- document().body (&Node)
+  - Document is a type, not a trait
+- `Unknown`/`Any` trait
+  - current `Unknown` -> `Invalid`
+  - `Any :: .{}`
+    - might not even need an alias, as `.{}` is already 3 chars long
+- fix declaration for tuples: check if part of an object (use “let” or not)
+- object definition: remove order check
+  - emitter should just use Object.Members & Object.Default to sort things out
+- list methods
+  - list.filter() mutates the list
+  - filter(list, predicate)
+  - list.sort() sorts in place
+  - sort(list, predicate)
+  - map(list, predicate)
+- int vs float?
+  - divisions
+    - `Math.floor(a/b)`
+    - `~~(a/b)`
+    - `(a/b|0)`
+- refactor Braced + Parenthesized + Bracketed ?
+- merge token and literal
+- infer constructors in lists, maps & sum
+  - `[]Struct{{x: 1}, {x: 2}}`
+  - `Sum.Constructor{{x: 1}}`
+- Collapse option types
+  - `??Type` => `?Type`
+- Match
+  - break
+    - check if unreachable after break
+  - fallthrough
+  - number
+  - string
+    - regex
+  - lists
+  - tuple
+  - update syntax to `pattern: expr`
+    - for complex expr `pattern: {block}`
+  - check all types in scope for traits
+  - `isExiting(map)` returns `true` if all cases exit
+- variadic functions
+- WaitGroup()
+  - .add() to push request
+  - .settled()
+  - .all()
+  - .any()
+  - .first()
+- Signals?
+- Optimizations:
+  - Option type:
+    - Type | undefined
+    - match => test if undefined
+  - emit inclusive range with literal
+    - `1..=3` => `1..4`
+  - reduce Loc memory footprint
+    - Loc is just 1 int (character number in file)
+    - have a list of new line positions
+    - infer End from Start and token length
+- Templating
+  - `h'<p>Hello, world!</p>'`
+  - `h'<p>Hello, {name}!</p>'`
+- formatter
