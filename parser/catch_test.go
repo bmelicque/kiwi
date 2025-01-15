@@ -71,6 +71,56 @@ func TestParseCatchExpression(t *testing.T) {
 	}
 }
 
+func TestCheckCatchBody(t *testing.T) {
+	tests := []struct {
+		name       string
+		happy      ExpressionType
+		body       *Block
+		errorCount int
+	}{
+		{
+			name:       "Matching types produce no errors",
+			happy:      Number{},
+			body:       &Block{Statements: []Node{&Literal{literal{kind: NumberLiteral}}}},
+			errorCount: 0,
+		},
+		{
+			name:       "Not matching types produce one error",
+			happy:      Number{},
+			body:       &Block{Statements: []Node{&Literal{literal{kind: StringLiteral}}}},
+			errorCount: 1,
+		},
+		{
+			name:       "Exiting body produce no mismatching error",
+			happy:      Number{},
+			body:       &Block{Statements: []Node{&Exit{Operator: token{kind: ReturnKeyword}}}},
+			errorCount: 0,
+		},
+		{
+			// error is already handled in parsing phase
+			name:       "Missing body produce no type-checking error",
+			happy:      Number{},
+			body:       nil,
+			errorCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := MakeParser(strings.NewReader(""))
+			parser.scope.kind = FunctionScope
+			c := &CatchExpression{Body: tt.body}
+			c.typeCheckBody(parser, tt.happy)
+			if got := len(parser.errors); got != tt.errorCount {
+				t.Errorf("Got %v errors, want %v\n", got, tt.errorCount)
+				for _, e := range parser.errors {
+					t.Log(e.Text())
+				}
+			}
+		})
+	}
+}
+
 func TestCheckCatchExpression(t *testing.T) {
 	parser := MakeParser(nil)
 	parser.scope.Add(

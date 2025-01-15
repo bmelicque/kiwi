@@ -32,23 +32,14 @@ func (c *CatchExpression) typeCheck(p *Parser) {
 	c.Left.typeCheck(p)
 	p.pushScope(NewScope(BlockScope))
 	defer p.dropScope()
-
 	happy, err, ok := getCatchTypes(c.Left)
 	if !ok {
 		p.error(c, UnneededCatch)
 	}
-
 	if c.Identifier != nil {
 		p.scope.Add(c.Identifier.Text(), c.Identifier.Loc(), err)
 	}
-
-	if c.Body == nil {
-		return
-	}
-	c.Body.typeCheck(p)
-	if !happy.Extends(c.Body.Type()) {
-		p.error(c.Body.reportedNode(), CannotAssignType, happy, c.Body.Type())
-	}
+	c.typeCheckBody(p, happy)
 }
 
 // returns (Left, Right, ok), with CatchExpression being:
@@ -62,13 +53,19 @@ func getCatchTypes(result Expression) (ExpressionType, ExpressionType, bool) {
 	err := alias.Ref.(Sum).getMember("Err")
 	return happy, err, true
 }
+func (c *CatchExpression) typeCheckBody(p *Parser, happy ExpressionType) {
+	if c.Body == nil {
+		return
+	}
+	c.Body.typeCheck(p)
+	if !isExiting(c.Body) && !happy.Extends(c.Body.Type()) {
+		p.error(c.Body.reportedNode(), CannotAssignType, happy, c.Body.Type())
+	}
+}
 
 func (c *CatchExpression) Type() ExpressionType {
-	alias, ok := c.Left.Type().(TypeAlias)
-	if !ok || alias.Name != "!" {
-		return c.Left.Type()
-	}
-	return alias.Ref.(Sum).getMember("Ok")
+	t, _, _ := getCatchTypes(c.Left)
+	return t
 }
 
 func (p *Parser) parseCatchExpression() Expression {
