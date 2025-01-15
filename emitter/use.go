@@ -18,12 +18,12 @@ func (e *Emitter) emitUseStatement(u *parser.UseDirective) {
 		if u.Star {
 			e.write("const ")
 			e.emitExpression(u.Names)
-			e.write(" = { createElement: (s) => document.createElement(s) }\n")
+			e.write(" = { createElement: __.createElement }\n")
 			return
 		}
 		names := getUsedNames(u.Names)
 		if slices.Contains(names, "createElement") {
-			e.write("const createElement = (s) => document.createElement(s);\n")
+			e.write("const createElement = __.createElement;\n")
 		}
 	case "io":
 		if u.Star {
