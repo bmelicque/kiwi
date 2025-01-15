@@ -1,5 +1,7 @@
 package parser
 
+import "slices"
+
 type Exit struct {
 	Operator Token
 	Value    Expression
@@ -66,5 +68,18 @@ func reportIllegalExit(p *Parser, e *Exit) {
 	}
 	if operator == ThrowKeyword && !inFunction {
 		p.error(e, IllegalThrow)
+	}
+}
+
+func isExiting(n Node) bool {
+	switch n := n.(type) {
+	case *Exit:
+		return true
+	case *Block:
+		return slices.IndexFunc(n.Statements, isExiting) != -1
+	case *IfExpression:
+		return isExiting(n.Body) && isExiting(n.Alternate)
+	default:
+		return false
 	}
 }
