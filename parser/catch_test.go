@@ -1,46 +1,73 @@
 package parser
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 )
 
 func TestParseCatchExpression(t *testing.T) {
-	parser := MakeParser(strings.NewReader("result catch err { true }"))
-	expr := parser.parseCatchExpression()
-
-	if len(parser.errors) > 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
+	tests := []struct {
+		name        string
+		source      string
+		errorCount  int
+		expectedLoc Loc
+	}{
+		{
+			name:        "Valid catch expression produces no errors",
+			source:      "result catch err {}",
+			errorCount:  0,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 20}},
+		},
+		{
+			name:        "Catch expression with no identifiers are valid",
+			source:      "result catch {}",
+			errorCount:  0,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 16}},
+		},
+		{
+			name:        "Invalid identifiers produce one error",
+			source:      "result catch number {}",
+			errorCount:  1,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 23}},
+		},
+		{
+			name:        "Invalid tokens produce one error",
+			source:      "result catch err err {}",
+			errorCount:  1,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 24}},
+		},
+		{
+			name:        "Missing body produces one error",
+			source:      "result catch err",
+			errorCount:  1,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 17}},
+		},
+		{
+			name:        "Missing body & identifier produces one error",
+			source:      "result catch",
+			errorCount:  1,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 13}},
+		},
 	}
-	if _, ok := expr.(*CatchExpression); !ok {
-		t.Fatalf("Expected 'catch' expression, got %#v", expr)
-	}
-}
 
-func TestParseCatchExpressionNoIdentifier(t *testing.T) {
-	parser := MakeParser(strings.NewReader("result catch {}"))
-	parser.parseCatchExpression()
-
-	if len(parser.errors) != 1 {
-		t.Fatalf("Expected 1 error, got %v: %#v", len(parser.errors), parser.errors)
-	}
-}
-
-func TestParseCatchExpressionBadIdentifier(t *testing.T) {
-	parser := MakeParser(strings.NewReader("result catch number {}"))
-	parser.parseCatchExpression()
-
-	if len(parser.errors) != 1 {
-		t.Fatalf("Expected 1 error, got %v: %#v", len(parser.errors), parser.errors)
-	}
-}
-
-func TestParseCatchExpressionBadTokens(t *testing.T) {
-	parser := MakeParser(strings.NewReader("result catch err err {}"))
-	parser.parseCatchExpression()
-
-	if len(parser.errors) != 1 {
-		t.Fatalf("Expected 1 error, got %v: %#v", len(parser.errors), parser.errors)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := MakeParser(strings.NewReader(tt.source))
+			expr := parser.parseCatchExpression()
+			if got := len(parser.errors); got != tt.errorCount {
+				t.Errorf("Got %v errors, want %v\n", got, tt.errorCount)
+				for _, e := range parser.errors {
+					t.Log(e.Text())
+				}
+			}
+			if _, ok := expr.(*CatchExpression); !ok {
+				t.Errorf("Expected *CatchExpression, got %#v", reflect.TypeOf(expr))
+			}
+			if expr.Loc() != tt.expectedLoc {
+				t.Errorf("Got loc %v, want %v", expr.Loc(), tt.expectedLoc)
+			}
+		})
 	}
 }
 

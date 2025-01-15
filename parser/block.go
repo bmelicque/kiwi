@@ -59,11 +59,6 @@ func (b *Block) Type() ExpressionType {
 }
 
 func (p *Parser) parseBlock() *Block {
-	if p.Peek().Kind() != LeftBrace {
-		p.error(&Literal{p.Peek()}, LeftBraceExpected)
-		return nil
-	}
-
 	start := p.Consume().Loc().Start // '{'
 	p.DiscardLineBreaks()
 

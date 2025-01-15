@@ -42,6 +42,9 @@ func (c *CatchExpression) typeCheck(p *Parser) {
 		p.scope.Add(c.Identifier.Text(), c.Identifier.Loc(), err)
 	}
 
+	if c.Body == nil {
+		return
+	}
 	c.Body.typeCheck(p)
 	if !happy.Extends(c.Body.Type()) {
 		p.error(c.Body.reportedNode(), CannotAssignType, happy, c.Body.Type())
@@ -80,23 +83,36 @@ func (p *Parser) parseCatchExpression() Expression {
 	}
 	keyword := p.Consume()
 
-	outer := p.allowBraceParsing
-	p.allowBraceParsing = false
-	token := p.parseToken()
-	p.allowBraceParsing = outer
-	identifier, ok := token.(*Identifier)
-	if token != nil && !ok {
-		p.error(token, IdentifierExpected)
-	}
+	identifier := parseCatchIdentifier(p)
+	body := parseCatchBody(p)
 
-	if p.Peek().Kind() != LeftBrace {
-		recoverBadTokens(p, LeftBrace)
-	}
-	body := p.parseBlock()
 	return &CatchExpression{
 		Left:       expr,
 		Keyword:    keyword,
 		Identifier: identifier,
 		Body:       body,
 	}
+}
+
+func parseCatchIdentifier(p *Parser) *Identifier {
+	outerBrace, outerEmpty := p.allowBraceParsing, p.allowEmptyExpr
+	p.allowBraceParsing, p.allowEmptyExpr = false, true
+	token := p.parseToken()
+	p.allowBraceParsing, p.allowEmptyExpr = outerBrace, outerEmpty
+	identifier, ok := token.(*Identifier)
+	if token != nil && !ok {
+		p.error(token, IdentifierExpected)
+	}
+	return identifier
+}
+
+func parseCatchBody(p *Parser) *Block {
+	if p.Peek().Kind() != LeftBrace {
+		recoverBadTokens(p, LeftBrace)
+	}
+	// left brace if recovered correctly, else EOL/EOF
+	if p.Peek().Kind() != LeftBrace {
+		return nil
+	}
+	return p.parseBlock()
 }
