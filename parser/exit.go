@@ -28,35 +28,43 @@ func (e *Exit) Loc() Loc {
 
 func (p *Parser) parseExit() *Exit {
 	keyword := p.Consume()
-
-	if p.Peek().Kind() == EOL {
-		return &Exit{keyword, nil}
+	var value Expression
+	if p.Peek().Kind() != EOL {
+		value = p.parseExpression()
 	}
+	statement := &Exit{keyword, value}
+	checkKeywordValueConsistency(p, statement)
+	reportIllegalExit(p, statement)
+	return statement
+}
 
-	value := p.parseExpression()
-
-	operator := keyword.Kind()
-	if operator == ContinueKeyword && value != nil {
-		p.error(value, UnexpectedExpression)
+// check if presence/absence of value matches keyword
+func checkKeywordValueConsistency(p *Parser, e *Exit) {
+	operator := e.Operator.Kind()
+	if operator == ContinueKeyword && e.Value != nil {
+		p.error(e.Value, UnexpectedExpression)
 	}
-	if operator == ThrowKeyword && value == nil {
+	if operator == ThrowKeyword && e.Value == nil {
 		p.error(&Literal{p.Peek()}, ExpressionExpected)
 	}
+}
 
-	statement := &Exit{keyword, value}
+// Exit statements may only appear in certain contexts
+// (e.g. you can only return in a function)
+func reportIllegalExit(p *Parser, e *Exit) {
+	operator := e.Operator.Kind()
 	inLoop := p.scope.in(LoopScope)
 	inFunction := p.scope.in(FunctionScope)
 	if operator == BreakKeyword && !inLoop {
-		p.error(statement, IllegalBreak)
+		p.error(e, IllegalBreak)
 	}
 	if operator == ContinueKeyword && !inLoop {
-		p.error(statement, IllegalContinue)
+		p.error(e, IllegalContinue)
 	}
 	if operator == ReturnKeyword && !inFunction {
-		p.error(statement, IllegalReturn)
+		p.error(e, IllegalReturn)
 	}
 	if operator == ThrowKeyword && !inFunction {
-		p.error(statement, IllegalThrow)
+		p.error(e, IllegalThrow)
 	}
-	return statement
 }
