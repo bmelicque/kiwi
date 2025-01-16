@@ -284,6 +284,122 @@ func TestCheckExplicitReturn(t *testing.T) {
 	}
 }
 
+func TestTypeCheckReturnsExplicit(t *testing.T) {
+	tests := []struct {
+		name       string
+		returnType ExpressionType
+		body       *Block
+		wantErr    int
+	}{
+		{
+			name:       "matching return type",
+			returnType: Type{String{}},
+			body: &Block{
+				Statements: []Node{
+					&Exit{
+						Operator: token{kind: ReturnKeyword},
+						Value:    &Literal{literal{kind: StringLiteral}},
+					},
+				},
+			},
+			wantErr: 0,
+		},
+		{
+			name:       "matching return type expecting result",
+			returnType: Type{makeResultType(String{}, Number{})},
+			body: &Block{
+				Statements: []Node{
+					&Exit{
+						Operator: token{kind: ReturnKeyword},
+						Value:    &Literal{literal{kind: StringLiteral}},
+					},
+				},
+			},
+			wantErr: 0,
+		},
+		{
+			name:       "mismatched return type",
+			returnType: Type{Number{}},
+			body: &Block{
+				Statements: []Node{
+					&Exit{
+						Operator: token{kind: ReturnKeyword},
+						Value:    &Literal{literal{kind: StringLiteral}},
+					},
+				},
+			},
+			wantErr: 1,
+		},
+		{
+			name:       "mismatched return type expecting result",
+			returnType: Type{makeResultType(Number{}, Number{})},
+			body: &Block{
+				Statements: []Node{
+					&Exit{
+						Operator: token{kind: ReturnKeyword},
+						Value:    &Literal{literal{kind: StringLiteral}},
+					},
+				},
+			},
+			wantErr: 1,
+		},
+		{
+			name:       "multiple return statements",
+			returnType: Type{String{}},
+			body: &Block{
+				Statements: []Node{
+					&Exit{
+						Operator: token{kind: ReturnKeyword},
+						Value:    &Literal{literal{kind: StringLiteral}},
+					},
+					&Exit{
+						Operator: token{kind: ReturnKeyword},
+						Value:    &Literal{literal{kind: StringLiteral}},
+					},
+				},
+			},
+			wantErr: 0,
+		},
+		{
+			name:       "body type",
+			returnType: Type{String{}},
+			body: &Block{
+				Statements: []Node{&Literal{literal{kind: StringLiteral}}},
+			},
+			wantErr: 0,
+		},
+		{
+			name:       "mismathced body type",
+			returnType: Type{String{}},
+			body: &Block{
+				Statements: []Node{&Literal{literal{kind: NumberLiteral}}},
+			},
+			wantErr: 1,
+		},
+		{
+			// error already handled in another function
+			name:       "invalid (non-type) explicit type produce no error",
+			returnType: Invalid{},
+			body: &Block{
+				Statements: []Node{&Literal{literal{kind: StringLiteral}}},
+			},
+			wantErr: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := MakeParser(strings.NewReader(""))
+
+			typeCheckReturnsExplicit(p, tt.returnType, tt.body)
+
+			if len(p.errors) != tt.wantErr {
+				t.Errorf("expected %v errors but got %v", tt.wantErr, len(p.errors))
+			}
+		})
+	}
+}
+
 func TestCheckBadExplicit(t *testing.T) {
 	parser := MakeParser(nil)
 	expr := &FunctionExpression{
@@ -298,44 +414,6 @@ func TestCheckBadExplicit(t *testing.T) {
 
 	if expr.typing.Returned != (Invalid{}) {
 		t.Fatalf("unknown expected")
-	}
-}
-
-func TestCheckExplicitBadLastExpr(t *testing.T) {
-	parser := MakeParser(nil)
-	expr := &FunctionExpression{
-		Params:   &ParenthesizedExpression{Expr: &TupleExpression{}},
-		Explicit: &Literal{token{kind: NumberKeyword}},
-		Body: &Block{Statements: []Node{
-			&Literal{literal{kind: BooleanLiteral, value: "true"}},
-		}},
-	}
-	expr.typeCheck(parser)
-	testParserErrors(t, parser, 1)
-
-	if _, ok := expr.typing.Returned.(Number); !ok {
-		t.Fatalf("Number type expected")
-	}
-}
-
-func TestCheckExplicitResult(t *testing.T) {
-	parser := MakeParser(nil)
-	expr := &FunctionExpression{
-		Params: &ParenthesizedExpression{Expr: &TupleExpression{}},
-		Explicit: &BinaryExpression{
-			Left:     &Literal{token{kind: StringKeyword}},
-			Right:    &Literal{token{kind: NumberKeyword}},
-			Operator: token{kind: Bang},
-		},
-		Body: &Block{Statements: []Node{
-			&Literal{literal{kind: NumberLiteral, value: "42"}},
-		}},
-	}
-	expr.typeCheck(parser)
-	testParserErrors(t, parser, 0)
-
-	if alias, ok := expr.typing.Returned.(TypeAlias); !ok || alias.Name != "!" {
-		t.Fatalf("Result type expected")
 	}
 }
 
@@ -387,33 +465,6 @@ func TestCheckExplicitBadThrow(t *testing.T) {
 					&Exit{
 						Operator: token{kind: ThrowKeyword},
 						Value:    &Literal{literal{kind: NumberLiteral, value: "42"}},
-					},
-				}},
-			},
-			&Literal{literal{kind: NumberLiteral, value: "42"}},
-		}},
-	}
-	expr.typeCheck(parser)
-	testParserErrors(t, parser, 1)
-}
-
-func TestCheckExplicitBadReturn(t *testing.T) {
-	parser := MakeParser(nil)
-	expr := &FunctionExpression{
-		Params: &ParenthesizedExpression{Expr: &TupleExpression{}},
-		Explicit: &BinaryExpression{
-			Left:     &Literal{token{kind: StringKeyword}},
-			Right:    &Literal{token{kind: NumberKeyword}},
-			Operator: token{kind: Bang},
-		},
-		Body: &Block{Statements: []Node{
-			&IfExpression{
-				Keyword:   token{kind: IfKeyword},
-				Condition: &Literal{literal{kind: BooleanLiteral}},
-				Body: &Block{Statements: []Node{
-					&Exit{
-						Operator: token{kind: ReturnKeyword},
-						Value:    &Literal{literal{kind: BooleanLiteral, value: "true"}},
 					},
 				}},
 			},

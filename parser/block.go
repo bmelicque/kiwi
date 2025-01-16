@@ -104,3 +104,11 @@ func reportUnreachableCode(p *Parser, statements []Node) {
 func (b *Block) Scope() *Scope {
 	return b.scope
 }
+
+func (b *Block) Last() Node {
+	l := len(b.Statements)
+	if l == 0 {
+		return nil
+	}
+	return b.Statements[l-1]
+}

@@ -61,7 +61,7 @@ func typeCheckFunctionExpression(p *Parser, f *FunctionExpression, paramHandler 
 	f.Body.typeCheck(p)
 
 	if f.Explicit != nil {
-		typeCheckExplicitReturn(p, f)
+		f.typeCheckBodyExplicit(p)
 	} else {
 		typeCheckImplicitReturn(p, f)
 	}
@@ -302,26 +302,31 @@ func validateFunctionParam(p *Parser, expr Expression) {
 
 // Type check all possible return points against the explicit return type.
 // Also check possible failure points.
-func typeCheckExplicitReturn(p *Parser, f *FunctionExpression) {
-	t, ok := f.Explicit.Type().(Type)
-	if !ok {
+func (f *FunctionExpression) typeCheckBodyExplicit(p *Parser) {
+	if _, ok := f.Explicit.Type().(Type); !ok {
 		p.error(f.Explicit, TypeExpected)
 		return
 	}
-
-	typeCheckHappyReturn(p, f.Body, t.Value)
-
-	err := getErrorType(t.Value)
-	if err == nil {
-		return
+	typeCheckReturnsExplicit(p, f.Explicit.Type(), f.Body)
+	err := f.getExplicitErrorType()
+	checkFunctionTries(p, err, findTryExpressions(f.Body))
+	checkFunctionThrows(p, err, findThrowStatements(f.Body))
+}
+func (f *FunctionExpression) getExplicitErrorType() ExpressionType {
+	t, ok := f.Explicit.Type().(Type)
+	if !ok {
+		return nil
 	}
-	tries := findTryExpressions(f.Body)
+	return getErrorType(t.Value)
+}
+func checkFunctionTries(p *Parser, err ExpressionType, tries []*UnaryExpression) {
 	for _, t := range tries {
 		if !err.Extends(getErrorType(t.Operand.Type())) {
 			p.error(t.Operand, CannotAssignType, err, t.Operand.Type())
 		}
 	}
-	throws := findThrowStatements(f.Body)
+}
+func checkFunctionThrows(p *Parser, err ExpressionType, throws []*Exit) {
 	for _, t := range throws {
 		if t.Value != nil && !err.Extends(t.Value.Type()) {
 			p.error(t.Value, CannotAssignType, err, t.Value)
@@ -347,21 +352,23 @@ func typeCheckImplicitReturn(p *Parser, f *FunctionExpression) {
 }
 
 // Check all return points in a function body against an expected typing.
-func typeCheckHappyReturn(p *Parser, body *Block, expected ExpressionType) bool {
-	happy := getHappyType(expected)
+func typeCheckReturnsExplicit(p *Parser, explicit ExpressionType, body *Block) {
+	t, ok := explicit.(Type)
+	if !ok {
+		return
+	}
+	expected := getHappyType(t.Value)
 	returns := findReturnStatements(body)
-	ok := true
-	if !expected.Extends(body.Type()) && !happy.Extends(body.Type()) {
-		p.error(body.reportedNode(), CannotAssignType, happy, body.Type())
+	bodyType := body.Type()
+	if !isExiting(body.Last()) && !expected.Extends(bodyType) {
+		p.error(body.reportedNode(), CannotAssignType, expected, bodyType)
 	}
 	for _, r := range returns {
 		returnType := getExitType(r)
-		if !expected.Extends(returnType) && !happy.Extends(returnType) {
-			ok = false
-			p.error(r.Value, CannotAssignType, happy, returnType)
+		if !expected.Extends(returnType) {
+			p.error(r.Value, CannotAssignType, expected, returnType)
 		}
 	}
-	return ok
 }
 
 func getExitType(e *Exit) ExpressionType {

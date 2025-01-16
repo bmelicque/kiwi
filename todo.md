@@ -1,4 +1,3 @@
-- fix return types…
 - update maps syntax to `Key#Value`
   - inferred maps as `#{}`
 - cannot define method outside of module where type is declared
