@@ -26,6 +26,12 @@ func TestParseCatchExpression(t *testing.T) {
 			expectedLoc: Loc{Position{1, 1}, Position{1, 16}},
 		},
 		{
+			name:        "Missing left expressions produce one error",
+			source:      "catch {}",
+			errorCount:  1,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 9}},
+		},
+		{
 			name:        "Invalid identifiers produce one error",
 			source:      "result catch number {}",
 			errorCount:  1,

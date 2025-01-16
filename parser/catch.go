@@ -8,8 +8,13 @@ type CatchExpression struct {
 }
 
 func (c *CatchExpression) Loc() Loc {
-	start := c.Left.Loc().Start
-	var end Position
+	var start, end Position
+	if c.Left != nil {
+		start = c.Left.Loc().Start
+	} else {
+		start = c.Keyword.Loc().Start
+	}
+
 	if c.Body != nil {
 		end = c.Body.loc.End
 	} else if c.Identifier != nil {
@@ -21,7 +26,10 @@ func (c *CatchExpression) Loc() Loc {
 }
 
 func (c *CatchExpression) getChildren() []Node {
-	children := []Node{c.Left}
+	children := []Node{}
+	if c.Left != nil {
+		children = append(children, c.Left)
+	}
 	if c.Body != nil {
 		children = append(children, c.Body)
 	}
@@ -45,9 +53,13 @@ func (c *CatchExpression) typeCheck(p *Parser) {
 // returns (Left, Right, ok), with CatchExpression being:
 // Left catch (identifier Right) {}
 func getCatchTypes(result Expression) (ExpressionType, ExpressionType, bool) {
+	if result == nil {
+		return Unknown{}, Unknown{}, true
+	}
 	alias, ok := result.Type().(TypeAlias)
 	if !ok || alias.Name != "!" {
-		return result.Type(), Unknown{}, false
+		t := result.Type()
+		return t, Unknown{}, t == (Unknown{})
 	}
 	happy := alias.Ref.(Sum).getMember("Ok")
 	err := alias.Ref.(Sum).getMember("Err")
@@ -69,16 +81,14 @@ func (c *CatchExpression) Type() ExpressionType {
 }
 
 func (p *Parser) parseCatchExpression() Expression {
-	var expr Expression
-	if p.allowBraceParsing {
-		expr = p.parseInstanceExpression()
-	} else {
-		expr = p.parseUnaryExpression()
-	}
+	expr := parseCatchSubExpression(p)
 	if p.Peek().Kind() != CatchKeyword {
 		return expr
 	}
 	keyword := p.Consume()
+	if expr == nil {
+		p.error(&Literal{keyword}, ExpressionExpected)
+	}
 
 	identifier := parseCatchIdentifier(p)
 	body := parseCatchBody(p)
@@ -89,6 +99,19 @@ func (p *Parser) parseCatchExpression() Expression {
 		Identifier: identifier,
 		Body:       body,
 	}
+}
+
+func parseCatchSubExpression(p *Parser) Expression {
+	outer := p.allowEmptyExpr
+	p.allowEmptyExpr = true
+	var expr Expression
+	if p.allowBraceParsing {
+		expr = p.parseInstanceExpression()
+	} else {
+		expr = p.parseUnaryExpression()
+	}
+	p.allowEmptyExpr = outer
+	return expr
 }
 
 func parseCatchIdentifier(p *Parser) *Identifier {
