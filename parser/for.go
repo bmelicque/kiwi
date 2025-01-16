@@ -152,19 +152,19 @@ func getValidatedForInTuple(p *Parser, tuple *TupleExpression) *TupleExpression 
 func getLoopType(p *Parser, body *Block) ExpressionType {
 	breaks := findBreakStatements(body)
 	if len(breaks) == 0 {
-		return Nil{}
+		return Void{}
 	}
 	var t ExpressionType
 	if breaks[0].Value != nil {
 		t = breaks[0].Value.Type()
 	} else {
-		t = Nil{}
+		t = Void{}
 	}
 	for _, b := range breaks[1:] {
-		if t == (Nil{}) && b.Value != nil {
+		if t == (Void{}) && b.Value != nil {
 			p.error(b.Value, CannotAssignType, t, b.Value.Type())
 		}
-		if t != (Nil{}) && !t.Extends(b.Value.Type()) {
+		if t != (Void{}) && !t.Extends(b.Value.Type()) {
 			p.error(b.Value, CannotAssignType, t, b.Value.Type())
 		}
 	}

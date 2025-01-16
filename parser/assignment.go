@@ -506,7 +506,7 @@ func reportInvalidVariableType(p *Parser, value Expression) {
 		if t.Name == "!" {
 			p.error(value, ResultDeclaration)
 		}
-	case Nil:
-		p.error(value, NilDeclaration)
+	case Void:
+		p.error(value, VoidAssignment)
 	}
 }

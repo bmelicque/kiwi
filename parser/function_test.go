@@ -229,7 +229,7 @@ func TestCheckImplicitReturn(t *testing.T) {
 
 func TestCheckImplicitReturnBadReturns(t *testing.T) {
 	parser := MakeParser(nil)
-	parser.scope.Add("result", Loc{}, makeResultType(Nil{}, Number{}))
+	parser.scope.Add("result", Loc{}, makeResultType(Void{}, Number{}))
 	expr := &FunctionExpression{
 		Params: &ParenthesizedExpression{Expr: &TupleExpression{}},
 		Body: &Block{Statements: []Node{

@@ -19,7 +19,7 @@ func (p *ParenthesizedExpression) Loc() Loc {
 
 func (p *ParenthesizedExpression) Type() ExpressionType {
 	if p.Expr == nil {
-		return Nil{}
+		return Type{Void{}}
 	}
 	return p.Expr.Type()
 }

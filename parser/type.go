@@ -29,7 +29,12 @@ func (t Type) Extends(testType ExpressionType) bool {
 	got, ok := testType.(Type)
 	return ok && t.Value.Extends(got.Value)
 }
-func (t Type) Text() string { return "(" + t.Value.Text() + ")" }
+func (t Type) Text() string {
+	if t.Value == (Void{}) {
+		return "()"
+	}
+	return "(" + t.Value.Text() + ")"
+}
 func (t Type) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	var value ExpressionType
 	if c, ok := compared.(Type); ok {
@@ -47,14 +52,14 @@ func (u Unknown) build(scope *Scope, c ExpressionType) (ExpressionType, bool) {
 	return u, true
 }
 
-type Nil struct{}
+type Void struct{}
 
-func (n Nil) Extends(t ExpressionType) bool {
-	_, ok := t.(Nil)
+func (n Void) Extends(t ExpressionType) bool {
+	_, ok := t.(Void)
 	return ok
 }
-func (n Nil) Text() string { return "nil" }
-func (n Nil) build(scope *Scope, c ExpressionType) (ExpressionType, bool) {
+func (n Void) Text() string { return "()" }
+func (n Void) build(scope *Scope, c ExpressionType) (ExpressionType, bool) {
 	return n, true
 }
 
@@ -337,7 +342,7 @@ func newFunction() Function {
 	return Function{
 		TypeParams: []Generic{},
 		Params:     &Tuple{[]ExpressionType{}},
-		Returned:   Nil{},
+		Returned:   Void{},
 	}
 }
 

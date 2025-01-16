@@ -27,7 +27,7 @@ func DomLib() Module {
 	domLib.addMember("Event", Type{Event})
 	domLib.addMember("EventHandler", Function{
 		Params:   &Tuple{[]ExpressionType{Event}},
-		Returned: Nil{},
+		Returned: Void{},
 	})
 	domLib.addMember("EventTarget", Type{TypeAlias{
 		Name: "EventTarget",
@@ -98,7 +98,7 @@ func buildEventTrait() {
 	methods["composedPath"] = newGetter(List{Ref{EventTarget}})
 	methods["currentTarget"] = newGetter(Ref{Generic{Name: "Self"}})
 	methods["defaultPrevented"] = newGetter(Boolean{})
-	methods["eventPhase"] = newGetter(Nil{}) // TODO: returns https://developer.mozilla.org/fr/docs/Web/API/Event/eventPhase
+	methods["eventPhase"] = newGetter(Void{}) // TODO: returns https://developer.mozilla.org/fr/docs/Web/API/Event/eventPhase
 	methods["isTrusted"] = newGetter(Boolean{})
 	methods["preventDefault"] = newFunction()
 	methods["stopImmediatePropagation"] = newFunction()
@@ -120,20 +120,20 @@ func buildEventTargetTrait() {
 			String{},
 			EventHandler,
 		}},
-		Returned: Nil{},
+		Returned: Void{},
 	}
 	methods["dispatchEvent"] = Function{
 		Params: &Tuple{[]ExpressionType{
 			Event,
 		}},
-		Returned: Nil{},
+		Returned: Void{},
 	}
 	methods["removeEventListener"] = Function{
 		Params: &Tuple{[]ExpressionType{
 			String{},
 			EventHandler,
 		}},
-		Returned: Nil{},
+		Returned: Void{},
 	}
 }
 
@@ -147,7 +147,7 @@ func buildNodeTrait() {
 
 	methods["appendChild"] = Function{
 		Params:   &Tuple{[]ExpressionType{Ref{Node}}},
-		Returned: Nil{},
+		Returned: Void{},
 	}
 	methods["baseURI"] = newGetter(String{})
 	methods["childNodes"] = newGetter(Ref{List{Ref{Node}}})
@@ -184,7 +184,7 @@ func buildNodeTrait() {
 	methods["normalize"] = newFunction()
 	methods["ownerDocument"] = newGetter(Ref{Document})
 	methods["parentNode"] = newGetter(Ref{Node})
-	methods["parentElement"] = newGetter(Nil{}) // TODO: &Element{}
+	methods["parentElement"] = newGetter(Void{}) // FIXME: &Element{}
 	methods["previousSibling"] = newGetter(Ref{Node})
 	methods["removeChild"] = Function{
 		TypeParams: []Generic{{Name: "Removed", Constraints: Ref{Node}}},
@@ -211,7 +211,7 @@ func buildDocumentType() {
 	node, _ := domLib.GetOwned("Node")
 	methods := Document.(TypeAlias).Methods
 
-	methods["activeElement"] = newGetter(Nil{}) // TODO: returns &Element
+	methods["activeElement"] = newGetter(Void{}) // FIXME: returns &Element
 
 	maps.Copy(methods, node.(Type).Value.(TypeAlias).Ref.(Trait).Members)
 }

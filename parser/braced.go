@@ -14,6 +14,9 @@ func (b *BracedExpression) getChildren() []Node {
 }
 
 func (b *BracedExpression) typeCheck(p *Parser) {
+	if b.Expr == nil {
+		return
+	}
 	b.Expr.typeCheck(p)
 	b.Expr = makeTuple(b.Expr)
 	var foundDefault bool

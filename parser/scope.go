@@ -167,7 +167,7 @@ var mapMethods = map[string]ExpressionType{
 	},
 	"set": Function{
 		Params:   &Tuple{[]ExpressionType{Generic{Name: "Key"}, Generic{Name: "Value"}}},
-		Returned: Nil{},
+		Returned: Void{},
 	},
 }
 

@@ -11,11 +11,11 @@ type MatchCase struct {
 
 func (m MatchCase) Type() ExpressionType {
 	if len(m.Statements) == 0 {
-		return Nil{}
+		return Void{}
 	}
 	expr, ok := m.Statements[len(m.Statements)-1].(Expression)
 	if !ok {
-		return Nil{}
+		return Void{}
 	}
 	t, _ := expr.Type().build(nil, nil)
 	return t
@@ -58,7 +58,7 @@ func (m *MatchExpression) Loc() Loc {
 }
 func (m *MatchExpression) Type() ExpressionType {
 	if len(m.Cases) == 0 {
-		return Nil{}
+		return Void{}
 	}
 	return m.Cases[0].Type()
 }

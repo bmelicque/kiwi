@@ -51,7 +51,7 @@ func TestEmptyTupleType(t *testing.T) {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 
-	if _, ok := expr.Type().(Nil); !ok {
+	if _, ok := expr.Type().(Void); !ok {
 		t.Fatalf("Expected nil type, got %#v", expr.Type())
 	}
 }

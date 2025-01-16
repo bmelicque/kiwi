@@ -48,12 +48,12 @@ func (b *Block) reportedNode() Node {
 }
 func (b *Block) Type() ExpressionType {
 	if len(b.Statements) == 0 {
-		return Nil{}
+		return Void{}
 	}
 	last := b.Statements[len(b.Statements)-1]
 	expr, ok := last.(Expression)
 	if !ok {
-		return Nil{}
+		return Void{}
 	}
 	return expr.Type()
 }

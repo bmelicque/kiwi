@@ -12,7 +12,7 @@ func TestEmptyBlock(t *testing.T) {
 	if len(parser.errors) != 0 {
 		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
-	if _, ok := block.Type().(Nil); !ok {
+	if _, ok := block.Type().(Void); !ok {
 		t.Fatalf("Expected nil type, got %#v", block.Type())
 	}
 }

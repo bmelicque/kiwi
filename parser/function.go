@@ -215,8 +215,11 @@ func (f *FunctionTypeExpression) typeCheck(p *Parser) {
 	tuple := f.Params.Expr.(*TupleExpression)
 	for i := range tuple.Elements {
 		tuple.Elements[i].typeCheck(p)
-		if _, ok := tuple.Elements[i].Type().(Type); !ok {
+		t, ok := tuple.Elements[i].Type().(Type)
+		if !ok {
 			p.error(tuple.Elements[i], TypeExpected)
+		} else if t.Value == (Void{}) {
+			p.error(tuple.Elements[i], VoidAssignment)
 		}
 	}
 
@@ -363,7 +366,7 @@ func typeCheckHappyReturn(p *Parser, body *Block, expected ExpressionType) bool 
 
 func getExitType(e *Exit) ExpressionType {
 	if e.Value == nil {
-		return Nil{}
+		return Void{}
 	}
 	return e.Value.Type()
 }

@@ -270,7 +270,7 @@ func getListMethod(l List, name string) ExpressionType {
 		return Function{
 			Params: &Tuple{[]ExpressionType{Number{}, l.Element}},
 			// FIXME: proper error type
-			Returned: makeResultType(Nil{}, nil),
+			Returned: makeResultType(Void{}, nil),
 		}
 	default:
 		return nil

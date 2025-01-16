@@ -67,7 +67,7 @@ const (
 	FunctionTypeExpected
 
 	ResultDeclaration
-	NilDeclaration
+	VoidAssignment
 	UnneededCatch
 	UnneededAsync
 	UnusedVariable // [variable name]
@@ -230,7 +230,7 @@ func (p ParserError) Text() string {
 
 	case ResultDeclaration:
 		return "Cannot declare a variable as a result type; consider using 'try' or 'catch'"
-	case NilDeclaration:
+	case VoidAssignment:
 		return "Cannot declare a variable as nil value; consider using the option type"
 	case UnneededCatch:
 		return "Unneeded catch (lhs is not a result type)"

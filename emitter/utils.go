@@ -8,7 +8,7 @@ import (
 // e.g. `object.key = value` is listed, not `variable = value`
 func isMutated(v *parser.Variable) bool {
 	switch v.Typing.(type) {
-	case parser.Boolean, parser.Nil, parser.Number, parser.String:
+	case parser.Boolean, parser.Void, parser.Number, parser.String:
 		return false
 	}
 	writes := v.Writes()

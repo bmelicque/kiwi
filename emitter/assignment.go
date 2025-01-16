@@ -8,7 +8,7 @@ import (
 
 func needsCopy(expr parser.Expression) bool {
 	switch expr.Type().(type) {
-	case parser.Nil, parser.Number, parser.Boolean, parser.String, parser.Function:
+	case parser.Void, parser.Number, parser.Boolean, parser.String, parser.Function:
 		return false
 	}
 

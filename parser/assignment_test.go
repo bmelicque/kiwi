@@ -265,10 +265,10 @@ func TestCheckVariableDeclaration(t *testing.T) {
 
 func TestCheckVariableDeclarationNoNil(t *testing.T) {
 	parser := MakeParser(nil)
-	// v := ()
+	// v := {}
 	declaration := &Assignment{
 		Pattern:  &Identifier{Token: literal{kind: Name, value: "v"}},
-		Value:    &ParenthesizedExpression{},
+		Value:    &Block{},
 		Operator: token{kind: Declare},
 	}
 	declaration.typeCheck(parser)
