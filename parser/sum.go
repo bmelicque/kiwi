@@ -131,7 +131,7 @@ func getSumConstructorType(member SumTypeConstructor) Tuple {
 		if ok {
 			tu.Elements[i] = t.Value
 		} else {
-			tu.Elements[i] = Unknown{}
+			tu.Elements[i] = Invalid{}
 		}
 	}
 	return tu

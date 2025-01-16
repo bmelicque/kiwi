@@ -65,14 +65,14 @@ func (expr *BinaryExpression) Type() ExpressionType {
 		if t, ok := left.(Type); ok {
 			left = t.Value
 		} else {
-			left = Unknown{}
+			left = Invalid{}
 		}
 
 		right := expr.Right.Type()
 		if t, ok := right.(Type); ok {
 			right = t.Value
 		} else {
-			right = Unknown{}
+			right = Invalid{}
 		}
 		return Type{makeResultType(right, left)}
 	case InKeyword:
@@ -194,10 +194,10 @@ func (p *Parser) typeCheckConcatExpression(left Expression, right Expression) {
 	if right != nil {
 		rightType = right.Type()
 	}
-	if leftType != nil && !(String{}).Extends(leftType) && !(List{Unknown{}}).Extends(leftType) {
+	if leftType != nil && !(String{}).Extends(leftType) && !(List{Invalid{}}).Extends(leftType) {
 		p.error(left, ConcatenableExpected, left.Type())
 	}
-	if rightType != nil && !(String{}).Extends(rightType) && !(List{Unknown{}}).Extends(rightType) {
+	if rightType != nil && !(String{}).Extends(rightType) && !(List{Invalid{}}).Extends(rightType) {
 		p.error(right, ConcatenableExpected, right.Type())
 	}
 

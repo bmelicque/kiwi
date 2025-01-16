@@ -66,7 +66,7 @@ func (i *Identifier) GetScope() *Scope { return i.scope }
 func (i *Identifier) typeCheck(p *Parser) {
 	variable, ok := p.scope.Find(i.Text())
 	if !ok {
-		i.typing = Unknown{}
+		i.typing = Invalid{}
 		return
 	}
 	i.scope = variable.scope

@@ -97,7 +97,7 @@ func TestCheckAwaitExpressionNotPromise(t *testing.T) {
 	if len(parser.errors) != 1 {
 		t.Fatalf("Expected 1 error, got %#v", parser.errors)
 	}
-	if _, ok := expr.Type().(Unknown); !ok {
+	if _, ok := expr.Type().(Invalid); !ok {
 		t.Fatalf("Expected unknown type, got %v", expr.Type().Text())
 	}
 }
@@ -302,7 +302,7 @@ func TestCheckDereference(t *testing.T) {
 	if len(parser.errors) != 1 {
 		t.Fatalf("Expected 1 error, got %v: %#v", len(parser.errors), parser.errors)
 	}
-	if _, ok := expr.Type().(Unknown); !ok {
+	if _, ok := expr.Type().(Invalid); !ok {
 		t.Fatalf("Expected unknown, got %v", expr.Type().Text())
 	}
 }
@@ -381,7 +381,7 @@ func TestCheckListTypeNoValue(t *testing.T) {
 	if !ok {
 		t.Fatal("Expected list type")
 	}
-	if _, ok := list.Element.(Unknown); !ok {
+	if _, ok := list.Element.(Invalid); !ok {
 		t.Fatal("Expected unknown list type")
 	}
 }

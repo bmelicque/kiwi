@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"slices"
 	"strconv"
 )
 
@@ -54,11 +53,16 @@ func (expr *PropertyAccessExpression) typeCheck(p *Parser) {
 
 func parsePropertyAccess(p *Parser, left Expression) Expression {
 	p.Consume() // .
-	if l, ok := left.(*ParenthesizedExpression); ok {
-		if p.Peek().Kind() == LeftBrace {
+
+	if p.Peek().Kind() == LeftBrace {
+		switch l := left.(type) {
+		case *ParenthesizedExpression:
 			return parseTraitExpression(p, l)
+		case *Identifier:
+			return &Param{l, parseTraitExpression(p, nil)}
 		}
 	}
+
 	prop := fallback(p)
 	switch prop.(type) {
 	case *Identifier, *Literal:
@@ -72,23 +76,23 @@ func parsePropertyAccess(p *Parser, left Expression) Expression {
 func typeCheckTupleIndexAccess(p *Parser, expr *PropertyAccessExpression) {
 	property, ok := expr.Property.(*Literal)
 	if !ok {
-		expr.typing = Unknown{}
+		expr.typing = Invalid{}
 		return
 	}
 	if _, ok := property.Type().(Number); !ok {
-		expr.typing = Unknown{}
+		expr.typing = Invalid{}
 		return
 	}
 	number, err := strconv.Atoi(property.Text())
 	if err != nil {
 		p.error(property, IntegerExpected)
-		expr.typing = Unknown{}
+		expr.typing = Invalid{}
 		return
 	}
 	elements := deref(expr.Expr.Type()).(Tuple).Elements
 	if number > len(elements)-1 || number < 0 {
 		p.error(property, OutOfRange, len(elements), number)
-		expr.typing = Unknown{}
+		expr.typing = Invalid{}
 		return
 	}
 	expr.typing = elements[number]
@@ -98,13 +102,13 @@ func typeCheckTupleIndexAccess(p *Parser, expr *PropertyAccessExpression) {
 func typeCheckSumConstructorAccess(p *Parser, expr *PropertyAccessExpression) {
 	property, ok := expr.Property.(*Identifier)
 	if !ok {
-		expr.typing = Unknown{}
+		expr.typing = Invalid{}
 		return
 	}
 	name := property.Token.Text()
 
 	expr.typing = getSumTypeConstructor(expr.Expr.Type().(Type), name)
-	if expr.typing == (Unknown{}) {
+	if expr.typing == (Invalid{}) {
 		p.error(expr.Property, PropertyDoesNotExist, name)
 	}
 }
@@ -112,17 +116,17 @@ func typeCheckSumConstructorAccess(p *Parser, expr *PropertyAccessExpression) {
 func getSumTypeConstructor(t Type, name string) ExpressionType {
 	alias, ok := t.Value.(TypeAlias)
 	if !ok {
-		return Unknown{}
+		return Invalid{}
 	}
 
 	sum, ok := alias.Ref.(Sum)
 	if !ok {
-		return Unknown{}
+		return Invalid{}
 	}
 
 	constructor, ok := sum.Members[name]
 	if !ok {
-		return Unknown{}
+		return Invalid{}
 	}
 
 	return Function{Params: &constructor, Returned: alias}
@@ -135,7 +139,7 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 	}
 	property, ok := expr.Property.(*Identifier)
 	if expr.Property != nil && !ok {
-		expr.typing = Unknown{}
+		expr.typing = Invalid{}
 		return
 	}
 	var name string
@@ -154,10 +158,10 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 				expr.typing = typing[0]
 			} else if len(typing) > 1 {
 				p.error(expr.Property, MultipleEmbeddedProperties, name)
-				expr.typing = Unknown{}
+				expr.typing = Invalid{}
 			} else {
 				p.error(expr.Property, PropertyDoesNotExist, name)
-				expr.typing = Unknown{}
+				expr.typing = Invalid{}
 			}
 		}
 	case Module:
@@ -167,7 +171,7 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 	}
 	if expr.typing == nil {
 		p.error(expr.Property, PropertyDoesNotExist, name)
-		expr.typing = Unknown{}
+		expr.typing = Invalid{}
 	}
 }
 func reportPrivateFromOtherModule(p *Parser, expr *PropertyAccessExpression) bool {
@@ -304,16 +308,7 @@ func (t *TraitExpression) typeCheck(p *Parser) {
 	for _, duplicate := range duplicates {
 		p.error(t, DuplicateIdentifier, duplicate)
 	}
-	trait := map[string]ExpressionType{}
-	for _, member := range members {
-		if !slices.Contains(duplicates, member.Name) {
-			trait[member.Name] = member.Type
-		}
-	}
-	t.typing = Trait{
-		Self:    Generic{Name: t.Receiver.Expr.(*Identifier).Text()},
-		Members: trait,
-	}
+	t.buildType()
 }
 func typeCheckTraitReceiver(p *Parser, receiver *ParenthesizedExpression) {
 	// receiver is nil in case of .{} shorthand
@@ -329,6 +324,25 @@ func typeCheckTraitReceiver(p *Parser, receiver *ParenthesizedExpression) {
 		identifier.Loc(),
 		Generic{Name: identifier.Text()},
 	)
+}
+func (t *TraitExpression) buildType() {
+	members := t.Def.Type().(Type).Value.(Object).flatten()
+	trait := map[string]ExpressionType{}
+	for _, member := range members {
+		// handle possible duplicates
+		_, exists := trait[member.Name]
+		if !exists {
+			trait[member.Name] = member.Type
+		}
+	}
+	var text string
+	if t.Receiver != nil {
+		text = t.Receiver.Expr.(*Identifier).Text()
+	}
+	t.typing = Type{Trait{
+		Self:    Generic{Name: text},
+		Members: trait,
+	}}
 }
 
 func parseTraitExpression(p *Parser, left *ParenthesizedExpression) Expression {

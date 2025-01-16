@@ -71,7 +71,7 @@ func typeCheckStructInstanciation(p *Parser, i *InstanceExpression) {
 	object, ok := alias.Ref.(Object)
 	if !ok {
 		p.error(i.Typing, ObjectTypeExpected)
-		i.typing = Unknown{}
+		i.typing = Invalid{}
 		return
 	}
 
@@ -275,7 +275,7 @@ func typeCheckAnonymousListInstanciation(p *Parser, i *InstanceExpression) {
 	elements := i.Args.Expr.(*TupleExpression).Elements
 	if len(elements) == 0 {
 		p.error(i, MissingTypeArgs)
-		i.typing = List{Unknown{}}
+		i.typing = List{Invalid{}}
 		return
 	}
 	first := elements[0]

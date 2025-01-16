@@ -12,10 +12,10 @@ func Match(a ExpressionType, b ExpressionType) bool {
 	if a == nil || b == nil {
 		return true
 	}
-	if _, ok := a.(Unknown); ok {
+	if _, ok := a.(Invalid); ok {
 		return true
 	}
-	if _, ok := b.(Unknown); ok {
+	if _, ok := b.(Invalid); ok {
 		return true
 	}
 	return a.Extends(b) && b.Extends(a)
@@ -44,11 +44,11 @@ func (t Type) build(scope *Scope, compared ExpressionType) (ExpressionType, bool
 	return Type{v}, ok
 }
 
-type Unknown struct{}
+type Invalid struct{}
 
-func (u Unknown) Extends(t ExpressionType) bool { return true }
-func (u Unknown) Text() string                  { return "unknown" }
-func (u Unknown) build(scope *Scope, c ExpressionType) (ExpressionType, bool) {
+func (u Invalid) Extends(t ExpressionType) bool { return true }
+func (u Invalid) Text() string                  { return "invalid" }
+func (u Invalid) build(scope *Scope, c ExpressionType) (ExpressionType, bool) {
 	return u, true
 }
 
@@ -567,7 +567,7 @@ func (s Sum) build(scope *Scope, compared ExpressionType) (ExpressionType, bool)
 func (s Sum) getMember(name string) ExpressionType {
 	member, ok := s.Members[name]
 	if !ok {
-		return Unknown{}
+		return Invalid{}
 	}
 	tuple, _ := member.build(nil, nil)
 	if len(tuple.(Tuple).Elements) == 1 {
@@ -666,11 +666,11 @@ func (g Generic) build(scope *Scope, compared ExpressionType) (ExpressionType, b
 		return g.Value, true
 	}
 	if scope == nil {
-		return Unknown{}, false
+		return Invalid{}, false
 	}
 	variable, ok := scope.Find(g.Name)
 	if !ok {
-		return Unknown{}, false
+		return Invalid{}, false
 	}
 	variable.readAt(Loc{})
 	ok = isGenericType(variable.Typing)

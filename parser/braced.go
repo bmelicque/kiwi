@@ -60,7 +60,7 @@ func (b *BracedExpression) Type() ExpressionType {
 			if t, ok := element.Complement.Type().(Type); ok {
 				memberType = t.Value
 			} else {
-				memberType = Unknown{}
+				memberType = Invalid{}
 			}
 			if element.Identifier.IsPrivate() {
 				// This case is reported as an error in the type-check phase.

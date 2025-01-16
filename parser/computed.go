@@ -35,7 +35,7 @@ func (expr *ComputedAccessExpression) typeCheck(p *Parser) {
 		typeCheckGenericFunction(p, expr)
 	default:
 		p.error(expr.Expr, NotSubscriptable, t)
-		expr.typing = Unknown{}
+		expr.typing = Invalid{}
 	}
 }
 
@@ -43,7 +43,7 @@ func typeCheckGenericType(p *Parser, expr *ComputedAccessExpression) {
 	alias, ok := expr.Expr.Type().(Type).Value.(TypeAlias)
 	if !ok {
 		p.error(expr.Property, UnexpectedTypeArgs)
-		expr.typing = Unknown{}
+		expr.typing = Invalid{}
 		return
 	}
 

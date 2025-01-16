@@ -32,7 +32,7 @@ func (u *UseDirective) typeCheck(p *Parser) {
 func typeCheckModule(p *Parser, source Expression) ExpressionType {
 	l, ok := source.(*Literal)
 	if !ok {
-		return Unknown{}
+		return Invalid{}
 	}
 	path := l.Text()
 	path = path[1 : len(path)-1]
@@ -45,7 +45,7 @@ func typeCheckModule(p *Parser, source Expression) ExpressionType {
 	}
 	if !ok {
 		p.error(l, CannotResolvePath)
-		return Unknown{}
+		return Invalid{}
 	}
 	return module
 }
@@ -56,13 +56,13 @@ func declareUseNames(p *Parser, module ExpressionType, names Expression) {
 	for _, el := range tuple.Elements {
 		id := el.(*Identifier)
 		switch module := module.(type) {
-		case Unknown:
+		case Invalid:
 			addVariableToScope(p, id, module)
 		case Module:
 			t, ok := module.GetOwned(id.Text())
 			if !ok {
 				p.error(id, NotInModule, id.Text())
-				t = Unknown{}
+				t = Invalid{}
 			}
 			addVariableToScope(p, id, t)
 		}

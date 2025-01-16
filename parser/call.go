@@ -58,7 +58,7 @@ func typeCheckFunctionCall(p *Parser, c *CallExpression) {
 	t, ok := function.Returned.build(p.scope, nil)
 	if !ok {
 		p.error(c, MissingTypeArgs)
-		c.typing = Unknown{}
+		c.typing = Invalid{}
 		return
 	}
 	c.typing = t

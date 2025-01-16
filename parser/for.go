@@ -32,12 +32,12 @@ func (f *ForExpression) typeCheck(p *Parser) {
 	f.typing = getLoopType(p, f.Body)
 }
 func typeCheckForInExpression(p *Parser, expr *BinaryExpression) {
-	var el ExpressionType = Unknown{}
+	var el ExpressionType = Invalid{}
 	if expr.Right != nil {
 		expr.Right.typeCheck(p)
 		checkExplicitRange(p, expr.Right)
 		el = getIteratedElementType(expr.Right.Type())
-		if el == (Unknown{}) {
+		if el == (Invalid{}) {
 			p.error(expr.Right, IterableExpected, expr.Right.Type())
 		}
 	}
@@ -198,5 +198,5 @@ func getIteratedElementType(t ExpressionType) ExpressionType {
 	case Range:
 		return t.operands
 	}
-	return Unknown{}
+	return Invalid{}
 }

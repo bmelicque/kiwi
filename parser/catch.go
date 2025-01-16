@@ -54,12 +54,12 @@ func (c *CatchExpression) typeCheck(p *Parser) {
 // Left catch (identifier Right) {}
 func getCatchTypes(result Expression) (ExpressionType, ExpressionType, bool) {
 	if result == nil {
-		return Unknown{}, Unknown{}, true
+		return Invalid{}, Invalid{}, true
 	}
 	alias, ok := result.Type().(TypeAlias)
 	if !ok || alias.Name != "!" {
 		t := result.Type()
-		return t, Unknown{}, t == (Unknown{})
+		return t, Invalid{}, t == (Invalid{})
 	}
 	happy := alias.Ref.(Sum).getMember("Ok")
 	err := alias.Ref.(Sum).getMember("Err")

@@ -150,7 +150,7 @@ func getFunctionReturnedType(f *FunctionExpression) ExpressionType {
 	}
 	t, ok := f.Explicit.Type().(Type)
 	if !ok {
-		return Unknown{}
+		return Invalid{}
 	}
 	return t.Value
 }
@@ -198,7 +198,7 @@ func (f *FunctionTypeExpression) Type() ExpressionType {
 		t, _ := param.Type().(Type)
 		p.Elements[i] = t.Value
 	}
-	var ret ExpressionType = Unknown{}
+	var ret ExpressionType = Invalid{}
 	if f.Expr != nil {
 		t, ok := f.Expr.Type().(Type)
 		if ok {
@@ -441,12 +441,12 @@ func addParamToScope(p *Parser, expr Expression) {
 	}
 	if param.Complement == nil {
 		p.error(param, TypeExpected)
-		p.scope.Add(param.Identifier.Text(), param.Loc(), Unknown{})
+		p.scope.Add(param.Identifier.Text(), param.Loc(), Invalid{})
 		return
 	}
 	if _, ok := param.Complement.Type().(Type); !ok {
 		p.error(param, TypeExpected)
-		p.scope.Add(param.Identifier.Text(), param.Loc(), Unknown{})
+		p.scope.Add(param.Identifier.Text(), param.Loc(), Invalid{})
 		return
 	}
 	typing, _ := param.Complement.Type().(Type)

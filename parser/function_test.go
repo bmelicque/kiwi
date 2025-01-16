@@ -206,7 +206,7 @@ func TestCheckFunctionExpressionBadParam(t *testing.T) {
 	expr.typeCheck(parser)
 	testParserErrors(t, parser, 1)
 
-	if a, ok := expr.Body.scope.Find("a"); !ok || a.Typing != (Unknown{}) {
+	if a, ok := expr.Body.scope.Find("a"); !ok || a.Typing != (Invalid{}) {
 		t.Log("Expected 'a' to be unknown")
 		t.Fail()
 	}
@@ -296,7 +296,7 @@ func TestCheckBadExplicit(t *testing.T) {
 	expr.typeCheck(parser)
 	testParserErrors(t, parser, 1)
 
-	if expr.typing.Returned != (Unknown{}) {
+	if expr.typing.Returned != (Invalid{}) {
 		t.Fatalf("unknown expected")
 	}
 }

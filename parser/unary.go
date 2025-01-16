@@ -90,7 +90,7 @@ func (u *UnaryExpression) Loc() Loc {
 
 func (u *UnaryExpression) Type() ExpressionType {
 	if u.Operand == nil {
-		return Unknown{}
+		return Invalid{}
 	}
 	switch u.Operator.Kind() {
 	case AsyncKeyword:
@@ -98,7 +98,7 @@ func (u *UnaryExpression) Type() ExpressionType {
 	case AwaitKeyword:
 		alias, ok := u.Operand.Type().(TypeAlias)
 		if !ok || alias.Name != "..." {
-			return Unknown{}
+			return Invalid{}
 		}
 		t, _ := alias.Params[0].Value.build(nil, nil)
 		return t
@@ -120,7 +120,7 @@ func (u *UnaryExpression) Type() ExpressionType {
 	case Mul:
 		ref, ok := u.Operand.Type().(Ref)
 		if !ok {
-			return Unknown{}
+			return Invalid{}
 		}
 		return ref.To
 	case QuestionMark:
@@ -132,11 +132,11 @@ func (u *UnaryExpression) Type() ExpressionType {
 	case TryKeyword:
 		alias, ok := u.Operand.Type().(TypeAlias)
 		if !ok || alias.Name != "!" {
-			return Unknown{}
+			return Invalid{}
 		}
 		return alias.Ref.(Sum).getMember("Ok")
 	default:
-		return Unknown{}
+		return Invalid{}
 	}
 }
 
@@ -173,7 +173,7 @@ func (l *ListTypeExpression) Loc() Loc {
 func (l *ListTypeExpression) Type() ExpressionType {
 	t, ok := l.Expr.Type().(Type)
 	if !ok {
-		return Type{List{Unknown{}}}
+		return Type{List{Invalid{}}}
 	}
 	return Type{List{t.Value}}
 }

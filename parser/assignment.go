@@ -280,11 +280,11 @@ func typeCheckOtherAssignment(p *Parser, a *Assignment) {
 	case ConcatAssign:
 		init := a.Value.Type()
 		var err bool
-		if !(String{}).Extends(left) && !(List{Unknown{}}).Extends(left) {
+		if !(String{}).Extends(left) && !(List{Invalid{}}).Extends(left) {
 			p.error(a.Pattern, ConcatenableExpected, left)
 			err = true
 		}
-		if !(String{}).Extends(init) && !(List{Unknown{}}).Extends(init) {
+		if !(String{}).Extends(init) && !(List{Invalid{}}).Extends(init) {
 			p.error(a.Pattern, ConcatenableExpected, init)
 			err = true
 		}
@@ -418,12 +418,12 @@ func typeCheckTypeDefinition(p *Parser, a *Assignment) {
 
 func getInitType(p *Parser, expr Expression) ExpressionType {
 	if expr == nil {
-		return Unknown{}
+		return Invalid{}
 	}
 	t, ok := expr.Type().(Type)
 	if !ok {
 		p.error(expr, TypeExpected)
-		return Unknown{}
+		return Invalid{}
 	}
 	return t.Value
 }

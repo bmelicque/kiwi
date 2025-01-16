@@ -211,7 +211,7 @@ func TestCheckForInBadType(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected to find 'el' variable in scope")
 	}
-	if v.Typing.Text() != "unknown" {
-		t.Fatalf("Expected 'el' to be unknown, got '%v'", v.Typing.Text())
+	if v.Typing != (Invalid{}) {
+		t.Fatalf("Expected 'el' to be invalid, got '%v'", v.Typing.Text())
 	}
 }
