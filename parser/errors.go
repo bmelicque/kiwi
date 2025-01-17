@@ -68,6 +68,7 @@ const (
 
 	ResultDeclaration
 	VoidAssignment
+	OrphanMethod
 	UnneededCatch
 	UnneededAsync
 	UnusedVariable // [variable name]
@@ -232,6 +233,8 @@ func (p ParserError) Text() string {
 		return "Cannot declare a variable as a result type; consider using 'try' or 'catch'"
 	case VoidAssignment:
 		return "Cannot declare a variable as nil value; consider using the option type"
+	case OrphanMethod:
+		return "Methods have to be declared in the same file as the type they're attached to"
 	case UnneededCatch:
 		return "Unneeded catch (lhs is not a result type)"
 	case UnneededAsync:

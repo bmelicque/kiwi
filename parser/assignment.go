@@ -86,6 +86,11 @@ func (p *Parser) parseAssignment() Node {
 		reportDuplicatedFields(p, braced)
 		init = braced
 	}
+	if a, ok := expr.(*PropertyAccessExpression); ok && operator.Kind() == Define {
+		a.Expr = getValidatedMethodReceiver(p, a.Expr)
+		a.Property = getValidatedMethodIdentifier(p, a.Property)
+		expr = a
+	}
 	return &Assignment{expr, init, operator}
 }
 
@@ -376,7 +381,7 @@ func typeCheckDefinition(p *Parser, a *Assignment) {
 			typeCheckFunctionDefinition(p, a)
 		}
 	case *PropertyAccessExpression:
-		typeCheckMethod(p, pattern, a.Value)
+		checkMethodDefinition(p, pattern, a.Value)
 	default:
 		a.Value.typeCheck(p)
 		reportInvalidVariableType(p, a.Value)
@@ -438,40 +443,11 @@ func typeCheckFunctionDefinition(p *Parser, a *Assignment) {
 	addVariableToScope(p, identifier, t)
 }
 
-func typeCheckMethod(p *Parser, expr *PropertyAccessExpression, init Expression) {
-	p.pushScope(NewScope(ProgramScope))
-	defer p.dropScope()
+// ----------------------------------------
+// -- METHOD DEFINITION HELPER FUNCTIONS --
+// ----------------------------------------
 
-	typeIdentifier := declareMethodReceiver(p, expr.Expr)
-
-	method, ok := expr.Property.(*Identifier)
-	if !ok {
-		p.error(expr.Property, IdentifierExpected)
-	}
-
-	init.typeCheck(p)
-
-	if _, ok := init.Type().(Function); !ok {
-		p.error(init, FunctionExpressionExpected)
-		return
-	}
-	if !ok || typeIdentifier == nil {
-		return
-	}
-
-	t, ok := typeIdentifier.Type().(Type)
-	if !ok {
-		return
-	}
-	alias, ok := t.Value.(TypeAlias)
-	if !ok {
-		return
-	}
-
-	p.scope.AddMethod(method.Text(), alias, init.Type().(Function))
-}
-
-func declareMethodReceiver(p *Parser, receiver Expression) *Identifier {
+func getValidatedMethodReceiver(p *Parser, receiver Expression) Expression {
 	paren, ok := receiver.(*ParenthesizedExpression)
 	if !ok || paren.Expr == nil {
 		p.error(receiver, ReceiverExpected)
@@ -482,23 +458,90 @@ func declareMethodReceiver(p *Parser, receiver Expression) *Identifier {
 		p.error(paren.Expr, ReceiverExpected)
 		return nil
 	}
-
 	typeIdentifier, ok := param.Complement.(*Identifier)
 	if !ok || !typeIdentifier.IsType() {
 		p.error(param.Complement, TypeIdentifierExpected)
+		// will still add invalid receiver to scope as unknown to prevent too much errors
+		param.Complement = nil
+		paren.Expr = param
+	}
+	return paren
+}
+
+func getValidatedMethodIdentifier(p *Parser, method Expression) *Identifier {
+	identifier, ok := method.(*Identifier)
+	if !ok {
+		p.error(method, IdentifierExpected)
 		return nil
 	}
-	typeIdentifier.typeCheck(p)
-
-	if t, ok := typeIdentifier.Type().(Type); ok {
-		p.scope.Add(
-			param.Identifier.Text(),
-			param.Identifier.Loc(),
-			t.Value,
-		)
+	if identifier.IsType() {
+		p.error(identifier, ValueIdentifierExpected)
 	}
+	return identifier
+}
+
+func checkMethodDefinition(p *Parser, expr *PropertyAccessExpression, init Expression) {
+	p.pushScope(NewScope(ProgramScope))
+	defer p.dropScope()
+
+	typeIdentifier := declareMethodReceiver(p, expr.Expr)
+
+	init.typeCheck(p)
+	if _, ok := init.Type().(Function); !ok {
+		p.error(init, FunctionExpressionExpected)
+		return
+	}
+
+	if m, ok := expr.Property.(*Identifier); ok && typeIdentifier != nil {
+		declareMethod(p, typeIdentifier, m.Text(), init.Type().(Function))
+	}
+}
+
+func declareMethodReceiver(p *Parser, receiver Expression) *Identifier {
+	if receiver == nil {
+		return nil
+	}
+	param := receiver.(*ParenthesizedExpression).Expr.(*Param)
+
+	typeIdentifier, ok := param.Complement.(*Identifier)
+	if ok && typeIdentifier.IsType() {
+		typeIdentifier.typeCheck(p)
+	}
+
+	var typing ExpressionType
+	if t, ok := typeIdentifier.Type().(Type); ok {
+		typing = t.Value
+	} else {
+		typing = Invalid{}
+	}
+	p.scope.Add(
+		param.Identifier.Text(),
+		param.Identifier.Loc(),
+		typing,
+	)
 	return typeIdentifier
 }
+
+func declareMethod(p *Parser, onType *Identifier, name string, f Function) {
+	t, ok := onType.Type().(Type)
+	if !ok {
+		return
+	}
+	alias, ok := t.Value.(TypeAlias)
+	if !ok {
+		return
+	}
+
+	if alias.from != p.filePath {
+		p.error(onType, OrphanMethod)
+		return
+	}
+	p.scope.AddMethod(name, alias, f)
+}
+
+// -----------
+// -- UTILS --
+// -----------
 
 func reportInvalidVariableType(p *Parser, value Expression) {
 	switch t := value.Type().(type) {

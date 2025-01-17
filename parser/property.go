@@ -32,10 +32,21 @@ func (p *PropertyAccessExpression) getChildren() []Node {
 }
 
 func (p *PropertyAccessExpression) Loc() Loc {
-	return Loc{
-		Start: p.Expr.Loc().Start,
-		End:   p.Property.Loc().End,
+	// TODO: handle <nil>.<nil>
+	var start, end Position
+	if p.Expr != nil {
+		start = p.Expr.Loc().Start
+	} else {
+		start = p.Property.Loc().Start
 	}
+
+	if p.Property != nil {
+		end = p.Property.Loc().End
+	} else {
+		end = p.Expr.Loc().End
+	}
+
+	return Loc{start, end}
 }
 func (p *PropertyAccessExpression) Type() ExpressionType { return p.typing }
 

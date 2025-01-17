@@ -1,6 +1,5 @@
 - update maps syntax to `Key#Value`
   - inferred maps as `#{}`
-- cannot define method outside of module where type is declared
 - optimize import emission
   - check if js imports are hoisted -> emit them at the end of file only if needed
   - list all needed functions in files, to emit only needed stuff in standard file

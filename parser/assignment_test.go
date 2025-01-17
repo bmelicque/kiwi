@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -547,11 +548,141 @@ func TestParseMethodDeclaration(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected Assignment, got %#v", node)
 	}
-	if _, ok := expr.Pattern.(*PropertyAccessExpression); !ok {
+	access, ok := expr.Pattern.(*PropertyAccessExpression)
+	if !ok {
 		t.Fatalf("Expected method declaration")
+	}
+	if _, ok := access.Expr.(*ParenthesizedExpression); !ok {
+		t.Fatalf("Expected parenthesized, got %v", reflect.TypeOf(access.Expr))
 	}
 	if _, ok := expr.Value.(*FunctionExpression); !ok {
 		t.Fatalf("Expected FunctionExpression, got %#v", expr.Value)
+	}
+}
+
+func TestGetValidatedMethodReceiver(t *testing.T) {
+	tests := []struct {
+		name          string
+		receiver      Expression
+		expectedError ErrorKind
+		shouldBeNil   bool
+	}{
+		{
+			name: "Valid receiver",
+			receiver: &ParenthesizedExpression{
+				Expr: &Param{
+					Complement: &Identifier{Token: literal{kind: Name, value: "Type"}},
+				},
+			},
+			expectedError: NoError,
+			shouldBeNil:   false,
+		},
+		{
+			name:          "Nil receiver",
+			receiver:      nil,
+			expectedError: ReceiverExpected,
+			shouldBeNil:   true,
+		},
+		{
+			name:          "Non-parenthesized expression",
+			receiver:      &Identifier{},
+			expectedError: ReceiverExpected,
+			shouldBeNil:   true,
+		},
+		{
+			name: "Parenthesized but not param",
+			receiver: &ParenthesizedExpression{
+				Expr: &Identifier{},
+			},
+			expectedError: ReceiverExpected,
+			shouldBeNil:   true,
+		},
+		{
+			name: "Invalid type identifier",
+			receiver: &ParenthesizedExpression{
+				Expr: &Param{
+					Complement: &Identifier{Token: literal{kind: Name, value: "name"}},
+				},
+			},
+			expectedError: TypeIdentifierExpected,
+			shouldBeNil:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := MakeParser(strings.NewReader(""))
+
+			result := getValidatedMethodReceiver(p, tt.receiver)
+
+			if tt.expectedError != NoError {
+				if len(p.errors) == 0 {
+					t.Errorf("expected error %v, got none", tt.expectedError)
+				} else if p.errors[0].Kind != tt.expectedError {
+					t.Errorf("expected error %v, got %v", tt.expectedError, p.errors[0].Kind)
+				}
+			}
+
+			if tt.shouldBeNil && result != nil {
+				t.Errorf("expected nil result, got %v", result)
+			}
+		})
+	}
+}
+
+func TestGetValidatedMethodIdentifier(t *testing.T) {
+	tests := []struct {
+		name          string
+		method        Expression
+		expectedError ErrorKind
+		shouldBeNil   bool
+	}{
+		{
+			name:          "Valid identifier",
+			method:        &Identifier{Token: literal{kind: Name, value: "method"}},
+			expectedError: NoError,
+			shouldBeNil:   false,
+		},
+		{
+			name:          "Nil method",
+			method:        nil,
+			expectedError: IdentifierExpected,
+			shouldBeNil:   true,
+		},
+		{
+			name:          "Non-identifier expression",
+			method:        &ParenthesizedExpression{},
+			expectedError: IdentifierExpected,
+			shouldBeNil:   true,
+		},
+		{
+			name:          "Type identifier instead of value",
+			method:        &Identifier{Token: literal{kind: Name, value: "Method"}},
+			expectedError: ValueIdentifierExpected,
+			shouldBeNil:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := MakeParser(strings.NewReader(""))
+
+			result := getValidatedMethodIdentifier(p, tt.method)
+
+			if tt.expectedError != NoError {
+				if len(p.errors) == 0 {
+					t.Errorf("expected error %v, got none", tt.expectedError)
+				} else if p.errors[0].Kind != tt.expectedError {
+					t.Errorf("expected error %v, got %v", tt.expectedError, p.errors[0].Kind)
+				}
+			}
+
+			if tt.shouldBeNil && result != nil {
+				t.Errorf("expected nil result, got %v", result)
+			} else if !tt.shouldBeNil && result == nil {
+				t.Error("expected non-nil result, got nil")
+			}
+		})
 	}
 }
 
