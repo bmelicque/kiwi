@@ -1,8 +1,22 @@
 - update maps syntax to `Key#Value`
   - inferred maps as `#{}`
 - cannot define method outside of module where type is declared
+- optimize import emission
+  - check if js imports are hoisted -> emit them at the end of file only if needed
+  - list all needed functions in files, to emit only needed stuff in standard file
+    - use the `from` key in `TypeAlias` to detect methods that need a js function in standard file
+    - use currying to match params (treat methods, call will manage itself)
+      - e.g. `setDocumentBody => (document) => (body) => document.boy = body`
 - document().body (&Node)
-  - Document is a type, not a trait
+  - ~~Document is a type, not a trait~~
+  - `dom.document() -> &Document` <=> js's `document`
+  - `document.body` has limited typing (cf MDN)
+    - `DocumentBody :: | Body{HTMLBodyElement} | Frame{HTMLFrameSetElement}`
+    - `(d Document).body :: () -> ?&DocumentBody`
+    - `(d Document).setBody :: (&DocumentBody) -> {}`
+  - on emit `object.method`:
+    - if `object` is Document | &Document and method name is "body" or "setBody", emit as `__.getDocumentBody` and `__.setDocumentBody`
+    - or `new NodePointer(object.body)`
 - fix declaration for tuples: check if part of an object (use “let” or not)
 - object definition: remove order check
   - emitter should just use Object.Members & Object.Default to sort things out
