@@ -45,6 +45,18 @@ func DomLib() Module {
 		Ref:  Trait{Self: Generic{Name: "Self"}, Members: map[string]ExpressionType{}},
 	}
 	domLib.addMember("Element", Type{Element})
+	HTMLBodyElement := TypeAlias{
+		Name: "HTMLBodyElement",
+		from: "dom",
+		Ref:  newObject(),
+	}
+	domLib.addMember("HTMLBodyElement", Type{HTMLBodyElement})
+	HTMLFrameElement := TypeAlias{
+		Name: "HTMLFrameElement",
+		from: "dom",
+		Ref:  newObject(),
+	}
+	domLib.addMember("HTMLFrameElement", Type{HTMLFrameElement})
 	domLib.addMember("CharacterData", Type{TypeAlias{
 		Name: "CharacterData",
 		from: "dom",
@@ -63,6 +75,15 @@ func DomLib() Module {
 		Methods: map[string]ExpressionType{},
 	}
 	domLib.addMember("Document", Type{Document})
+	domLib.addMember("DocumentBody", Type{TypeAlias{
+		Name: "DocumentBody",
+		from: "dom",
+		Ref: Sum{map[string]Tuple{
+			"Body":  {[]ExpressionType{HTMLBodyElement}},
+			"Frame": {[]ExpressionType{HTMLFrameElement}},
+		}},
+		Methods: map[string]ExpressionType{},
+	}})
 	HTMLError := TypeAlias{
 		Name:    "HTMLError",
 		from:    "dom",

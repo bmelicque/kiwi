@@ -58,6 +58,10 @@ func EmitStd(filePath string, flags StandardFlags) {
 	if hasFlag(flags, DocumentFlag) {
 		f.WriteString("export let getDocument=()=>new NodePointer(document)\n")
 	}
+	if hasFlag(flags, DocumentBodyFlag) {
+		f.WriteString(`export class DocumentBody extends Sum{}
+export let getDocumentBody=d=>(d instanceof NodePointer&&(d=d.get()),d&&new DocumentBody(d.body instanceof HTMLBodyElement?"Body":"Frame",d.body))` + "\n")
+	}
 	if hasFlag(flags, CreateElementFlag) {
 		f.WriteString(`export let createElement=s=>{let[a,t,i,c]=s.match(/^(\w[\w\-_]*)?(?:#(\w[\w\-_]*))?((?:\.\w[\w\-_]*)*)$/);if(!a)throw new Error("Invalid selector");let e=document.createElement(t||"div");if(i)e.id=i.slice(1);if(c)e.classList.add(...c.split(".").slice(1));return e}` + "\n")
 	}
@@ -76,6 +80,7 @@ const (
 	WrapNodeMethodFlag
 	BindFlag
 	DocumentFlag
+	DocumentBodyFlag
 	CreateElementFlag
 )
 

@@ -111,3 +111,15 @@ export function createElement(string) {
 	if (match[3]) el.classList.add(...match[3].split(".").slice(1));
 	return el;
 }
+
+export class DocumentBody extends Sum {}
+
+// TODO: use actual Option type
+export function getDocumentBody(document) {
+	if (document instanceof NodePointer) document = document.get();
+	if (document == null) return null;
+
+	const body = document.body;
+	const tag = body instanceof HTMLBodyElement ? "Body" : "Frame";
+	return new DocumentBody(tag, body);
+}
