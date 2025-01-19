@@ -220,10 +220,7 @@ func getValidatedObjectField(p *Parser, node Node) Expression {
 
 // type check assignment where operator is '='
 func typeCheckAssignment(p *Parser, a *Assignment) {
-	outer := p.writing
-	p.writing = a
-	a.Pattern.typeCheck(p)
-	p.writing = outer
+	checkAssignmentPattern(p, a)
 	a.Value.typeCheck(p)
 	reportInvalidVariableType(p, a.Value)
 
@@ -266,10 +263,7 @@ func readDeref(p *Parser, pattern *UnaryExpression) {
 }
 
 func typeCheckOtherAssignment(p *Parser, a *Assignment) {
-	outer := p.writing
-	p.writing = a
-	a.Pattern.typeCheck(p)
-	p.writing = outer
+	checkAssignmentPattern(p, a)
 	a.Value.typeCheck(p)
 
 	left := a.Pattern.Type()
@@ -304,6 +298,20 @@ func typeCheckOtherAssignment(p *Parser, a *Assignment) {
 			p.error(a.Pattern, BooleanExpected, left)
 		}
 	}
+}
+
+func checkAssignmentPattern(p *Parser, a *Assignment) {
+	operator := a.Operator.Kind()
+	if operator == Declare || operator == Define {
+		panic("invalid context call for this function")
+	}
+	outer := p.writing
+	p.writing = a
+	a.Pattern.typeCheck(p)
+	if isModuleAccess(a.Pattern) {
+		p.error(a.Pattern, ModuleWrite)
+	}
+	p.writing = outer
 }
 
 // type check assignment where operator is ':='

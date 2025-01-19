@@ -1,4 +1,3 @@
-- prevent reassign to module key: `module.imported = someOtherStuffWithSameSignature`
 - emit traits as `new Trait(value, type, ...typeParams)`
   - should be completely transparent in parser
   - collapse `Trait(Trait)`

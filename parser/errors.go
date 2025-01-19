@@ -86,7 +86,8 @@ const (
 	PropertyDoesNotExist
 	MultipleEmbeddedProperties // [name]
 	NotInModule                // [expected variable name]
-	PrivateProperty            // [property name, path to origin file]
+	ModuleWrite
+	PrivateProperty // [property name, path to origin file]
 	PublicDeclaration
 	TypeDoesNotImplement
 	MissingKeys
@@ -288,6 +289,8 @@ func (p ParserError) Text() string {
 	case NotInModule:
 		variableName := p.Complements[0]
 		return fmt.Sprintf("Variable '%v' does not exist in this module", variableName)
+	case ModuleWrite:
+		return "Cannot write module property"
 	case PrivateProperty:
 		key := p.Complements[0]
 		path := p.Complements[1]

@@ -64,6 +64,66 @@ func TestParseAssignmentShorthand(t *testing.T) {
 	}
 }
 
+func TestCheckAssignmentPattern(t *testing.T) {
+	type test struct {
+		name      string
+		pattern   Expression
+		wantError bool
+	}
+	tests := []test{
+		{
+			name: "is module access",
+			pattern: &PropertyAccessExpression{
+				Expr:     &Identifier{Token: literal{kind: Name, value: "module"}},
+				Property: &Identifier{Token: literal{kind: Name, value: "member"}},
+			},
+			wantError: true,
+		},
+		{
+			name: "is access to non-module",
+			pattern: &PropertyAccessExpression{
+				Expr:     &Identifier{Token: literal{kind: Name, value: "object"}},
+				Property: &Identifier{Token: literal{kind: Name, value: "member"}},
+			},
+			wantError: false,
+		},
+		{
+			name:      "is not access",
+			pattern:   &Identifier{Token: literal{kind: Name, value: "object"}},
+			wantError: false,
+		},
+	}
+
+	scope := NewScope(ProgramScope)
+	scope.Add("module", Loc{}, Module{Object{Members: []ObjectMember{
+		{"member", Number{}},
+	}}})
+	scope.Add("object", Loc{}, TypeAlias{
+		Name: "Object",
+		Ref: Object{Members: []ObjectMember{
+			{"member", Number{}},
+		}},
+		Methods: map[string]ExpressionType{},
+	})
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := MakeParser(strings.NewReader(""))
+			p.scope = scope
+
+			a := &Assignment{Pattern: tt.pattern, Operator: token{kind: Assign}}
+			checkAssignmentPattern(p, a)
+
+			if tt.wantError && len(p.errors) == 0 {
+				t.Error("expected error, got none")
+			}
+			if !tt.wantError && len(p.errors) > 0 {
+				t.Errorf("expected no error, got one: %v", p.errors[0].Text())
+			}
+		})
+	}
+}
+
 func TestCheckAssignmentToIdentifier(t *testing.T) {
 	parser := MakeParser(nil)
 	parser.scope.Add("value", Loc{}, Number{})

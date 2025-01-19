@@ -116,3 +116,12 @@ func getValidatedEmbedding(p *Parser, expr *PropertyAccessExpression) *PropertyA
 	}
 	return expr
 }
+
+func isModuleAccess(pattern Expression) bool {
+	a, ok := pattern.(*PropertyAccessExpression)
+	if !ok {
+		return false
+	}
+	_, isModule := a.Expr.Type().(Module)
+	return isModule
+}
