@@ -198,6 +198,7 @@ func (e *Emitter) emitTypeDeclaration(definition *parser.Assignment) {
 		e.write("class ")
 		e.write(getTypeIdentifier(definition.Pattern))
 		e.write(" extends __.Sum {}\n")
+		e.addFlag(SumFlag)
 		return
 	}
 }

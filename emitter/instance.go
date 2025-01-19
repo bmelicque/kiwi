@@ -117,8 +117,10 @@ func (e *Emitter) emitRefInstance(constructor parser.Expression, args *parser.Tu
 	c := constructor.Type().(parser.Type).Value.(parser.Ref).To
 	if implementsNode(c) {
 		e.write("new __.NodePointer(")
+		e.addFlag(NodePointerFlag)
 	} else {
 		e.write("new __.Pointer(null, ")
+		e.addFlag(PointerFlag)
 	}
 	e.emitInstance(constructor.(*parser.UnaryExpression).Operand, args)
 	e.write(")")

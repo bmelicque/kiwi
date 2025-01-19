@@ -19,11 +19,13 @@ func (e *Emitter) emitUseStatement(u *parser.UseDirective) {
 			e.write("const ")
 			e.emitExpression(u.Names)
 			e.write(" = { createElement: __.createElement }\n")
+			e.addFlag(CreateElementFlag)
 			return
 		}
 		names := getUsedNames(u.Names)
 		if slices.Contains(names, "createElement") {
 			e.write("const createElement = __.createElement;\n")
+			e.addFlag(CreateElementFlag)
 		}
 	case "io":
 		if u.Star {

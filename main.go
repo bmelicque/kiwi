@@ -42,7 +42,6 @@ func transpile(rootPath string, outDir string) {
 	h := parseHtml(htmlPath)
 	outPath := rootPath[:len(rootPath)-len(filepath.Ext(rootPath))] + ".js"
 	appendScript(h, filepath.Base(outPath))
-	emitHtml(outDir, h)
 
 	chunks := []chunk{}
 	errors := []parser.ParserError{}
@@ -61,6 +60,7 @@ func transpile(rootPath string, outDir string) {
 	}
 
 	emptyOutDir(outDir)
+	emitHtml(outDir, h)
 	std := emitter.EmitStd(filepath.Dir(rootPath), outDir)
 	std = filepath.Join(outDir, std)
 	for _, chunk := range chunks {
@@ -149,10 +149,13 @@ func writeChunk(chunk chunk, stdPath string) {
 	if stdPath[0] != '.' {
 		stdPath = "./" + stdPath
 	}
-	f.WriteString("import * as __ from \"" + stdPath + ".js\";\n")
-	_, err = f.WriteString(emitter.EmitProgram(chunk.Program))
+	output, flags := emitter.EmitProgram(chunk.Program)
+	_, err = f.WriteString(output)
 	if err != nil {
 		log.Fatal(err)
+	}
+	if flags != emitter.NoFlag {
+		f.WriteString("import * as __ from \"" + stdPath + ".js\";\n")
 	}
 	f.Sync()
 }

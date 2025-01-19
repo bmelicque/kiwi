@@ -14,6 +14,7 @@ type Emitter struct {
 	thisName     string
 	constructors map[string]map[string]parser.Expression
 	uninlinables map[parser.Node]int
+	stdEmitter
 }
 
 func makeEmitter() *Emitter {
@@ -120,7 +121,7 @@ func (e *Emitter) emitExpression(expr parser.Expression) {
 	}
 }
 
-func EmitProgram(program parser.Program) string {
+func EmitProgram(program parser.Program) (string, StandardFlags) {
 	e := makeEmitter()
 	e.write("const ")
 	emitScope(e, program.Scope())
@@ -128,5 +129,5 @@ func EmitProgram(program parser.Program) string {
 	for _, node := range program.Nodes() {
 		e.emitAtTopLevel(node)
 	}
-	return e.string()
+	return e.string(), e.flags
 }

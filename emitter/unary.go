@@ -32,8 +32,10 @@ func (e *Emitter) emitUnaryExpression(u *parser.UnaryExpression) {
 
 func (e *Emitter) emitReference(expr parser.Expression) {
 	if implementsNode(expr.Type()) {
+		e.addFlag(NodePointerFlag)
 		e.write("new __.NodePointer(")
 	} else {
+		e.addFlag(PointerFlag)
 		e.write("new __.Pointer(")
 	}
 	identifier, isIdentifier := getRefIdentifier(expr)

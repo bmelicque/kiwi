@@ -1,11 +1,14 @@
+- fix emit catch: if last node of body `isExiting`, don't assign to `_tmp`
+- fix emit catch if no error identifier
+- fix emit `_tmp` to `__tmp`
 - update maps syntax to `Key#Value`
   - inferred maps as `#{}`
-- optimize import emission
-  - check if js imports are hoisted -> emit them at the end of file only if needed
+- optimize import emission -> imports **are** hoisted
+  - ~~emit them at the end of file, only if needed~~
   - list all needed functions in files, to emit only needed stuff in standard file
-    - use the `from` key in `TypeAlias` to detect methods that need a js function in standard file
-    - use currying to match params (treat methods, call will manage itself)
-      - e.g. `setDocumentBody => (document) => (body) => document.boy = body`
+  - use the `from` key in `TypeAlias` to detect methods that need a js function in standard file (e.g. `setDocumentBody` on TypeAlias `Document` from `dom`, not a user-defined document class)
+  - use currying to match params (treat methods, call will manage itself)
+    - e.g. `setDocumentBody => (document) => (body) => document.boy = body`
 - document().body (&Node)
   - ~~Document is a type, not a trait~~
   - `dom.document() -> &Document` <=> js's `document`

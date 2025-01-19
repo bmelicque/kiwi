@@ -46,3 +46,30 @@ export let n=NodePointer,wrapNodeMethod=(o,m,r,f=(...a)=>o[m].apply(o,a.map(a=>a
 `)
 	return name
 }
+
+type StandardFlags = uint
+
+const (
+	NoFlag StandardFlags = 0
+
+	SumFlag StandardFlags = 1 << (iota - 1)
+	PointerFlag
+	NodePointerFlag
+
+	DeepEqualFlag
+	WrapNodeMethodFlag
+	BindFlag
+	CreateElementFlag
+)
+
+type stdEmitter struct {
+	flags StandardFlags
+}
+
+func (e *stdEmitter) addFlag(flag StandardFlags) {
+	e.flags |= flag
+}
+
+func (e *stdEmitter) hasFlag(flag StandardFlags) bool {
+	return (e.flags & flag) != NoFlag
+}

@@ -16,6 +16,7 @@ func (e *Emitter) emitPropertyAccessExpression(p *parser.PropertyAccessExpressio
 
 // Native methods on nodes are tricky to handle (concerning refs for example)
 func emitNodeMethod(e *Emitter, p *parser.PropertyAccessExpression) {
+	e.addFlag(WrapNodeMethodFlag)
 	e.write("__.wrapNodeMethod(")
 	e.emitExpression(p.Expr)
 	e.write(", \"")
@@ -31,6 +32,7 @@ func emitNodeMethod(e *Emitter, p *parser.PropertyAccessExpression) {
 // A method which is not called has to be bound to handle correct behavior of "this".
 // Method on Node trait has to have extra handling.
 func emitNoncalledMethod(e *Emitter, p *parser.PropertyAccessExpression) {
+	e.addFlag(BindFlag)
 	e.write("__.bind(")
 	e.emitExpression(p.Expr)
 	e.write(", \"")
