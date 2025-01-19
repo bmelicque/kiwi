@@ -6,24 +6,77 @@ import (
 	"github.com/bmelicque/test-parser/parser"
 )
 
-func TestCatchStatement(t *testing.T) {
-	emitter := makeEmitter()
-	// result catch _ { 0 }
-	emitter.emit(&parser.CatchExpression{
-		Left:       &parser.Identifier{Token: testToken{kind: parser.Name, value: "result"}},
-		Identifier: &parser.Identifier{Token: testToken{kind: parser.Name, value: "_"}},
-		Body: parser.MakeBlock([]parser.Node{
-			&parser.Literal{Token: testToken{kind: parser.NumberLiteral, value: "0"}},
-		}),
-	})
+func TestEmitCatchStatement(t *testing.T) {
+	type test struct {
+		name               string
+		node               *parser.CatchExpression
+		expectedStatement  string
+		expectedExpression string
+	}
+	tests := []test{
+		{
+			name: "with identifier",
+			// result catch _ { 0 }
+			node: &parser.CatchExpression{
+				Left:       &parser.Identifier{Token: testToken{kind: parser.Name, value: "result"}},
+				Identifier: &parser.Identifier{Token: testToken{kind: parser.Name, value: "_"}},
+				Body: parser.MakeBlock([]parser.Node{
+					&parser.Literal{Token: testToken{kind: parser.NumberLiteral, value: "0"}},
+				}),
+			},
+			expectedStatement:  "try {\n    result;\n} catch (_) {\n    0;\n}\n",
+			expectedExpression: "let _tmp0;\ntry {\n    _tmp0 = result;\n} catch (_) {\n    _tmp0 = 0;\n}\n_tmp0",
+		},
+		{
+			name: "without identifier",
+			// result catch { 0 }
+			node: &parser.CatchExpression{
+				Left:       &parser.Identifier{Token: testToken{kind: parser.Name, value: "result"}},
+				Identifier: nil,
+				Body: parser.MakeBlock([]parser.Node{
+					&parser.Literal{Token: testToken{kind: parser.NumberLiteral, value: "0"}},
+				}),
+			},
+			expectedStatement:  "try {\n    result;\n} catch (_) {\n    0;\n}\n",
+			expectedExpression: "let _tmp0;\ntry {\n    _tmp0 = result;\n} catch (_) {\n    _tmp0 = 0;\n}\n_tmp0",
+		},
+		{
+			name: "with exiting statement",
+			// result catch { return }
+			node: &parser.CatchExpression{
+				Left:       &parser.Identifier{Token: testToken{kind: parser.Name, value: "result"}},
+				Identifier: nil,
+				Body: parser.MakeBlock([]parser.Node{
+					&parser.Exit{Operator: testToken{kind: parser.ReturnKeyword}},
+				}),
+			},
+			expectedStatement:  "try {\n    result;\n} catch (_) {\n    return;\n}\n",
+			expectedExpression: "let _tmp0;\ntry {\n    _tmp0 = result;\n} catch (_) {\n    return;\n}\n_tmp0",
+		},
+	}
 
-	text := emitter.string()
-	expected := "try {\n"
-	expected += "    result;\n"
-	expected += "} catch (_) {\n"
-	expected += "    0;\n"
-	expected += "}\n"
-	if text != expected {
-		t.Fatalf("Expected string:\n%v\ngot:\n%v", expected, text)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			emitter := makeEmitter()
+			emitter.emit(tt.node)
+			text := emitter.string()
+
+			if text != tt.expectedStatement {
+				t.Errorf("Expected statement:\n%v\ngot:\n%v", tt.expectedStatement, text)
+			}
+		})
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			emitter := makeEmitter()
+			emitter.extractUninlinables(tt.node)
+			emitter.emitExpression(tt.node)
+			text := emitter.string()
+
+			if text != tt.expectedExpression {
+				t.Fatalf("Expected expression:\n%v\ngot:\n%v", tt.expectedExpression, text)
+			}
+		})
 	}
 }

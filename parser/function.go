@@ -360,7 +360,7 @@ func typeCheckReturnsExplicit(p *Parser, explicit ExpressionType, body *Block) {
 	expected := getHappyType(t.Value)
 	returns := findReturnStatements(body)
 	bodyType := body.Type()
-	if !isExiting(body.Last()) && !expected.Extends(bodyType) {
+	if !IsExiting(body.Last()) && !expected.Extends(bodyType) {
 		p.error(body.reportedNode(), CannotAssignType, expected, bodyType)
 	}
 	for _, r := range returns {

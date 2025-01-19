@@ -1,5 +1,4 @@
-- fix emit catch: if last node of body `isExiting`, don't assign to `_tmp`
-- fix emit catch if no error identifier
+- fix `TestEmitReference` to ignore scope number
 - fix emit `_tmp` to `__tmp`
 - update maps syntax to `Key#Value`
   - inferred maps as `#{}`

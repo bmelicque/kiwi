@@ -9,7 +9,11 @@ func (e *Emitter) emitCatchStatement(c *parser.CatchExpression) {
 	e.emit(c.Left)
 	e.depth--
 	e.write("} catch (")
-	e.emitExpression(c.Identifier)
+	if c.Identifier != nil {
+		e.emitExpression(c.Identifier)
+	} else {
+		e.write("_")
+	}
 	e.write(") ")
 	e.emitBlockStatement(c.Body)
 }

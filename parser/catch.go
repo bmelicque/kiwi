@@ -70,7 +70,7 @@ func (c *CatchExpression) typeCheckBody(p *Parser, happy ExpressionType) {
 		return
 	}
 	c.Body.typeCheck(p)
-	if !isExiting(c.Body) && !happy.Extends(c.Body.Type()) {
+	if !IsExiting(c.Body) && !happy.Extends(c.Body.Type()) {
 		p.error(c.Body.reportedNode(), CannotAssignType, happy, c.Body.Type())
 	}
 }

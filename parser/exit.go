@@ -71,14 +71,14 @@ func reportIllegalExit(p *Parser, e *Exit) {
 	}
 }
 
-func isExiting(n Node) bool {
+func IsExiting(n Node) bool {
 	switch n := n.(type) {
 	case *Exit:
 		return true
 	case *Block:
-		return slices.IndexFunc(n.Statements, isExiting) != -1
+		return slices.IndexFunc(n.Statements, IsExiting) != -1
 	case *IfExpression:
-		return isExiting(n.Body) && isExiting(n.Alternate)
+		return IsExiting(n.Body) && IsExiting(n.Alternate)
 	default:
 		return false
 	}
