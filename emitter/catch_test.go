@@ -25,7 +25,7 @@ func TestEmitCatchStatement(t *testing.T) {
 				}),
 			},
 			expectedStatement:  "try {\n    result;\n} catch (_) {\n    0;\n}\n",
-			expectedExpression: "let _tmp0;\ntry {\n    _tmp0 = result;\n} catch (_) {\n    _tmp0 = 0;\n}\n_tmp0",
+			expectedExpression: "let __tmp0;\ntry {\n    __tmp0 = result;\n} catch (_) {\n    __tmp0 = 0;\n}\n__tmp0",
 		},
 		{
 			name: "without identifier",
@@ -38,7 +38,7 @@ func TestEmitCatchStatement(t *testing.T) {
 				}),
 			},
 			expectedStatement:  "try {\n    result;\n} catch (_) {\n    0;\n}\n",
-			expectedExpression: "let _tmp0;\ntry {\n    _tmp0 = result;\n} catch (_) {\n    _tmp0 = 0;\n}\n_tmp0",
+			expectedExpression: "let __tmp0;\ntry {\n    __tmp0 = result;\n} catch (_) {\n    __tmp0 = 0;\n}\n__tmp0",
 		},
 		{
 			name: "with exiting statement",
@@ -51,7 +51,7 @@ func TestEmitCatchStatement(t *testing.T) {
 				}),
 			},
 			expectedStatement:  "try {\n    result;\n} catch (_) {\n    return;\n}\n",
-			expectedExpression: "let _tmp0;\ntry {\n    _tmp0 = result;\n} catch (_) {\n    return;\n}\n_tmp0",
+			expectedExpression: "let __tmp0;\ntry {\n    __tmp0 = result;\n} catch (_) {\n    return;\n}\n__tmp0",
 		},
 	}
 

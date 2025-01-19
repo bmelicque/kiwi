@@ -54,7 +54,7 @@ func (e *Emitter) extractUninlinables(node parser.Node) {
 			continue
 		}
 		// outline block
-		e.write(fmt.Sprintf("let _tmp%v;\n", id))
+		e.write(fmt.Sprintf("let __tmp%v;\n", id))
 		e.indent()
 		switch n := n.(type) {
 		case *parser.Block:
@@ -77,7 +77,7 @@ func emitExtractedBlock(e *Emitter, b *parser.Block, id int) {
 	e.indent()
 	last := b.Statements[max]
 	if !parser.IsExiting(last) {
-		e.write(fmt.Sprintf("_tmp%v = ", id))
+		e.write(fmt.Sprintf("__tmp%v = ", id))
 	}
 	e.emit(last)
 	e.depth--
@@ -90,7 +90,7 @@ func emitExtractedCatch(e *Emitter, c *parser.CatchExpression) {
 	e.depth++
 	e.indent()
 	id := e.uninlinables[c]
-	e.write(fmt.Sprintf("_tmp%v = ", id))
+	e.write(fmt.Sprintf("__tmp%v = ", id))
 	e.emitExpression(c.Left)
 	e.write(";\n")
 	e.depth--

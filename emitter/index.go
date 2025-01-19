@@ -94,7 +94,7 @@ func (e *Emitter) emitExpression(expr parser.Expression) {
 		if !ok {
 			panic("Catch expression should have been extracted!")
 		}
-		e.write(fmt.Sprintf("_tmp%v", id))
+		e.write(fmt.Sprintf("__tmp%v", id))
 		delete(e.uninlinables, expr)
 	case *parser.ComputedAccessExpression:
 		e.emitComputedAccessExpression(expr)

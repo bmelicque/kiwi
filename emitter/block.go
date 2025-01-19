@@ -35,7 +35,7 @@ func (e *Emitter) emitBlockStatement(b *parser.Block) {
 
 func (e *Emitter) emitBlockExpression(b *parser.Block) {
 	if id, ok := e.uninlinables[b]; ok {
-		e.write(fmt.Sprintf("_tmp%v", id))
+		e.write(fmt.Sprintf("__tmp%v", id))
 		delete(e.uninlinables, b)
 		return
 	}

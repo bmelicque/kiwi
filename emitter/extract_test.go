@@ -15,11 +15,11 @@ func TestExtractBlock(t *testing.T) {
 	}})
 
 	text := emitter.string()
-	expected := "let _tmp0;\n"
+	expected := "let __tmp0;\n"
 	expected += "{\n"
 	expected += "    0;\n"
 	expected += "    1;\n"
-	expected += "    _tmp0 = 2;\n"
+	expected += "    __tmp0 = 2;\n"
 	expected += "}\n"
 	if text != expected {
 		t.Fatalf("Expected string:\n%v\ngot:\n%v", expected, text)
@@ -38,11 +38,11 @@ func TestExtractCatch(t *testing.T) {
 	})
 
 	text := emitter.string()
-	expected := "let _tmp0;\n"
+	expected := "let __tmp0;\n"
 	expected += "try {\n"
-	expected += "    _tmp0 = result;\n"
+	expected += "    __tmp0 = result;\n"
 	expected += "} catch (_) {\n"
-	expected += "    _tmp0 = 0;\n"
+	expected += "    __tmp0 = 0;\n"
 	expected += "}\n"
 	if text != expected {
 		t.Fatalf("Expected string:\n%v\ngot:\n%v", expected, text)

@@ -1,4 +1,3 @@
-- fix emit `_tmp` to `__tmp`
 - update maps syntax to `Key#Value`
   - inferred maps as `#{}`
 - optimize import emission -> imports **are** hoisted
