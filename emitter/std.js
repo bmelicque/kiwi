@@ -114,12 +114,19 @@ export function createElement(string) {
 
 export class DocumentBody extends Sum {}
 
-// TODO: use actual Option type
 export function getDocumentBody(document) {
 	if (document instanceof NodePointer) document = document.get();
-	if (document == null) return null;
+	if (document.body == null) return null;
 
 	const body = document.body;
 	const tag = body instanceof HTMLBodyElement ? "Body" : "Frame";
-	return new DocumentBody(tag, body);
+	return () => new DocumentBody(tag, body);
+}
+
+/**
+ * @param {Document} document
+ */
+export function setDocumentBody(document) {
+	if (document instanceof NodePointer) document = document.get();
+	return (body) => (document.body = body.value);
 }

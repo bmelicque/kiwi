@@ -5,6 +5,19 @@ import "github.com/bmelicque/test-parser/parser"
 func (e *Emitter) emitPropertyAccessExpression(p *parser.PropertyAccessExpression, isCalled bool) {
 	_, isMethod := p.Type().(parser.Function)
 	switch {
+	case isDomDocument(p.Expr):
+		switch p.Property.(*parser.Identifier).Text() {
+		case "body":
+			e.write("__.getDocumentBody(")
+			e.emitExpression(p.Expr)
+			e.write(")")
+			e.addFlag(DocumentGetBodyFlag)
+		case "setBody":
+			e.write("__.setDocumentBody(")
+			e.emitExpression(p.Expr)
+			e.write(")")
+			e.addFlag(DocumentSetBodyFlag)
+		}
 	case isMethod && implementsNode(p.Expr.Type()):
 		emitNodeMethod(e, p)
 	case isMethod && !isCalled:
@@ -53,4 +66,16 @@ func emitPropertyAccess(e *Emitter, p *parser.PropertyAccessExpression) {
 		e.write(".")
 		e.emitExpression(p.Property)
 	}
+}
+
+func isDomDocument(expr parser.Expression) bool {
+	t := expr.Type()
+	if ref, ok := t.(parser.Ref); ok {
+		t = ref.To
+	}
+	alias, ok := t.(parser.TypeAlias)
+	if !ok {
+		return false
+	}
+	return alias.Name == "Document" && alias.From == "dom"
 }

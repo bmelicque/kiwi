@@ -1,19 +1,9 @@
-- How to match against a generic? do types hold their params?
-- document().body (&Node)
-  - ~~Document is a type, not a trait~~
-  - ~~`dom.document() -> &Document` <=> js's `document`~~
-  - `document.body` has limited typing (cf MDN)
-    - ~~`DocumentBody :: | Body{HTMLBodyElement} | Frame{HTMLFrameSetElement}`~~
-    - add real `Option` type
-    - `(d Document).body :: () -> ?&DocumentBody`
-    - `(d Document).setBody :: (&DocumentBody) -> {}`
-    - html elements should be used as types, but they are interfaces in JS => on emit instance, if type implements Node and is from dom, use createElement instead
-  - on emit `object.method`:
-    - if `object` is Document | &Document (with `from` key being 'dom') and method name is "body" or "setBody", emit as `__.getDocumentBody` and `__.setDocumentBody`
-    - or `new NodePointer(object.body)`??
-    - use currying to match params on call (`setDocumentBody => (document) => (body) => document.boy = body`)
 - prevent reassign to module key: `module.imported = someOtherStuffWithSameSignature`
+- emit traits as `new Trait(value, type, ...typeParams)`
+  - should be completely transparent in parser
+  - collapse `Trait(Trait)`
 - emit `dom` just like std instead of hard-coding stuff at the top of files
+- html elements should be used as types, but they are interfaces in JS => on emit instance, if type implements Node and is from dom, use createElement instead
 - fix declaration for tuples: check if part of an object (use “let” or not)
 - update maps syntax to `Key#Value`
   - inferred maps as `#{}`

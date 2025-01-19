@@ -198,8 +198,8 @@ func reportPrivateFromOtherModule(p *Parser, expr *PropertyAccessExpression) boo
 	if !ok {
 		return false
 	}
-	if i.IsPrivate() && alias.from != p.filePath {
-		p.error(expr, PrivateProperty, i.Text(), alias.from)
+	if i.IsPrivate() && alias.From != p.filePath {
+		p.error(expr, PrivateProperty, i.Text(), alias.From)
 		return true
 	}
 	return false

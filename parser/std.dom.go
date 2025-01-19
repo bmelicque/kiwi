@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"maps"
 )
 
@@ -21,7 +22,7 @@ func DomLib() Module {
 
 	Event := TypeAlias{
 		Name: "Event",
-		from: "dom",
+		From: "dom",
 		Ref:  Trait{Self: Generic{Name: "Self"}, Members: map[string]ExpressionType{}},
 	}
 	domLib.addMember("Event", Type{Event})
@@ -31,53 +32,53 @@ func DomLib() Module {
 	})
 	domLib.addMember("EventTarget", Type{TypeAlias{
 		Name: "EventTarget",
-		from: "dom",
+		From: "dom",
 		Ref:  Trait{Members: map[string]ExpressionType{}},
 	}})
 	domLib.addMember("Node", Type{TypeAlias{
 		Name: "Node",
-		from: "dom",
+		From: "dom",
 		Ref:  Trait{Self: Generic{Name: "Self"}, Members: map[string]ExpressionType{}},
 	}})
 	Element := TypeAlias{
 		Name: "Element",
-		from: "dom",
+		From: "dom",
 		Ref:  Trait{Self: Generic{Name: "Self"}, Members: map[string]ExpressionType{}},
 	}
 	domLib.addMember("Element", Type{Element})
 	HTMLBodyElement := TypeAlias{
 		Name: "HTMLBodyElement",
-		from: "dom",
+		From: "dom",
 		Ref:  newObject(),
 	}
 	domLib.addMember("HTMLBodyElement", Type{HTMLBodyElement})
 	HTMLFrameElement := TypeAlias{
 		Name: "HTMLFrameElement",
-		from: "dom",
+		From: "dom",
 		Ref:  newObject(),
 	}
 	domLib.addMember("HTMLFrameElement", Type{HTMLFrameElement})
 	domLib.addMember("CharacterData", Type{TypeAlias{
 		Name: "CharacterData",
-		from: "dom",
+		From: "dom",
 		Ref:  Trait{Self: Generic{Name: "Self"}, Members: map[string]ExpressionType{}},
 	}})
 	domLib.addMember("Text", Type{TypeAlias{
 		Name:    "Text",
-		from:    "dom",
+		From:    "dom",
 		Ref:     Object{Members: []ObjectMember{{Name: "data", Type: String{}}}},
 		Methods: map[string]ExpressionType{},
 	}})
 	Document := TypeAlias{
 		Name:    "Document",
-		from:    "dom",
+		From:    "dom",
 		Ref:     newObject(),
 		Methods: map[string]ExpressionType{},
 	}
 	domLib.addMember("Document", Type{Document})
 	domLib.addMember("DocumentBody", Type{TypeAlias{
 		Name: "DocumentBody",
-		from: "dom",
+		From: "dom",
 		Ref: Sum{map[string]Tuple{
 			"Body":  {[]ExpressionType{HTMLBodyElement}},
 			"Frame": {[]ExpressionType{HTMLFrameElement}},
@@ -86,7 +87,7 @@ func DomLib() Module {
 	}})
 	HTMLError := TypeAlias{
 		Name:    "HTMLError",
-		from:    "dom",
+		From:    "dom",
 		Ref:     Object{},
 		Methods: map[string]ExpressionType{"error": newGetter(String{})},
 	}
@@ -110,10 +111,9 @@ func DomLib() Module {
 }
 
 func buildEventTrait() {
-	event, _ := domLib.GetOwned("Event")
-	eventTarget, _ := domLib.GetOwned("EventTarget")
-	EventTarget := eventTarget.(Type).Value
-	methods := event.(Type).Value.(TypeAlias).Ref.(Trait).Members
+	Event := getDomMember("Event")
+	EventTarget := getDomMember("EventTarget")
+	methods := Event.(TypeAlias).Ref.(Trait).Members
 
 	methods["bubbles"] = newGetter(Boolean{})
 	methods["cancelable"] = newGetter(Boolean{})
@@ -132,11 +132,10 @@ func buildEventTrait() {
 }
 
 func buildEventTargetTrait() {
-	eventTarget, _ := domLib.GetOwned("EventTarget")
+	EventTarget := getDomMember("EventTarget")
 	EventHandler, _ := domLib.GetOwned("EventHandler")
-	event, _ := domLib.GetOwned("Event")
-	Event := event.(Type).Value
-	methods := eventTarget.(Type).Value.(TypeAlias).Ref.(Trait).Members
+	Event := getDomMember("Event")
+	methods := EventTarget.(TypeAlias).Ref.(Trait).Members
 
 	methods["addEventListener"] = Function{
 		Params: &Tuple{[]ExpressionType{
@@ -161,13 +160,10 @@ func buildEventTargetTrait() {
 }
 
 func buildNodeTrait() {
-	node, _ := domLib.GetOwned("Node")
-	Node := node.(Type).Value
-	document, _ := domLib.GetOwned("Document")
-	Document := document.(Type).Value
-	element, _ := domLib.GetOwned("Element")
-	Element := element.(Type).Value
-	eventTarget, _ := domLib.GetOwned("EventTarget")
+	Node := getDomMember("Node")
+	Document := getDomMember("Document")
+	Element := getDomMember("Element")
+	EventTarget := getDomMember("EventTarget")
 	methods := Node.(TypeAlias).Ref.(Trait).Members
 
 	methods["appendChild"] = Function{
@@ -227,50 +223,50 @@ func buildNodeTrait() {
 	// TODO: nodeValue => getter & setter
 	// TODO: textContent => getter & setter
 
-	maps.Copy(methods, eventTarget.(Type).Value.(TypeAlias).Ref.(Trait).Members)
+	maps.Copy(methods, EventTarget.(TypeAlias).Ref.(Trait).Members)
 }
 
 func buildDocumentType() {
-	document, _ := domLib.GetOwned("Document")
-	Document := document.(Type).Value
-	element, _ := domLib.GetOwned("Element")
-	Element := element.(Type).Value
-	node, _ := domLib.GetOwned("Node")
+	Document := getDomMember("Document")
+	DocumentBody := getDomMember("DocumentBody")
+	Element := getDomMember("Element")
+	Node := getDomMember("Node")
 	methods := Document.(TypeAlias).Methods
 
 	methods["activeElement"] = newGetter(Ref{Element})
+	methods["body"] = newGetter(makeOptionType(Ref{DocumentBody}))
+	methods["setBody"] = newGetter(Function{
+		Params:   &Tuple{[]ExpressionType{Ref{DocumentBody}}},
+		Returned: Void{},
+	})
 
-	maps.Copy(methods, node.(Type).Value.(TypeAlias).Ref.(Trait).Members)
+	maps.Copy(methods, Node.(TypeAlias).Ref.(Trait).Members)
 }
 
 func buildElementTrait() {
-	element, _ := domLib.GetOwned("Element")
-	Element := element.(Type).Value
-	node, _ := domLib.GetOwned("Node")
+	Element := getDomMember("Element")
+	Node := getDomMember("Node")
 	methods := Element.(TypeAlias).Ref.(Trait).Members
 
 	// TODO: Element methods
 
-	maps.Copy(methods, node.(Type).Value.(TypeAlias).Ref.(Trait).Members)
+	maps.Copy(methods, Node.(TypeAlias).Ref.(Trait).Members)
 }
 
 func buildCharacterDataTrait() {
-	characterData, _ := domLib.GetOwned("CharacterData")
-	CharacterData := characterData.(Type).Value
-	node, _ := domLib.GetOwned("Node")
+	CharacterData := getDomMember("CharacterData")
+	Node := getDomMember("Node")
 	methods := CharacterData.(TypeAlias).Ref.(Trait).Members
 
 	// TODO: CharacterData methods
 
-	maps.Copy(methods, node.(Type).Value.(TypeAlias).Ref.(Trait).Members)
+	maps.Copy(methods, Node.(TypeAlias).Ref.(Trait).Members)
 }
 
 func buildTextType() {
-	text, _ := domLib.GetOwned("Text")
-	Text := text.(Type).Value
-	element, _ := domLib.GetOwned("Element")
-	Element := element.(Type).Value
-	characterData, _ := domLib.GetOwned("CharacterData")
+	Text := getDomMember("Text")
+	Element := getDomMember("Element")
+	CharacterData := getDomMember("CharacterData")
 	methods := Text.(TypeAlias).Methods
 
 	methods["assignedSlot"] = Function{Params: &Tuple{}, Returned: Ref{Element}} // TODO: HTMLSlotElement
@@ -281,5 +277,13 @@ func buildTextType() {
 	}
 	methods["cloneNode"] = newGetter(Text)
 
-	maps.Copy(methods, characterData.(Type).Value.(TypeAlias).Ref.(Trait).Members)
+	maps.Copy(methods, CharacterData.(TypeAlias).Ref.(Trait).Members)
+}
+
+func getDomMember(name string) ExpressionType {
+	t, ok := domLib.GetOwned(name)
+	if !ok {
+		panic(fmt.Sprintf("invalid member %v in dom lib", name))
+	}
+	return t.(Type).Value
 }
