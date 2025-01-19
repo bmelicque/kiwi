@@ -61,11 +61,12 @@ func transpile(rootPath string, outDir string) {
 
 	emptyOutDir(outDir)
 	emitHtml(outDir, h)
-	std := emitter.EmitStd(filepath.Dir(rootPath), outDir)
-	std = filepath.Join(outDir, std)
+	std := emitter.CreateStdName(filepath.Dir(rootPath))
+	var flags emitter.StandardFlags
 	for _, chunk := range chunks {
-		writeChunk(chunk, std)
+		flags |= writeChunk(chunk, std)
 	}
+	emitter.EmitStd(filepath.Join(outDir, std), flags)
 }
 
 func parseHtml(path string) *html.Node {
@@ -136,7 +137,7 @@ func getOutPath(rootPath, filePath, outDir string) string {
 	return outFile[:len(outFile)-ext] + ".js"
 }
 
-func writeChunk(chunk chunk, stdPath string) {
+func writeChunk(chunk chunk, stdPath string) emitter.StandardFlags {
 	f, err := os.Create(chunk.path)
 	if err != nil {
 		panic(err)
@@ -158,6 +159,7 @@ func writeChunk(chunk chunk, stdPath string) {
 		f.WriteString("import * as __ from \"" + stdPath + ".js\";\n")
 	}
 	f.Sync()
+	return flags
 }
 
 func logErrors(errors []parser.ParserError) {

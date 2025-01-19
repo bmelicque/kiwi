@@ -1,11 +1,3 @@
-- update maps syntax to `Key#Value`
-  - inferred maps as `#{}`
-- optimize import emission -> imports **are** hoisted
-  - ~~emit them at the end of file, only if needed~~
-  - list all needed functions in files, to emit only needed stuff in standard file
-  - use the `from` key in `TypeAlias` to detect methods that need a js function in standard file (e.g. `setDocumentBody` on TypeAlias `Document` from `dom`, not a user-defined document class)
-  - use currying to match params (treat methods, call will manage itself)
-    - e.g. `setDocumentBody => (document) => (body) => document.boy = body`
 - document().body (&Node)
   - ~~Document is a type, not a trait~~
   - `dom.document() -> &Document` <=> js's `document`
@@ -14,9 +6,12 @@
     - `(d Document).body :: () -> ?&DocumentBody`
     - `(d Document).setBody :: (&DocumentBody) -> {}`
   - on emit `object.method`:
-    - if `object` is Document | &Document and method name is "body" or "setBody", emit as `__.getDocumentBody` and `__.setDocumentBody`
-    - or `new NodePointer(object.body)`
+    - if `object` is Document | &Document (with `from` key being 'dom') and method name is "body" or "setBody", emit as `__.getDocumentBody` and `__.setDocumentBody`
+    - or `new NodePointer(object.body)`??
+    - use currying to match params on call (`setDocumentBody => (document) => (body) => document.boy = body`)
 - fix declaration for tuples: check if part of an object (use “let” or not)
+- update maps syntax to `Key#Value`
+  - inferred maps as `#{}`
 - object definition: remove order check
   - emitter should just use Object.Members & Object.Default to sort things out
 - list methods
