@@ -1,17 +1,29 @@
 package emitter
 
 import (
+	"regexp"
+	"strings"
 	"testing"
+
+	"github.com/bmelicque/test-parser/parser"
 )
 
 func TestEmitReference(t *testing.T) {
 	source := "value := 0\n"
 	source += "&value"
 
-	// FIXME: __s55 is magic, should handle this properly (regex?)
-	expected := "new __.Pointer(__s54, \"value\");\n"
-
-	testEmitter(t, source, expected, 1)
+	program, _ := parser.ParseProgram(strings.NewReader(source), "")
+	emitter := makeEmitter()
+	emitter.emit(program.Nodes()[1])
+	received := emitter.string()
+	matched, _ := regexp.Match(`new __\.Pointer\(__s\d+, "value"\);`, []byte(received))
+	if !matched {
+		t.Fatalf(
+			"expected output:\n%v\n\ngot:\n%v",
+			"new __.Pointer(__sXX, \"value\");\n",
+			received,
+		)
+	}
 }
 
 func TestEmitDeref(t *testing.T) {
