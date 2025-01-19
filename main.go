@@ -62,11 +62,12 @@ func transpile(rootPath string, outDir string) {
 	emptyOutDir(outDir)
 	emitHtml(outDir, h)
 	std := emitter.CreateStdName(filepath.Dir(rootPath))
+	std = filepath.Join(outDir, std)
 	var flags emitter.StandardFlags
 	for _, chunk := range chunks {
 		flags |= writeChunk(chunk, std)
 	}
-	emitter.EmitStd(filepath.Join(outDir, std), flags)
+	emitter.EmitStd(std, flags)
 }
 
 func parseHtml(path string) *html.Node {

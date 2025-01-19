@@ -1,6 +1,6 @@
 - document().body (&Node)
   - ~~Document is a type, not a trait~~
-  - `dom.document() -> &Document` <=> js's `document`
+  - ~~`dom.document() -> &Document` <=> js's `document`~~
   - `document.body` has limited typing (cf MDN)
     - `DocumentBody :: | Body{HTMLBodyElement} | Frame{HTMLFrameSetElement}`
     - `(d Document).body :: () -> ?&DocumentBody`
@@ -9,6 +9,7 @@
     - if `object` is Document | &Document (with `from` key being 'dom') and method name is "body" or "setBody", emit as `__.getDocumentBody` and `__.setDocumentBody`
     - or `new NodePointer(object.body)`??
     - use currying to match params on call (`setDocumentBody => (document) => (body) => document.boy = body`)
+- prevent reassign to module key: `module.imported = someOtherStuffWithSameSignature`
 - fix declaration for tuples: check if part of an object (use “let” or not)
 - update maps syntax to `Key#Value`
   - inferred maps as `#{}`

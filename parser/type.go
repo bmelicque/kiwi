@@ -195,6 +195,9 @@ func (r Ref) Extends(t ExpressionType) bool {
 }
 func (r Ref) Text() string { return "&" + r.To.Text() }
 func (r Ref) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
+	if compared == nil {
+		return r.To.build(scope, nil)
+	}
 	ref, ok := compared.(Ref)
 	if !ok {
 		return r, false

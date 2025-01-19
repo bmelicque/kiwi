@@ -56,12 +56,13 @@ func DomLib() Module {
 		Ref:     Object{Members: []ObjectMember{{Name: "data", Type: String{}}}},
 		Methods: map[string]ExpressionType{},
 	}})
-	domLib.addMember("Document", Type{TypeAlias{
+	Document := TypeAlias{
 		Name:    "Document",
 		from:    "dom",
 		Ref:     newObject(),
 		Methods: map[string]ExpressionType{},
-	}})
+	}
+	domLib.addMember("Document", Type{Document})
 	HTMLError := TypeAlias{
 		Name:    "HTMLError",
 		from:    "dom",
@@ -82,6 +83,7 @@ func DomLib() Module {
 		Params:   &Tuple{[]ExpressionType{String{}}},
 		Returned: makeResultType(Element, HTMLError),
 	})
+	domLib.addMember("document", newGetter(Ref{Document}))
 
 	return domLib
 }
@@ -142,6 +144,8 @@ func buildNodeTrait() {
 	Node := node.(Type).Value
 	document, _ := domLib.GetOwned("Document")
 	Document := document.(Type).Value
+	element, _ := domLib.GetOwned("Element")
+	Element := element.(Type).Value
 	eventTarget, _ := domLib.GetOwned("EventTarget")
 	methods := Node.(TypeAlias).Ref.(Trait).Members
 
@@ -184,7 +188,7 @@ func buildNodeTrait() {
 	methods["normalize"] = newFunction()
 	methods["ownerDocument"] = newGetter(Ref{Document})
 	methods["parentNode"] = newGetter(Ref{Node})
-	methods["parentElement"] = newGetter(Void{}) // FIXME: &Element{}
+	methods["parentElement"] = newGetter(Ref{Element})
 	methods["previousSibling"] = newGetter(Ref{Node})
 	methods["removeChild"] = Function{
 		TypeParams: []Generic{{Name: "Removed", Constraints: Ref{Node}}},
@@ -208,10 +212,12 @@ func buildNodeTrait() {
 func buildDocumentType() {
 	document, _ := domLib.GetOwned("Document")
 	Document := document.(Type).Value
+	element, _ := domLib.GetOwned("Element")
+	Element := element.(Type).Value
 	node, _ := domLib.GetOwned("Node")
 	methods := Document.(TypeAlias).Methods
 
-	methods["activeElement"] = newGetter(Void{}) // FIXME: returns &Element
+	methods["activeElement"] = newGetter(Ref{Element})
 
 	maps.Copy(methods, node.(Type).Value.(TypeAlias).Ref.(Trait).Members)
 }

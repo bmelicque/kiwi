@@ -95,6 +95,10 @@ export function equals(a, b) {
 	return !Object.keys(a).find((k) => !equals(a[k], b[k]));
 }
 
+export function getDocument() {
+	return new NodePointer(document);
+}
+
 /**
  * Wrapper around document.createElement to handle some shorthands
  * @param {string} string

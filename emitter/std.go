@@ -55,6 +55,9 @@ func EmitStd(filePath string, flags StandardFlags) {
 	if hasFlag(flags, BindFlag) {
 		f.WriteString("export let bind=(o,m)=>(o[m].bind(o))\n")
 	}
+	if hasFlag(flags, DocumentFlag) {
+		f.WriteString("export let getDocument=()=>new NodePointer(document)\n")
+	}
 	if hasFlag(flags, CreateElementFlag) {
 		f.WriteString(`export let createElement=s=>{let[a,t,i,c]=s.match(/^(\w[\w\-_]*)?(?:#(\w[\w\-_]*))?((?:\.\w[\w\-_]*)*)$/);if(!a)throw new Error("Invalid selector");let e=document.createElement(t||"div");if(i)e.id=i.slice(1);if(c)e.classList.add(...c.split(".").slice(1));return e}` + "\n")
 	}
@@ -72,6 +75,7 @@ const (
 	DeepEqualFlag
 	WrapNodeMethodFlag
 	BindFlag
+	DocumentFlag
 	CreateElementFlag
 )
 

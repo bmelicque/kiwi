@@ -18,11 +18,15 @@ func (e *Emitter) emitUseStatement(u *parser.UseDirective) {
 		if u.Star {
 			e.write("const ")
 			e.emitExpression(u.Names)
-			e.write(" = { createElement: __.createElement }\n")
-			e.addFlag(CreateElementFlag)
+			e.write(" = { createElement: __.createElement, document: __.getDocument }\n")
+			e.addFlag(CreateElementFlag | DocumentFlag)
 			return
 		}
 		names := getUsedNames(u.Names)
+		if slices.Contains(names, "document") {
+			e.write("const document = __.getDocument;\n")
+			e.addFlag(DocumentFlag)
+		}
 		if slices.Contains(names, "createElement") {
 			e.write("const createElement = __.createElement;\n")
 			e.addFlag(CreateElementFlag)
