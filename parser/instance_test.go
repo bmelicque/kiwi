@@ -1,9 +1,155 @@
 package parser
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 )
+
+func TestParseInstanceExpression(t *testing.T) {
+	type test struct {
+		name        string
+		source      string
+		wantError   bool
+		expectedLoc Loc
+	}
+	tests := []test{
+		{
+			name:        "option instance with arg",
+			source:      "?number{42}",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 12}},
+		},
+		{
+			name:        "option instance without arg",
+			source:      "?number{}",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 10}},
+		},
+		{
+			name:        "map",
+			source:      "Map{\"key\": \"value\"}",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 20}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := MakeParser(strings.NewReader(tt.source))
+			expr := parser.parseInstanceExpression()
+			if tt.wantError && len(parser.errors) == 0 {
+				t.Error("Got no errors, want one\n")
+			}
+			if !tt.wantError && len(parser.errors) > 0 {
+				t.Error("Got one error, want none\n")
+			}
+			if _, ok := expr.(*InstanceExpression); !ok {
+				t.Errorf("Want *InstanceExpression, got %v", reflect.TypeOf(expr))
+			}
+			if expr.Loc() != tt.expectedLoc {
+				t.Errorf("Got loc %v, want %v", expr.Loc(), tt.expectedLoc)
+			}
+		})
+	}
+}
+
+func TestCheckOptionInstanceExpression(t *testing.T) {
+	type test struct {
+		name         string
+		expr         *InstanceExpression
+		wantError    bool
+		expectedType string
+	}
+	tests := []test{
+		{
+			name: "option instance with one arg", // ?number{42}
+			expr: &InstanceExpression{
+				Typing: &UnaryExpression{
+					Operator: token{kind: QuestionMark},
+					Operand:  &Literal{token{kind: NumberKeyword}},
+				},
+				Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
+					&Literal{token{kind: NumberLiteral}},
+				}}},
+			},
+			wantError:    false,
+			expectedType: "?number",
+		},
+		{
+			name: "option instance with no arg", // ?number{}
+			expr: &InstanceExpression{
+				Typing: &UnaryExpression{
+					Operator: token{kind: QuestionMark},
+					Operand:  &Literal{token{kind: NumberKeyword}},
+				},
+				Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{}}},
+			},
+			wantError:    false,
+			expectedType: "?number",
+		},
+		{
+			name: "option instance with two args", // ?number{42, 43}
+			expr: &InstanceExpression{
+				Typing: &UnaryExpression{
+					Operator: token{kind: QuestionMark},
+					Operand:  &Literal{token{kind: NumberKeyword}},
+				},
+				Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
+					&Literal{token{kind: NumberLiteral}},
+					&Literal{token{kind: NumberLiteral}},
+				}}},
+			},
+			wantError:    true,
+			expectedType: "?number",
+		},
+		{
+			name: "option instance with invalid pattern", // ?number{value: 42}
+			expr: &InstanceExpression{
+				Typing: &UnaryExpression{
+					Operator: token{kind: QuestionMark},
+					Operand:  &Literal{token{kind: NumberKeyword}},
+				},
+				Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
+					&Entry{Value: &Literal{token{kind: NumberLiteral}}},
+				}}},
+			},
+			wantError:    true,
+			expectedType: "?number",
+		},
+		{
+			name: "option instance with invalid arg type", // ?number{true}
+			expr: &InstanceExpression{
+				Typing: &UnaryExpression{
+					Operator: token{kind: QuestionMark},
+					Operand:  &Literal{token{kind: NumberKeyword}},
+				},
+				Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
+					&Literal{token{kind: BooleanLiteral}},
+				}}},
+			},
+			wantError:    true,
+			expectedType: "?number",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := MakeParser(strings.NewReader(""))
+			tt.expr.typeCheck(parser)
+			if tt.wantError && len(parser.errors) == 0 {
+				t.Error("Got no errors, want one\n")
+			}
+			if !tt.wantError && len(parser.errors) > 0 {
+				t.Error("Got one error, want none\n")
+			}
+			got := tt.expr.Type().Text()
+			if got != tt.expectedType {
+				t.Errorf("Got type %v, want %v", got, tt.expectedType)
+			}
+		})
+	}
+}
 
 func TestParseExplicitGenericInstanciation(t *testing.T) {
 	source := "Boxed[number]{ value: 42 }"
@@ -63,15 +209,6 @@ func TestParseMultilineInstanciation(t *testing.T) {
 			t.Logf("%v\n", err.Text())
 		}
 		t.Fail()
-	}
-}
-
-func TestParseMapInstanciation(t *testing.T) {
-	parser := MakeParser(strings.NewReader("Map{\"key\": \"value\"}"))
-	parser.parseInstanceExpression()
-
-	if len(parser.errors) > 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 }
 

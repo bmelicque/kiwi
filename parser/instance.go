@@ -25,21 +25,14 @@ func (i *InstanceExpression) typeCheck(p *Parser) {
 		typeCheckAnonymousListInstanciation(p, i)
 		return
 	}
-	i.Typing.typeCheck(p)
-	t, ok := i.Typing.Type().(Type)
-	if !ok {
-		p.error(i.Typing, TypeExpected)
+	if !checkInstanceConstructor(p, i) {
 		i.Args.typeCheck(p)
 		return
 	}
-	constructor := t.Value
-	ref, isRef := constructor.(Ref)
-	if isRef {
-		constructor = ref.To
-	}
+	constructor, isRef := getConstructorType(i)
 	switch constructor.(type) {
 	case TypeAlias:
-		typeCheckStructInstanciation(p, i)
+		checkObjectInstanciation(p, i)
 	case List:
 		typeCheckNamedListInstanciation(p, i)
 	default:
@@ -50,8 +43,27 @@ func (i *InstanceExpression) typeCheck(p *Parser) {
 	}
 }
 
+func checkInstanceConstructor(p *Parser, i *InstanceExpression) bool {
+	i.Typing.typeCheck(p)
+	_, ok := i.Typing.Type().(Type)
+	if !ok {
+		p.error(i.Typing, TypeExpected)
+	}
+	return ok
+}
+
+func getConstructorType(i *InstanceExpression) (ExpressionType, bool) {
+	t := i.Typing.Type().(Type)
+	constructor := t.Value
+	ref, isRef := constructor.(Ref)
+	if isRef {
+		constructor = ref.To
+	}
+	return constructor, isRef
+}
+
 // Parse a struct instanciation, like 'Object{key: value}'
-func typeCheckStructInstanciation(p *Parser, i *InstanceExpression) {
+func checkObjectInstanciation(p *Parser, i *InstanceExpression) {
 	// next line should be ensured by calling function
 	t := i.Typing.Type().(Type).Value
 	var alias TypeAlias
@@ -59,6 +71,10 @@ func typeCheckStructInstanciation(p *Parser, i *InstanceExpression) {
 		alias = ref.To.(TypeAlias)
 	} else {
 		alias = t.(TypeAlias)
+	}
+	if alias.Name == "?" {
+		checkOptionInstanciation(p, i, alias)
+		return
 	}
 	if alias.Name == "Map" {
 		typeCheckMapInstanciation(p, i, alias)
@@ -158,6 +174,29 @@ func reportMissingMembers(p *Parser, expected Object, received *BracedExpression
 		i++
 	}
 	p.error(received, MissingKeys, msg)
+}
+
+func checkOptionInstanciation(p *Parser, i *InstanceExpression, t TypeAlias) {
+	i.typing = t
+	args := i.Args.Expr.(*TupleExpression).Elements
+	if len(args) == 0 {
+		return
+	}
+	if len(args) > 1 {
+		p.error(i.Args.Expr, TooManyElements, 1, len(args))
+	}
+	for _, arg := range args {
+		arg.typeCheck(p)
+		switch arg.(type) {
+		case *Param, *Entry:
+			p.error(arg, InvalidPattern)
+		}
+	}
+	expected := t.Params[0].Value
+	received := args[0].Type()
+	if !expected.Extends(received) {
+		p.error(args[0], CannotAssignType, expected, received)
+	}
 }
 
 func typeCheckMapInstanciation(p *Parser, i *InstanceExpression, t TypeAlias) {

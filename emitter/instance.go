@@ -126,6 +126,18 @@ func (e *Emitter) emitRefInstance(constructor parser.Expression, args *parser.Tu
 	e.write(")")
 }
 
+func (e *Emitter) emitOptionInstance(args *parser.TupleExpression) {
+	e.addFlag(OptionFlag)
+	e.write("new __.Option(")
+	if len(args.Elements) > 0 {
+		e.write(`"Some", `)
+		e.emitExpression(args.Elements[0])
+	} else {
+		e.write(`"None"`)
+	}
+	e.write(")")
+}
+
 func (e *Emitter) emitInstance(constructor parser.Expression, args *parser.TupleExpression) {
 	if isReferenceExpression(constructor) {
 		e.emitRefInstance(constructor, args)
@@ -143,6 +155,12 @@ func (e *Emitter) emitInstance(constructor parser.Expression, args *parser.Tuple
 			e.emitMapInstance(args)
 		} else {
 			e.emitObjectInstance(c, args)
+		}
+	case *parser.UnaryExpression:
+		if c.Operator.Kind() == parser.QuestionMark {
+			e.emitOptionInstance(args)
+		} else {
+			panic("unexpected operator in constructor")
 		}
 	}
 }

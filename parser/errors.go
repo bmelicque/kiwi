@@ -41,8 +41,8 @@ const (
 
 	InvalidPattern
 	InvalidTypeForPattern
-	TooManyElements // [expecter count, received count]
-	MissingElements // [expecter count, received count]
+	TooManyElements // [expected count, received count]
+	MissingElements // [expected count, received count]
 	MandatoryAfterOptional
 	MissingDefault
 	UnreachableCode

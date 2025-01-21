@@ -37,8 +37,11 @@ func EmitStd(filePath string, flags StandardFlags) {
 	}
 	defer f.Close()
 
-	if hasFlag(flags, SumFlag) {
+	if hasFlag(flags, SumFlag|OptionFlag) {
 		f.WriteString("export function Sum(t,v){this.tag=t;this.value=v}\n")
+	}
+	if hasFlag(flags, OptionFlag) {
+		f.WriteString("export class Option extends Sum{}\n")
 	}
 	if hasFlag(flags, PointerFlag) {
 		f.WriteString("export class Pointer{constructor(c,n){this.c=c;this.n=n}get(){return this.c?.[this.n]??this.n}set(v){this.c?(this.c[this.n]=v):(this.n=v)}}\n")
@@ -78,6 +81,7 @@ const (
 	NoFlag StandardFlags = 0
 
 	SumFlag StandardFlags = 1 << (iota - 1)
+	OptionFlag
 	PointerFlag
 	NodePointerFlag
 
