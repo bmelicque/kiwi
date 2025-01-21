@@ -1,4 +1,3 @@
-- inferred option type: `?{42}`
 - emit `dom` just like std instead of hard-coding stuff at the top of files
 - html elements should be used as types, but they are interfaces in JS => on emit instance, if type implements Node and is from dom, use createElement instead
 - fix declaration for tuples: check if part of an object (use “let” or not)

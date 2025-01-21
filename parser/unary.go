@@ -231,6 +231,9 @@ func (p *Parser) parseUnaryExpression() Expression {
 	switch p.Peek().Kind() {
 	case AsyncKeyword, AwaitKeyword, Bang, BinaryAnd, Mul, QuestionMark, TryKeyword:
 		token := p.Consume()
+		if token.Kind() == QuestionMark && p.Peek().Kind() == LeftBrace {
+			return parseInferredInstance(p, &UnaryExpression{token, nil})
+		}
 		expr := parseInnerUnary(p)
 		if token.Kind() == AsyncKeyword {
 			validateAsyncOperand(p, expr)
@@ -269,7 +272,7 @@ func parseListTypeExpression(p *Parser) Expression {
 	case LeftParenthesis:
 		return p.parseFunctionExpression(brackets)
 	case LeftBrace:
-		return parseAnonymousList(p, brackets)
+		return parseInferredInstance(p, &ListTypeExpression{brackets, nil})
 	default:
 		expr := parseInnerUnary(p)
 		if brackets != nil && brackets.Expr != nil {
@@ -279,11 +282,8 @@ func parseListTypeExpression(p *Parser) Expression {
 	}
 }
 
-func parseAnonymousList(p *Parser, brackets *BracketedExpression) *InstanceExpression {
+func parseInferredInstance(p *Parser, constructor Expression) *InstanceExpression {
 	args := p.parseBracedExpression()
 	args.Expr = makeTuple(args.Expr)
-	return &InstanceExpression{
-		Typing: &ListTypeExpression{brackets, nil},
-		Args:   args,
-	}
+	return &InstanceExpression{Typing: constructor, Args: args}
 }

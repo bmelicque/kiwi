@@ -24,6 +24,11 @@ func TestEmitInstanceExpression(t *testing.T) {
 			src:      "?number{42}",
 			expected: "new __.Option(\"Some\", 42);\n",
 		},
+		{
+			name:     "inferred option",
+			src:      "?{42}",
+			expected: "new __.Option(\"Some\", 42);\n",
+		},
 	}
 
 	for _, tt := range tests {

@@ -27,6 +27,12 @@ func TestParseInstanceExpression(t *testing.T) {
 			expectedLoc: Loc{Position{1, 1}, Position{1, 10}},
 		},
 		{
+			name:        "parse inferred option",
+			source:      "?{42}",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 6}},
+		},
+		{
 			name:        "map",
 			source:      "Map{\"key\": \"value\"}",
 			wantError:   false,
@@ -130,6 +136,32 @@ func TestCheckOptionInstanceExpression(t *testing.T) {
 			},
 			wantError:    true,
 			expectedType: "?number",
+		},
+		{
+			name: "inferred option instance", // ?{42}
+			expr: &InstanceExpression{
+				Typing: &UnaryExpression{
+					Operator: token{kind: QuestionMark},
+					Operand:  nil,
+				},
+				Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
+					&Literal{token{kind: NumberLiteral}},
+				}}},
+			},
+			wantError:    false,
+			expectedType: "?number",
+		},
+		{
+			name: "inferred option instance without arg", // ?{}
+			expr: &InstanceExpression{
+				Typing: &UnaryExpression{
+					Operator: token{kind: QuestionMark},
+					Operand:  nil,
+				},
+				Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{}}},
+			},
+			wantError:    true,
+			expectedType: "?invalid",
 		},
 	}
 

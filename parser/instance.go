@@ -25,6 +25,10 @@ func (i *InstanceExpression) typeCheck(p *Parser) {
 		typeCheckAnonymousListInstanciation(p, i)
 		return
 	}
+	if u, ok := i.Typing.(*UnaryExpression); ok && u.Operand == nil {
+		checkInferredOptionInstance(p, i)
+		return
+	}
 	if !checkInstanceConstructor(p, i) {
 		i.Args.typeCheck(p)
 		return
@@ -178,24 +182,37 @@ func reportMissingMembers(p *Parser, expected Object, received *BracedExpression
 
 func checkOptionInstanciation(p *Parser, i *InstanceExpression, t TypeAlias) {
 	i.typing = t
-	args := i.Args.Expr.(*TupleExpression).Elements
-	if len(args) == 0 {
+	args := i.Args.Expr.(*TupleExpression)
+	if len(args.Elements) == 0 {
 		return
 	}
-	if len(args) > 1 {
-		p.error(i.Args.Expr, TooManyElements, 1, len(args))
+	checkOptionArgs(p, args)
+	expected := t.Params[0].Value
+	received := args.Elements[0].Type()
+	if !expected.Extends(received) {
+		p.error(args.Elements[0], CannotAssignType, expected, received)
 	}
-	for _, arg := range args {
+}
+func checkInferredOptionInstance(p *Parser, i *InstanceExpression) {
+	args := i.Args.Expr.(*TupleExpression)
+	if len(args.Elements) == 0 {
+		i.typing = makeOptionType(Invalid{})
+		p.error(i, MissingTypeArgs)
+		return
+	}
+	checkOptionArgs(p, i.Args.Expr.(*TupleExpression))
+	i.typing = makeOptionType(args.Elements[0].Type())
+}
+func checkOptionArgs(p *Parser, args *TupleExpression) {
+	if len(args.Elements) > 1 {
+		p.error(args, TooManyElements, 1, len(args.Elements))
+	}
+	for _, arg := range args.Elements {
 		arg.typeCheck(p)
 		switch arg.(type) {
 		case *Param, *Entry:
 			p.error(arg, InvalidPattern)
 		}
-	}
-	expected := t.Params[0].Value
-	received := args[0].Type()
-	if !expected.Extends(received) {
-		p.error(args[0], CannotAssignType, expected, received)
 	}
 }
 
