@@ -14,6 +14,8 @@ export class Sum {
 	}
 }
 
+export class Option extends Sum {}
+
 /**
  * Wraps native methods related to DOM. Handles pointers, this values, etc.
  *

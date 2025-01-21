@@ -14,7 +14,9 @@ func (b *BracketedExpression) getChildren() []Node {
 }
 
 func (b *BracketedExpression) typeCheck(p *Parser) {
-	b.Expr.typeCheck(p)
+	if b.Expr != nil {
+		b.Expr.typeCheck(p)
+	}
 }
 
 func (b *BracketedExpression) Loc() Loc             { return b.loc }

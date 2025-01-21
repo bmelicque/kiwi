@@ -133,6 +133,12 @@ func (ta TypeAlias) Text() string {
 	if len(params) == 0 {
 		return ta.Name
 	}
+	if ta.Name == "!" {
+		return getResultText(ta)
+	}
+	if ta.Name == "?" {
+		return getOptionText(ta)
+	}
 	var s string
 	if ta.Name == "..." {
 		s = "async"
@@ -147,6 +153,26 @@ func (ta TypeAlias) Text() string {
 	}
 	s += params[max].Value.Text()
 	return s + "]"
+}
+func getResultText(ta TypeAlias) string {
+	var s string
+	r, l := ta.Params[0].Value, ta.Params[1].Value
+	if l != nil {
+		s += l.Text()
+	}
+	s += "!"
+	if r != nil {
+		s += r.Text()
+	}
+	return s
+}
+func getOptionText(ta TypeAlias) string {
+	s := "?"
+	arg := ta.Params[0].Value
+	if arg != nil {
+		s += arg.Text()
+	}
+	return s
 }
 func (ta TypeAlias) build(scope *Scope, compared ExpressionType) (ExpressionType, bool) {
 	s := NewScope(ProgramScope)

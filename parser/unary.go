@@ -21,62 +21,77 @@ func (u *UnaryExpression) typeCheck(p *Parser) {
 	u.Operand.typeCheck(p)
 	switch u.Operator.Kind() {
 	case AsyncKeyword:
-		typeCheckAsyncExpression(p, u)
+		checkAsyncExpression(p, u)
 	case AwaitKeyword:
-		alias, ok := u.Operand.Type().(TypeAlias)
-		if !ok || alias.Name != "..." {
-			p.error(u.Operand, PromiseExpected, u.Operand.Type())
-		}
+		checkAwaitExpression(p, u)
 	case Bang:
-		switch u.Operand.Type().(type) {
-		case Type, Boolean:
-		default:
-			p.error(u.Operand, TypeOrBoolExpected, u.Operand.Type())
-		}
+		checkBangExpression(p, u)
 	case BinaryAnd:
-		identifier := getReferencedIdentifier(u.Operand)
-		if identifier == nil {
-			return
-		}
-		v, ok := p.scope.Find(identifier.Text())
-		if !ok {
-			return
-		}
-		v.readAt(u.Loc())
-		v.writeAt(u)
-		if _, ok := u.Operand.(*Identifier); ok {
-			v.hasDirectRef = true
-		}
+		checkReferenceExpression(p, u)
 	case Mul:
-		if _, ok := u.Operand.Type().(Ref); !ok {
-			p.error(u.Operand, RefExpected, u.Operand.Type())
-			return
-		}
+		checkDerefExpression(p, u)
 	case QuestionMark:
-		if _, ok := u.Operand.Type().(Type); !ok {
-			p.error(u.Operand, TypeExpected)
-		}
+		checkOptionType(p, u)
 	case TryKeyword:
-		alias, ok := u.Operand.Type().(TypeAlias)
-		if !ok || alias.Name != "!" {
-			p.error(u.Operand, ResultExpected, u.Operand.Type())
-		}
+		checkTryExpression(p, u)
 	default:
 		panic(fmt.Sprintf("Operator '%v' not implemented!", u.Operator.Kind()))
 	}
 }
-func typeCheckAsyncExpression(p *Parser, u *UnaryExpression) {
+func checkAsyncExpression(p *Parser, u *UnaryExpression) {
 	call, ok := u.Operand.(*CallExpression)
 	if !ok || call.Callee == nil {
 		return
 	}
 	f, ok := call.Callee.Type().(Function)
-	if !ok {
-		p.error(call, FunctionExpected)
+	if ok && !f.Async {
+		p.error(u, UnneededAsync)
+	}
+}
+func checkAwaitExpression(p *Parser, u *UnaryExpression) {
+	alias, ok := u.Operand.Type().(TypeAlias)
+	if !ok || alias.Name != "..." {
+		p.error(u.Operand, PromiseExpected, u.Operand.Type())
+	}
+}
+
+// error type | boolean neg
+func checkBangExpression(p *Parser, u *UnaryExpression) {
+	switch u.Operand.Type().(type) {
+	case Type, Boolean:
+	default:
+		p.error(u.Operand, TypeOrBoolExpected, u.Operand.Type())
+	}
+}
+func checkReferenceExpression(p *Parser, u *UnaryExpression) {
+	identifier := getReferencedIdentifier(u.Operand)
+	if identifier == nil {
 		return
 	}
-	if !f.Async {
-		p.error(u, UnneededAsync)
+	v, ok := p.scope.Find(identifier.Text())
+	if !ok {
+		return
+	}
+	v.readAt(u.Loc())
+	v.writeAt(u)
+	if _, ok := u.Operand.(*Identifier); ok {
+		v.hasDirectRef = true
+	}
+}
+func checkDerefExpression(p *Parser, u *UnaryExpression) {
+	if _, ok := u.Operand.Type().(Ref); !ok {
+		p.error(u.Operand, RefExpected, u.Operand.Type())
+	}
+}
+func checkOptionType(p *Parser, u *UnaryExpression) {
+	if _, ok := u.Operand.Type().(Type); !ok {
+		p.error(u.Operand, TypeExpected)
+	}
+}
+func checkTryExpression(p *Parser, u *UnaryExpression) {
+	alias, ok := u.Operand.Type().(TypeAlias)
+	if !ok || alias.Name != "!" {
+		p.error(u.Operand, ResultExpected, u.Operand.Type())
 	}
 }
 
@@ -94,50 +109,81 @@ func (u *UnaryExpression) Type() ExpressionType {
 	}
 	switch u.Operator.Kind() {
 	case AsyncKeyword:
-		return makePromise(u.Operand.Type())
+		return getAsyncType(u)
 	case AwaitKeyword:
-		alias, ok := u.Operand.Type().(TypeAlias)
-		if !ok || alias.Name != "..." {
-			return Invalid{}
-		}
-		t, _ := alias.Params[0].Value.build(nil, nil)
-		return t
+		return getAwaitedType(u)
 	case Bang:
-		t := u.Operand.Type()
-		if ty, ok := t.(Type); ok {
-			t = ty.Value
-			return Type{makeResultType(t, nil)}
-		} else {
-			return Boolean{}
-		}
+		return getBangType(u)
 	case BinaryAnd:
-		switch t := u.Operand.Type().(type) {
-		case Type:
-			return Type{Ref{t.Value}}
-		default:
-			return Ref{t}
-		}
+		return getRefType(u)
 	case Mul:
-		ref, ok := u.Operand.Type().(Ref)
-		if !ok {
-			return Invalid{}
-		}
-		return ref.To
+		return getDerefType(u)
 	case QuestionMark:
-		t := u.Operand.Type()
-		if ty, ok := t.(Type); ok {
-			t = ty.Value
-		}
-		return Type{makeOptionType(t)}
+		return getOptionType(u)
 	case TryKeyword:
-		alias, ok := u.Operand.Type().(TypeAlias)
-		if !ok || alias.Name != "!" {
-			return Invalid{}
-		}
-		return alias.Ref.(Sum).getMember("Ok")
+		return getTryType(u)
 	default:
 		return Invalid{}
 	}
+}
+func getAsyncType(u *UnaryExpression) ExpressionType {
+	var t ExpressionType
+	if c, ok := u.Operand.(*CallExpression); ok {
+		t = c.Type()
+	} else {
+		t = Invalid{}
+	}
+	return makePromise(t)
+}
+func getAwaitedType(u *UnaryExpression) ExpressionType {
+	raw := u.Operand.Type()
+	alias, ok := raw.(TypeAlias)
+	if !ok || alias.Name != "..." {
+		return raw
+	}
+	t, _ := alias.Params[0].Value.build(nil, nil)
+	return t
+}
+func getBangType(u *UnaryExpression) ExpressionType {
+	switch t := u.Operand.Type().(type) {
+	case Type:
+		return Type{makeResultType(t.Value, nil)}
+	case Boolean:
+		return Boolean{}
+	default:
+		return Invalid{}
+	}
+}
+func getRefType(u *UnaryExpression) ExpressionType {
+	switch t := u.Operand.Type().(type) {
+	case Type:
+		return Type{Ref{t.Value}}
+	default:
+		return Ref{t}
+	}
+}
+func getDerefType(u *UnaryExpression) ExpressionType {
+	ref, ok := u.Operand.Type().(Ref)
+	if !ok {
+		return Invalid{}
+	}
+	return ref.To
+}
+func getOptionType(u *UnaryExpression) ExpressionType {
+	var t ExpressionType
+	if ty, ok := u.Operand.Type().(Type); ok {
+		t = ty.Value
+	} else {
+		t = Invalid{}
+	}
+	return Type{makeOptionType(t)}
+}
+func getTryType(u *UnaryExpression) ExpressionType {
+	alias, ok := u.Operand.Type().(TypeAlias)
+	if !ok || alias.Name != "!" {
+		return Invalid{}
+	}
+	return alias.Ref.(Sum).getMember("Ok")
 }
 
 type ListTypeExpression struct {
@@ -171,6 +217,9 @@ func (l *ListTypeExpression) Loc() Loc {
 }
 
 func (l *ListTypeExpression) Type() ExpressionType {
+	if l.Expr == nil {
+		return Type{List{Invalid{}}}
+	}
 	t, ok := l.Expr.Type().(Type)
 	if !ok {
 		return Type{List{Invalid{}}}

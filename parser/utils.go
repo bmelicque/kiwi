@@ -59,6 +59,7 @@ func getErrorType(t ExpressionType) ExpressionType {
 // Check if an expression can be taken as an argument for the ref operator.
 // Such an expression can only be identifiers or nested accesses.
 func isReferencable(expr Expression) bool {
+	var nested bool
 	for {
 		switch e := expr.(type) {
 		case *Identifier:
@@ -67,12 +68,16 @@ func isReferencable(expr Expression) bool {
 			_, ok := e.Type().(Type)
 			return ok
 		case *InstanceExpression:
+			if nested {
+				return false
+			}
 			expr = e.Typing
 		case *PropertyAccessExpression:
 			expr = e.Expr
 		default:
 			return false
 		}
+		nested = true
 	}
 }
 

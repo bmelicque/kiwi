@@ -196,6 +196,19 @@ func TestCheckMapEntriesBadTypes(t *testing.T) {
 	}
 }
 
+func TestListTypeInstance(t *testing.T) {
+	parser := MakeParser(strings.NewReader("[]number{0, 1, 2}"))
+	node := parser.parseExpression()
+
+	if len(parser.errors) != 0 {
+		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
+	}
+
+	if _, ok := node.(*InstanceExpression); !ok {
+		t.Fatalf("Expected InstanceExpression, got %#v", node)
+	}
+}
+
 func TestParseAnonymousList(t *testing.T) {
 	parser := MakeParser(strings.NewReader("[]{1, 2, 3}"))
 	expr := parser.parseInstanceExpression()

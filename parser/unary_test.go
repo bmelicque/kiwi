@@ -5,224 +5,333 @@ import (
 	"testing"
 )
 
-func TestParseAsyncExpression(t *testing.T) {
-	parser := MakeParser(strings.NewReader("async fetch()"))
-	parser.parseUnaryExpression()
-
-	if len(parser.errors) > 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
+func TestParseUnaryExpression(t *testing.T) {
+	type test struct {
+		name        string
+		source      string
+		wantError   bool
+		expectedLoc Loc
 	}
-}
-
-func TestParseAsyncNoExpr(t *testing.T) {
-	parser := MakeParser(strings.NewReader("async"))
-	parser.parseUnaryExpression()
-
-	if len(parser.errors) != 1 {
-		t.Fatalf("Expected 1 error, got %#v", parser.errors)
-	}
-}
-
-func TestParseAsyncNotCall(t *testing.T) {
-	parser := MakeParser(strings.NewReader("async fetch"))
-	parser.parseUnaryExpression()
-
-	if len(parser.errors) != 1 {
-		t.Fatalf("Expected 1 error, got %#v", parser.errors)
-	}
-}
-
-func TestCheckAsyncExpression(t *testing.T) {
-	parser := MakeParser(nil)
-	parser.scope.Add("fetch", Loc{}, Function{
-		Params:   &Tuple{},
-		Returned: String{},
-		Async:    true,
-	})
-	expr := &UnaryExpression{
-		Operator: token{kind: AsyncKeyword},
-		Operand: &CallExpression{
-			Callee: &Identifier{Token: literal{kind: Name, value: "fetch"}},
-			Args:   &ParenthesizedExpression{Expr: &TupleExpression{}},
+	tests := []test{
+		{
+			name:        "option type",
+			source:      "?number",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 8}},
+		},
+		{
+			name:        "result type",
+			source:      "!number",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 8}},
+		},
+		{
+			name:        "try expression",
+			source:      "try 42",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 7}},
+		},
+		{
+			name:        "async call",
+			source:      "async fetch()",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 14}},
+		},
+		{
+			name:        "await expression",
+			source:      "await promise",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 14}},
+		},
+		{
+			name:        "ref",
+			source:      "&value",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 7}},
+		},
+		{
+			name:        "deref",
+			source:      "*ref",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 5}},
+		},
+		{
+			name:        "nested unary expressions",
+			source:      "??number",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 9}},
+		},
+		{
+			name:        "missing operand produce one error",
+			source:      "?",
+			wantError:   true,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 2}},
+		},
+		{
+			name:        "awaiting on non-call produces one error",
+			source:      "async true",
+			wantError:   true,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 11}},
+		},
+		{
+			name:        "list type",
+			source:      "[]number",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 9}},
+		},
+		{
+			name:        "empty list type",
+			source:      "[]",
+			wantError:   true,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 3}},
+		},
+		{
+			name:        "list type with something in brackets",
+			source:      "[number]number",
+			wantError:   true,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 15}},
 		},
 	}
-	expr.typeCheck(parser)
-	if len(parser.errors) != 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := MakeParser(strings.NewReader(tt.source))
+			expr := parser.parseUnaryExpression()
+			if tt.wantError && len(parser.errors) == 0 {
+				t.Error("Got no errors, want one\n")
+			}
+			if !tt.wantError && len(parser.errors) > 0 {
+				t.Error("Got one error, want none\n")
+			}
+			if expr.Loc() != tt.expectedLoc {
+				t.Errorf("Got loc %v, want %v", expr.Loc(), tt.expectedLoc)
+			}
+		})
 	}
 }
 
-func TestParseAwaitExpression(t *testing.T) {
-	parser := MakeParser(strings.NewReader("await request"))
-	parser.parseUnaryExpression()
+func TestCheckUnaryExpression(t *testing.T) {
+	type test struct {
+		name         string
+		expr         Expression
+		wantError    bool
+		expectedType string
+	}
+	tests := []test{
+		{
+			name: "async non call",
+			expr: &UnaryExpression{
+				Operator: token{kind: AsyncKeyword},
+				Operand:  &Identifier{Token: literal{kind: Name, value: "value"}},
+			},
+			wantError:    false, // error handled in parsing
+			expectedType: "async[invalid]",
+		},
+		{
+			name: "async call of asyncable function",
+			expr: &UnaryExpression{
+				Operator: token{kind: AsyncKeyword},
+				Operand: &CallExpression{
+					Callee: &Identifier{Token: literal{kind: Name, value: "asyncGetter"}},
+					Args:   &ParenthesizedExpression{Expr: &TupleExpression{Elements: []Expression{}}},
+				},
+			},
+			wantError:    false,
+			expectedType: "async[number]",
+		},
+		{
+			name: "async call of non-asyncable function",
+			expr: &UnaryExpression{
+				Operator: token{kind: AsyncKeyword},
+				Operand: &CallExpression{
+					Callee: &Identifier{Token: literal{kind: Name, value: "getter"}},
+					Args:   &ParenthesizedExpression{Expr: &TupleExpression{Elements: []Expression{}}},
+				},
+			},
+			wantError:    true,
+			expectedType: "async[number]",
+		},
+		{
+			name: "await promise",
+			expr: &UnaryExpression{
+				Operator: token{kind: AwaitKeyword},
+				Operand:  &Identifier{Token: literal{kind: Name, value: "request"}},
+			},
+			wantError:    false,
+			expectedType: "number",
+		},
+		{
+			name: "await non-promise",
+			expr: &UnaryExpression{
+				Operator: token{kind: AwaitKeyword},
+				Operand:  &Identifier{Token: literal{kind: Name, value: "value"}},
+			},
+			wantError:    true,
+			expectedType: "number",
+		},
+		{
+			name: "logical not",
+			expr: &UnaryExpression{
+				Operator: token{kind: Bang},
+				Operand:  &Literal{literal{kind: BooleanLiteral}},
+			},
+			wantError:    false,
+			expectedType: "boolean",
+		},
+		{
+			name: "error type",
+			expr: &UnaryExpression{
+				Operator: token{kind: Bang},
+				Operand:  &Literal{literal{kind: NumberKeyword}},
+			},
+			wantError:    false,
+			expectedType: "(!number)",
+		},
+		{
+			name: "bang on (not type, not bool)",
+			expr: &UnaryExpression{
+				Operator: token{kind: Bang},
+				Operand:  &Literal{literal{kind: StringLiteral}},
+			},
+			wantError:    true,
+			expectedType: "invalid",
+		},
+		{
+			name: "ref of value",
+			expr: &UnaryExpression{
+				Operator: token{kind: BinaryAnd},
+				Operand:  &Identifier{Token: literal{kind: Name, value: "value"}},
+			},
+			wantError:    false,
+			expectedType: "&number",
+		},
+		{
+			name: "ref of type",
+			expr: &UnaryExpression{
+				Operator: token{kind: BinaryAnd},
+				Operand:  &Identifier{Token: literal{kind: Name, value: "Type"}},
+			},
+			wantError:    false,
+			expectedType: "(&Type)",
+		},
+		{
+			name: "deref of ref",
+			expr: &UnaryExpression{
+				Operator: token{kind: Mul},
+				Operand:  &Identifier{Token: literal{kind: Name, value: "ref"}},
+			},
+			wantError:    false,
+			expectedType: "number",
+		},
+		{
+			name: "deref of non-ref",
+			expr: &UnaryExpression{
+				Operator: token{kind: Mul},
+				Operand:  &Identifier{Token: literal{kind: Name, value: "value"}},
+			},
+			wantError:    true,
+			expectedType: "invalid",
+		},
+		{
+			name: "option type",
+			expr: &UnaryExpression{
+				Operator: token{kind: QuestionMark},
+				Operand:  &Identifier{Token: literal{kind: Name, value: "Type"}},
+			},
+			wantError:    false,
+			expectedType: "(?Type)",
+		},
+		{
+			name: "option values are invalid",
+			expr: &UnaryExpression{
+				Operator: token{kind: QuestionMark},
+				Operand:  &Identifier{Token: literal{kind: Name, value: "value"}},
+			},
+			wantError:    true,
+			expectedType: "(?invalid)",
+		},
+		{
+			name: "try result",
+			expr: &UnaryExpression{
+				Operator: token{kind: TryKeyword},
+				Operand:  &Identifier{Token: literal{kind: Name, value: "result"}},
+			},
+			wantError:    false,
+			expectedType: "number",
+		},
+		{
+			name: "try simple type",
+			expr: &UnaryExpression{
+				Operator: token{kind: TryKeyword},
+				Operand:  &Identifier{Token: literal{kind: Name, value: "value"}},
+			},
+			wantError:    true,
+			expectedType: "invalid",
+		},
+		{
+			name: "list type",
+			expr: &ListTypeExpression{
+				Bracketed: &BracketedExpression{},
+				Expr:      &Identifier{Token: literal{kind: Name, value: "Type"}},
+			},
+			wantError:    false,
+			expectedType: "([]Type)",
+		},
+		{
+			name: "list type without operand",
+			expr: &ListTypeExpression{
+				Bracketed: &BracketedExpression{},
+				Expr:      nil,
+			},
+			wantError:    false, // error already handled in parsing
+			expectedType: "([]invalid)",
+		},
+		{
+			name: "list type with value operand",
+			expr: &ListTypeExpression{
+				Bracketed: &BracketedExpression{},
+				Expr:      &Identifier{Token: literal{kind: Name, value: "value"}},
+			},
+			wantError:    true,
+			expectedType: "([]invalid)",
+		},
+		{
+			name: "list type with something inside brackets",
+			expr: &ListTypeExpression{
+				Bracketed: &BracketedExpression{Expr: &Literal{token{kind: NumberKeyword}}},
+				Expr:      &Identifier{Token: literal{kind: Name, value: "Type"}},
+			},
+			wantError:    false, // handled in parsing
+			expectedType: "([]Type)",
+		},
+	}
 
-	if len(parser.errors) > 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
-	}
-}
+	scope := NewScope(ProgramScope)
+	scope.Add("value", Loc{}, Number{})
+	scope.Add("ref", Loc{}, Ref{Number{}})
+	scope.Add("Type", Loc{}, Type{TypeAlias{Name: "Type"}})
+	scope.Add("result", Loc{}, makeResultType(Number{}, String{}))
+	scope.Add("getter", Loc{}, newGetter(Number{}))
+	scope.Add("asyncGetter", Loc{}, Function{Params: &Tuple{}, Returned: Number{}, Async: true})
+	scope.Add("request", Loc{}, makePromise(Number{}))
 
-func TestParseAwaitExpressionNoExpr(t *testing.T) {
-	parser := MakeParser(strings.NewReader("await"))
-	parser.parseUnaryExpression()
-
-	if len(parser.errors) != 1 {
-		t.Fatalf("Expected 1 error, got %#v", parser.errors)
-	}
-}
-
-func TestCheckAwaitExpression(t *testing.T) {
-	parser := MakeParser(nil)
-	parser.scope.Add("req", Loc{}, makePromise(Number{}))
-	expr := &UnaryExpression{
-		Operator: token{kind: AwaitKeyword},
-		Operand:  &Identifier{Token: literal{kind: Name, value: "req"}},
-	}
-	expr.typeCheck(parser)
-	if len(parser.errors) != 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
-	}
-	if _, ok := expr.Type().(Number); !ok {
-		t.Fatalf("Expected number type, got %v", expr.Type().Text())
-	}
-}
-
-func TestCheckAwaitExpressionNotPromise(t *testing.T) {
-	parser := MakeParser(nil)
-	parser.scope.Add("req", Loc{}, Number{})
-	expr := &UnaryExpression{
-		Operator: token{kind: AwaitKeyword},
-		Operand:  &Identifier{Token: literal{kind: Name, value: "req"}},
-	}
-	expr.typeCheck(parser)
-	if len(parser.errors) != 1 {
-		t.Fatalf("Expected 1 error, got %#v", parser.errors)
-	}
-	if _, ok := expr.Type().(Invalid); !ok {
-		t.Fatalf("Expected unknown type, got %v", expr.Type().Text())
-	}
-}
-
-func TestUnaryExpression(t *testing.T) {
-	parser := MakeParser(strings.NewReader("?number"))
-	expr := parser.parseUnaryExpression()
-
-	if len(parser.errors) != 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
-	}
-	unary, ok := expr.(*UnaryExpression)
-	if !ok {
-		t.Fatal("Expected unary expression")
-	}
-	if unary.Operator.Kind() != QuestionMark {
-		t.Fatal("Expected question mark")
-	}
-	if _, ok := unary.Operand.(*Literal); !ok {
-		t.Fatal("Expected literal")
-	}
-	ty, ok := unary.Type().(Type)
-	if !ok {
-		t.Fatal("Expected type")
-	}
-	alias, ok := ty.Value.(TypeAlias)
-	if !ok || alias.Name != "?" {
-		t.Fatal("Expected option type")
-	}
-}
-
-func TestCheckOptionType(t *testing.T) {
-	// ?number
-	parser := MakeParser(nil)
-	expr := &UnaryExpression{
-		Operator: token{kind: QuestionMark},
-		Operand:  &Literal{Token: token{kind: NumberKeyword}},
-	}
-	expr.typeCheck(parser)
-
-	if len(parser.errors) != 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
-	}
-	ty, ok := expr.Type().(Type)
-	if !ok {
-		t.Fatal("Expected type")
-	}
-	alias, ok := ty.Value.(TypeAlias)
-	if !ok || alias.Name != "?" {
-		t.Fatal("Expected option type")
-	}
-	if _, ok := getSomeType(alias.Ref.(Sum)).(Number); !ok {
-		t.Fatal("Expected number option type")
-	}
-}
-
-func TestNoOptionValue(t *testing.T) {
-	parser := MakeParser(strings.NewReader("?42"))
-	expr := parser.parseUnaryExpression()
-	expr.typeCheck(parser)
-
-	if len(parser.errors) != 1 {
-		t.Fatalf("Expected 1 error, got %#v", parser.errors)
-	}
-}
-
-func TestCheckErrorType(t *testing.T) {
-	// !number
-	parser := MakeParser(nil)
-	expr := &UnaryExpression{
-		Operator: token{kind: Bang},
-		Operand:  &Literal{Token: token{kind: NumberKeyword}},
-	}
-	expr.typeCheck(parser)
-
-	if len(parser.errors) != 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
-	}
-	ty, ok := expr.Type().(Type)
-	if !ok {
-		t.Fatal("Expected type")
-	}
-	alias, ok := ty.Value.(TypeAlias)
-	if !ok || alias.Name != "!" {
-		t.Fatal("Expected result type")
-	}
-	if _, ok := alias.Ref.(Sum).getMember("Ok").(Number); !ok {
-		t.Fatal("Expected number option type")
-	}
-}
-
-func TestCheckLogicalNot(t *testing.T) {
-	// !true
-	parser := MakeParser(nil)
-	expr := &UnaryExpression{
-		Operator: token{kind: Bang},
-		Operand:  &Literal{literal{kind: BooleanLiteral, value: "true"}},
-	}
-	expr.typeCheck(parser)
-
-	if len(parser.errors) != 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
-	}
-	if _, ok := expr.Type().(Boolean); !ok {
-		t.Fatalf("Expected boolean")
-	}
-
-	// !42
-	expr.Operand = &Literal{literal{kind: NumberLiteral, value: "42"}}
-	expr.typeCheck(parser)
-	if len(parser.errors) != 1 {
-		t.Fatalf("Expected 1 error, got %#v", parser.errors)
-	}
-}
-
-func TestParseReference(t *testing.T) {
-	parser := MakeParser(strings.NewReader("&value"))
-	node := parser.parseExpression()
-
-	if len(parser.errors) != 0 {
-		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
-	}
-
-	if u, ok := node.(*UnaryExpression); !ok || u.Operator.Kind() != BinaryAnd {
-		t.Fatalf("Expected '&' unary, got %#v", node)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := MakeParser(strings.NewReader(""))
+			parser.scope = scope
+			tt.expr.typeCheck(parser)
+			if tt.wantError && len(parser.errors) == 0 {
+				t.Error("Got no errors, want one\n")
+			}
+			if !tt.wantError && len(parser.errors) > 0 {
+				t.Error("Got one error, want none\n")
+				t.Log(parser.errors[0].Text())
+			}
+			text := tt.expr.Type().Text()
+			if text != tt.expectedType {
+				t.Errorf("expected %v, got %v", tt.expectedType, text)
+			}
+		})
 	}
 }
 
@@ -232,225 +341,5 @@ func TestParseReferenceBadOperand(t *testing.T) {
 
 	if len(parser.errors) != 1 {
 		t.Fatalf("Expected 1 errors, got %+v: %#v", len(parser.errors), parser.errors)
-	}
-}
-
-func TestCheckReference(t *testing.T) {
-	parser := MakeParser(nil)
-	// &number
-	expr := &UnaryExpression{
-		Operator: token{kind: BinaryAnd},
-		Operand:  &Literal{token{kind: NumberKeyword}},
-	}
-	expr.typeCheck(parser)
-
-	if len(parser.errors) != 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
-	}
-	if _, ok := expr.Type().(Type); !ok {
-		t.Fatalf("Expected type, got %v", expr.Type().Text())
-	}
-
-	// &value
-	parser.scope.Add("value", Loc{}, Number{})
-	expr = &UnaryExpression{
-		Operator: token{kind: BinaryAnd},
-		Operand:  &Identifier{Token: literal{kind: Name, value: "value"}},
-	}
-	expr.typeCheck(parser)
-
-	if len(parser.errors) != 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
-	}
-	if _, ok := expr.Type().(Ref); !ok {
-		t.Fatalf("Expected ref, got %v", expr.Type().Text())
-	}
-}
-
-func TestParseDereference(t *testing.T) {
-	parser := MakeParser(strings.NewReader("*ref"))
-	node := parser.parseExpression()
-
-	if len(parser.errors) != 0 {
-		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
-	}
-
-	if u, ok := node.(*UnaryExpression); !ok || u.Operator.Kind() != Mul {
-		t.Fatalf("Expected '*' unary, got %#v", node)
-	}
-}
-
-func TestCheckDereference(t *testing.T) {
-	parser := MakeParser(nil)
-	// *ref
-	parser.scope.Add("ref", Loc{}, Ref{Number{}})
-	expr := &UnaryExpression{
-		Operator: token{kind: Mul},
-		Operand:  &Identifier{Token: literal{kind: Name, value: "ref"}},
-	}
-	expr.typeCheck(parser)
-
-	if len(parser.errors) != 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
-	}
-	if _, ok := expr.Type().(Number); !ok {
-		t.Fatalf("Expected number, got %v", expr.Type().Text())
-	}
-
-	expr.Operand = &Literal{literal{kind: NumberLiteral, value: "42"}}
-	expr.typeCheck(parser)
-	if len(parser.errors) != 1 {
-		t.Fatalf("Expected 1 error, got %v: %#v", len(parser.errors), parser.errors)
-	}
-	if _, ok := expr.Type().(Invalid); !ok {
-		t.Fatalf("Expected unknown, got %v", expr.Type().Text())
-	}
-}
-
-func TestListTypeExpression(t *testing.T) {
-	parser := MakeParser(strings.NewReader("[]number"))
-	node := parser.parseExpression()
-
-	if len(parser.errors) != 0 {
-		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
-	}
-
-	list, ok := node.(*ListTypeExpression)
-	if !ok {
-		t.Fatalf("Expected ListExpression, got %#v", node)
-	}
-	if list.Expr == nil {
-		t.Fatalf("Expected a Type")
-	}
-}
-
-func TestListTypeInstance(t *testing.T) {
-	parser := MakeParser(strings.NewReader("[]number{0, 1, 2}"))
-	node := parser.parseExpression()
-
-	if len(parser.errors) != 0 {
-		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
-	}
-
-	if _, ok := node.(*InstanceExpression); !ok {
-		t.Fatalf("Expected InstanceExpression, got %#v", node)
-	}
-}
-
-func TestCheckListType(t *testing.T) {
-	// []number
-	parser := MakeParser(nil)
-	expr := &ListTypeExpression{
-		Expr: &Literal{Token: token{kind: NumberKeyword}},
-	}
-	expr.typeCheck(parser)
-
-	if len(parser.errors) != 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
-	}
-	ty, ok := expr.Type().(Type)
-	if !ok {
-		t.Fatal("Expected type")
-	}
-	list, ok := ty.Value.(List)
-	if !ok {
-		t.Fatal("Expected list type")
-	}
-	if _, ok := list.Element.(Number); !ok {
-		t.Fatal("Expected number list type")
-	}
-}
-
-func TestCheckListTypeNoValue(t *testing.T) {
-	// []42
-	parser := MakeParser(nil)
-	expr := &ListTypeExpression{
-		Bracketed: &BracketedExpression{},
-		Expr:      &Literal{Token: literal{kind: NumberLiteral, value: "42"}},
-	}
-	expr.typeCheck(parser)
-
-	if len(parser.errors) != 1 {
-		t.Fatalf("Expected 1 error, got %#v", parser.errors)
-	}
-	ty, ok := expr.Type().(Type)
-	if !ok {
-		t.Fatal("Expected type")
-	}
-	list, ok := ty.Value.(List)
-	if !ok {
-		t.Fatal("Expected list type")
-	}
-	if _, ok := list.Element.(Invalid); !ok {
-		t.Fatal("Expected unknown list type")
-	}
-}
-
-func TestNestedListTypeExpression(t *testing.T) {
-	parser := MakeParser(strings.NewReader("[][]number"))
-	node := parser.parseExpression()
-
-	if len(parser.errors) != 0 {
-		t.Fatalf("Expected no errors, got %+v: %#v", len(parser.errors), parser.errors)
-	}
-
-	list, ok := node.(*ListTypeExpression)
-	if !ok {
-		t.Fatalf("Expected ListExpression, got %#v", node)
-	}
-	if _, ok := list.Expr.(*ListTypeExpression); !ok {
-		t.Fatalf("Expected a nested ListTypeExpression, got %#v", list.Type())
-	}
-	if list.Expr == nil {
-		t.Fatalf("Expected a Type")
-	}
-}
-
-func TestListTypeExpressionWithBracketed(t *testing.T) {
-	parser := MakeParser(strings.NewReader("[number]number"))
-	parser.parseExpression()
-
-	if len(parser.errors) != 1 {
-		t.Fatalf("Expected 1 error, got %#v", parser.errors)
-	}
-}
-
-func TestParseTryExpression(t *testing.T) {
-	parser := MakeParser(strings.NewReader("try result"))
-	expr := parser.parseExpression()
-
-	if len(parser.errors) > 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
-	}
-	_ = expr
-}
-
-func TestCheckTryExpression(t *testing.T) {
-	parser := MakeParser(nil)
-	parser.scope.Add("result", Loc{}, makeResultType(Number{}, nil))
-	expr := &UnaryExpression{
-		Operator: token{kind: TryKeyword},
-		Operand:  &Identifier{Token: literal{kind: Name, value: "result"}},
-	}
-	expr.typeCheck(parser)
-
-	if len(parser.errors) > 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
-	}
-	if _, ok := expr.Type().(Number); !ok {
-		t.Fatalf("Expected a number, got %v", expr)
-	}
-}
-
-func TestCheckTryExpressionBadType(t *testing.T) {
-	parser := MakeParser(nil)
-	expr := &UnaryExpression{
-		Operator: token{kind: TryKeyword},
-		Operand:  &Literal{literal{kind: NumberLiteral, value: "42"}},
-	}
-	expr.typeCheck(parser)
-
-	if len(parser.errors) != 1 {
-		t.Fatalf("Expected 1 error, got %#v", parser.errors)
 	}
 }

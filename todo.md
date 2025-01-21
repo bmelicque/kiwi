@@ -1,6 +1,4 @@
-- emit traits as `new Trait(value, type, ...typeParams)`
-  - should be completely transparent in parser
-  - collapse `Trait(Trait)`
+- emit options as a full-fledged sum type (optimize to Type|undefined not possible because of match to traits like .{})
 - emit `dom` just like std instead of hard-coding stuff at the top of files
 - html elements should be used as types, but they are interfaces in JS => on emit instance, if type implements Node and is from dom, use createElement instead
 - fix declaration for tuples: check if part of an object (use “let” or not)
@@ -24,8 +22,6 @@
 - infer constructors in lists, maps & sum
   - `[]Struct{{x: 1}, {x: 2}}`
   - `Sum.Constructor{{x: 1}}`
-- Collapse option types
-  - `??Type` => `?Type`
 - Match
   - break
     - check if unreachable after break
