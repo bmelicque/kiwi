@@ -19,7 +19,6 @@ func (b *BracedExpression) typeCheck(p *Parser) {
 	}
 	b.Expr.typeCheck(p)
 	b.Expr = makeTuple(b.Expr)
-	var foundDefault bool
 	for i, element := range b.Expr.(*TupleExpression).Elements {
 		switch element := element.(type) {
 		case *Identifier, *PropertyAccessExpression:
@@ -30,11 +29,7 @@ func (b *BracedExpression) typeCheck(p *Parser) {
 			if element.Identifier.IsPrivate() {
 				p.error(element, MissingDefault)
 			}
-			if foundDefault {
-				p.error(element, MandatoryAfterOptional)
-			}
 		case *Entry:
-			foundDefault = true
 		default:
 			p.error(element, InvalidPattern)
 			b.Expr.(*TupleExpression).Elements[i] = nil

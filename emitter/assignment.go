@@ -163,6 +163,7 @@ func (e *Emitter) emitObjectTypeDefinition(definition *parser.Assignment) {
 	e.depth++
 	e.indent()
 	e.write("constructor(")
+	elements = sortObjectElements(elements)
 	max := len(elements) - 1
 	for _, s := range elements[:max] {
 		e.emitObjectConstructorParam(s)
@@ -181,6 +182,29 @@ func (e *Emitter) emitObjectTypeDefinition(definition *parser.Assignment) {
 	e.depth--
 	e.indent()
 	e.write("}\n")
+}
+func sortObjectElements(elements []parser.Expression) []parser.Expression {
+	sorted := make([]parser.Expression, len(elements))
+	var i int
+	for _, element := range elements {
+		if _, ok := element.(*parser.Identifier); ok {
+			sorted[i] = element
+			i++
+		}
+	}
+	for _, element := range elements {
+		if _, ok := element.(*parser.Param); ok {
+			sorted[i] = element
+			i++
+		}
+	}
+	for _, element := range elements {
+		if _, ok := element.(*parser.Entry); ok {
+			sorted[i] = element
+			i++
+		}
+	}
+	return sorted
 }
 
 func (e *Emitter) emitTypeDeclaration(definition *parser.Assignment) {

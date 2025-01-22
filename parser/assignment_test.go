@@ -503,7 +503,7 @@ func TestParseGenericObjectDefinition(t *testing.T) {
 	}
 }
 
-func TestCheckObjectTypeDefinitionBadOrder(t *testing.T) {
+func TestCheckObjectTypeDefinitionDefaultFirst(t *testing.T) {
 	parser := MakeParser(nil)
 	declaration := &Assignment{
 		Pattern: &Identifier{Token: literal{kind: Name, value: "Type"}},
@@ -521,8 +521,8 @@ func TestCheckObjectTypeDefinitionBadOrder(t *testing.T) {
 	}
 	declaration.typeCheck(parser)
 
-	if len(parser.errors) != 1 {
-		t.Fatalf("Expected 1 error, got %#v", parser.errors)
+	if len(parser.errors) > 0 {
+		t.Fatalf("Expected no errors, got %#v", parser.errors)
 	}
 }
 

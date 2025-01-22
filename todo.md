@@ -1,6 +1,4 @@
 - html elements should be used as types, but they are interfaces in JS => on emit instance, if type implements Node and is from dom, use createElement instead (e.g. for `DocumentBody`)
-- object definition: remove order check
-  - emitter should just use Object.Members & Object.Default to sort things out
 - list methods (list = `TypeAlias{"[]"}`?)
   - `filter(list, predicate)` -> js `list.filter(predicate)`
   - `list.sort()` sorts in place
@@ -13,6 +11,7 @@
 - infer constructors in lists, maps & sum
   - `[]Struct{{x: 1}, {x: 2}}`
   - `Sum.Constructor{{x: 1}}`
+- change semantics? => `:=` is mutable, `::` is constant
 - Match
   - break
     - check if unreachable after break

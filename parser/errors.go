@@ -43,7 +43,6 @@ const (
 	InvalidTypeForPattern
 	TooManyElements // [expected count, received count]
 	MissingElements // [expected count, received count]
-	MandatoryAfterOptional
 	MissingDefault
 	UnreachableCode
 	CatchallNotLast
@@ -175,8 +174,6 @@ func (p ParserError) Text() string {
 		a := p.Complements[0]
 		b := p.Complements[1]
 		return fmt.Sprintf("Got too few elements: expected %v, got %v", a, b)
-	case MandatoryAfterOptional:
-		return "Cannot define mandatory fields after optional ones"
 	case MissingDefault:
 		return "Private fields must have a default value"
 	case UnreachableCode:

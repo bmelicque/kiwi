@@ -84,7 +84,8 @@ func (e *Emitter) emitObjectInstance(constructor *parser.Identifier, args *parse
 	typing := constructor.Type().(parser.Type).Value.(parser.TypeAlias).Ref.(parser.Object)
 	l := len(args.Elements)
 	i := 0
-	for _, m := range append(typing.Members, typing.Defaults...) {
+	elements := append(append(typing.Embedded, typing.Members...), typing.Defaults...)
+	for _, m := range elements {
 		member := findMemberByName(args, m.Name)
 		if member == nil {
 			e.write("undefined")
