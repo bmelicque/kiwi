@@ -19,121 +19,77 @@ func TestFunctionType(t *testing.T) {
 	}
 }
 
-// ---------------------------------
-// TEST PARSING FUNCTION EXPRESSIONS
-// ---------------------------------
-
-func TestParseFunctionExpressionWithNoParams(t *testing.T) {
-	parser := MakeParser(strings.NewReader("() => {}"))
-	node := parser.parseFunctionExpression(nil)
-	testParserErrors(t, parser, 0)
-	loc := Loc{Position{1, 1}, Position{1, 9}}
-	if node.Loc() != loc {
-		t.Fatalf("Expected loc %v, got %v", loc, node.Loc())
+func TestParseFunctionExpression(t *testing.T) {
+	tests := []struct {
+		name        string
+		source      string
+		wantError   bool
+		expectedLoc Loc
+	}{
+		{
+			name:        "no params, implicit return",
+			source:      "() => {}",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 9}},
+		},
+		{
+			name:        "explicit return type",
+			source:      "() => number {}",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 16}},
+		},
+		{
+			name:        "explicit void return",
+			source:      "() => _ {}",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 11}},
+		},
+		{
+			name:        "one param",
+			source:      "(n number) => {}",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 17}},
+		},
+		{
+			name:        "several params",
+			source:      "(a number, b number) => {}",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 27}},
+		},
+		{
+			name:        "shortened params", // for HOF
+			source:      "(a, b) => {}",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 13}},
+		},
+		{
+			name:        "type param",
+			source:      "[Type]() => {}",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 15}},
+		},
+		{
+			name:        "missing body",
+			source:      "() =>",
+			wantError:   true,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 6}},
+		},
 	}
 
-	function, ok := node.(*FunctionExpression)
-	if !ok {
-		t.Fatalf("Expected FunctionExpression, got %#v", node)
-	}
-
-	params := function.Params.Expr.(*TupleExpression).Elements
-	if len(params) > 0 {
-		t.Fatalf("Expected no params, got %#v", function.Params.Expr)
-	}
-	if function.Body == nil {
-		t.Fatalf("Expected Body, got nothing")
-	}
-}
-
-func TestParseFunctionExpressionWithOneParam(t *testing.T) {
-	parser := MakeParser(strings.NewReader("(n number) => {}"))
-	node := parser.parseFunctionExpression(nil)
-	testParserErrors(t, parser, 0)
-
-	function, ok := node.(*FunctionExpression)
-	if !ok {
-		t.Fatalf("Expected FunctionExpression, got %#v", node)
-	}
-
-	params := function.Params.Expr.(*TupleExpression).Elements
-	if len(params) != 1 {
-		t.Fatalf("Expected 1 param, got %#v", function.Params.Expr)
-	}
-	if function.Body == nil {
-		t.Fatalf("Expected Body, got nothing")
-	}
-}
-
-func TestParseFunctionExpressionWithSeveralParams(t *testing.T) {
-	parser := MakeParser(strings.NewReader("(a number, b number) => {}"))
-	node := parser.parseFunctionExpression(nil)
-	testParserErrors(t, parser, 0)
-
-	function, ok := node.(*FunctionExpression)
-	if !ok {
-		t.Fatalf("Expected FunctionExpression, got %#v", node)
-	}
-
-	params := function.Params.Expr.(*TupleExpression).Elements
-	if len(params) != 2 {
-		t.Fatalf("Expected 2 params, got %#v", function.Params.Expr)
-	}
-	if function.Body == nil {
-		t.Fatalf("Expected Body, got nothing")
-	}
-}
-
-func TestParseHOFFunctionArgument(t *testing.T) {
-	parser := MakeParser(strings.NewReader("(a, b number) => {}"))
-	parser.parseFunctionExpression(nil)
-	testParserErrors(t, parser, 0)
-}
-
-func TestParseFunctionExpressionMissingBody(t *testing.T) {
-	parser := MakeParser(strings.NewReader("() =>"))
-	expr := parser.parseFunctionExpression(nil)
-	testParserErrors(t, parser, 1)
-	loc := Loc{Position{1, 1}, Position{1, 6}}
-	if expr.Loc() != loc {
-		t.Fatalf("Expected loc %v, got %v", loc, expr.Loc())
-	}
-}
-
-func TestParseFunctionExpressionExplicit(t *testing.T) {
-	parser := MakeParser(strings.NewReader("() => number {}"))
-	node := parser.parseFunctionExpression(nil)
-	testParserErrors(t, parser, 0)
-
-	function, ok := node.(*FunctionExpression)
-	if !ok {
-		t.Fatalf("Expected FunctionExpression, got %#v", node)
-		return
-	}
-
-	if _, ok := function.Explicit.(*Literal); !ok {
-		t.Fatalf("Expected literal, got %#v", function.Explicit)
-	}
-	if function.Body == nil {
-		t.Fatalf("Expected Body, got nothing")
-	}
-}
-
-func TestParseFunctionWithTypeParams(t *testing.T) {
-	parser := MakeParser(strings.NewReader("[Type]() => {}"))
-	node := parser.parseExpression()
-	testParserErrors(t, parser, 0)
-	loc := Loc{Position{1, 1}, Position{1, 15}}
-	if node.Loc() != loc {
-		t.Fatalf("Expected loc %v, got %v", loc, node.Loc())
-	}
-
-	f, ok := node.(*FunctionExpression)
-	if !ok {
-		t.Fatalf("Expected FunctionExpression, got %#v", node)
-	}
-	if f.TypeParams == nil {
-		t.Fatalf("Expected type params, got nothing")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := MakeParser(strings.NewReader(tt.source))
+			expr := parser.parseBinaryExpression()
+			if tt.wantError && len(parser.errors) == 0 {
+				t.Error("Got no errors, want one\n")
+			}
+			if !tt.wantError && len(parser.errors) > 0 {
+				t.Error("Got one error, want none\n")
+			}
+			if expr.Loc() != tt.expectedLoc {
+				t.Errorf("Got loc %v, want %v", expr.Loc(), tt.expectedLoc)
+			}
+		})
 	}
 }
 
@@ -141,18 +97,50 @@ func TestParseFunctionWithTypeParams(t *testing.T) {
 // TEST TYPE-CHECK FUNCTION EXPRESSIONS
 // ------------------------------------
 
-func TestCheckFunctionExpressionNoParams(t *testing.T) {
-	parser := MakeParser(nil)
-	expr := &FunctionExpression{
-		Params: &ParenthesizedExpression{Expr: &TupleExpression{Elements: []Expression{}}},
-		Body:   &Block{Statements: []Node{}},
+func TestCheckFunctionExpression(t *testing.T) {
+	tests := []struct {
+		name         string
+		expr         *FunctionExpression
+		wantError    bool
+		expectedType string
+	}{
+		{
+			name: "no params, no return",
+			expr: &FunctionExpression{
+				Params: &ParenthesizedExpression{Expr: makeTuple(nil)},
+				Body:   MakeBlock([]Node{}),
+			},
+			wantError:    false,
+			expectedType: "() -> ()",
+		},
+		{
+			name: "no params, void return",
+			expr: &FunctionExpression{
+				Params:   &ParenthesizedExpression{Expr: makeTuple(nil)},
+				Explicit: &Identifier{Token: literal{kind: Name, value: "_"}},
+				Body:     MakeBlock([]Node{}),
+			},
+			wantError:    false,
+			expectedType: "() -> ()",
+		},
 	}
-	expr.typeCheck(parser)
-	testParserErrors(t, parser, 0)
 
-	params := expr.Type().(Function).Params.Elements
-	if len(params) != 0 {
-		t.Fatalf("Expected no params, found %#v", params)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := MakeParser(strings.NewReader(""))
+			tt.expr.typeCheck(parser)
+			if tt.wantError && len(parser.errors) == 0 {
+				t.Error("Got no errors, want one\n")
+			}
+			if !tt.wantError && len(parser.errors) > 0 {
+				t.Error("Got one error, want none\n")
+				t.Log(parser.errors[0].Text())
+			}
+			text := tt.expr.Type().Text()
+			if text != tt.expectedType {
+				t.Errorf("Got %v, want %v", text, tt.expectedType)
+			}
+		})
 	}
 }
 

@@ -3,7 +3,7 @@ package parser
 type FunctionExpression struct {
 	TypeParams *BracketedExpression     // contains *TupleExpression of *Param
 	Params     *ParenthesizedExpression // contains *TupleExpression
-	Array      Token
+	Arrow      Token
 	Explicit   Expression // Explicit return type (if any)
 	Body       *Block
 	typing     Function
@@ -31,7 +31,7 @@ func (f *FunctionExpression) Loc() Loc {
 	} else if f.Explicit != nil {
 		loc.End = f.Explicit.Loc().End
 	} else {
-		loc.End = f.Array.Loc().End
+		loc.End = f.Arrow.Loc().End
 	}
 	return loc
 }
@@ -61,6 +61,7 @@ func typeCheckFunctionExpression(p *Parser, f *FunctionExpression, paramHandler 
 	f.Body.typeCheck(p)
 
 	if f.Explicit != nil {
+		f.Explicit.typeCheck(p)
 		f.typeCheckBodyExplicit(p)
 	} else {
 		typeCheckImplicitReturn(p, f)
@@ -147,6 +148,9 @@ func getFunctionParamsType(f *FunctionExpression) Tuple {
 func getFunctionReturnedType(f *FunctionExpression) ExpressionType {
 	if f.Explicit == nil {
 		return f.Body.Type()
+	}
+	if i, ok := Unwrap(f.Explicit).(*Identifier); ok && i.Text() == "_" {
+		return Void{}
 	}
 	t, ok := f.Explicit.Type().(Type)
 	if !ok {
@@ -272,7 +276,7 @@ func (p *Parser) parseFunctionExpression(typeParams *BracketedExpression) Expres
 		return &FunctionExpression{
 			TypeParams: typeParams,
 			Params:     paren,
-			Array:      arrow,
+			Arrow:      arrow,
 			Explicit:   explicit,
 			Body:       body,
 		}
@@ -303,11 +307,19 @@ func validateFunctionParam(p *Parser, expr Expression) {
 // Type check all possible return points against the explicit return type.
 // Also check possible failure points.
 func (f *FunctionExpression) typeCheckBodyExplicit(p *Parser) {
-	if _, ok := f.Explicit.Type().(Type); !ok {
+	i, ok := Unwrap(f.Explicit).(*Identifier)
+	isVoid := ok && i.Text() == "_"
+	if _, ok := f.Explicit.Type().(Type); !ok && !isVoid {
 		p.error(f.Explicit, TypeExpected)
 		return
 	}
-	typeCheckReturnsExplicit(p, f.Explicit.Type(), f.Body)
+	var explicit ExpressionType
+	if isVoid {
+		explicit = Type{Void{}}
+	} else {
+		explicit = f.Explicit.Type()
+	}
+	typeCheckReturnsExplicit(p, explicit, f.Body)
 	err := f.getExplicitErrorType()
 	checkFunctionTries(p, err, findTryExpressions(f.Body))
 	checkFunctionThrows(p, err, findThrowStatements(f.Body))

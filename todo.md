@@ -36,6 +36,7 @@
   - .first()
 - Signals?
 - Optimizations:
+  - redo tokenizer properly (i.e. without regexes)
   - reduce Loc memory footprint
     - Loc is just 1 int (character number in file)
     - have a list of new line positions
