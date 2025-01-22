@@ -33,10 +33,16 @@ func TestParseInstanceExpression(t *testing.T) {
 			expectedLoc: Loc{Position{1, 1}, Position{1, 6}},
 		},
 		{
-			name:        "map",
-			source:      "Map{\"key\": \"value\"}",
+			name:        "explicit map",
+			source:      "string#string{\"key\": \"value\"}",
 			wantError:   false,
-			expectedLoc: Loc{Position{1, 1}, Position{1, 20}},
+			expectedLoc: Loc{Position{1, 1}, Position{1, 30}},
+		},
+		{
+			name:        "implicit map",
+			source:      "#{\"key\": \"value\"}",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 18}},
 		},
 	}
 
@@ -183,6 +189,143 @@ func TestCheckOptionInstanceExpression(t *testing.T) {
 	}
 }
 
+func TestCheckMapInstanceExpression(t *testing.T) {
+	type test struct {
+		name         string
+		expr         *InstanceExpression
+		wantError    bool
+		expectedType string
+	}
+	tests := []test{
+		{
+			name: "map explicit instance with no args",
+			expr: &InstanceExpression{
+				Typing: &BinaryExpression{
+					Left:     &Literal{token{kind: StringKeyword}},
+					Operator: token{kind: Hash},
+					Right:    &Literal{token{kind: NumberKeyword}},
+				},
+				Args: &BracedExpression{Expr: makeTuple(nil)},
+			},
+			wantError:    false,
+			expectedType: "string#number",
+		},
+		{
+			name: "map explicit instance with arg",
+			expr: &InstanceExpression{
+				Typing: &BinaryExpression{
+					Left:     &Literal{token{kind: StringKeyword}},
+					Operator: token{kind: Hash},
+					Right:    &Literal{token{kind: NumberKeyword}},
+				},
+				Args: &BracedExpression{Expr: makeTuple(
+					&Entry{
+						Key:   &Literal{literal{kind: StringLiteral}},
+						Value: &Literal{literal{kind: NumberLiteral}},
+					},
+				)},
+			},
+			wantError:    false,
+			expectedType: "string#number",
+		},
+		{
+			name: "map explicit instance with bad key",
+			expr: &InstanceExpression{
+				Typing: &BinaryExpression{
+					Left:     &Literal{token{kind: StringKeyword}},
+					Operator: token{kind: Hash},
+					Right:    &Literal{token{kind: NumberKeyword}},
+				},
+				Args: &BracedExpression{Expr: makeTuple(
+					&Entry{
+						Key:   &Literal{literal{kind: NumberLiteral}},
+						Value: &Literal{literal{kind: NumberLiteral}},
+					},
+				)},
+			},
+			wantError:    true,
+			expectedType: "string#number",
+		},
+		{
+			name: "map explicit instance with bad value",
+			expr: &InstanceExpression{
+				Typing: &BinaryExpression{
+					Left:     &Literal{token{kind: StringKeyword}},
+					Operator: token{kind: Hash},
+					Right:    &Literal{token{kind: NumberKeyword}},
+				},
+				Args: &BracedExpression{Expr: makeTuple(
+					&Entry{
+						Key:   &Literal{literal{kind: StringLiteral}},
+						Value: &Literal{literal{kind: StringLiteral}},
+					},
+				)},
+			},
+			wantError:    true,
+			expectedType: "string#number",
+		},
+		{
+			name: "map implicit instance with arg",
+			expr: &InstanceExpression{
+				Typing: &BinaryExpression{Operator: token{kind: Hash}},
+				Args: &BracedExpression{Expr: makeTuple(
+					&Entry{
+						Key:   &Literal{literal{kind: StringLiteral}},
+						Value: &Literal{literal{kind: NumberLiteral}},
+					},
+				)},
+			},
+			wantError:    false,
+			expectedType: "string#number",
+		},
+		{
+			name: "map implicit instance with no args",
+			expr: &InstanceExpression{
+				Typing: &BinaryExpression{Operator: token{kind: Hash}},
+				Args:   &BracedExpression{Expr: makeTuple(nil)},
+			},
+			wantError:    true,
+			expectedType: "invalid#invalid",
+		},
+		{
+			name: "map implicit instance with mismatched args",
+			expr: &InstanceExpression{
+				Typing: &BinaryExpression{Operator: token{kind: Hash}},
+				Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
+					&Entry{
+						Key:   &Literal{literal{kind: StringLiteral}},
+						Value: &Literal{literal{kind: NumberLiteral}},
+					},
+					&Entry{
+						Key:   &Literal{literal{kind: NumberLiteral}},
+						Value: &Literal{literal{kind: StringLiteral}},
+					},
+				}}},
+			},
+			wantError:    true,
+			expectedType: "string#number",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := MakeParser(strings.NewReader(""))
+			tt.expr.typeCheck(parser)
+			if tt.wantError && len(parser.errors) == 0 {
+				t.Error("Got no errors, want one\n")
+			}
+			if !tt.wantError && len(parser.errors) > 0 {
+				t.Error("Got one error, want none\n")
+				t.Log(parser.errors[0].Text())
+			}
+			got := tt.expr.Type().Text()
+			if got != tt.expectedType {
+				t.Errorf("Got type %v, want %v", got, tt.expectedType)
+			}
+		})
+	}
+}
+
 func TestParseExplicitGenericInstanciation(t *testing.T) {
 	source := "Boxed[number]{ value: 42 }"
 	parser := MakeParser(strings.NewReader(source))
@@ -241,127 +384,6 @@ func TestParseMultilineInstanciation(t *testing.T) {
 			t.Logf("%v\n", err.Text())
 		}
 		t.Fail()
-	}
-}
-
-func TestCheckImplicitMapInstanciation(t *testing.T) {
-	parser := MakeParser(nil)
-	expr := &InstanceExpression{
-		Typing: &Identifier{Token: literal{kind: Name, value: "Map"}},
-		Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
-			&Entry{
-				Key:   &Literal{literal{kind: StringLiteral, value: "\"key\""}},
-				Value: &Literal{literal{kind: StringLiteral, value: "\"value\""}},
-			},
-		},
-		}},
-	}
-	expr.typeCheck(parser)
-
-	if len(parser.errors) > 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
-	}
-	alias, ok := expr.Type().(TypeAlias)
-	if !ok || alias.Name != "Map" {
-		t.Fatalf("Map expected")
-	}
-	if _, ok := alias.Ref.(Map).Key.(String); !ok {
-		t.Fatalf("Expected string keys, got %v", alias.Ref.(Map).Key.Text())
-	}
-}
-
-func TestCheckMapInstanciationMissingTypeArg(t *testing.T) {
-	parser := MakeParser(nil)
-	expr := &InstanceExpression{
-		Typing: &Identifier{Token: literal{kind: Name, value: "Map"}},
-		Args:   &BracedExpression{Expr: makeTuple(nil)},
-	}
-	expr.typeCheck(parser)
-
-	if len(parser.errors) != 1 {
-		t.Fatalf("Expected 1 error, got %v: %#v", len(parser.errors), parser.errors)
-	}
-}
-
-func TestCheckExplicitMapInstanciation(t *testing.T) {
-	parser := MakeParser(nil)
-	expr := &InstanceExpression{
-		Typing: &ComputedAccessExpression{
-			Expr: &Identifier{Token: literal{kind: Name, value: "Map"}},
-			Property: &BracketedExpression{Expr: &TupleExpression{Elements: []Expression{
-				&Literal{token{kind: StringKeyword}},
-				&Literal{token{kind: StringKeyword}},
-			}}},
-		},
-		Args: &BracedExpression{Expr: makeTuple(nil)},
-	}
-	expr.typeCheck(parser)
-
-	if len(parser.errors) > 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
-	}
-	alias, ok := expr.Type().(TypeAlias)
-	if !ok || alias.Name != "Map" {
-		t.Fatalf("Map expected")
-	}
-	if _, ok := alias.Ref.(Map).Key.(String); !ok {
-		t.Fatalf("Expected string keys")
-	}
-}
-
-func TestCheckMapEntries(t *testing.T) {
-	parser := MakeParser(nil)
-	expr := &InstanceExpression{
-		Typing: &ComputedAccessExpression{
-			Expr: &Identifier{Token: literal{kind: Name, value: "Map"}},
-			Property: &BracketedExpression{Expr: &TupleExpression{Elements: []Expression{
-				&Literal{token{kind: StringKeyword}},
-				&Literal{token{kind: StringKeyword}},
-			}}},
-		},
-		Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
-			&Entry{
-				Key:   &Literal{literal{kind: StringLiteral, value: "\"a\""}},
-				Value: &Literal{literal{kind: StringLiteral, value: "\"value\""}},
-			},
-			&Entry{
-				Key:   &Literal{literal{kind: StringLiteral, value: "\"b\""}},
-				Value: &Literal{literal{kind: StringLiteral, value: "\"value\""}},
-			},
-		}}},
-	}
-	expr.typeCheck(parser)
-
-	if len(parser.errors) > 0 {
-		t.Fatalf("Expected no errors, got %#v", parser.errors)
-	}
-}
-
-func TestCheckMapEntriesBadTypes(t *testing.T) {
-	parser := MakeParser(nil)
-	expr := &InstanceExpression{
-		Typing: &ComputedAccessExpression{
-			Expr: &Identifier{Token: literal{kind: Name, value: "Map"}},
-			Property: &BracketedExpression{Expr: &TupleExpression{Elements: []Expression{
-				&Literal{token{kind: StringKeyword}},
-				&Literal{token{kind: StringKeyword}},
-			}}},
-		},
-		Args: &BracedExpression{Expr: &TupleExpression{Elements: []Expression{
-			&Entry{
-				Key:   &Literal{literal{kind: NumberLiteral, value: "1"}},
-				Value: &Literal{literal{kind: StringLiteral, value: "\"value\""}},
-			},
-			&Entry{
-				Key:   &Literal{literal{kind: StringLiteral, value: "\"a\""}},
-				Value: &Literal{literal{kind: NumberLiteral, value: "42"}},
-			},
-		}}},
-	}
-	expr.typeCheck(parser)
-
-	if len(parser.errors) != 2 {
-		t.Fatalf("Expected 2 errors, got %v: %#v", len(parser.errors), parser.errors)
 	}
 }
 

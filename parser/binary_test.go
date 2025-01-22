@@ -5,6 +5,144 @@ import (
 	"testing"
 )
 
+func TestParseBinaryExpression(t *testing.T) {
+	tests := []struct {
+		name             string
+		source           string
+		wantError        bool
+		expectedOperator TokenKind
+		expectedLoc      Loc
+	}{
+		{
+			name:             "valid map",
+			source:           "Key#Value",
+			wantError:        false,
+			expectedOperator: Hash,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 10}},
+		},
+		{
+			name:             "map missing lhs",
+			source:           "#Value",
+			wantError:        true,
+			expectedOperator: Hash,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 7}},
+		},
+		{
+			name:             "map missing rhs",
+			source:           "Key#",
+			wantError:        true,
+			expectedOperator: Hash,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 5}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := MakeParser(strings.NewReader(tt.source))
+			expr := parser.parseBinaryExpression()
+			if tt.wantError && len(parser.errors) == 0 {
+				t.Error("Got no errors, want one\n")
+			}
+			if !tt.wantError && len(parser.errors) > 0 {
+				t.Error("Got one error, want none\n")
+			}
+			if expr.(*BinaryExpression).Operator.Kind() != tt.expectedOperator {
+				t.Errorf("Bad operator")
+			}
+			if expr.Loc() != tt.expectedLoc {
+				t.Errorf("Got loc %v, want %v", expr.Loc(), tt.expectedLoc)
+			}
+		})
+	}
+}
+
+func TestCheckBinaryExpression(t *testing.T) {
+	tests := []struct {
+		name         string
+		expr         *BinaryExpression
+		wantError    bool
+		expectedType string
+	}{
+		{
+			name: "valid map",
+			expr: &BinaryExpression{
+				Left:     &Literal{token{kind: StringKeyword}},
+				Operator: token{kind: Hash},
+				Right:    &Literal{token{kind: NumberKeyword}},
+			},
+			wantError:    false,
+			expectedType: "(string#number)",
+		},
+		{
+			name: "map without lhs",
+			expr: &BinaryExpression{
+				Left:     nil,
+				Operator: token{kind: Hash},
+				Right:    &Literal{token{kind: NumberKeyword}},
+			},
+			wantError:    false, // handled in parser
+			expectedType: "(invalid#number)",
+		},
+		{
+			name: "map without rhs",
+			expr: &BinaryExpression{
+				Left:     &Literal{token{kind: StringKeyword}},
+				Operator: token{kind: Hash},
+				Right:    nil,
+			},
+			wantError:    false, // handled in parser,
+			expectedType: "(string#invalid)",
+		},
+		{
+			name: "map with non-type on lhs",
+			expr: &BinaryExpression{
+				Left:     &Literal{token{kind: StringLiteral}},
+				Operator: token{kind: Hash},
+				Right:    &Literal{token{kind: NumberKeyword}},
+			},
+			wantError:    true,
+			expectedType: "(invalid#number)",
+		},
+		{
+			name: "map with non-type on rhs",
+			expr: &BinaryExpression{
+				Left:     &Literal{token{kind: StringKeyword}},
+				Operator: token{kind: Hash},
+				Right:    &Literal{token{kind: NumberLiteral}},
+			},
+			wantError:    true,
+			expectedType: "(string#invalid)",
+		},
+		{
+			name: "valid error type",
+			expr: &BinaryExpression{
+				Left:     &Literal{token{kind: StringKeyword}},
+				Operator: token{kind: Bang},
+				Right:    &Literal{token{kind: NumberKeyword}},
+			},
+			wantError:    false,
+			expectedType: "(string!number)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := MakeParser(strings.NewReader(""))
+			tt.expr.typeCheck(parser)
+			if tt.wantError && len(parser.errors) == 0 {
+				t.Error("Got no errors, want one\n")
+			}
+			if !tt.wantError && len(parser.errors) > 0 {
+				t.Error("Got one error, want none\n")
+			}
+			text := tt.expr.Type().Text()
+			if text != tt.expectedType {
+				t.Errorf("Got %v, want %v", text, tt.expectedType)
+			}
+		})
+	}
+}
+
 func TestBinaryExpression(t *testing.T) {
 	parser := MakeParser(strings.NewReader("2 ** 3"))
 	expr := parser.parseBinaryExpression()
@@ -171,31 +309,5 @@ func TestCheckComparisonExpression(t *testing.T) {
 			len(operators),
 			parser.errors,
 		)
-	}
-}
-
-func TestCheckBinaryErrorType(t *testing.T) {
-	parser := MakeParser(nil)
-	expr := &BinaryExpression{
-		Left:     &Literal{literal{kind: StringKeyword}},
-		Right:    &Literal{literal{kind: NumberKeyword}},
-		Operator: token{kind: Bang},
-	}
-	expr.typeCheck(parser)
-
-	if len(parser.errors) > 0 {
-		t.Fatalf("Expected no parsing errors, got %#v", parser.errors)
-	}
-	ty, ok := expr.Type().(Type)
-	if !ok {
-		t.Fatalf("Type expected")
-	}
-	alias, ok := ty.Value.(TypeAlias)
-	if !ok || alias.Name != "!" {
-		t.Fatalf("Result type expected")
-	}
-	okType := alias.Ref.(Sum).getMember("Ok")
-	if _, ok := okType.(Number); !ok {
-		t.Fatalf("Number expected")
 	}
 }

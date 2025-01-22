@@ -5,7 +5,7 @@ import "github.com/bmelicque/test-parser/parser"
 func (e *Emitter) emitComputedAccessExpression(expr *parser.ComputedAccessExpression) {
 	switch left := expr.Expr.Type().(type) {
 	case parser.TypeAlias:
-		if left.Name == "Map" {
+		if left.Name == "#" {
 			emitGetElement(e, expr)
 		} else {
 			e.emitExpression(expr.Expr)

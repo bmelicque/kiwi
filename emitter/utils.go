@@ -50,3 +50,15 @@ func isReferenced(identifier *parser.Identifier) bool {
 	v := scope.FindLocal(identifier.Text())
 	return v != nil && v.HasDirectRef()
 }
+
+func hasMapType(expr parser.Expression) bool {
+	if expr == nil {
+		return false
+	}
+	t, ok := expr.Type().(parser.Type)
+	if !ok {
+		return false
+	}
+	alias, ok := t.Value.(parser.TypeAlias)
+	return ok && alias.Name == "#"
+}

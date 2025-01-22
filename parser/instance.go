@@ -21,12 +21,7 @@ func (i *InstanceExpression) getChildren() []Node {
 }
 
 func (i *InstanceExpression) typeCheck(p *Parser) {
-	if l, ok := i.Typing.(*ListTypeExpression); ok && l.Expr == nil {
-		typeCheckAnonymousListInstanciation(p, i)
-		return
-	}
-	if u, ok := i.Typing.(*UnaryExpression); ok && u.Operand == nil {
-		checkInferredOptionInstance(p, i)
+	if checkInferredInstances(p, i) {
 		return
 	}
 	if !checkInstanceConstructor(p, i) {
@@ -45,6 +40,33 @@ func (i *InstanceExpression) typeCheck(p *Parser) {
 	if isRef {
 		i.typing = Ref{i.typing}
 	}
+}
+func checkInferredInstances(p *Parser, i *InstanceExpression) bool {
+	switch {
+	case isInferredList(i):
+		checkInferredListInstance(p, i)
+		return true
+	case isInferredOption(i):
+		checkInferredOptionInstance(p, i)
+		return true
+	case isInferredMap(i):
+		checkInferredMapInstance(p, i)
+		return true
+	default:
+		return false
+	}
+}
+func isInferredList(i *InstanceExpression) bool {
+	l, ok := i.Typing.(*ListTypeExpression)
+	return ok && l.Expr == nil
+}
+func isInferredOption(i *InstanceExpression) bool {
+	u, ok := i.Typing.(*UnaryExpression)
+	return ok && u.Operator.Kind() == QuestionMark && u.Operand == nil
+}
+func isInferredMap(i *InstanceExpression) bool {
+	b, ok := i.Typing.(*BinaryExpression)
+	return ok && b.Operator.Kind() == Hash && b.Left == nil && b.Right == nil
 }
 
 func checkInstanceConstructor(p *Parser, i *InstanceExpression) bool {
@@ -80,7 +102,7 @@ func checkObjectInstanciation(p *Parser, i *InstanceExpression) {
 		checkOptionInstanciation(p, i, alias)
 		return
 	}
-	if alias.Name == "Map" {
+	if alias.Name == "#" {
 		typeCheckMapInstanciation(p, i, alias)
 		return
 	}
@@ -225,6 +247,19 @@ func typeCheckMapInstanciation(p *Parser, i *InstanceExpression, t TypeAlias) {
 	i.typing = getMapType(p, i)
 	typeCheckMapEntries(p, args, i.typing.(TypeAlias).Ref.(Map))
 }
+func checkInferredMapInstance(p *Parser, i *InstanceExpression) {
+	p.pushScope(NewScope(ProgramScope))
+	defer p.dropScope()
+	args := i.Args.Expr.(*TupleExpression).Elements
+	formatMapEntries(p, args)
+	if len(args) == 0 {
+		p.error(i, MissingTypeArgs)
+		i.typing = makeMapType(Invalid{}, Invalid{})
+		return
+	}
+	i.typing = getInferredMapType(p, i)
+	typeCheckMapEntries(p, args, i.typing.(TypeAlias).Ref.(Map))
+}
 
 func formatMapEntries(p *Parser, received []Expression) {
 	for i := range received {
@@ -274,6 +309,18 @@ func getMapType(p *Parser, i *InstanceExpression) ExpressionType {
 	m.Value = value
 	t.Ref = m
 	return t
+}
+func getInferredMapType(p *Parser, i *InstanceExpression) ExpressionType {
+	args := i.Args.Expr.(*TupleExpression).Elements
+	var key, value ExpressionType
+	var kk, vk bool
+	key, kk = args[0].(*Entry).Key.Type().build(p.scope, nil)
+	value, vk = args[0].(*Entry).Value.Type().build(p.scope, nil)
+	if !kk || !vk {
+		p.error(i, MissingTypeArgs)
+	}
+	built, _ := makeMapType(key, value).build(p.scope, nil)
+	return built
 }
 func typeCheckMapEntries(p *Parser, entries []Expression, t Map) {
 	for i := range entries {
@@ -326,7 +373,7 @@ func typeCheckNamedListInstanciation(p *Parser, i *InstanceExpression) {
 }
 
 // Type-check nodes like []{a, b, c}
-func typeCheckAnonymousListInstanciation(p *Parser, i *InstanceExpression) {
+func checkInferredListInstance(p *Parser, i *InstanceExpression) {
 	// next line ensured by calling function
 	elements := i.Args.Expr.(*TupleExpression).Elements
 	if len(elements) == 0 {
@@ -354,7 +401,7 @@ func (i *InstanceExpression) Loc() Loc {
 }
 
 func (p *Parser) parseInstanceExpression() Expression {
-	expr := p.parseUnaryExpression()
+	expr := parseBinaryType(p)
 	if p.Peek().Kind() != LeftBrace {
 		return expr
 	}
@@ -364,4 +411,10 @@ func (p *Parser) parseInstanceExpression() Expression {
 		Typing: expr,
 		Args:   args,
 	}
+}
+
+func parseInferredInstance(p *Parser, constructor Expression) *InstanceExpression {
+	args := p.parseBracedExpression()
+	args.Expr = makeTuple(args.Expr)
+	return &InstanceExpression{Typing: constructor, Args: args}
 }

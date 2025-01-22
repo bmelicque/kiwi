@@ -174,7 +174,7 @@ var mapMethods = map[string]ExpressionType{
 // utility to create map types
 func makeMapType(key ExpressionType, value ExpressionType) TypeAlias {
 	alias := TypeAlias{
-		Name: "Map",
+		Name: "#",
 		Params: []Generic{
 			{Name: "Key", Value: key},
 			{Name: "Value", Value: value},
@@ -208,7 +208,7 @@ var std = Scope{
 		"Error": {
 			Typing: Type{Trait{Members: map[string]ExpressionType{"error": newGetter(String{})}}},
 		},
-		"Map": {
+		"#": {
 			Typing: Type{makeMapType(nil, nil)},
 		},
 		"...": {

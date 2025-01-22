@@ -130,3 +130,8 @@ func isModuleAccess(pattern Expression) bool {
 	_, isModule := a.Expr.Type().(Module)
 	return isModule
 }
+
+func isType(expr Expression) bool {
+	_, ok := expr.Type().(Type)
+	return ok
+}

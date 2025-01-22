@@ -281,9 +281,3 @@ func parseListTypeExpression(p *Parser) Expression {
 		return &ListTypeExpression{brackets, expr}
 	}
 }
-
-func parseInferredInstance(p *Parser, constructor Expression) *InstanceExpression {
-	args := p.parseBracedExpression()
-	args.Expr = makeTuple(args.Expr)
-	return &InstanceExpression{Typing: constructor, Args: args}
-}

@@ -93,7 +93,7 @@ func TestGenericObjectExplicitInstance(t *testing.T) {
 }
 
 func TestMapInstance(t *testing.T) {
-	source := "Map{ \"value\": 42 }"
+	source := "string#number{ \"value\": 42 }"
 	expected := "new Map([[\"value\", 42]]);\n"
 	testEmitter(t, source, expected, 0)
 }

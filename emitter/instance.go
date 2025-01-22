@@ -151,10 +151,14 @@ func (e *Emitter) emitInstance(constructor parser.Expression, args *parser.Tuple
 	case *parser.ComputedAccessExpression:
 		e.emitInstance(c.Expr, args)
 	case *parser.Identifier:
-		if c.Text() == "Map" {
+		if hasMapType(c) {
 			e.emitMapInstance(args)
 		} else {
 			e.emitObjectInstance(c, args)
+		}
+	case *parser.BinaryExpression:
+		if hasMapType(c) {
+			e.emitMapInstance(args)
 		}
 	case *parser.UnaryExpression:
 		if c.Operator.Kind() == parser.QuestionMark {

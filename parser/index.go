@@ -28,8 +28,19 @@ func fallback(p *Parser) Expression {
 		if p.allowBraceParsing {
 			return p.parseBlock()
 		}
+	case Hash:
+		return parseHashExpression(p)
 	}
 	return p.parseToken()
+}
+func parseHashExpression(p *Parser) Expression {
+	operator := p.Consume()
+	if p.Peek().Kind() == LeftBrace {
+		return parseInferredInstance(p, &BinaryExpression{Operator: operator})
+	}
+	p.error(&Literal{operator}, ExpressionExpected)
+	right := parseRHS(p, parseBinaryFallback)
+	return &BinaryExpression{Operator: operator, Right: right}
 }
 
 func Walk(node Node, predicate func(n Node, skip func())) {

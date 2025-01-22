@@ -1,8 +1,4 @@
-- emit `dom` just like std instead of hard-coding stuff at the top of files
-- html elements should be used as types, but they are interfaces in JS => on emit instance, if type implements Node and is from dom, use createElement instead
-- fix declaration for tuples: check if part of an object (use “let” or not)
-- update maps syntax to `Key#Value`
-  - inferred maps as `#{}`
+- html elements should be used as types, but they are interfaces in JS => on emit instance, if type implements Node and is from dom, use createElement instead (e.g. for `DocumentBody`)
 - object definition: remove order check
   - emitter should just use Object.Members & Object.Default to sort things out
 - list methods
@@ -14,10 +10,7 @@
 - int vs float?
   - divisions
     - `Math.floor(a/b)`
-    - `~~(a/b)`
-    - `(a/b|0)`
-- refactor Braced + Parenthesized + Bracketed ?
-- merge token and literal
+- merge token and literal?
 - infer constructors in lists, maps & sum
   - `[]Struct{{x: 1}, {x: 2}}`
   - `Sum.Constructor{{x: 1}}`
@@ -43,11 +36,6 @@
   - .first()
 - Signals?
 - Optimizations:
-  - Option type:
-    - Type | undefined
-    - match => test if undefined
-  - emit inclusive range with literal
-    - `1..=3` => `1..4`
   - reduce Loc memory footprint
     - Loc is just 1 int (character number in file)
     - have a list of new line positions

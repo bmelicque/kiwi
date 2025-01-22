@@ -345,7 +345,7 @@ func declareVariable(p *Parser, identifier *Identifier, typing ExpressionType) {
 
 func addVariableToScope(p *Parser, identifier *Identifier, typing ExpressionType) {
 	name := identifier.Text()
-	if name == "Map" {
+	if name == "#" {
 		p.error(identifier, ReservedName, name)
 		return
 	}

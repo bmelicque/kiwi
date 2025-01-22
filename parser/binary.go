@@ -75,33 +75,63 @@ func (expr *BinaryExpression) Type() ExpressionType {
 			right = Invalid{}
 		}
 		return Type{makeResultType(right, left)}
+	case Hash:
+		return getBinaryHashType(expr)
 	case InKeyword:
 		return Void{}
 	default:
 		panic(fmt.Sprintf("operator '%v' not implemented", expr.Operator.Kind()))
 	}
 }
+func getBinaryHashType(expr *BinaryExpression) ExpressionType {
+	var left, right ExpressionType
+	if expr.Left != nil && isType(expr.Left) {
+		left = expr.Left.Type().(Type).Value
+	} else {
+		left = Invalid{}
+	}
+	if expr.Right != nil && isType(expr.Right) {
+		right = expr.Right.Type().(Type).Value
+	} else {
+		right = Invalid{}
+	}
+	return Type{makeMapType(left, right)}
+}
 
 /******************************
  *  PARSING HELPER FUNCTIONS  *
  ******************************/
 func (p *Parser) parseBinaryExpression() Expression {
-	return parseBinaryErrorType(p)
+	return parseLogicalOr(p)
 }
 func parseBinary(p *Parser, operators []TokenKind, fallback func(p *Parser) Expression) Expression {
 	expression := fallback(p)
 	next := p.Peek()
 	for slices.Contains(operators, next.Kind()) {
 		operator := p.Consume()
-		right := fallback(p)
+		if expression == nil {
+			p.error(&Literal{operator}, ExpressionExpected)
+		}
+		right := parseRHS(p, fallback)
 		expression = &BinaryExpression{expression, right, operator}
 		next = p.Peek()
 	}
 	return expression
 }
-func parseBinaryErrorType(p *Parser) Expression {
-	return parseBinary(p, []TokenKind{Bang}, parseLogicalOr)
+func parseRHS(p *Parser, fallback func(p *Parser) Expression) Expression {
+	outer := p.allowBraceParsing
+	p.allowBraceParsing = false
+	right := fallback(p)
+	if right == nil {
+		p.error(&Literal{p.Peek()}, ExpressionExpected)
+	}
+	p.allowBraceParsing = outer
+	return right
 }
+func parseBinaryType(p *Parser) Expression {
+	return parseBinary(p, []TokenKind{Bang, Hash}, parseBinaryFallback)
+}
+func parseBinaryFallback(p *Parser) Expression { return p.parseUnaryExpression() }
 func parseLogicalOr(p *Parser) Expression {
 	return parseBinary(p, []TokenKind{LogicalOr}, parseLogicalAnd)
 }
@@ -133,8 +163,12 @@ func parseExponentiation(p *Parser) Expression {
 }
 
 func (b *BinaryExpression) typeCheck(p *Parser) {
-	b.Left.typeCheck(p)
-	b.Right.typeCheck(p)
+	if b.Left != nil {
+		b.Left.typeCheck(p)
+	}
+	if b.Right != nil {
+		b.Right.typeCheck(p)
+	}
 	switch b.Operator.Kind() {
 	case
 		Add,
@@ -158,8 +192,8 @@ func (b *BinaryExpression) typeCheck(p *Parser) {
 		Equal,
 		NotEqual:
 		p.typeCheckComparisonExpression(b.Left, b.Right)
-	case Bang:
-		typeCheckBinaryErrorType(p, b.Left, b.Right)
+	case Bang, Hash:
+		checkBinaryType(p, b.Left, b.Right)
 	default:
 		panic(fmt.Sprintf("operator '%v' not implemented", b.Operator.Kind()))
 	}
@@ -222,11 +256,11 @@ func (p *Parser) typeCheckArithmeticExpression(left Expression, right Expression
 		p.error(right, NumberExpected, right.Type())
 	}
 }
-func typeCheckBinaryErrorType(p *Parser, left Expression, right Expression) {
-	if _, ok := left.Type().(Type); !ok {
+func checkBinaryType(p *Parser, left Expression, right Expression) {
+	if left != nil && !isType(left) {
 		p.error(left, TypeExpected)
 	}
-	if _, ok := right.Type().(Type); !ok {
+	if right != nil && !isType(right) {
 		p.error(right, TypeExpected)
 	}
 }

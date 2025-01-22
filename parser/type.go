@@ -134,7 +134,10 @@ func (ta TypeAlias) Text() string {
 		return ta.Name
 	}
 	if ta.Name == "!" {
-		return getResultText(ta)
+		return getBinaryErrorText(ta)
+	}
+	if ta.Name == "#" {
+		return getMapTypeText(ta)
 	}
 	if ta.Name == "?" {
 		return getOptionText(ta)
@@ -154,13 +157,25 @@ func (ta TypeAlias) Text() string {
 	s += params[max].Value.Text()
 	return s + "]"
 }
-func getResultText(ta TypeAlias) string {
+func getBinaryErrorText(ta TypeAlias) string {
 	var s string
 	r, l := ta.Params[0].Value, ta.Params[1].Value
 	if l != nil {
 		s += l.Text()
 	}
 	s += "!"
+	if r != nil {
+		s += r.Text()
+	}
+	return s
+}
+func getMapTypeText(ta TypeAlias) string {
+	var s string
+	l, r := ta.Params[0].Value, ta.Params[1].Value
+	if l != nil {
+		s += l.Text()
+	}
+	s += "#"
 	if r != nil {
 		s += r.Text()
 	}

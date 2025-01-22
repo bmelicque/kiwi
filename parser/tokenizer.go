@@ -64,6 +64,7 @@ const (
 	BinaryOr   // |
 
 	QuestionMark // ?
+	Hash         // #
 
 	Less         // <
 	Greater      // >
@@ -182,7 +183,7 @@ var newLine = regexp.MustCompile(`^\s+`)
 var number = regexp.MustCompile(`^\d+`)
 var str = regexp.MustCompile(`^"(.*?)[^\\]"`)
 var word = regexp.MustCompile(`^[_a-zA-Z][a-zA-Z0-9]*`)
-var operator = regexp.MustCompile(`^(&&=|\|\|=|\+=|-=|\*=|/=|%=|\+\+?|->?|\*\*?|/|%|::|:=|\.\.=?|=>|<=?|>=?|={1,2}|!=?|\|{1,2}|\?|&&?)`)
+var operator = regexp.MustCompile(`^(&&=|\|\|=|\+=|#|-=|\*=|/=|%=|\+\+?|->?|\*\*?|/|%|::|:=|\.\.=?|=>|<=?|>=?|={1,2}|!=?|\|{1,2}|\?|&&?)`)
 var punctuation = regexp.MustCompile(`^(\[|\]|,|:|\(|\)|\{|\}|\.)`)
 
 func split(data []byte, atEOF bool) (advance int, token []byte, err error) {
@@ -319,6 +320,8 @@ func makeToken(text string, loc Loc) Token {
 		return token{NotEqual, loc}
 	case "?":
 		return token{QuestionMark, loc}
+	case "#":
+		return token{Hash, loc}
 	case "[":
 		return token{LeftBracket, loc}
 	case "]":
