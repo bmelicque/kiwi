@@ -71,7 +71,7 @@ func EmitStd(filePath string, flags StandardFlags) {
 		f.WriteString("export let setDocumentBody=d=>(d instanceof NodePointer&&(d=d.get()),b=>d.body=b.value)\n")
 	}
 	if hasFlag(flags, CreateElementFlag) {
-		f.WriteString(`export let createElement=s=>{let[a,t,i,c]=s.match(/^(\w[\w\-_]*)?(?:#(\w[\w\-_]*))?((?:\.\w[\w\-_]*)*)$/);if(!a)throw new Error("Invalid selector");let e=document.createElement(t||"div");if(i)e.id=i.slice(1);if(c)e.classList.add(...c.split(".").slice(1));return e}` + "\n")
+		f.WriteString(`export let createElement=s=>{let[a,t,i,c]=s.match(/^(\w[\w\-_]*)?(?:#(\w[\w\-_]*))?((?:\.\w[\w\-_]*)*)$/);if(!a)throw new Error("Invalid selector");let e=document.createElement(t||"div");if(i)e.id=i;if(c)e.classList.add(...c.split("."));return e}` + "\n")
 	}
 }
 

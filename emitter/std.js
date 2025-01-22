@@ -109,8 +109,8 @@ export function createElement(string) {
 	const match = string.match(/^(\w[\w\-_]*)?(?:#(\w[\w\-_]*))?((?:\.\w[\w\-_]*)*)$/);
 	if (!match[0]) throw new Error("Invalid selector");
 	const el = document.createElement(match[1] || "div");
-	if (match[2]) el.id = match[2].slice(1);
-	if (match[3]) el.classList.add(...match[3].split(".").slice(1));
+	if (match[2]) el.id = match[2];
+	if (match[3]) el.classList.add(...match[3].split("."));
 	return el;
 }
 

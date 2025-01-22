@@ -1,12 +1,11 @@
 - html elements should be used as types, but they are interfaces in JS => on emit instance, if type implements Node and is from dom, use createElement instead (e.g. for `DocumentBody`)
 - object definition: remove order check
   - emitter should just use Object.Members & Object.Default to sort things out
-- list methods
-  - list.filter() mutates the list
-  - filter(list, predicate)
-  - list.sort() sorts in place
-  - sort(list, predicate)
-  - map(list, predicate)
+- list methods (list = `TypeAlias{"[]"}`?)
+  - `filter(list, predicate)` -> js `list.filter(predicate)`
+  - `list.sort()` sorts in place
+  - `sort(list, predicate)` returns a sorted copy
+  - `map(list, predicate)`
 - int vs float?
   - divisions
     - `Math.floor(a/b)`
@@ -17,7 +16,7 @@
 - Match
   - break
     - check if unreachable after break
-  - fallthrough
+  - fallthrough?
   - number
   - string
     - regex
