@@ -52,7 +52,7 @@ func typeCheckModule(p *Parser, source Expression) ExpressionType {
 
 // 'names' should be either *Identifier or *TupleExpression{*Identifier}.
 func declareUseNames(p *Parser, module ExpressionType, names Expression) {
-	tuple := makeTuple(names)
+	tuple := MakeTuple(names)
 	for _, el := range tuple.Elements {
 		id := el.(*Identifier)
 		switch module := module.(type) {

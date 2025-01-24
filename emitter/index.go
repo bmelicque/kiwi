@@ -68,7 +68,7 @@ func (e *Emitter) emit(node parser.Node) {
 	case *parser.IfExpression:
 		e.emitIfStatement(node)
 	case *parser.MatchExpression:
-		e.emitMatchStatement(*node)
+		e.emitMatchStatement(node)
 	case *parser.Exit:
 		e.emitExit(node)
 	case *parser.UseDirective:

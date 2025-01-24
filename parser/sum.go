@@ -102,7 +102,7 @@ func parseSumTypeConstructor(p *Parser) SumTypeConstructor {
 	var params *BracedExpression
 	if p.Peek().Kind() == LeftBrace {
 		params = p.parseBracedExpression()
-		params.Expr = makeTuple(params.Expr)
+		params.Expr = MakeTuple(params.Expr)
 	}
 	return SumTypeConstructor{identifier, params}
 }

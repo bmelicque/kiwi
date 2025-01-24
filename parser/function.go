@@ -248,7 +248,7 @@ func (p *Parser) parseFunctionExpression(typeParams *BracketedExpression) Expres
 	case SlimArrow:
 		p.Consume() // ->
 		if paren != nil {
-			paren.Expr = makeTuple(paren.Expr)
+			paren.Expr = MakeTuple(paren.Expr)
 		}
 		old := p.allowBraceParsing
 		p.allowBraceParsing = false
@@ -262,7 +262,7 @@ func (p *Parser) parseFunctionExpression(typeParams *BracketedExpression) Expres
 	case FatArrow:
 		arrow := p.Consume() // =>
 		if paren != nil {
-			paren.Expr = makeTuple(paren.Expr)
+			paren.Expr = MakeTuple(paren.Expr)
 			validateFunctionParams(p, paren)
 		}
 		outerBrace := p.allowBraceParsing

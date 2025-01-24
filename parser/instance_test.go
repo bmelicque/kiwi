@@ -205,7 +205,7 @@ func TestCheckMapInstanceExpression(t *testing.T) {
 					Operator: token{kind: Hash},
 					Right:    &Literal{token{kind: NumberKeyword}},
 				},
-				Args: &BracedExpression{Expr: makeTuple(nil)},
+				Args: &BracedExpression{Expr: MakeTuple(nil)},
 			},
 			wantError:    false,
 			expectedType: "string#number",
@@ -218,7 +218,7 @@ func TestCheckMapInstanceExpression(t *testing.T) {
 					Operator: token{kind: Hash},
 					Right:    &Literal{token{kind: NumberKeyword}},
 				},
-				Args: &BracedExpression{Expr: makeTuple(
+				Args: &BracedExpression{Expr: MakeTuple(
 					&Entry{
 						Key:   &Literal{literal{kind: StringLiteral}},
 						Value: &Literal{literal{kind: NumberLiteral}},
@@ -236,7 +236,7 @@ func TestCheckMapInstanceExpression(t *testing.T) {
 					Operator: token{kind: Hash},
 					Right:    &Literal{token{kind: NumberKeyword}},
 				},
-				Args: &BracedExpression{Expr: makeTuple(
+				Args: &BracedExpression{Expr: MakeTuple(
 					&Entry{
 						Key:   &Literal{literal{kind: NumberLiteral}},
 						Value: &Literal{literal{kind: NumberLiteral}},
@@ -254,7 +254,7 @@ func TestCheckMapInstanceExpression(t *testing.T) {
 					Operator: token{kind: Hash},
 					Right:    &Literal{token{kind: NumberKeyword}},
 				},
-				Args: &BracedExpression{Expr: makeTuple(
+				Args: &BracedExpression{Expr: MakeTuple(
 					&Entry{
 						Key:   &Literal{literal{kind: StringLiteral}},
 						Value: &Literal{literal{kind: StringLiteral}},
@@ -268,7 +268,7 @@ func TestCheckMapInstanceExpression(t *testing.T) {
 			name: "map implicit instance with arg",
 			expr: &InstanceExpression{
 				Typing: &BinaryExpression{Operator: token{kind: Hash}},
-				Args: &BracedExpression{Expr: makeTuple(
+				Args: &BracedExpression{Expr: MakeTuple(
 					&Entry{
 						Key:   &Literal{literal{kind: StringLiteral}},
 						Value: &Literal{literal{kind: NumberLiteral}},
@@ -282,7 +282,7 @@ func TestCheckMapInstanceExpression(t *testing.T) {
 			name: "map implicit instance with no args",
 			expr: &InstanceExpression{
 				Typing: &BinaryExpression{Operator: token{kind: Hash}},
-				Args:   &BracedExpression{Expr: makeTuple(nil)},
+				Args:   &BracedExpression{Expr: MakeTuple(nil)},
 			},
 			wantError:    true,
 			expectedType: "invalid#invalid",

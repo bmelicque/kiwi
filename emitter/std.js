@@ -14,7 +14,11 @@ export class Sum {
 	}
 }
 
-export class Option extends Sum {}
+export class Option extends Sum {
+	static from(data) {
+		return data != null ? new Option("Some", data) : new Option("None");
+	}
+}
 
 /**
  * Wraps native methods related to DOM. Handles pointers, this values, etc.
@@ -118,11 +122,9 @@ export class DocumentBody extends Sum {}
 
 export function getDocumentBody(document) {
 	if (document instanceof NodePointer) document = document.get();
-	if (document.body == null) return null;
-
 	const body = document.body;
 	const tag = body instanceof HTMLBodyElement ? "Body" : "Frame";
-	return () => new DocumentBody(tag, body);
+	return () => (body == null ? new Option("None") : new Option("Some", new DocumentBody(tag, body)));
 }
 
 /**

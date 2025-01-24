@@ -406,7 +406,7 @@ func (p *Parser) parseInstanceExpression() Expression {
 		return expr
 	}
 	args := p.parseBracedExpression()
-	args.Expr = makeTuple(args.Expr)
+	args.Expr = MakeTuple(args.Expr)
 	return &InstanceExpression{
 		Typing: expr,
 		Args:   args,
@@ -415,6 +415,6 @@ func (p *Parser) parseInstanceExpression() Expression {
 
 func parseInferredInstance(p *Parser, constructor Expression) *InstanceExpression {
 	args := p.parseBracedExpression()
-	args.Expr = makeTuple(args.Expr)
+	args.Expr = MakeTuple(args.Expr)
 	return &InstanceExpression{Typing: constructor, Args: args}
 }

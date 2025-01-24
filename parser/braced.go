@@ -18,7 +18,7 @@ func (b *BracedExpression) typeCheck(p *Parser) {
 		return
 	}
 	b.Expr.typeCheck(p)
-	b.Expr = makeTuple(b.Expr)
+	b.Expr = MakeTuple(b.Expr)
 	for i, element := range b.Expr.(*TupleExpression).Elements {
 		switch element := element.(type) {
 		case *Identifier, *PropertyAccessExpression:

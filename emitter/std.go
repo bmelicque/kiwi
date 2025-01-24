@@ -65,7 +65,7 @@ func EmitStd(filePath string, flags StandardFlags) {
 		f.WriteString(`export class DocumentBody extends Sum{}` + "\n")
 	}
 	if hasFlag(flags, DocumentGetBodyFlag) {
-		f.WriteString(`export let getDocumentBody=d=>()=>(d instanceof NodePointer&&(d=d.get()),d.body&&new DocumentBody(d.body instanceof HTMLBodyElement?"Body":"Frame",d.body))` + "\n")
+		f.WriteString(`export let getDocumentBody=d=>(d instanceof NodePointer&&(d=d.get()),()=>d.body?new Option("Some",new DocumentBody(d.body instanceof HTMLBodyElement?"Body":"Frame",d.body)):new Option("None"))` + "\n")
 	}
 	if hasFlag(flags, DocumentSetBodyFlag) {
 		f.WriteString("export let setDocumentBody=d=>(d instanceof NodePointer&&(d=d.get()),b=>d.body=b.value)\n")
@@ -101,7 +101,7 @@ var flagDependencies = map[StandardFlags]StandardFlags{
 	WrapNodeMethodFlag:  NodePointerFlag,
 	DocumentGetBodyFlag: DocumentBodyFlag,
 	DocumentSetBodyFlag: DocumentBodyFlag,
-	DocumentBodyFlag:    SumFlag,
+	DocumentBodyFlag:    OptionFlag, // actually needs only Sum, but GetBody needs Option
 }
 
 type stdEmitter struct {

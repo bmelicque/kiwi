@@ -53,7 +53,7 @@ func validateTypeParams(p *Parser, bracketed *BracketedExpression) {
 		return
 	}
 
-	tuple := makeTuple(bracketed.Expr)
+	tuple := MakeTuple(bracketed.Expr)
 	for i := range tuple.Elements {
 		tuple.Elements[i] = getValidatedTypeParam(p, tuple.Elements[i])
 	}

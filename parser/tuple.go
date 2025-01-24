@@ -44,7 +44,7 @@ func (t *TupleExpression) Loc() Loc {
 func (t *TupleExpression) Type() ExpressionType { return t.typing }
 
 // Wrap the expression in a tuple if not one
-func makeTuple(expr Expression) *TupleExpression {
+func MakeTuple(expr Expression) *TupleExpression {
 	if expr == nil {
 		return &TupleExpression{nil, Void{}}
 	}

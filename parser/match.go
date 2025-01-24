@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"reflect"
 	"slices"
 )
 
@@ -14,7 +15,7 @@ func (m MatchCase) Type() ExpressionType {
 		return Void{}
 	}
 	expr, ok := m.Statements[len(m.Statements)-1].(Expression)
-	if !ok {
+	if !ok || reflect.ValueOf(expr).IsNil() {
 		return Void{}
 	}
 	t, _ := expr.Type().build(nil, nil)
@@ -64,9 +65,13 @@ func (m *MatchExpression) Type() ExpressionType {
 }
 
 func (m *MatchExpression) typeCheck(p *Parser) {
+	m.Value.typeCheck(p)
 	t := m.Value.Type()
 	if t == nil {
 		return
+	}
+	if alias, ok := t.(TypeAlias); ok {
+		t = alias.Ref
 	}
 	switch t.(type) {
 	case Sum, Trait:
@@ -134,12 +139,12 @@ func parseMatchCase(p *Parser) MatchCase {
 
 func parseCaseStatement(p *Parser) Expression {
 	p.Consume()
+	outer := p.preventColon
+	p.preventColon = true
 	pattern := p.parseExpression()
+	p.preventColon = outer
 	if p.Peek().Kind() == Colon || recoverBadTokens(p, Colon) {
 		p.Consume()
-	}
-	if p.Peek().Kind() != EOL {
-		recoverBadTokens(p, EOL)
 	}
 	p.DiscardLineBreaks()
 	return pattern

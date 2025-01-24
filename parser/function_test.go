@@ -107,7 +107,7 @@ func TestCheckFunctionExpression(t *testing.T) {
 		{
 			name: "no params, no return",
 			expr: &FunctionExpression{
-				Params: &ParenthesizedExpression{Expr: makeTuple(nil)},
+				Params: &ParenthesizedExpression{Expr: MakeTuple(nil)},
 				Body:   MakeBlock([]Node{}),
 			},
 			wantError:    false,
@@ -116,7 +116,7 @@ func TestCheckFunctionExpression(t *testing.T) {
 		{
 			name: "no params, void return",
 			expr: &FunctionExpression{
-				Params:   &ParenthesizedExpression{Expr: makeTuple(nil)},
+				Params:   &ParenthesizedExpression{Expr: MakeTuple(nil)},
 				Explicit: &Identifier{Token: literal{kind: Name, value: "_"}},
 				Body:     MakeBlock([]Node{}),
 			},

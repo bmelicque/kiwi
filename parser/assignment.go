@@ -77,7 +77,7 @@ func (p *Parser) parseAssignment() Node {
 	}
 	init := p.parseExpression()
 	if c, ok := expr.(*ComputedAccessExpression); ok && operator.Kind() == Define {
-		c.Property.Expr = makeTuple(c.Property.Expr)
+		c.Property.Expr = MakeTuple(c.Property.Expr)
 		validateTypeParams(p, c.Property)
 		expr = c
 	}

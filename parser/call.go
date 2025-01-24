@@ -27,7 +27,7 @@ func (c *CallExpression) Type() ExpressionType { return c.typing }
 // It can be either a function call or an instanciation.
 func parseCallExpression(p *Parser, callee Expression) *CallExpression {
 	args := p.parseParenthesizedExpression()
-	args.Expr = makeTuple(args.Expr)
+	args.Expr = MakeTuple(args.Expr)
 	return &CallExpression{callee, args, nil}
 }
 
@@ -39,6 +39,7 @@ func (c *CallExpression) typeCheck(p *Parser) {
 	default:
 		p.error(c.Callee, FunctionExpressionExpected)
 		c.Args.typeCheck(p)
+		c.typing = Invalid{}
 	}
 }
 
