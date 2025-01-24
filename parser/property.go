@@ -174,6 +174,8 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 				p.error(expr.Property, PropertyDoesNotExist, name)
 				expr.typing = Invalid{}
 			}
+		case Sum:
+			expr.typing = t.Methods[name]
 		}
 	case Module:
 		expr.typing, _ = t.GetOwned(name)

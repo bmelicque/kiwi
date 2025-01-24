@@ -37,7 +37,7 @@ func EmitStd(filePath string, flags StandardFlags) {
 	}
 	defer f.Close()
 
-	if hasFlag(flags, SumFlag|OptionFlag) {
+	if hasFlag(flags, SumFlag) {
 		f.WriteString("export function Sum(t,v){this.tag=t;this.value=v}\n")
 	}
 	if hasFlag(flags, OptionFlag) {
@@ -46,7 +46,7 @@ func EmitStd(filePath string, flags StandardFlags) {
 	if hasFlag(flags, PointerFlag) {
 		f.WriteString("export class Pointer{constructor(c,n){this.c=c;this.n=n}get(){return this.c?.[this.n]??this.n}set(v){this.c?(this.c[this.n]=v):(this.n=v)}}\n")
 	}
-	if hasFlag(flags, NodePointerFlag|DeepEqualFlag|WrapNodeMethodFlag) {
+	if hasFlag(flags, NodePointerFlag) {
 		f.WriteString("export class NodePointer{constructor(v){this._=v}get(){return this._}set(v){this._.parentNode?.replaceChild(this._,v);this._=v}}\n")
 	}
 	if hasFlag(flags, DeepEqualFlag) {
@@ -71,7 +71,7 @@ func EmitStd(filePath string, flags StandardFlags) {
 		f.WriteString("export let setDocumentBody=d=>(d instanceof NodePointer&&(d=d.get()),b=>d.body=b.value)\n")
 	}
 	if hasFlag(flags, CreateElementFlag) {
-		f.WriteString(`export let createElement=s=>{let[a,t,i,c]=s.match(/^(\w[\w\-_]*)?(?:#(\w[\w\-_]*))?((?:\.\w[\w\-_]*)*)$/);if(!a)throw new Error("Invalid selector");let e=document.createElement(t||"div");if(i)e.id=i;if(c)e.classList.add(...c.split("."));return e}` + "\n")
+		f.WriteString(`export let createElement=s=>{let[a,t,i,c]=s.match(/^(\w[\w\-_]*)?(?:#(\w[\w\-_]*))?((?:\.\w[\w\-_]*)*)$/);if(!a)throw new Error("Invalid selector");let e=document.createElement(t||"div");if(i)e.id=i;if(c)e.classList.add(...c.split(".").slice(1));return e}` + "\n")
 	}
 }
 
@@ -95,12 +95,24 @@ const (
 	CreateElementFlag
 )
 
+var flagDependencies = map[StandardFlags]StandardFlags{
+	OptionFlag:          SumFlag,
+	DeepEqualFlag:       NodePointerFlag,
+	WrapNodeMethodFlag:  NodePointerFlag,
+	DocumentGetBodyFlag: DocumentBodyFlag,
+	DocumentSetBodyFlag: DocumentBodyFlag,
+	DocumentBodyFlag:    SumFlag,
+}
+
 type stdEmitter struct {
 	flags StandardFlags
 }
 
 func (e *stdEmitter) addFlag(flag StandardFlags) {
 	e.flags |= flag
+	if f, ok := flagDependencies[flag]; ok {
+		e.addFlag(f)
+	}
 }
 
 func hasFlag(flags, flag StandardFlags) bool {
