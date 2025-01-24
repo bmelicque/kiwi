@@ -22,9 +22,45 @@ func (m MatchCase) Type() ExpressionType {
 	return t
 }
 
+func (m *MatchCase) typeCheck(p *Parser, pattern ExpressionType) {
+	p.pushScope(NewScope(BlockScope))
+	p.typeCheckPattern(m.Pattern, pattern)
+	for j := range m.Statements {
+		m.Statements[j].typeCheck(p)
+	}
+	p.dropScope()
+}
+
 func (m MatchCase) IsCatchall() bool {
 	identifier, ok := m.Pattern.(*Identifier)
 	return ok && identifier.Text() == "_"
+}
+
+func parseMatchCase(p *Parser) MatchCase {
+	pattern := parseCaseStatement(p)
+	stopAt := []TokenKind{EOF, RightBrace, CaseKeyword}
+	statements := []Node{}
+	for !slices.Contains(stopAt, p.Peek().Kind()) {
+		statements = append(statements, p.parseStatement())
+		p.DiscardLineBreaks()
+	}
+	return MatchCase{
+		Pattern:    pattern,
+		Statements: statements,
+	}
+}
+
+func parseCaseStatement(p *Parser) Expression {
+	p.Consume()
+	outer := p.preventColon
+	p.preventColon = true
+	pattern := p.parseExpression()
+	p.preventColon = outer
+	if p.Peek().Kind() == Colon || recoverBadTokens(p, Colon) {
+		p.Consume()
+	}
+	p.DiscardLineBreaks()
+	return pattern
 }
 
 type MatchExpression struct {
@@ -79,12 +115,7 @@ func (m *MatchExpression) typeCheck(p *Parser) {
 		p.error(m.Value, Unmatchable, t)
 	}
 	for i := range m.Cases {
-		p.pushScope(NewScope(BlockScope))
-		p.typeCheckPattern(m.Cases[i].Pattern, t)
-		for j := range m.Cases[i].Statements {
-			m.Cases[i].Statements[j].typeCheck(p)
-		}
-		p.dropScope()
+		m.Cases[i].typeCheck(p, t)
 	}
 	reportMissingCases(p, m.Cases, t)
 }
@@ -121,33 +152,6 @@ func (p *Parser) parseMatchExpression() Expression {
 		p.error(&expr, MissingElements, "at least 2", len(cases))
 	}
 	return &expr
-}
-
-func parseMatchCase(p *Parser) MatchCase {
-	pattern := parseCaseStatement(p)
-	stopAt := []TokenKind{EOF, RightBrace, CaseKeyword}
-	statements := []Node{}
-	for !slices.Contains(stopAt, p.Peek().Kind()) {
-		statements = append(statements, p.parseStatement())
-		p.DiscardLineBreaks()
-	}
-	return MatchCase{
-		Pattern:    pattern,
-		Statements: statements,
-	}
-}
-
-func parseCaseStatement(p *Parser) Expression {
-	p.Consume()
-	outer := p.preventColon
-	p.preventColon = true
-	pattern := p.parseExpression()
-	p.preventColon = outer
-	if p.Peek().Kind() == Colon || recoverBadTokens(p, Colon) {
-		p.Consume()
-	}
-	p.DiscardLineBreaks()
-	return pattern
 }
 
 func validateCaseList(p *Parser, cases []MatchCase) {
