@@ -463,6 +463,7 @@ func addParamToScope(p *Parser, expr Expression) {
 		p.scope.Add(param.Identifier.Text(), param.Loc(), Invalid{})
 		return
 	}
+	param.Complement.typeCheck(p)
 	if _, ok := param.Complement.Type().(Type); !ok {
 		p.error(param, TypeExpected)
 		p.scope.Add(param.Identifier.Text(), param.Loc(), Invalid{})

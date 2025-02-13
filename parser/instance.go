@@ -131,7 +131,7 @@ func checkObjectInstanciation(p *Parser, i *InstanceExpression) {
 		}
 	}
 
-	reportExcessMembers(p, object, args)
+	reportExcessMembers(p, alias, args)
 	reportMissingMembers(p, object, i.Args)
 
 	i.typing = alias
@@ -160,7 +160,8 @@ func getFormattedStructEntry(p *Parser, received Expression) *Entry {
 	}
 	return entry
 }
-func reportExcessMembers(p *Parser, expected Object, received []Expression) {
+func reportExcessMembers(p *Parser, alias TypeAlias, received []Expression) {
+	expected := alias.Ref.(Object)
 	for _, arg := range received {
 		namedArg, ok := arg.(*Entry)
 		if !ok || namedArg.Key == nil {
@@ -170,7 +171,7 @@ func reportExcessMembers(p *Parser, expected Object, received []Expression) {
 		if _, ok := expected.GetOwned(name); ok {
 			continue
 		}
-		p.error(arg, PropertyDoesNotExist, name)
+		p.error(arg, PropertyDoesNotExist, name, alias)
 	}
 }
 func reportMissingMembers(p *Parser, expected Object, received *BracedExpression) {

@@ -120,7 +120,7 @@ func typeCheckSumConstructorAccess(p *Parser, expr *PropertyAccessExpression) {
 
 	expr.typing = getSumTypeConstructor(expr.Expr.Type().(Type), name)
 	if expr.typing == (Invalid{}) {
-		p.error(expr.Property, PropertyDoesNotExist, name)
+		p.error(expr.Property, PropertyDoesNotExist, name, expr.Expr.Type())
 	}
 }
 
@@ -171,7 +171,7 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 				p.error(expr.Property, MultipleEmbeddedProperties, name)
 				expr.typing = Invalid{}
 			} else {
-				p.error(expr.Property, PropertyDoesNotExist, name)
+				p.error(expr.Property, PropertyDoesNotExist, name, expr.Expr.Type())
 				expr.typing = Invalid{}
 			}
 		case Sum:
@@ -183,7 +183,7 @@ func typeCheckPropertyAccess(p *Parser, expr *PropertyAccessExpression) {
 		expr.typing = getListMethod(t, name)
 	}
 	if expr.typing == nil {
-		p.error(expr.Property, PropertyDoesNotExist, name)
+		p.error(expr.Property, PropertyDoesNotExist, name, expr.Expr.Type())
 		expr.typing = Invalid{}
 	}
 }

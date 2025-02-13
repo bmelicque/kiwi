@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -57,6 +58,12 @@ func TestParseFunctionExpression(t *testing.T) {
 			expectedLoc: Loc{Position{1, 1}, Position{1, 27}},
 		},
 		{
+			name:        "one ref param",
+			source:      "(n &number) => {}",
+			wantError:   false,
+			expectedLoc: Loc{Position{1, 1}, Position{1, 18}},
+		},
+		{
 			name:        "shortened params", // for HOF
 			source:      "(a, b) => {}",
 			wantError:   false,
@@ -79,7 +86,7 @@ func TestParseFunctionExpression(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			parser := MakeParser(strings.NewReader(tt.source))
-			expr := parser.parseBinaryExpression()
+			expr := parser.parseExpression()
 			if tt.wantError && len(parser.errors) == 0 {
 				t.Error("Got no errors, want one\n")
 			}
@@ -89,7 +96,43 @@ func TestParseFunctionExpression(t *testing.T) {
 			if expr.Loc() != tt.expectedLoc {
 				t.Errorf("Got loc %v, want %v", expr.Loc(), tt.expectedLoc)
 			}
+			if _, ok := expr.(*FunctionExpression); !ok {
+				t.Errorf("Got node type %v, want *FunctionExpression", reflect.TypeOf(expr))
+			}
 		})
+	}
+}
+
+func TestParseCheckRefParam(t *testing.T) {
+	source := "(n &number) => { n }"
+
+	parser := MakeParser(strings.NewReader(source))
+	expr := parser.parseExpression()
+	if len(parser.errors) != 0 {
+		t.Error("Got errors, want none\n")
+		for _, err := range parser.errors {
+			t.Log(err)
+		}
+	}
+	f, ok := expr.(*FunctionExpression)
+	if !ok {
+		t.Fatalf("Got node type %v, want *FunctionExpression", reflect.TypeOf(expr))
+	}
+	params := f.Params.Expr.(*TupleExpression).Elements
+	if len(params) != 1 {
+		t.Fatalf("Got %v params, want 1", len(params))
+	}
+
+	if _, ok := params[0].(*Param); !ok {
+		t.Fatalf("Got %v, want *parser.Param", reflect.TypeOf(params[0]))
+	}
+
+	expr.typeCheck(parser)
+	if len(parser.errors) != 0 {
+		t.Error("Got errors, want none\n")
+		for _, err := range parser.errors {
+			t.Log(err)
+		}
 	}
 }
 
@@ -122,6 +165,22 @@ func TestCheckFunctionExpression(t *testing.T) {
 			},
 			wantError:    false,
 			expectedType: "() -> ()",
+		},
+		{
+			name: "one param",
+			expr: &FunctionExpression{
+				Params: &ParenthesizedExpression{Expr: MakeTuple(
+					&Param{
+						Identifier: &Identifier{Token: literal{kind: Name, value: "n"}},
+						Complement: &Literal{Token: token{kind: NumberKeyword}},
+					},
+				)},
+				Body: MakeBlock([]Node{
+					&Identifier{Token: literal{kind: Name, value: "n"}},
+				}),
+			},
+			wantError:    false,
+			expectedType: "(number) -> number",
 		},
 	}
 

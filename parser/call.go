@@ -33,11 +33,13 @@ func parseCallExpression(p *Parser, callee Expression) *CallExpression {
 
 func (c *CallExpression) typeCheck(p *Parser) {
 	c.Callee.typeCheck(p)
-	switch c.Callee.Type().(type) {
+	switch t := c.Callee.Type().(type) {
 	case Function:
 		typeCheckFunctionCall(p, c)
 	default:
-		p.error(c.Callee, FunctionExpressionExpected)
+		if _, ok := t.(Invalid); !ok {
+			p.error(c.Callee, FunctionExpressionExpected)
+		}
 		c.Args.typeCheck(p)
 		c.typing = Invalid{}
 	}

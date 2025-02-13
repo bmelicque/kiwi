@@ -277,8 +277,8 @@ func (p ParserError) Text() string {
 		return fmt.Sprintf("Types %v and %v do not match", t1, t2)
 	case PropertyDoesNotExist:
 		name := p.Complements[0]
-		// parent := p.Complements[1].(ExpressionType).Text()
-		return fmt.Sprintf("Property '%v' does not exist on this type", name)
+		parent := p.Complements[1].(ExpressionType).Text()
+		return fmt.Sprintf("Property '%v' does not exist on type %v", name, parent)
 	case MultipleEmbeddedProperties:
 		name := p.Complements[0]
 		// parent := p.Complements[1].(ExpressionType).Text()
