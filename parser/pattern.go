@@ -3,42 +3,52 @@ package parser
 func (p *Parser) typeCheckPattern(pattern Expression, matched ExpressionType) {
 	switch matched := matched.(type) {
 	case Sum:
+		validateSumPattern(p, pattern, matched)
 	case Trait:
 		validateTraitPattern(p, pattern, matched)
 	}
 }
 
-func validateTraitPattern(p *Parser, pattern Expression, trait Trait) {
-	instance, ok := pattern.(*InstanceExpression)
+func validateSumPattern(p *Parser, pattern Expression, sum Sum) {
+	param, ok := pattern.(*Param)
 	if !ok {
 		p.error(pattern, InvalidPattern)
 		return
 	}
-	callee, ok := instance.Typing.(*Identifier)
-	if !ok || !callee.IsType() {
-		p.error(instance.Typing, TypeIdentifierExpected)
+	typing, ok := param.Complement.(*Identifier)
+	if !ok || !typing.IsType() {
+		p.error(param.Complement, TypeIdentifierExpected)
 		return
 	}
-	v, ok := p.scope.Find(callee.Text())
+	i := sum.getMember(typing.Text())
+	if i == (Invalid{}) {
+		p.error(typing, TypeDoesNotImplement, i)
+	}
+	p.scope.Add(param.Identifier.Text(), param.Identifier.Loc(), i)
+}
+
+func validateTraitPattern(p *Parser, pattern Expression, trait Trait) {
+	param, ok := pattern.(*Param)
 	if !ok {
-		p.error(callee, CannotFind, callee.Text())
+		p.error(pattern, InvalidPattern)
+		return
+	}
+	typing, ok := param.Complement.(*Identifier)
+	if !ok || !typing.IsType() {
+		p.error(param.Complement, TypeIdentifierExpected)
+		return
+	}
+	typing.typeCheck(p)
+	v, ok := p.scope.Find(typing.Text())
+	if !ok {
+		p.error(typing, CannotFind, typing.Text())
 		return
 	}
 	alias, ok := v.Typing.(TypeAlias)
 	if !ok || alias.Implements(trait) {
-		p.error(callee, TypeDoesNotImplement, callee.Type())
+		p.error(typing, TypeDoesNotImplement, typing.Type())
 		return
 	}
 
-	elements := instance.Args.Expr.(*TupleExpression).Elements
-	if len(elements) != 1 {
-		p.error(instance.Args, TooManyElements, 1, len(elements))
-		return
-	}
-	identifier, ok := elements[0].(*Identifier)
-	if !ok {
-		p.error(elements[0], InvalidPattern)
-		return
-	}
-	p.scope.Add(identifier.Text(), identifier.Loc(), alias)
+	p.scope.Add(param.Identifier.Text(), param.Identifier.Loc(), alias)
 }

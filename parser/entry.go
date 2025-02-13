@@ -4,6 +4,7 @@ package parser
 // The key can be either an identifier, a [bracketed expression] or a literal.
 type Entry struct {
 	Key   Expression // *BracketedExpression | *Identifier | *Literal
+	Colon Token
 	Value Expression
 }
 
@@ -22,12 +23,12 @@ func (e *Entry) Loc() Loc {
 	if e.Key != nil {
 		start = e.Key.Loc().Start
 	} else {
-		start = e.Value.Loc().Start
+		start = e.Colon.Loc().Start
 	}
 	if e.Value != nil {
 		end = e.Value.Loc().End
 	} else {
-		end = e.Key.Loc().End
+		end = e.Colon.Loc().End
 	}
 	return Loc{start, end}
 }
@@ -95,7 +96,7 @@ func parseEntry(p *Parser, expr Expression) Expression {
 	if p.preventColon {
 		return expr
 	}
-	p.Consume()
+	colon := p.Consume()
 	switch expr.(type) {
 	case *BracketedExpression, *Identifier, *Literal:
 	default:
@@ -105,6 +106,7 @@ func parseEntry(p *Parser, expr Expression) Expression {
 	complement := p.parseBinaryExpression()
 	return &Entry{
 		Key:   expr,
+		Colon: colon,
 		Value: complement,
 	}
 }

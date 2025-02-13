@@ -52,7 +52,7 @@ func (e *Emitter) emitAtTopLevel(node parser.Node) {
 
 func (e *Emitter) emit(node parser.Node) {
 	//TODO: if not node that needs extraction, look if contains one
-	if !isUninlinable(node) {
+	if !needsEscape(node) {
 		e.extractUninlinables(node)
 	}
 	switch node := node.(type) {
@@ -92,7 +92,7 @@ func (e *Emitter) emitExpression(expr parser.Expression) {
 	case *parser.CatchExpression:
 		id, ok := e.uninlinables[expr]
 		if !ok {
-			panic("Catch expression should have been extracted!")
+			panic("Catch expression should have been escaped!")
 		}
 		e.write(fmt.Sprintf("__tmp%v", id))
 		delete(e.uninlinables, expr)

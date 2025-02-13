@@ -13,17 +13,12 @@
   - `Sum.Constructor{{x: 1}}`
 - change semantics? => `:=` is mutable, `::` is constant
 - Match
-  - break
-    - check if unreachable after break
-  - fallthrough?
   - number
   - string
     - regex
   - lists
   - tuple
-  - update syntax to `pattern: expr`
-    - for complex expr `pattern: {block}`
-  - check all types in scope for traits
+  - check all types in scope for traits?
   - `isExiting(map)` returns `true` if all cases exit
 - variadic functions
 - WaitGroup()

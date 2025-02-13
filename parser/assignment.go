@@ -323,7 +323,7 @@ func typeCheckDeclaration(p *Parser, a *Assignment) {
 		declareVariable(p, pattern, a.Value.Type())
 	case *TupleExpression:
 		declareTuple(p, pattern, a.Value.Type())
-	case *InstanceExpression:
+	case *Param:
 		if !p.conditionalDeclaration {
 			p.error(a.Pattern, InvalidPattern)
 			return

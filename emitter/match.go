@@ -2,7 +2,6 @@ package emitter
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/bmelicque/test-parser/parser"
 )
@@ -19,6 +18,7 @@ func (e *Emitter) emitMatchStatement(m *parser.MatchExpression) {
 		emitSumMatch(e, m)
 		return
 	}
+	e.indent()
 	e.write("switch (_m.constructor) {\n")
 	for _, c := range m.Cases {
 		e.indent()
@@ -39,7 +39,8 @@ func (e *Emitter) emitMatchStatement(m *parser.MatchExpression) {
 			e.indent()
 			e.write(fmt.Sprintf("let %v = _m;\n", pattern))
 		}
-		emitCaseStatements(e, c.Statements)
+		e.emitExpression(c.Consequent)
+		e.write(";\n")
 		e.depth--
 		e.indent()
 		e.write("}\n")
@@ -49,19 +50,22 @@ func (e *Emitter) emitMatchStatement(m *parser.MatchExpression) {
 }
 
 func emitSumMatch(e *Emitter, m *parser.MatchExpression) {
+	e.indent()
 	e.write("switch (_m.tag) {\n")
 	for _, c := range m.Cases {
 		e.indent()
 		if c.IsCatchall() {
 			e.write("default:")
-		} else if call, ok := c.Pattern.(*parser.InstanceExpression); ok {
+		} else if param, ok := c.Pattern.(*parser.Param); ok {
 			e.write("case \"")
-			e.emitExpression(call.Typing)
+			e.emitExpression(param.Complement)
 			e.write("\": {\n")
 		} else if id, ok := c.Pattern.(*parser.Identifier); ok {
 			e.write("case \"")
 			e.emitIdentifier(id)
 			e.write("\": {\n")
+		} else {
+			panic("unexpected case pattern")
 		}
 		e.depth++
 		if c.Pattern != nil {
@@ -69,7 +73,10 @@ func emitSumMatch(e *Emitter, m *parser.MatchExpression) {
 			e.indent()
 			e.write(fmt.Sprintf("let %v = _m.value;\n", pattern))
 		}
-		emitCaseStatements(e, c.Statements)
+		e.indent()
+		e.emitExpression(c.Consequent)
+		e.write(";\n")
+		e.depth--
 		e.indent()
 		e.write("}\n")
 	}
@@ -77,31 +84,12 @@ func emitSumMatch(e *Emitter, m *parser.MatchExpression) {
 	e.write("}\n")
 }
 
-func emitCaseStatements(e *Emitter, statements []parser.Node) {
-	for _, s := range statements {
-		e.indent()
-		e.emit(s)
-	}
-	e.indent()
-	e.write("break;\n")
-	e.depth--
-}
-
 func getMatchedName(pattern parser.Expression) string {
 	switch pattern := pattern.(type) {
 	case *parser.Identifier:
 		return pattern.Text()
-	case *parser.InstanceExpression:
-		elements := parser.MakeTuple(pattern.Args.Expr).Elements
-		last := len(elements) - 1
-		builder := strings.Builder{}
-		for _, element := range elements[:last] {
-			id := element.(*parser.Identifier)
-			builder.WriteString(id.Text())
-			builder.WriteString(", ")
-		}
-		builder.WriteString(elements[last].(*parser.Identifier).Text())
-		return builder.String()
+	case *parser.Param:
+		return pattern.Identifier.Text()
 	default:
 		panic("unexpected case param")
 	}

@@ -13,26 +13,32 @@ func TestParseMatchCase(t *testing.T) {
 		isCatchAll bool
 	}{
 		{
-			name:       "case enum",
-			source:     "case None:",
+			name:       "enum",
+			source:     "None: 42",
 			wantError:  false,
 			isCatchAll: false,
 		},
 		{
 			name:       "case constructor",
-			source:     "case Some{s}:",
+			source:     "s Some: s",
 			wantError:  false,
 			isCatchAll: false,
 		},
 		{
-			name:       "case constructor with statement",
-			source:     "case Some{s}: s",
-			wantError:  false,
+			name:       "missing consequent",
+			source:     "None:",
+			wantError:  true,
+			isCatchAll: false,
+		},
+		{
+			name:       "missing consequent after param",
+			source:     "s Some:",
+			wantError:  true,
 			isCatchAll: false,
 		},
 		{
 			name:       "catch-all case",
-			source:     "case _:",
+			source:     "_: 42",
 			wantError:  false,
 			isCatchAll: true,
 		},
@@ -58,29 +64,27 @@ func TestParseMatchCase(t *testing.T) {
 
 func TestCheckMatchCase(t *testing.T) {
 	testCases := []struct {
-		statements   []Node
+		consequent   Expression
 		expectedType ExpressionType
 	}{
 		{
-			statements:   []Node{},
+			consequent:   &Block{},
 			expectedType: Void{},
 		},
 		{
-			statements: []Node{
-				&Literal{literal{kind: NumberLiteral}},
-			},
+			consequent:   &Literal{literal{kind: NumberLiteral}},
 			expectedType: Number{},
 		},
 		{
-			statements: []Node{
+			consequent: &Block{Statements: []Node{
 				&Exit{Operator: token{kind: ReturnKeyword}},
-			},
+			}},
 			expectedType: Void{},
 		},
 	}
 
 	for _, tc := range testCases {
-		matchCase := MatchCase{Statements: tc.statements}
+		matchCase := MatchCase{Consequent: tc.consequent}
 		if matchCase.Type() != tc.expectedType {
 			t.Errorf("Type() = %v, want %v", matchCase.Type(), tc.expectedType)
 		}
@@ -89,8 +93,7 @@ func TestCheckMatchCase(t *testing.T) {
 
 func TestMatch(t *testing.T) {
 	str := "match option {\n"
-	str += "case Some{s}:\n"
-	str += "    return s\n"
+	str += "s Some: s\n"
 	str += "}"
 	parser := MakeParser(strings.NewReader(str))
 	node := parser.parseMatchExpression()

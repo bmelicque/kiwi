@@ -1,32 +1,28 @@
 package parser
 
 import (
-	"reflect"
 	"slices"
 )
 
 type MatchCase struct {
 	Pattern    Expression
-	Statements []Node
+	Colon      Token
+	Consequent Expression
 }
 
 func (m MatchCase) Type() ExpressionType {
-	if len(m.Statements) == 0 {
-		return Void{}
+	if m.Consequent == nil {
+		return Invalid{}
 	}
-	expr, ok := m.Statements[len(m.Statements)-1].(Expression)
-	if !ok || reflect.ValueOf(expr).IsNil() {
-		return Void{}
-	}
-	t, _ := expr.Type().build(nil, nil)
-	return t
+
+	return m.Consequent.Type()
 }
 
 func (m *MatchCase) typeCheck(p *Parser, pattern ExpressionType) {
 	p.pushScope(NewScope(BlockScope))
 	p.typeCheckPattern(m.Pattern, pattern)
-	for j := range m.Statements {
-		m.Statements[j].typeCheck(p)
+	if m.Consequent != nil {
+		m.Consequent.typeCheck(p)
 	}
 	p.dropScope()
 }
@@ -36,31 +32,49 @@ func (m MatchCase) IsCatchall() bool {
 	return ok && identifier.Text() == "_"
 }
 
-func parseMatchCase(p *Parser) MatchCase {
-	pattern := parseCaseStatement(p)
-	stopAt := []TokenKind{EOF, RightBrace, CaseKeyword}
-	statements := []Node{}
-	for !slices.Contains(stopAt, p.Peek().Kind()) {
-		statements = append(statements, p.parseStatement())
-		p.DiscardLineBreaks()
+func (m MatchCase) Loc() Loc {
+	var start, end Position
+	if m.Pattern != nil {
+		start = m.Pattern.Loc().Start
+	} else {
+		start = m.Colon.Loc().Start
 	}
-	return MatchCase{
-		Pattern:    pattern,
-		Statements: statements,
+	if m.Consequent != nil {
+		end = m.Consequent.Loc().End
+	} else {
+		end = m.Colon.Loc().End
 	}
+	return Loc{start, end}
 }
 
-func parseCaseStatement(p *Parser) Expression {
-	p.Consume()
-	outer := p.preventColon
-	p.preventColon = true
-	pattern := p.parseExpression()
-	p.preventColon = outer
-	if p.Peek().Kind() == Colon || recoverBadTokens(p, Colon) {
-		p.Consume()
+func parseMatchCase(p *Parser) MatchCase {
+	pattern := p.parseTaggedExpression()
+	switch pattern := pattern.(type) {
+	case *Entry:
+		if pattern.Value == nil {
+			p.error(&Literal{p.Peek()}, ExpressionExpected)
+		}
+		return MatchCase{
+			Pattern:    pattern.Key,
+			Colon:      pattern.Colon,
+			Consequent: pattern.Value,
+		}
+	default:
+		// Note: this default includes *Param as a valid pattern
+		if p.Peek().Kind() != Colon && !recoverBadTokens(p, Colon) {
+			return MatchCase{Pattern: pattern}
+		}
+		colon := p.Consume()
+		consequent := p.parseExpression()
+		if consequent == nil {
+			p.error(&Literal{p.Peek()}, ExpressionExpected)
+		}
+		return MatchCase{
+			Pattern:    pattern,
+			Colon:      colon,
+			Consequent: consequent,
+		}
 	}
-	p.DiscardLineBreaks()
-	return pattern
 }
 
 type MatchExpression struct {
@@ -79,8 +93,8 @@ func (m *MatchExpression) getChildren() []Node {
 		if m.Cases[i].Pattern != nil {
 			children = append(children, m.Cases[i].Pattern)
 		}
-		if len(m.Cases[i].Statements) > 0 {
-			children = append(children, m.Cases[i].Statements...)
+		if m.Cases[i].Consequent != nil {
+			children = append(children, m.Cases[i].Consequent)
 		}
 	}
 	return children
@@ -137,6 +151,10 @@ func (p *Parser) parseMatchExpression() Expression {
 	stopAt := []TokenKind{RightBrace, EOF}
 	for !slices.Contains(stopAt, p.Peek().Kind()) {
 		cases = append(cases, parseMatchCase(p))
+		if p.Peek().Kind() != EOL {
+			recoverBadTokens(p, EOL)
+		}
+		p.DiscardLineBreaks()
 	}
 	validateCaseList(p, cases)
 
@@ -157,9 +175,6 @@ func (p *Parser) parseMatchExpression() Expression {
 func validateCaseList(p *Parser, cases []MatchCase) {
 	if len(cases) == 0 {
 		return
-	}
-	if cases[0].Pattern == nil {
-		p.error(cases[0].Statements[0], TokenExpected, token{kind: CaseKeyword})
 	}
 	reportUnreachableCases(p, cases)
 	reportDuplicatedCases(p, cases)
@@ -207,7 +222,7 @@ func reportMissingCases(p *Parser, cases []MatchCase, matched ExpressionType) {
 	last := cases[len(cases)-1]
 	loc := Loc{
 		cases[0].Pattern.Loc().Start,
-		last.Statements[len(last.Statements)-1].Loc().End,
+		last.Loc().End,
 	}
 	names := map[string]bool{}
 	for _, c := range cases {

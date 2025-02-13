@@ -20,7 +20,7 @@ func (e *Emitter) findUninlinables(node parser.Node) {
 			skip()
 			return
 		}
-		if isUninlinable(node) {
+		if needsEscape(node) {
 			e.uninlinables[node] = len(e.uninlinables)
 			skip()
 		}
@@ -32,7 +32,7 @@ func isTypeDef(node parser.Node) bool {
 	return ok && a.Operator.Kind() == parser.Define && isTypePattern(a.Pattern)
 }
 
-func isUninlinable(node parser.Node) bool {
+func needsEscape(node parser.Node) bool {
 	switch n := node.(type) {
 	case *parser.CatchExpression,
 		*parser.ForExpression,
