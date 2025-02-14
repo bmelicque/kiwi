@@ -131,6 +131,18 @@ func isModuleAccess(pattern Expression) bool {
 	return isModule
 }
 
+func isTypePattern(expr Expression) bool {
+	c, ok := expr.(*ComputedAccessExpression)
+	if ok {
+		expr = c.Expr
+	}
+	identifier, ok := expr.(*Identifier)
+	if !ok {
+		return false
+	}
+	return identifier.IsType()
+}
+
 func isType(expr Expression) bool {
 	_, ok := expr.Type().(Type)
 	return ok

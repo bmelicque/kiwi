@@ -52,10 +52,52 @@ func (a *Assignment) getChildren() []Node {
 
 func (p *Parser) parseAssignment() Node {
 	expr := p.parseExpression()
+	operator, ok := parseAssignmentOperator(p)
+	if !ok {
+		return expr
+	}
+	if expr == nil {
+		p.error(&Literal{operator}, ExpressionExpected)
+	}
+	init := p.parseExpression()
+	if init == nil {
+		p.error(&Literal{p.Peek()}, ExpressionExpected)
+	}
+	a := &Assignment{expr, init, operator}
+	validateAssignee(p, a)
+	formatGenericTypeDef(p, a)
+	formatStructDef(p, a)
+	formatMethodDef(p, a)
+	if operator.Kind() == Declare && isTypePattern(expr) {
+		p.error(expr, NonConstantTypeDeclaration)
+	}
+	return a
+}
 
-	var operator Token
-	next := p.Peek()
-	switch next.Kind() {
+// Parse an assignment operator (=, +=, :=, etc.).
+// Returns (operator, true) if found, else (Token{}, false)
+func parseAssignmentOperator(p *Parser) (Token, bool) {
+	switch p.Peek().Kind() {
+	case Assign,
+		AddAssign,
+		ConcatAssign,
+		SubAssign,
+		MulAssign,
+		DivAssign,
+		ModAssign,
+		LogicalAndAssign,
+		LogicalOrAssign,
+		Declare,
+		Define:
+		return p.Consume(), true
+	default:
+		return token{}, false
+	}
+}
+
+// Check whether pattern on the left of assignment operator is valid.
+func validateAssignee(p *Parser, a *Assignment) {
+	switch a.Operator.Kind() {
 	case Assign,
 		AddAssign,
 		ConcatAssign,
@@ -65,33 +107,10 @@ func (p *Parser) parseAssignment() Node {
 		ModAssign,
 		LogicalAndAssign,
 		LogicalOrAssign:
-		if !isValidAssignee(expr) {
-			p.error(expr, InvalidPattern)
-			expr = nil
+		if a.Pattern != nil && !isValidAssignee(a.Pattern) {
+			p.error(a.Pattern, InvalidPattern)
 		}
-		operator = p.Consume()
-	case Declare, Define:
-		operator = p.Consume()
-	default:
-		return expr
 	}
-	init := p.parseExpression()
-	if c, ok := expr.(*ComputedAccessExpression); ok && operator.Kind() == Define {
-		c.Property.Expr = MakeTuple(c.Property.Expr)
-		validateTypeParams(p, c.Property)
-		expr = c
-	}
-	if b, ok := init.(*Block); ok && operator.Kind() == Define {
-		braced := getValidatedObject(p, b)
-		reportDuplicatedFields(p, braced)
-		init = braced
-	}
-	if a, ok := expr.(*PropertyAccessExpression); ok && operator.Kind() == Define {
-		a.Expr = getValidatedMethodReceiver(p, a.Expr)
-		a.Property = getValidatedMethodIdentifier(p, a.Property)
-		expr = a
-	}
-	return &Assignment{expr, init, operator}
 }
 
 func isValidAssignee(expr Expression) bool {
@@ -128,6 +147,40 @@ func isValidAssignee(expr Expression) bool {
 	return valid
 }
 
+// Formats nodes representing statements like 'Type[TypeArg] :: ...'
+func formatGenericTypeDef(p *Parser, a *Assignment) {
+	c, ok := a.Pattern.(*ComputedAccessExpression)
+	if !ok {
+		return
+	}
+	c.Property.Expr = MakeTuple(c.Property.Expr)
+	validateTypeParams(p, c.Property)
+	a.Pattern = c
+}
+
+// Formats nodes like ... :: { key value }
+func formatStructDef(p *Parser, a *Assignment) {
+	b, ok := a.Value.(*Block)
+	if !ok || a.Operator.Kind() != Define && a.Operator.Kind() != Declare {
+		return
+	}
+	braced := getValidatedObject(p, b)
+	reportDuplicatedFields(p, braced)
+	a.Value = braced
+}
+
+func formatMethodDef(p *Parser, a *Assignment) {
+	pa, ok := a.Pattern.(*PropertyAccessExpression)
+	// TODO: report if declaring method with other than ::
+	// TODO: report if writing to object.key with :: or :=
+	if !ok || a.Operator.Kind() != Define && a.Operator.Kind() != Declare {
+		return
+	}
+	pa.Expr = getValidatedMethodReceiver(p, pa.Expr)
+	pa.Property = getValidatedMethodIdentifier(p, pa.Property)
+	a.Pattern = pa
+}
+
 func getValidatedObject(p *Parser, b *Block) *BracedExpression {
 	if isTupleBlock(b) {
 		return getValidatedTupleObject(p, b)
@@ -155,6 +208,7 @@ func getValidatedTupleObject(p *Parser, b *Block) *BracedExpression {
 	}
 	return &BracedExpression{
 		Expr: &TupleExpression{Elements: elements},
+		loc:  b.loc,
 	}
 }
 
@@ -165,6 +219,7 @@ func getValidatedNonTupleObject(p *Parser, b *Block) *BracedExpression {
 	}
 	return &BracedExpression{
 		Expr: &TupleExpression{Elements: elements},
+		loc:  b.loc,
 	}
 }
 
@@ -178,6 +233,9 @@ func reportDuplicatedFields(p *Parser, b *BracedExpression) {
 			identifier = s.Identifier
 		case *Entry:
 			identifier = s.Key.(*Identifier)
+		}
+		if identifier == nil {
+			continue
 		}
 		name := identifier.Text()
 		if name != "" {

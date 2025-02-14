@@ -305,6 +305,9 @@ func (t *TraitExpression) getChildren() []Node {
 }
 
 func (t *TraitExpression) Loc() Loc {
+	if t.Receiver == nil {
+		return t.Def.loc
+	}
 	return Loc{t.Receiver.loc.Start, t.Def.loc.End}
 }
 func (t *TraitExpression) Type() ExpressionType { return t.typing }

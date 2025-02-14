@@ -7,60 +7,133 @@ import (
 )
 
 func TestParseAssignment(t *testing.T) {
-	parser := MakeParser(strings.NewReader("n = 42"))
-	node := parser.parseAssignment()
-	loc := Loc{Position{1, 1}, Position{1, 7}}
-	if node.Loc() != loc {
-		t.Fatalf("Expected loc %v, got %v", node.Loc(), loc)
+	tests := []struct {
+		name             string
+		source           string
+		wantError        bool
+		expectedOperator TokenKind
+		expectedLoc      Loc
+	}{
+		{
+			name:             "assignment to value",
+			source:           "value = 42",
+			wantError:        false,
+			expectedOperator: Assign,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 11}},
+		},
+		{
+			name:             "assignment to object field",
+			source:           "object.field = 42",
+			wantError:        false,
+			expectedOperator: Assign,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 18}},
+		},
+		{
+			name:             "assignment to deref",
+			source:           "*ref = 42",
+			wantError:        false,
+			expectedOperator: Assign,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 10}},
+		},
+		{
+			name:             "missing argument",
+			source:           "value =",
+			wantError:        true,
+			expectedOperator: Assign,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 8}},
+		},
+		{
+			name:             "missing value",
+			source:           "= 42",
+			wantError:        true,
+			expectedOperator: Assign,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 5}},
+		},
+		{
+			name:             "assignment to function call",
+			source:           "f() = 42",
+			wantError:        true,
+			expectedOperator: Assign,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 9}},
+		},
+		{
+			name:             "assignment to instance",
+			source:           "Type{} = 42",
+			wantError:        true,
+			expectedOperator: Assign,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 12}},
+		},
+		{
+			name:             "assignment to binary expression",
+			source:           "a + b = 42",
+			wantError:        true,
+			expectedOperator: Assign,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 11}},
+		},
+		{
+			name:             "shorthand",
+			source:           "a += 42",
+			wantError:        false,
+			expectedOperator: AddAssign,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 8}},
+		},
+		{
+			name:             "type",
+			source:           "Type :: .{}",
+			wantError:        false,
+			expectedOperator: Define,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 12}},
+		},
+		{
+			name:             "non-constant type",
+			source:           "Type := .{}",
+			wantError:        true,
+			expectedOperator: Declare,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 12}},
+		},
+		{
+			name:             "type w/ embedding",
+			source:           "Type :: { Other }",
+			wantError:        false,
+			expectedOperator: Define,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 18}},
+		},
+		{
+			name:             "type w/ embedding from module",
+			source:           "Type :: { module.Other }",
+			wantError:        false,
+			expectedOperator: Define,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 25}},
+		},
+		{
+			name:             "type w/ embedded value",
+			source:           "Type :: { value }",
+			wantError:        true,
+			expectedOperator: Define,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 18}},
+		},
 	}
-	testParserErrors(t, parser, 0)
 
-	expr, ok := node.(*Assignment)
-	if !ok {
-		t.Fatalf("Expected Assignment, got %#v", node)
-	}
-	if _, ok := expr.Pattern.(*Identifier); !ok {
-		t.Fatalf("Expected token 'n'")
-	}
-	if _, ok := expr.Value.(*Literal); !ok {
-		t.Fatalf("Expected literal 42")
-	}
-}
-
-func TestParseAssignmentToField(t *testing.T) {
-	parser := MakeParser(strings.NewReader("object.key = 42"))
-	parser.parseAssignment()
-	testParserErrors(t, parser, 0)
-}
-
-func TestParseAssignmentBadAssignee(t *testing.T) {
-	var parser *Parser
-
-	parser = MakeParser(strings.NewReader("f() = 42"))
-	parser.parseAssignment()
-	testParserErrors(t, parser, 1)
-
-	parser = MakeParser(strings.NewReader("T{} = 42"))
-	parser.parseAssignment()
-	testParserErrors(t, parser, 1)
-
-	parser = MakeParser(strings.NewReader("a + b = 42"))
-	parser.parseAssignment()
-	testParserErrors(t, parser, 1)
-}
-
-func TestParseAssignmentShorthand(t *testing.T) {
-	parser := MakeParser(strings.NewReader("n += 42"))
-	node := parser.parseAssignment()
-
-	testParserErrors(t, parser, 0)
-
-	expr, ok := node.(*Assignment)
-	if !ok {
-		t.Fatalf("Expected Assignment, got %#v", node)
-	}
-	if expr.Operator.Kind() != AddAssign {
-		t.Fatal("Expected +=, got", expr.Operator)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := MakeParser(strings.NewReader(tt.source))
+			expr := parser.parseAssignment()
+			if tt.wantError && len(parser.errors) == 0 {
+				t.Error("Got no errors, want one\n")
+			}
+			if !tt.wantError && len(parser.errors) > 0 {
+				t.Error("Got error(s), want none\n")
+				for _, err := range parser.errors {
+					t.Log(err.Text())
+				}
+			}
+			if expr.(*Assignment).Operator.Kind() != tt.expectedOperator {
+				t.Errorf("Bad operator")
+			}
+			if expr.Loc() != tt.expectedLoc {
+				t.Errorf("Got loc %v, want %v", expr.Loc(), tt.expectedLoc)
+			}
+		})
 	}
 }
 

@@ -49,6 +49,8 @@ const (
 	NotExhaustive
 
 	InvalidAssignmentToEntry
+	NonConstantTypeDeclaration
+	AssignmentToConstant
 
 	TypeExpected
 	ValueExpected
@@ -185,6 +187,10 @@ func (p ParserError) Text() string {
 
 	case InvalidAssignmentToEntry:
 		return "Invalid assignment to entry; expected assignment to map entry"
+	case NonConstantTypeDeclaration:
+		return "Cannot declare mutable type, use '::' instead"
+	case AssignmentToConstant:
+		return "Cannot assign new value to constant"
 
 	case TypeExpected:
 		return "Type expected, got value"
