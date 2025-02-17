@@ -9,6 +9,8 @@
   - `list.sort()` sorts in place
   - `sort(list, predicate)` returns a sorted copy
   - `map(list, predicate)`
+  - -> pipe? `|>`
+    - `array |> filter($, predicate) |> map($, predicate)`
 - int vs float?
   - divisions
     - `Math.floor(a/b)`

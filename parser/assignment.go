@@ -171,9 +171,12 @@ func formatStructDef(p *Parser, a *Assignment) {
 
 func formatMethodDef(p *Parser, a *Assignment) {
 	pa, ok := a.Pattern.(*PropertyAccessExpression)
-	// TODO: report if declaring method with other than ::
-	// TODO: report if writing to object.key with :: or :=
-	if !ok || a.Operator.Kind() != Define && a.Operator.Kind() != Declare {
+	if !ok {
+		return
+	}
+	if a.Operator.Kind() == Declare {
+		p.error(a, NonConstantMethodDeclaration)
+	} else if a.Operator.Kind() != Define {
 		return
 	}
 	pa.Expr = getValidatedMethodReceiver(p, pa.Expr)
@@ -398,16 +401,7 @@ func declareVariable(p *Parser, identifier *Identifier, typing ExpressionType) {
 		p.error(identifier, PublicDeclaration)
 		return
 	}
-	addVariableToScope(p, identifier, typing)
-}
-
-func addVariableToScope(p *Parser, identifier *Identifier, typing ExpressionType) {
-	name := identifier.Text()
-	if name == "#" {
-		p.error(identifier, ReservedName, name)
-		return
-	}
-	p.scope.Add(name, identifier.Loc(), typing)
+	p.scope.Add(identifier.Text(), identifier.Loc(), typing)
 }
 
 func declareTuple(p *Parser, pattern *TupleExpression, typing ExpressionType) {
@@ -484,7 +478,7 @@ func typeCheckTypeDefinition(p *Parser, a *Assignment) {
 		Ref:  getInitType(p, a.Value),
 		From: p.filePath,
 	}}
-	addVariableToScope(p, identifier, t)
+	p.scope.AddConstant(identifier.Text(), identifier.Loc(), t)
 }
 
 func getInitType(p *Parser, expr Expression) ExpressionType {
@@ -506,7 +500,9 @@ func typeCheckFunctionDefinition(p *Parser, a *Assignment) {
 		p.error(a.Value, FunctionExpressionExpected)
 		return
 	}
-	addVariableToScope(p, identifier, t)
+	if a.Operator.Kind() == Define {
+		p.scope.Add(identifier.Text(), identifier.Loc(), t)
+	}
 }
 
 // ----------------------------------------

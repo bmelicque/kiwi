@@ -50,6 +50,7 @@ const (
 
 	InvalidAssignmentToEntry
 	NonConstantTypeDeclaration
+	NonConstantMethodDeclaration
 	AssignmentToConstant
 
 	TypeExpected
@@ -189,6 +190,8 @@ func (p ParserError) Text() string {
 		return "Invalid assignment to entry; expected assignment to map entry"
 	case NonConstantTypeDeclaration:
 		return "Cannot declare mutable type, use '::' instead"
+	case NonConstantMethodDeclaration:
+		return "Cannot declare mutable methods, use '::' instead"
 	case AssignmentToConstant:
 		return "Cannot assign new value to constant"
 

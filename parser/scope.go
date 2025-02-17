@@ -7,6 +7,7 @@ type Variable struct {
 	writes       []Node
 	reads        []Loc
 	hasDirectRef bool
+	constant     bool
 }
 
 func (v *Variable) readAt(l Loc)   { v.reads = append(v.reads, l) }
@@ -78,6 +79,17 @@ func (s *Scope) Add(name string, declaredAt Loc, typing ExpressionType) {
 		declaredAt: declaredAt,
 		Typing:     typing,
 		scope:      s,
+	}
+}
+func (s *Scope) AddConstant(name string, declaredAt Loc, typing ExpressionType) {
+	if name == "" || name == "_" {
+		return
+	}
+	s.variables[name] = &Variable{
+		declaredAt: declaredAt,
+		Typing:     typing,
+		scope:      s,
+		constant:   true,
 	}
 }
 

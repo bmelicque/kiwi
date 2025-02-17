@@ -23,7 +23,7 @@ func (u *UseDirective) typeCheck(p *Parser) {
 	if u.Star {
 		id, ok := u.Names.(*Identifier)
 		if ok {
-			addVariableToScope(p, id, module)
+			p.scope.Add(id.Text(), id.Loc(), module)
 		}
 	} else {
 		declareUseNames(p, module, u.Names)
@@ -57,14 +57,14 @@ func declareUseNames(p *Parser, module ExpressionType, names Expression) {
 		id := el.(*Identifier)
 		switch module := module.(type) {
 		case Invalid:
-			addVariableToScope(p, id, module)
+			p.scope.Add(id.Text(), id.Loc(), module)
 		case Module:
 			t, ok := module.GetOwned(id.Text())
 			if !ok {
 				p.error(id, NotInModule, id.Text())
 				t = Invalid{}
 			}
-			addVariableToScope(p, id, t)
+			p.scope.Add(id.Text(), id.Loc(), t)
 		}
 	}
 }

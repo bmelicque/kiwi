@@ -112,6 +112,55 @@ func TestParseAssignment(t *testing.T) {
 			expectedOperator: Define,
 			expectedLoc:      Loc{Position{1, 1}, Position{1, 18}},
 		},
+		{
+			name:             "type w/ embedded literal",
+			source:           "Type :: { 42 }",
+			wantError:        true,
+			expectedOperator: Define,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 15}},
+		},
+		{
+			name:             "type w/ field",
+			source:           "Type :: { default: 42 }",
+			wantError:        false,
+			expectedOperator: Define,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 24}},
+		},
+		{
+			name:             "type w/ bad field",
+			source:           "Type :: { [default]: 42 }",
+			wantError:        true,
+			expectedOperator: Define,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 26}},
+		},
+		{
+			name:             "generic",
+			source:           "Generic[Type] :: .{}",
+			wantError:        false,
+			expectedOperator: Define,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 21}},
+		},
+		{
+			name:             "non-constant generic",
+			source:           "Generic[Type] := .{}",
+			wantError:        true,
+			expectedOperator: Declare,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 21}},
+		},
+		{
+			name:             "method",
+			source:           "(x Type).method :: () => {}",
+			wantError:        false,
+			expectedOperator: Define,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 28}},
+		},
+		{
+			name:             "non-constant method",
+			source:           "(x Type).method := () => {}",
+			wantError:        true,
+			expectedOperator: Declare,
+			expectedLoc:      Loc{Position{1, 1}, Position{1, 28}},
+		},
 	}
 
 	for _, tt := range tests {
