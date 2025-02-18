@@ -456,7 +456,10 @@ func TestCheckVariableDeclarationNoNil(t *testing.T) {
 	}
 	declaration.typeCheck(parser)
 	if len(parser.errors) != 1 {
-		t.Fatalf("Expected 1 error, got %v: %#v", len(parser.errors), parser.errors)
+		t.Errorf("Expected 1 error, got %v\n", len(parser.errors))
+		for _, err := range parser.errors {
+			t.Log(err.Text())
+		}
 	}
 }
 

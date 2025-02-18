@@ -1,8 +1,3 @@
-- change semantics? => `:=` is mutable, `::` is constant
-  - variable has a "constant" key
-  - merge `:=` and `::` code
-    - lowercase can be both
-    - Uppercase, method and Computed (i.e. generic) are `::` only
 - html elements should be used as types, but they are interfaces in JS => on emit instance, if type implements Node and is from dom, use createElement instead (e.g. for `DocumentBody`)
 - list methods (list = `TypeAlias{"[]"}`?)
   - `filter(list, predicate)` -> js `list.filter(predicate)`

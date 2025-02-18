@@ -19,10 +19,8 @@ func (a *Assignment) typeCheck(p *Parser) {
 		LogicalAndAssign,
 		LogicalOrAssign:
 		typeCheckOtherAssignment(p, a)
-	case Declare:
+	case Declare, Define:
 		typeCheckDeclaration(p, a)
-	case Define:
-		typeCheckDefinition(p, a)
 	default:
 		panic("Assignment type check should've been exhaustive!")
 	}
@@ -287,16 +285,17 @@ func typeCheckAssignment(p *Parser, a *Assignment) {
 
 	switch pattern := a.Pattern.(type) {
 	case *Identifier:
-		if pattern.typing.Extends(a.Value.Type()) {
-			return
+		if !pattern.typing.Extends(a.Value.Type()) {
+			p.error(pattern, CannotAssignType, pattern.typing, a.Value.Type())
 		}
-		p.error(pattern, CannotAssignType, pattern.typing, a.Value.Type())
+		reportAssignmentToConstant(p, a)
 	case *TupleExpression:
 		for _, element := range pattern.Elements {
 			if _, ok := element.(*Identifier); !ok {
 				p.error(element, IdentifierExpected)
 			}
 		}
+		reportAssignmentToConstant(p, a)
 		if !pattern.typing.Extends(a.Value.Type()) {
 			p.error(a.Value, CannotAssignType, pattern.typing, a.Value.Type())
 		}
@@ -327,8 +326,9 @@ func typeCheckOtherAssignment(p *Parser, a *Assignment) {
 	checkAssignmentPattern(p, a)
 	a.Value.typeCheck(p)
 
-	left := a.Pattern.Type()
+	reportAssignmentToConstant(p, a)
 
+	left := a.Pattern.Type()
 	switch a.Operator.Kind() {
 	case AddAssign, SubAssign, MulAssign, DivAssign, ModAssign:
 		if !(Number{}).Extends(left) {
@@ -377,20 +377,38 @@ func checkAssignmentPattern(p *Parser, a *Assignment) {
 
 // type check assignment where operator is ':='
 func typeCheckDeclaration(p *Parser, a *Assignment) {
-	a.Value.typeCheck(p)
-	reportInvalidVariableType(p, a.Value)
 	switch pattern := a.Pattern.(type) {
 	case *Identifier:
-		declareVariable(p, pattern, a.Value.Type())
+		if a.Value == nil {
+			declareVariable(p, pattern, Invalid{})
+			return
+		}
+		a.Value.typeCheck(p)
+		reportInvalidVariableType(p, a.Value)
+		if pattern.IsType() {
+			typeCheckTypeDefinition(p, a)
+		} else {
+			declareVariable(p, pattern, a.Value.Type())
+		}
+	case *ComputedAccessExpression:
+		typeCheckGenericTypeDefinition(p, a)
 	case *TupleExpression:
+		a.Value.typeCheck(p)
+		reportInvalidVariableType(p, a.Value)
 		declareTuple(p, pattern, a.Value.Type())
+	case *PropertyAccessExpression:
+		checkMethodDefinition(p, pattern, a.Value)
 	case *Param:
+		a.Value.typeCheck(p)
+		reportInvalidVariableType(p, a.Value)
 		if !p.conditionalDeclaration {
 			p.error(a.Pattern, InvalidPattern)
 			return
 		}
 		p.typeCheckPattern(a.Pattern, a.Value.Type())
 	default:
+		a.Value.typeCheck(p)
+		reportInvalidVariableType(p, a.Value)
 		p.error(a.Pattern, InvalidPattern)
 	}
 }
@@ -422,30 +440,6 @@ func declareTuple(p *Parser, pattern *TupleExpression, typing ExpressionType) {
 			continue
 		}
 		declareVariable(p, identifier, tuple.Elements[i])
-	}
-}
-
-func typeCheckDefinition(p *Parser, a *Assignment) {
-	switch pattern := a.Pattern.(type) {
-	case *ComputedAccessExpression:
-		typeCheckGenericTypeDefinition(p, a)
-	case *Identifier:
-		if a.Value == nil {
-			return
-		}
-		a.Value.typeCheck(p)
-		reportInvalidVariableType(p, a.Value)
-		if pattern.IsType() {
-			typeCheckTypeDefinition(p, a)
-		} else {
-			typeCheckFunctionDefinition(p, a)
-		}
-	case *PropertyAccessExpression:
-		checkMethodDefinition(p, pattern, a.Value)
-	default:
-		a.Value.typeCheck(p)
-		reportInvalidVariableType(p, a.Value)
-		p.error(pattern, InvalidPattern)
 	}
 }
 
@@ -491,18 +485,6 @@ func getInitType(p *Parser, expr Expression) ExpressionType {
 		return Invalid{}
 	}
 	return t.Value
-}
-
-func typeCheckFunctionDefinition(p *Parser, a *Assignment) {
-	identifier := a.Pattern.(*Identifier)
-	t, ok := a.Value.Type().(Function)
-	if !ok {
-		p.error(a.Value, FunctionExpressionExpected)
-		return
-	}
-	if a.Operator.Kind() == Define {
-		p.scope.Add(identifier.Text(), identifier.Loc(), t)
-	}
 }
 
 // ----------------------------------------
@@ -613,5 +595,26 @@ func reportInvalidVariableType(p *Parser, value Expression) {
 		}
 	case Void:
 		p.error(value, VoidAssignment)
+	}
+}
+
+func reportAssignmentToConstant(p *Parser, a *Assignment) {
+	switch pattern := a.Pattern.(type) {
+	case *Identifier:
+		v, ok := p.scope.Find(pattern.Text())
+		if ok && v.constant {
+			p.error(a, AssignmentToConstant)
+		}
+	case *TupleExpression:
+		for _, e := range pattern.Elements {
+			i, ok := e.(*Identifier)
+			if !ok {
+				continue
+			}
+			v, ok := p.scope.Find(i.Text())
+			if ok && v.constant {
+				p.error(a, AssignmentToConstant)
+			}
+		}
 	}
 }

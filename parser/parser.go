@@ -15,7 +15,7 @@ type Parser struct {
 	preventColon      bool // don't parse expressions like 'identifier: value'
 
 	// If true, declarations are considered as being part of an if statement.
-	// For example: 'if Some(s) := option {}'.
+	// For example: 'if s Some := option {}'.
 	// Some patterns are allowed in if statements, but not in regular declarations.
 	conditionalDeclaration bool
 }
